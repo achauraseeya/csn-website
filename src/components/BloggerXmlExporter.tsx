@@ -251,7 +251,7 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
             </strong>
             <p>If you see a blank screen or a 404 error in the console, it means the code wasn't built correctly on GitHub Pages. To fix this:</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Cause 1: You didn't push the GitHub Action.</strong> Make sure you export the project to GitHub AGAIN so it includes the new <code>.github/workflows/deploy.yml</code> file I just added.</li>
+              <li><strong>Cause 1: The GitHub Action failed.</strong> I made a mistake in the previous version of the deployment script that caused the build to fail! <strong>I have fixed this. Please export to GitHub AGAIN to push the fix.</strong></li>
               <li><strong>Cause 2: GitHub Pages Source is wrong.</strong> In your GitHub Repo Settings -&gt; Pages, make sure "Source" is set to <strong>GitHub Actions</strong>. If it's set to "Deploy from a branch", the action will fail!</li>
               <li><strong>Cause 3: Action hasn't finished.</strong> It takes 2-3 minutes to build. Check the "Actions" tab in your GitHub repository and wait for the green checkmark on "Deploy to GitHub Pages".</li>
             </ul>
