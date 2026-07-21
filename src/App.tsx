@@ -1,0 +1,392 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail } from 'lucide-react';
+import { Language, AnalyticsMetric, Member } from './types';
+import { boardMembers as initialMembers } from './data/communityData';
+import logoImg from './assets/images/chaurasiya_logo_1784519579895.jpg';
+
+import Navigation from './components/Navigation';
+import HistorySection from './components/HistorySection';
+import NoticeGallery from './components/NoticeGallery';
+import DirectorySection from './components/DirectorySection';
+import EventsSection from './components/EventsSection';
+import MembershipDonation from './components/MembershipDonation';
+import AbhishekBio from './components/AbhishekBio';
+import LeaderBio from './components/LeaderBio';
+import BloggerXmlExporter from './components/BloggerXmlExporter';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
+import TransparencySection from './components/TransparencySection';
+import ContactSection from './components/ContactSection';
+
+export default function App() {
+  const [lang, setLang] = useState<Language>('ne');
+  const [currentTab, setCurrentTab] = useState<string>('history');
+  const [selectedLeaderId, setSelectedLeaderId] = useState<string | null>(null);
+  
+  // Dynamic Member Directory list
+  const [members, setMembers] = useState<Member[]>(initialMembers);
+
+  // Simulated live metrics state
+  const [metrics, setMetrics] = useState<AnalyticsMetric>({
+    pageViews: 1248,
+    newsletterSubscribers: 342,
+    donationsReceived: 45000,
+    membersRegistered: 218,
+    xmlDownloads: 89,
+    buttonClicks: {
+      'Explore Platform Load': 1248,
+    },
+  });
+
+  // Track page view, simulate SEO meta tags
+  useEffect(() => {
+    // Increment page session metric on startup
+    setMetrics((prev) => ({
+      ...prev,
+      pageViews: prev.pageViews + 1,
+    }));
+
+    // Simulate standard SEO tags (Title, Meta Description)
+    document.title = lang === 'en' ? 'Chaurasiya Samaj Nepal | Official NGO Website' : 'चौरसिया समाज नेपाल | आधिकारिक NGO वेबसाइट';
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute('content', lang === 'en' 
+        ? 'Official NGO website of Chaurasiya Samaj Nepal. Dedicated to preserving betel leaf culture, education, healthcare, and humanitarian efforts.'
+        : 'चौरसिया समाज नेपालको आधिकारिक NGO वेबसाइट। पान संस्कृति, शिक्षा, स्वास्थ्य सेवा, र मानवीय प्रयासहरूको संरक्षण गर्न समर्पित।'
+      );
+    }
+
+    // Inject JSON-LD Schema for NGO
+    const schemaScript = document.createElement('script');
+    schemaScript.type = 'application/ld+json';
+    schemaScript.innerHTML = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "NGO",
+      "name": "Chaurasiya Samaj Nepal",
+      "url": "https://chaurasiyasumaj.org.np",
+      "logo": "https://chaurasiyasumaj.org.np/logo.png",
+      "description": "Dedicated to unifying community coordinators, supporting traditional cultivation, and providing healthcare.",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Ghantaghar Path",
+        "addressLocality": "Birgunj",
+        "addressRegion": "Madhesh Province",
+        "addressCountry": "NP"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+977-9812345678",
+        "contactType": "customer service"
+      }
+    });
+    
+    // Cleanup any existing schema to prevent duplicates on re-render
+    const existingSchema = document.querySelector('script[type="application/ld+json"]');
+    if (existingSchema) existingSchema.remove();
+    
+    document.head.appendChild(schemaScript);
+  }, [lang]);
+
+  const handleTrackAction = useCallback((actionName: string) => {
+    setMetrics((prev) => {
+      const updatedClicks = { ...prev.buttonClicks };
+      updatedClicks[actionName] = (updatedClicks[actionName] || 0) + 1;
+      return {
+        ...prev,
+        buttonClicks: updatedClicks,
+      };
+    });
+  }, []);
+
+  const handleAddMemberNomination = (newMember: Omit<Member, 'id'>) => {
+    const memberWithId: Member = {
+      ...newMember,
+      id: `m-nom-${Date.now()}`,
+    };
+    setMembers((prev) => [...prev, memberWithId]);
+    setMetrics((prev) => ({
+      ...prev,
+      membersRegistered: prev.membersRegistered + 1,
+    }));
+  };
+
+  const handleNewsletterSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    setMetrics((prev) => ({
+      ...prev,
+      newsletterSubscribers: prev.newsletterSubscribers + 1,
+    }));
+    handleTrackAction('Subscribed to Newsletter');
+    alert(lang === 'en' ? 'Successfully subscribed to the newsletter!' : 'समाचार पत्रको सफलतापूर्वक सदस्यता लिनुभयो!');
+  };
+
+  const handleAddDonation = (amount: number) => {
+    setMetrics((prev) => ({
+      ...prev,
+      donationsReceived: prev.donationsReceived + amount,
+    }));
+  };
+
+  const handleXmlDownload = () => {
+    setMetrics((prev) => ({
+      ...prev,
+      xmlDownloads: prev.xmlDownloads + 1,
+    }));
+  };
+
+  const handleResetMetrics = () => {
+    setMetrics({
+      pageViews: 1250,
+      newsletterSubscribers: 342,
+      donationsReceived: 45000,
+      membersRegistered: 218,
+      xmlDownloads: 89,
+      buttonClicks: {
+        'Simulate Telemetry Refresh': 1,
+      },
+    });
+  };
+
+  // Switch tab scroll helper
+  const handleNavigate = (tabId: string) => {
+    setCurrentTab(tabId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const t = {
+    tagline: {
+      en: 'A dedicated social platform preserving betel leaf culture & serving humanity',
+      ne: 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था',
+    },
+    designedBy: {
+      en: 'Designed and Engineered with love by Abhishek Kumar Chaurasiya',
+      ne: 'अभिषेक कुमार चौरसियाद्वारा माया र लगावका साथ डिजाइन तथा निर्माण गरिएको',
+    },
+    rights: {
+      en: '© 2026 Chaurasiya Samaj Nepal. All Rights Reserved.',
+      ne: '© २०२६ चौरसिया समाज नेपाल। सर्वाधिकार सुरक्षित।',
+    },
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-gray-900 flex flex-col font-sans selection:bg-teal-200 selection:text-teal-950">
+      {/* Brand Top bar */}
+      <div className="bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-teal-50 text-[11px] sm:text-xs py-2.5 px-4 sm:px-6 lg:px-8 shadow-sm">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+          <span className="font-bold flex items-center gap-2 tracking-wide uppercase">
+            <div className="w-5 h-5 rounded-full bg-white overflow-hidden flex items-center justify-center p-0.5 shadow-sm">
+              <img src={logoImg} alt="Logo" className="w-full h-full object-cover rounded-full" />
+            </div>
+            {t.tagline[lang]}
+          </span>
+          <div className="flex items-center gap-4 text-emerald-200 font-medium">
+            <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5" /> SWC Registered</span>
+            <span className="hidden sm:inline opacity-50">|</span>
+            <span className="hidden sm:inline hover:text-white transition-colors cursor-pointer">✉️ achauraseeya@gmail.com</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation header */}
+      <Navigation
+        currentTab={currentTab}
+        setCurrentTab={handleNavigate}
+        lang={lang}
+        setLang={setLang}
+        onTrackAction={handleTrackAction}
+      />
+
+      {/* Main body viewport container */}
+      <main className="flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        {currentTab === 'history' && (
+          <HistorySection
+            lang={lang}
+            onNavigate={handleNavigate}
+            onTrackAction={handleTrackAction}
+            onSelectLeader={setSelectedLeaderId}
+          />
+        )}
+
+        {currentTab === 'leader-bio' && (
+          <LeaderBio
+            lang={lang}
+            leaderId={selectedLeaderId}
+            onTrackAction={handleTrackAction}
+          />
+        )}
+
+        {currentTab === 'notices-gallery' && (
+          <NoticeGallery
+            lang={lang}
+            onSubscribe={() => {}}
+            onTrackAction={handleTrackAction}
+          />
+        )}
+
+        {currentTab === 'directory' && (
+          <DirectorySection
+            lang={lang}
+            onAddMember={handleAddMemberNomination}
+            onTrackAction={handleTrackAction}
+          />
+        )}
+
+        {currentTab === 'events' && (
+          <EventsSection
+            lang={lang}
+            onRegisterVolunteer={() => handleTrackAction('Submit Volunteer signup')}
+            onTrackAction={handleTrackAction}
+          />
+        )}
+
+        {currentTab === 'membership-donation' && (
+          <MembershipDonation
+            lang={lang}
+            onAddMember={() => {
+              setMetrics((prev) => ({
+                ...prev,
+                membersRegistered: prev.membersRegistered + 1,
+              }));
+            }}
+            onAddDonation={handleAddDonation}
+            onTrackAction={handleTrackAction}
+          />
+        )}
+
+        {currentTab === 'abhishek-bio' && (
+          <AbhishekBio
+            lang={lang}
+            onTrackAction={handleTrackAction}
+          />
+        )}
+
+        {currentTab === 'blogger-exporter' && (
+          <BloggerXmlExporter
+            lang={lang}
+            onDownload={handleXmlDownload}
+            onTrackAction={handleTrackAction}
+          />
+        )}
+
+        {currentTab === 'analytics' && (
+          <AnalyticsDashboard
+            lang={lang}
+            metrics={metrics}
+            onResetMetrics={handleResetMetrics}
+            onTrackAction={handleTrackAction}
+          />
+        )}
+
+        {currentTab === 'transparency' && (
+          <TransparencySection
+            lang={lang}
+            onTrackAction={handleTrackAction}
+          />
+        )}
+
+        {currentTab === 'contact' && (
+          <ContactSection
+            lang={lang}
+            onTrackAction={handleTrackAction}
+          />
+        )}
+      </main>
+
+      {/* Enhanced NGO Footer */}
+      <footer className="bg-gray-900 text-white border-t-8 border-emerald-500 py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 items-start mb-12">
+          
+          <div className="md:col-span-4 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-white overflow-hidden flex items-center justify-center">
+                <img src={logoImg} alt="Logo" className="w-full h-full object-cover" />
+              </div>
+              <span className="font-black text-2xl tracking-tight text-white">Chaurasiya Samaj</span>
+            </div>
+            <p className="text-sm text-gray-400 leading-relaxed font-medium pr-4">
+              {t.tagline[lang]} We are dedicated to unifying community coordinators, supporting traditional cultivation, and providing essential healthcare and youth education programs.
+            </p>
+            <div className="flex gap-4 pt-2">
+               {/* Social Icons Placeholder */}
+               <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors cursor-pointer text-gray-400 hover:text-white">fb</div>
+               <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors cursor-pointer text-gray-400 hover:text-white">tw</div>
+               <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors cursor-pointer text-gray-400 hover:text-white">ig</div>
+            </div>
+          </div>
+
+          <div className="md:col-span-2 space-y-4">
+            <h4 className="font-bold text-white mb-4">Quick Links</h4>
+            <div className="flex flex-col gap-3 text-sm text-gray-400 font-medium">
+              <button onClick={() => handleNavigate('history')} className="hover:text-emerald-400 text-left transition-colors">About Us</button>
+              <button onClick={() => handleNavigate('events')} className="hover:text-emerald-400 text-left transition-colors">Projects & Programs</button>
+              <button onClick={() => handleNavigate('directory')} className="hover:text-emerald-400 text-left transition-colors">Committee Members</button>
+              <button onClick={() => handleNavigate('transparency')} className="hover:text-emerald-400 text-left transition-colors">Transparency</button>
+            </div>
+          </div>
+
+          <div className="md:col-span-3 space-y-4">
+            <h4 className="font-bold text-white mb-4">Headquarters</h4>
+            <div className="text-sm text-gray-400 space-y-3 font-medium">
+              <p className="flex items-start gap-2">
+                <span className="text-emerald-500 mt-1">📍</span> 
+                Ghantaghar Path, Birgunj, Parsa, Madhesh Province, Nepal
+              </p>
+              <p className="flex items-center gap-2">
+                <span className="text-emerald-500">📞</span> 
+                +977-9812345678
+              </p>
+              <p className="flex items-center gap-2">
+                <span className="text-emerald-500">✉️</span> 
+                achauraseeya@gmail.com
+              </p>
+            </div>
+          </div>
+
+          <div className="md:col-span-3 space-y-4">
+            <h4 className="font-bold text-white mb-4">Newsletter</h4>
+            <p className="text-sm text-gray-400 font-medium mb-4">Subscribe to our newsletter for the latest updates on projects and events.</p>
+            <form onSubmit={handleNewsletterSubscribe} className="flex flex-col gap-2">
+              <div className="relative">
+                <Mail className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input 
+                  type="email" 
+                  required
+                  placeholder="Email address..." 
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+              <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-2.5 rounded-lg text-sm transition-colors">
+                Subscribe
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Footer Credit Line */}
+        <div className="max-w-7xl mx-auto pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500 font-medium">
+          <span>{t.rights[lang]} | Reg: 12345/071</span>
+          <div className="flex items-center gap-6">
+            <button onClick={() => handleNavigate('transparency')} className="hover:text-emerald-400 transition-colors">Privacy Policy</button>
+            <button onClick={() => handleNavigate('transparency')} className="hover:text-emerald-400 transition-colors">Terms of Service</button>
+            <button
+              onClick={() => handleNavigate('abhishek-bio')}
+              className="hover:text-emerald-400 transition-colors border-l border-gray-700 pl-6 flex items-center gap-2"
+            >
+              👨‍💻 {t.designedBy[lang]}
+            </button>
+          </div>
+        </div>
+      </footer>
+
+      {/* Floating WhatsApp Button */}
+      <a 
+        href="https://wa.me/9779812345678" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        onClick={() => handleTrackAction('Click WhatsApp Float')}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform hover:shadow-[0_0_20px_rgba(37,211,102,0.5)]"
+      >
+        <MessageCircle className="w-7 h-7" />
+      </a>
+    </div>
+  );
+}
