@@ -220,10 +220,10 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
                 <h5 className="font-bold text-slate-900">Host App on GitHub Pages</h5>
               </div>
               <ul className="text-sm text-slate-600 space-y-2 pl-11 list-disc">
-                <li>Download this project using the <strong>Export to ZIP</strong> or <strong>Export to GitHub</strong> option in AI Studio settings.</li>
-                <li>In your repository, update <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">vite.config.ts</code> with your repo name: <code>base: '/${githubRepo}/'</code>.</li>
-                <li>Run <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">npm run build</code> to generate the <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">dist/</code> folder.</li>
-                <li>Go to GitHub Repository Settings -&gt; Pages. Set source to <strong>Deploy from a branch</strong>, choose <strong>main</strong> branch and <strong>/root</strong> folder. Save.</li>
+                <li>Use the <strong>Export to GitHub</strong> option in AI Studio settings to push this code to your repository.</li>
+                <li><strong>Magic step:</strong> I have included a <code>.github/workflows/deploy.yml</code> file. This means GitHub will <strong>automatically build the app</strong> for you!</li>
+                <li>Go to your GitHub Repository Settings -&gt; Pages. Under "Build and deployment", set Source to <strong>GitHub Actions</strong>.</li>
+                <li>Wait 2-3 minutes for the Github Action to finish running. (Check the "Actions" tab in your repo).</li>
               </ul>
             </div>
             
@@ -233,9 +233,8 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
                 <h5 className="font-bold text-slate-900">Setup Blogger Theme</h5>
               </div>
               <ul className="text-sm text-slate-600 space-y-2 pl-11 list-disc">
-                <li>Enter your GitHub Username and Repository Name in the form above.</li>
-                <li>Make sure the <strong>Serving from main branch (/dist)</strong> checkbox matches your GitHub pages setup!</li>
-                <li>Click <strong>Download Blogger XML Theme File</strong>.</li>
+                <li>Ensure the <strong>Serving from main branch (/dist)</strong> box is <strong className="text-red-500">UNCHECKED</strong> because we are using GitHub actions!</li>
+                <li>Enter your GitHub Username and Repository Name, then click <strong>Download Blogger XML Theme File</strong>.</li>
                 <li>Log in to <strong className="text-orange-500">Blogger.com</strong>, select your blog, and go to <strong>Theme</strong>.</li>
                 <li>Click the drop-down arrow next to "Customize", choose <strong>Restore</strong>, click <strong>Upload</strong>, and select the XML file you downloaded.</li>
               </ul>
@@ -248,13 +247,13 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
 
           <div className="mt-4 p-4 bg-red-50 rounded-xl border border-red-200 text-sm text-red-900 leading-relaxed font-medium space-y-2">
             <strong className="flex items-center gap-2">
-              <span className="text-xl">⚠️</span> Troubleshooting "Loading Community Portal..."
+              <span className="text-xl">⚠️</span> Troubleshooting "Loading Community Portal..." or 404 Errors
             </strong>
-            <p>If you upload the XML to Blogger but the page is stuck on "Loading Community Portal...", Blogger is failing to find the JavaScript hosted on GitHub. To fix this:</p>
+            <p>If you see a blank screen or a 404 error in the console, it means the code wasn't built correctly on GitHub Pages. To fix this:</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Cause 1: Incorrect Path.</strong> If you pushed your code to GitHub and just enabled Pages on the <code>main</code> branch, your compiled files are inside the <code>/dist/</code> folder. <strong>Check the "Serving from main branch (/dist)" box</strong> above and re-download/re-upload the XML!</li>
-              <li><strong>Cause 2: GitHub Pages is not built yet.</strong> It takes 1-2 minutes for GitHub to deploy. Check your repository's "Environments" tab on the right side to ensure the github-pages deployment is green.</li>
-              <li><strong>Cause 3: Incorrect Base URL in vite.config.ts.</strong> If the browser console (F12) shows 404 errors, ensure you uncommented the <code>base: '/chaurasiya-samaj-nepal/'</code> line in <code>vite.config.ts</code> before building.</li>
+              <li><strong>Cause 1: You didn't push the GitHub Action.</strong> Make sure you export the project to GitHub AGAIN so it includes the new <code>.github/workflows/deploy.yml</code> file I just added.</li>
+              <li><strong>Cause 2: GitHub Pages Source is wrong.</strong> In your GitHub Repo Settings -&gt; Pages, make sure "Source" is set to <strong>GitHub Actions</strong>. If it's set to "Deploy from a branch", the action will fail!</li>
+              <li><strong>Cause 3: Action hasn't finished.</strong> It takes 2-3 minutes to build. Check the "Actions" tab in your GitHub repository and wait for the green checkmark on "Deploy to GitHub Pages".</li>
             </ul>
           </div>
         </div>
