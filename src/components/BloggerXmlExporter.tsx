@@ -16,8 +16,8 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
   );
   const [contactEmail, setContactEmail] = useState('achauraseeya@gmail.com');
   const [githubUsername, setGithubUsername] = useState('achauraseeya');
-  const [githubRepo, setGithubRepo] = useState('chaurasiya-samaj-nepal');
-  const [useDistFolder, setUseDistFolder] = useState(true);
+  const [githubRepo, setGithubRepo] = useState('csn-website');
+  const [useDistFolder, setUseDistFolder] = useState(false);
   
   // Theme Color Presets
   const presets = [
