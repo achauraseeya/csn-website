@@ -17,6 +17,7 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
   const [contactEmail, setContactEmail] = useState('achauraseeya@gmail.com');
   const [githubUsername, setGithubUsername] = useState('achauraseeya');
   const [githubRepo, setGithubRepo] = useState('chaurasiya-samaj-nepal');
+  const [useDistFolder, setUseDistFolder] = useState(true);
   
   // Theme Color Presets
   const presets = [
@@ -30,7 +31,7 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
   const [secondaryColor, setSecondaryColor] = useState('#22c55e');
   const [copied, setCopied] = useState(false);
 
-  const finalXml = generateBloggerXml(blogTitle, blogDesc, contactEmail, primaryColor, secondaryColor, githubUsername, githubRepo);
+  const finalXml = generateBloggerXml(blogTitle, blogDesc, contactEmail, primaryColor, secondaryColor, githubUsername, githubRepo, useDistFolder);
 
   const t = {
     title: { en: 'Blogger + GitHub Pages Headless Setup', ne: 'Blogger + GitHub Pages सेटअप' },
@@ -119,6 +120,20 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
               </div>
             </div>
 
+            <div className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <input 
+                type="checkbox" 
+                id="useDist"
+                checked={useDistFolder}
+                onChange={(e) => setUseDistFolder(e.target.checked)}
+                className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+              />
+              <label htmlFor="useDist" className="text-xs font-medium text-slate-700 leading-tight">
+                <strong>Serving from main branch (/dist)</strong><br/>
+                Check this if you directly deployed the <code className="bg-slate-200 px-1 rounded">main</code> branch via GitHub pages without an Action.
+              </label>
+            </div>
+
             {/* Title */}
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-700">{t.blogTitleLabel[lang]}</label>
@@ -185,7 +200,7 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
             <div className="bg-slate-950 p-4 border border-slate-800 rounded-xl space-y-2">
               <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider block">Source Preview (Top Lines)</span>
               <pre className="text-[10px] text-slate-300 font-mono leading-relaxed bg-black/50 p-2.5 rounded border border-slate-800 overflow-x-auto">
-                {`<?xml version="1.0" encoding="UTF-8" ?>\n<!DOCTYPE html>\n<html b:layoutsVersion='2' b:responsive='true' xmlns:b='http://www.google.com/schemas/2005/b'>\n<head>\n  <title><data:blog.pageTitle/></title>\n  <link rel="stylesheet" href="https://${githubUsername}.github.io/${githubRepo}/assets/index.css" />`}
+                {`<?xml version="1.0" encoding="UTF-8" ?>\n<!DOCTYPE html>\n<html b:layoutsVersion='2' b:responsive='true' xmlns:b='http://www.google.com/schemas/2005/b'>\n<head>\n  <title><data:blog.pageTitle/></title>\n  <link rel="stylesheet" href="https://${githubUsername}.github.io/${githubRepo}/${useDistFolder ? 'dist/assets' : 'assets'}/index.css" />`}
               </pre>
             </div>
           </div>
@@ -208,7 +223,7 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
                 <li>Download this project using the <strong>Export to ZIP</strong> or <strong>Export to GitHub</strong> option in AI Studio settings.</li>
                 <li>In your repository, update <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">vite.config.ts</code> with your repo name: <code>base: '/${githubRepo}/'</code>.</li>
                 <li>Run <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">npm run build</code> to generate the <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">dist/</code> folder.</li>
-                <li>Deploy the <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">dist/</code> folder to GitHub Pages (or use a GitHub Action).</li>
+                <li>Go to GitHub Repository Settings -&gt; Pages. Set source to <strong>Deploy from a branch</strong>, choose <strong>main</strong> branch and <strong>/root</strong> folder. Save.</li>
               </ul>
             </div>
             
@@ -219,6 +234,7 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
               </div>
               <ul className="text-sm text-slate-600 space-y-2 pl-11 list-disc">
                 <li>Enter your GitHub Username and Repository Name in the form above.</li>
+                <li>Make sure the <strong>Serving from main branch (/dist)</strong> checkbox matches your GitHub pages setup!</li>
                 <li>Click <strong>Download Blogger XML Theme File</strong>.</li>
                 <li>Log in to <strong className="text-orange-500">Blogger.com</strong>, select your blog, and go to <strong>Theme</strong>.</li>
                 <li>Click the drop-down arrow next to "Customize", choose <strong>Restore</strong>, click <strong>Upload</strong>, and select the XML file you downloaded.</li>
@@ -228,6 +244,18 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
           
           <div className="mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-sm text-emerald-900 leading-relaxed font-medium">
             <strong>How it works:</strong> The Blogger XML template contains a <code>&lt;div id="root"&gt;&lt;/div&gt;</code> element and links directly to the JavaScript and CSS files hosted on your GitHub Pages site. When users visit your Blogger site, it automatically loads your React App inside the Blogger shell!
+          </div>
+
+          <div className="mt-4 p-4 bg-red-50 rounded-xl border border-red-200 text-sm text-red-900 leading-relaxed font-medium space-y-2">
+            <strong className="flex items-center gap-2">
+              <span className="text-xl">⚠️</span> Troubleshooting "Loading Community Portal..."
+            </strong>
+            <p>If you upload the XML to Blogger but the page is stuck on "Loading Community Portal...", Blogger is failing to find the JavaScript hosted on GitHub. To fix this:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong>Cause 1: Incorrect Path.</strong> If you pushed your code to GitHub and just enabled Pages on the <code>main</code> branch, your compiled files are inside the <code>/dist/</code> folder. <strong>Check the "Serving from main branch (/dist)" box</strong> above and re-download/re-upload the XML!</li>
+              <li><strong>Cause 2: GitHub Pages is not built yet.</strong> It takes 1-2 minutes for GitHub to deploy. Check your repository's "Environments" tab on the right side to ensure the github-pages deployment is green.</li>
+              <li><strong>Cause 3: Incorrect Base URL in vite.config.ts.</strong> If the browser console (F12) shows 404 errors, ensure you uncommented the <code>base: '/chaurasiya-samaj-nepal/'</code> line in <code>vite.config.ts</code> before building.</li>
+            </ul>
           </div>
         </div>
 

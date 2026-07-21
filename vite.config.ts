@@ -5,7 +5,10 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: 'csn-website',
+    // ⚠️ IMPORTANT FOR GITHUB PAGES: 
+    // Uncomment the 'base' line below and replace 'chaurasiya-samaj-nepal' with your actual GitHub repository name.
+    // base: '/chaurasiya-samaj-nepal/',
+
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
