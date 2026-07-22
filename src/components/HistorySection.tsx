@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X } from 'lucide-react';
+import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin } from 'lucide-react';
 import { Language } from '../types';
 import { communityHistory, impactStats, galleryItems, boardMembers, notices, blogPosts } from '../data/communityData';
+import { journeyAlbums } from '../data/albumsData';
+import AlbumDetail from './AlbumDetail';
 
 interface HistorySectionProps {
   lang: Language;
@@ -10,10 +12,81 @@ interface HistorySectionProps {
   onSelectLeader: (id: string) => void;
 }
 
+interface BloggerPost {
+  id: string;
+  title: { en: string; ne: string };
+  excerpt: { en: string; ne: string };
+  date: string;
+  author: string;
+  imageUrl: string;
+  link: string;
+  tags?: string[];
+}
+
 export default function HistorySection({ lang, onNavigate, onTrackAction, onSelectLeader }: HistorySectionProps) {
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
   const [viewPdfNoticeId, setViewPdfNoticeId] = useState<string | null>(null);
+  const [livePosts, setLivePosts] = useState<BloggerPost[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+
+  useEffect(() => {
+    const fetchBloggerPosts = async () => {
+      try {
+        // Assume default feeds path if running inside Blogger
+        const feedUrl = '/feeds/posts/default?alt=json';
+        const res = await fetch(feedUrl);
+        if (!res.ok) throw new Error('Not on blogger');
+        
+        const data = await res.json();
+        const entries = data.feed.entry || [];
+        
+        const parsedPosts = entries.slice(0, 3).map((entry: any) => {
+          const contentStr = entry.content?.$t || entry.summary?.$t || '';
+          
+          // Extract first image
+          const imgMatch = contentStr.match(/<img[^>]+src="([^">]+)"/i);
+          const imageUrl = imgMatch ? imgMatch[1] : 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=800';
+          
+          // Clean HTML for excerpt
+          const stripped = contentStr.replace(/(<([^>]+)>)/gi, "").substring(0, 150) + '...';
+          
+          const link = entry.link.find((l: any) => l.rel === 'alternate')?.href || '#';
+          const tags = entry.category ? entry.category.map((c: any) => c.term) : [];
+          
+          return {
+            id: entry.id.$t,
+            title: {
+              en: entry.title.$t,
+              ne: entry.title.$t
+            },
+            excerpt: {
+              en: stripped,
+              ne: stripped
+            },
+            date: new Date(entry.published.$t).toLocaleDateString(),
+            author: entry.author?.[0]?.name?.$t || 'Admin',
+            imageUrl,
+            link,
+            tags
+          };
+        });
+        
+        if (parsedPosts.length > 0) {
+          setLivePosts(parsedPosts);
+        } else {
+          setLivePosts(blogPosts as unknown as BloggerPost[]);
+        }
+      } catch (err) {
+        // Fallback for localhost / github pages viewing
+        setLivePosts(blogPosts as unknown as BloggerPost[]);
+      } finally {
+        setLoadingPosts(false);
+      }
+    };
+    fetchBloggerPosts();
+  }, []);
 
   const nextImage = () => {
     setCurrentImageIdx((prev) => (prev + 1) % galleryItems.length);
@@ -309,64 +382,187 @@ export default function HistorySection({ lang, onNavigate, onTrackAction, onSele
           {lang === 'en' ? 'Latest Blog Posts' : 'पछिल्लो ब्लग पोस्टहरू'}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {blogPosts.map((post) => (
-            <div key={post.id} className="bg-white rounded-2xl shadow-sm border border-teal-100 overflow-hidden hover:shadow-md transition-shadow group">
+          {loadingPosts ? (
+            <div className="col-span-1 md:col-span-3 text-center py-12 text-teal-600 font-bold animate-pulse">
+              {lang === 'en' ? 'Loading latest posts from Blogger...' : 'ब्लगरबाट पछिल्लो पोस्टहरू लोड गर्दैछ...'}
+            </div>
+          ) : livePosts.map((post) => (
+            <a 
+              key={post.id} 
+              href={post.link || '#'}
+              target={post.link && post.link !== '#' ? "_top" : "_self"}
+              onClick={(e) => {
+                if (!post.link || post.link === '#') {
+                  e.preventDefault();
+                  alert(lang === 'en' ? 'Full blog posts are available on our official Blogger site.' : 'पूर्ण ब्लग पोस्टहरू हाम्रो आधिकारिक ब्लगर साइटमा उपलब्ध छन्।');
+                } else {
+                  onTrackAction(`Read live blog post: ${post.title.en}`);
+                }
+              }}
+              className="bg-white rounded-2xl shadow-sm border border-teal-100 overflow-hidden hover:shadow-md transition-shadow group block cursor-pointer"
+            >
               <div className="aspect-video overflow-hidden">
                 <img 
                   src={post.imageUrl} 
-                  alt={post.title[lang]} 
+                  alt={post.title[lang] || post.title.en} 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <div className="p-6">
+              <div className="p-6 flex flex-col h-full">
                 <div className="flex items-center justify-between text-xs font-bold text-teal-600 mb-3">
                   <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {post.date}</span>
                   <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {post.author}</span>
                 </div>
-                <h4 className="text-xl font-bold text-teal-950 mb-2 line-clamp-2">
-                  {post.title[lang]}
+                {post.tags && post.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {post.tags.slice(0, 2).map((tag: string, i: number) => (
+                      <span key={i} className="text-[10px] uppercase font-bold px-2 py-0.5 bg-teal-50 text-teal-600 rounded-full">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <h4 className="text-xl font-bold text-teal-950 mb-2 line-clamp-2 group-hover:text-teal-700 transition-colors">
+                  {post.title[lang] || post.title.en}
                 </h4>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
-                  {post.excerpt[lang]}
+                <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3 flex-grow">
+                  {post.excerpt[lang] || post.excerpt.en}
                 </p>
-                <button 
-                  onClick={() => {
-                    onTrackAction(`Read blog post: ${post.title.en}`);
-                    alert(lang === 'en' ? 'Full blog posts are available on our official Blogger site. Please visit our Blogger portal.' : 'पूर्ण ब्लग पोस्टहरू हाम्रो आधिकारिक ब्लगर साइटमा उपलब्ध छन्। कृपया हाम्रो ब्लगर पोर्टल भ्रमण गर्नुहोस्।');
-                  }}
-                  className="text-sm font-bold text-teal-700 hover:text-teal-900 inline-flex items-center gap-1 transition-colors"
+                <div 
+                  className="text-sm font-bold text-teal-700 group-hover:text-teal-900 inline-flex items-center gap-1 transition-colors mt-auto"
                 >
                   {lang === 'en' ? 'Read More' : 'थप पढ्नुहोस्'} <ChevronRight className="w-4 h-4" />
-                </button>
+                </div>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       </section>
 
-      {/* Gallery Section */}
-      <section className="space-y-8 py-8">
-        <h3 className="text-2xl sm:text-3xl font-black text-teal-950 text-center uppercase tracking-tight flex items-center justify-center gap-2">
-          <ImageIcon className="w-8 h-8 text-teal-600" />
-          {t.photoGallery[lang]}
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {galleryItems.slice(0, 3).map((item) => (
-            <div key={item.id} className="group relative rounded-2xl overflow-hidden shadow-sm aspect-video cursor-pointer">
-              <img 
-                src={item.imageUrl} 
-                alt={item.title[lang]} 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-teal-950/90 via-teal-900/40 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                <h4 className="text-white font-bold text-sm sm:text-base">
-                  {item.title[lang]}
-                </h4>
-              </div>
-            </div>
-          ))}
+      {/* Glimpses to Our Journey Albums Section */}
+      <section className="space-y-8 py-8 border-t border-teal-100">
+        <div className="text-center space-y-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-800 text-xs font-bold uppercase tracking-wider border border-teal-200">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            Photo & Video Gallery
+          </span>
+          <h3 className="text-2xl sm:text-3xl font-black text-teal-950 uppercase tracking-tight flex items-center justify-center gap-2">
+            <ImageIcon className="w-8 h-8 text-teal-600" />
+            {t.photoGallery[lang]}
+          </h3>
+          <p className="text-sm text-gray-600 font-medium max-w-2xl mx-auto">
+            {lang === 'en' 
+              ? 'Browse interactive media albums capturing healthcare camps, cultural expos, youth workshops, and community events.'
+              : 'स्वास्थ्य शिविर, सांस्कृतिक मेला, युवा कार्यशाला र सामुदायिक कार्यक्रमहरू समेटिएका अन्तरक्रियात्मक मिडिया एल्बमहरू हेर्नुहोस्।'}
+          </p>
         </div>
+
+        {selectedAlbumId ? (
+          <div className="animate-in fade-in duration-200">
+            {(() => {
+              const currentAlbum = journeyAlbums.find(a => a.id === selectedAlbumId);
+              if (!currentAlbum) return null;
+              return (
+                <AlbumDetail
+                  album={currentAlbum}
+                  lang={lang}
+                  onClose={() => setSelectedAlbumId(null)}
+                  onTrackAction={onTrackAction}
+                />
+              );
+            })()}
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {journeyAlbums.slice(0, 3).map((album) => {
+                const photosCount = album.mediaItems.filter(i => i.type === 'photo').length;
+                const videosCount = album.mediaItems.filter(i => i.type === 'video').length;
+
+                return (
+                  <div
+                    key={album.id}
+                    onClick={() => {
+                      setSelectedAlbumId(album.id);
+                      onTrackAction(`Open Album from Homepage: ${album.title.en}`);
+                    }}
+                    className="bg-white rounded-3xl border border-teal-100 shadow-sm hover:shadow-xl hover:border-emerald-300 transition-all duration-300 overflow-hidden cursor-pointer group flex flex-col"
+                  >
+                    {/* Cover Preview Image */}
+                    <div className="relative aspect-[16/10] overflow-hidden bg-teal-950">
+                      <img
+                        src={album.coverUrl}
+                        alt={album.title[lang]}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-teal-950/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+
+                      {/* Count Badges */}
+                      <div className="absolute bottom-3 left-3 flex gap-2">
+                        <span className="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[11px] font-bold text-teal-300 flex items-center gap-1 border border-white/10">
+                          <ImageIcon className="w-3 h-3 text-teal-400" /> {photosCount} {lang === 'en' ? 'Photos' : 'फोटो'}
+                        </span>
+                        {videosCount > 0 && (
+                          <span className="px-2.5 py-1 rounded-lg bg-amber-950/80 backdrop-blur-md text-[11px] font-bold text-amber-300 flex items-center gap-1 border border-amber-500/30">
+                            <Film className="w-3 h-3 text-amber-400" /> {videosCount} {lang === 'en' ? 'Videos' : 'भिडियो'}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="absolute top-3 right-3 p-2.5 rounded-full bg-emerald-500 text-gray-950 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 shadow-lg">
+                        <Play className="w-4 h-4 fill-current ml-0.5" />
+                      </div>
+                    </div>
+
+                    {/* Album Description & Info */}
+                    <div className="p-6 flex-grow flex flex-col justify-between space-y-3">
+                      <div>
+                        <div className="flex items-center gap-3 text-xs font-bold text-teal-600 mb-2">
+                          <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {album.date}</span>
+                          <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {album.location[lang]}</span>
+                        </div>
+                        <h4 className="text-lg font-extrabold text-teal-950 group-hover:text-teal-700 transition-colors line-clamp-2">
+                          {album.title[lang]}
+                        </h4>
+                        <p className="text-gray-600 text-xs sm:text-sm mt-2 line-clamp-2 font-medium leading-relaxed">
+                          {album.description[lang]}
+                        </p>
+                      </div>
+
+                      <div className="pt-3 border-t border-teal-50 flex items-center justify-between">
+                        <div className="flex flex-wrap gap-1">
+                          {album.tags.slice(0, 2).map((tag, i) => (
+                            <span key={i} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-teal-50 text-teal-700 rounded-md">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                        <span className="text-xs font-black text-teal-700 group-hover:text-emerald-600 inline-flex items-center gap-1 uppercase tracking-wider">
+                          {lang === 'en' ? 'Open Album' : 'एल्बम खोल्नुहोस्'} <ChevronRight className="w-4 h-4" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* View All Button below albums */}
+            <div className="text-center pt-4">
+              <button
+                onClick={() => {
+                  onNavigate('albums-gallery');
+                  onTrackAction('Navigated to View All Albums');
+                }}
+                className="px-8 py-3.5 rounded-2xl bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-sm uppercase tracking-wider shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2"
+              >
+                {lang === 'en' ? 'View All Journey Albums' : 'सबै यात्रा एल्बमहरू हेर्नुहोस्'}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </>
+        )}
       </section>
 
       {/* Leadership & Key Figures */}

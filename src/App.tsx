@@ -6,6 +6,7 @@ import logoImg from './assets/images/chaurasiya_logo_1784519579895.jpg';
 
 import Navigation from './components/Navigation';
 import HistorySection from './components/HistorySection';
+import AlbumGallery from './components/AlbumGallery';
 import NoticeGallery from './components/NoticeGallery';
 import DirectorySection from './components/DirectorySection';
 import EventsSection from './components/EventsSection';
@@ -203,6 +204,14 @@ export default function App() {
             onNavigate={handleNavigate}
             onTrackAction={handleTrackAction}
             onSelectLeader={setSelectedLeaderId}
+          />
+        )}
+
+        {currentTab === 'albums-gallery' && (
+          <AlbumGallery
+            lang={lang}
+            onTrackAction={handleTrackAction}
+            onBackToHome={() => handleNavigate('history')}
           />
         )}
 

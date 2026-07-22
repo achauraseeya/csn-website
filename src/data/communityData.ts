@@ -240,33 +240,24 @@ export const galleryItems: GalleryItem[] = [
     title: { en: 'Youth Interaction & IT Training', ne: 'युवा अन्तरक्रिया र सूचना प्रविधि तालिम' },
     imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=600',
     description: {
-      en: 'Inspiring digital skill training organized to empower youth for remote global careers.',
-      ne: 'युवाहरूलाई वैश्विक रोजगारीका लागि सशक्त बनाउन आयोजना गरिएको डिजिटल सीप तालिम।',
-    },
-  },
-  {
-    id: 'g4',
-    title: { en: 'Bara Flood Relief Distribution', ne: 'बारा बाढी राहत वितरण' },
-    imageUrl: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=600',
-    description: {
-      en: 'Chaurasiya Samaj emergency volunteers distribution of dry rations, blankets, and pure water.',
-      ne: 'चौरसिया समाजका आपतकालीन स्वयंसेवकहरूद्वारा सुक्खा खाद्यान्न, कम्बल र शुद्ध पानी वितरण।',
-    },
-  },
+      en: 'Workshop on modern IT skills while staying connected to roots.',
+      ne: 'जरासँग जोडिएर आधुनिक सूचना प्रविधि सीपहरूमा कार्यशाला।'
+    }
+  }
 ];
 
 export const impactStats: ImpactStat[] = [
   {
     id: 's1',
-    value: '1,500+',
-    label: { en: 'Families Supported', ne: 'सहयोग प्राप्त परिवार' },
-    desc: { en: 'Through healthcare, disaster relief, and direct welfare funds.', ne: 'स्वास्थ्य सेवा, विपद् राहत र प्रत्यक्ष कल्याण कोष मार्फत।' },
+    value: '500+',
+    label: { en: 'Families Supported', ne: 'परिवारहरूलाई सहयोग' },
+    desc: { en: 'Through our agriculture and welfare programs.', ne: 'हाम्रा कृषि र कल्याणकारी कार्यक्रमहरू मार्फत।' },
   },
   {
     id: 's2',
-    value: '450+',
-    label: { en: 'Paan Farmers Trained', ne: 'तालिमप्राप्त पान किसान' },
-    desc: { en: 'Empowered with organic pest management and yield-improving methods.', ne: 'अर्गानिक कीटनाशक व्यवस्थापन र उत्पादन बढाउने विधिहरूमा सक्षम।' },
+    value: '10,000+',
+    label: { en: 'Trees Planted', ne: 'वृक्षारोपण' },
+    desc: { en: 'Promoting eco-friendly farming.', ne: 'वातावरण मैत्री खेतीलाई बढावा दिँदै।' }, 
   },
   {
     id: 's3',

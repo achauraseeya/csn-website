@@ -87,3 +87,28 @@ export interface Document {
   size: string;
 }
 
+export type MediaType = 'photo' | 'video';
+
+export interface AlbumMediaItem {
+  id: string;
+  title: LocalizedString;
+  description?: LocalizedString;
+  type: MediaType;
+  url: string; // Direct image/mp4 link, Google Drive link, YouTube embed link
+  thumbnailUrl?: string; // Optional custom poster for videos or photos
+  date?: string;
+  location?: LocalizedString;
+}
+
+export interface Album {
+  id: string;
+  title: LocalizedString;
+  description: LocalizedString;
+  coverUrl: string;
+  date: string;
+  location: LocalizedString;
+  tags: string[];
+  mediaItems: AlbumMediaItem[];
+}
+
+
