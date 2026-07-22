@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   X, ChevronLeft, ChevronRight, Play, Maximize2, Minimize2, 
   Calendar, MapPin, Tag, Film, Image as ImageIcon, ExternalLink, Share2, Info, ArrowLeft,
-  Check
+  Check, FolderPlus
 } from 'lucide-react';
 import { Album, AlbumMediaItem, Language } from '../types';
-import { parseMediaUrl } from '../utils/mediaUrl';
+import { parseMediaUrl, extractGoogleDriveFolderId, getGoogleDriveFolderViewUrl } from '../utils/mediaUrl';
 
 interface AlbumDetailProps {
   album: Album;
@@ -104,9 +104,20 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction }: Alb
             <h2 className="text-lg sm:text-2xl font-black text-white line-clamp-1">
               {album.title[lang]}
             </h2>
-            <div className="flex items-center gap-3 text-xs text-teal-400 font-semibold mt-0.5">
+            <div className="flex items-center gap-3 text-xs text-teal-400 font-semibold mt-0.5 flex-wrap">
               <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {album.date}</span>
               <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {album.location[lang]}</span>
+              {(album.driveFolderUrl || extractGoogleDriveFolderId(currentItem?.url || '')) && (
+                <a
+                  href={album.driveFolderUrl || getGoogleDriveFolderViewUrl(extractGoogleDriveFolderId(currentItem?.url || '') || '')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-full text-[11px] font-bold transition-all"
+                >
+                  <FolderPlus className="w-3 h-3 text-emerald-400" />
+                  <span>{lang === 'en' ? 'Open Drive Folder ↗' : 'गूगल ड्राइभ फोल्डर खोल्नुहोस् ↗'}</span>
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -182,31 +193,29 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction }: Alb
           <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
         </button>
 
-        {/* Media Render Engine: Photo OR Video (HTML5, Google Drive Embed, YouTube Embed) */}
+        {/* Media Render Engine: Photo OR Video (HTML5, Google Drive Folder/Embed, YouTube Embed) */}
         <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
-          {currentItem.type === 'video' ? (
-            parsed.isEmbed ? (
-              <div className="w-full aspect-video max-w-5xl rounded-xl overflow-hidden shadow-2xl bg-black border border-gray-800 relative">
-                <iframe
-                  src={parsed.formattedUrl}
-                  title={currentItem.title[lang]}
-                  className="w-full h-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
-              </div>
-            ) : (
-              <video
-                key={currentItem.id}
-                controls
-                autoPlay={false}
-                poster={currentItem.thumbnailUrl || album.coverUrl}
-                className="max-w-full max-h-[600px] rounded-xl object-contain shadow-2xl"
-              >
-                <source src={parsed.formattedUrl} type="video/mp4" />
-                Your browser does not support video playback.
-              </video>
-            )
+          {parsed.isEmbed ? (
+            <div className="w-full aspect-video min-h-[420px] sm:min-h-[540px] max-w-5xl rounded-xl overflow-hidden shadow-2xl bg-black border border-gray-800 relative">
+              <iframe
+                src={parsed.formattedUrl}
+                title={currentItem.title[lang]}
+                className="w-full h-full min-h-[420px] sm:min-h-[540px] border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          ) : currentItem.type === 'video' ? (
+            <video
+              key={currentItem.id}
+              controls
+              autoPlay={false}
+              poster={currentItem.thumbnailUrl || album.coverUrl}
+              className="max-w-full max-h-[600px] rounded-xl object-contain shadow-2xl"
+            >
+              <source src={parsed.formattedUrl} type="video/mp4" />
+              Your browser does not support video playback.
+            </video>
           ) : (
             <img
               key={currentItem.id}

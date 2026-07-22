@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail } from 'lucide-react';
 import { Language, AnalyticsMetric, Member, Album } from './types';
-import { boardMembers as initialMembers } from './data/communityData';
+import { notices as initialNotices, boardMembers as initialMembers } from './data/communityData';
 import { journeyAlbums as initialJourneyAlbums } from './data/albumsData';
 import logoImg from './assets/images/chaurasiya_logo_1784519579895.jpg';
 
@@ -21,6 +21,9 @@ import AnalyticsDashboard from './components/AnalyticsDashboard';
 import TransparencySection from './components/TransparencySection';
 import ContactSection from './components/ContactSection';
 import UploadJourneyPostModal from './components/UploadJourneyPostModal';
+import AdminLoginModal from './components/AdminLoginModal';
+import AddNoticeModal from './components/AddNoticeModal';
+import { Notice } from './types';
 
 export default function App() {
   const [lang, setLang] = useState<Language>('ne');
@@ -31,14 +34,122 @@ export default function App() {
   // Dynamic Member Directory list
   const [members, setMembers] = useState<Member[]>(initialMembers);
 
-  // Glimpses of Our Journey Albums State (Initial + LocalStorage saved)
+  // Admin Authentication State
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('chaurasiya_is_admin') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isAddNoticeModalOpen, setIsAddNoticeModalOpen] = useState(false);
+
+  // Dynamic Community Notices State (Initial + Server Online + LocalStorage)
+  const [notices, setNotices] = useState<Notice[]>(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_notices');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const customOnly = parsed.filter(p => !initialNotices.some(i => i.id === p.id));
+          return [...customOnly, ...initialNotices];
+        }
+      }
+    } catch (e) {
+      console.error('Error loading custom notices from localStorage', e);
+    }
+    return initialNotices;
+  });
+
+  // Fetch online server notices on mount so ALL visitors see new notices automatically!
+  useEffect(() => {
+    fetch('/api/notices')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.notices) && data.notices.length > 0) {
+          setNotices((prev) => {
+            const serverNotices: Notice[] = data.notices;
+            const mergedMap = new Map<string, Notice>();
+            // Add server online custom notices first
+            serverNotices.forEach(n => mergedMap.set(n.id, n));
+            // Add initial static notices if not present
+            initialNotices.forEach(n => {
+              if (!mergedMap.has(n.id)) {
+                mergedMap.set(n.id, n);
+              }
+            });
+            return Array.from(mergedMap.values());
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend server /api/notices not reachable:', err);
+      });
+  }, []);
+
+  const handleAddNotice = async (newNotice: Notice) => {
+    // 1. Immediately update local state & localStorage
+    setNotices((prev) => {
+      const updated = [newNotice, ...prev.filter(n => n.id !== newNotice.id)];
+      try {
+        localStorage.setItem('chaurasiya_notices', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save notice to localStorage', e);
+      }
+      return updated;
+    });
+
+    // 2. Persist online to Express backend server so EVERY visitor online sees this notice!
+    try {
+      const response = await fetch('/api/notices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newNotice),
+      });
+      const data = await response.json();
+      if (data.success && Array.isArray(data.notices)) {
+        setNotices((prev) => {
+          const mergedMap = new Map<string, Notice>();
+          data.notices.forEach((n: Notice) => mergedMap.set(n.id, n));
+          initialNotices.forEach(n => {
+            if (!mergedMap.has(n.id)) {
+              mergedMap.set(n.id, n);
+            }
+          });
+          return Array.from(mergedMap.values());
+        });
+      }
+    } catch (err) {
+      console.error('Failed to save notice to online server:', err);
+    }
+  };
+
+  const handleDeleteNotice = async (id: string) => {
+    setNotices((prev) => {
+      const updated = prev.filter((n) => n.id !== id);
+      try {
+        localStorage.setItem('chaurasiya_notices', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to update localStorage', e);
+      }
+      return updated;
+    });
+
+    try {
+      await fetch(`/api/notices/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete notice on server:', err);
+    }
+  };
+
+  // Glimpses of Our Journey Albums State (Initial + Server Online + LocalStorage saved)
   const [albums, setAlbums] = useState<Album[]>(() => {
     try {
       const saved = localStorage.getItem('chaurasiya_journey_albums');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Merge custom albums with default ones to avoid duplicate IDs
           const customOnly = parsed.filter(p => !initialJourneyAlbums.some(i => i.id === p.id));
           return [...initialJourneyAlbums, ...customOnly];
         }
@@ -49,6 +160,28 @@ export default function App() {
     return initialJourneyAlbums;
   });
 
+  // Fetch online server albums on mount so ALL users see new posts instantly
+  useEffect(() => {
+    fetch('/api/albums')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.albums) && data.albums.length > 0) {
+          setAlbums((prev) => {
+            const serverAlbums: Album[] = data.albums;
+            const mergedMap = new Map<string, Album>();
+            // Add default initial albums
+            initialJourneyAlbums.forEach(a => mergedMap.set(a.id, a));
+            // Add or overwrite with server online custom albums
+            serverAlbums.forEach(a => mergedMap.set(a.id, a));
+            return Array.from(mergedMap.values());
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend server /api/albums not reachable, using offline state:', err);
+      });
+  }, []);
+
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
@@ -58,9 +191,10 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleAddAlbum = (newAlbum: Album) => {
+  const handleAddAlbum = async (newAlbum: Album) => {
+    // 1. Immediately update local state & localStorage for fast feedback
     setAlbums((prev) => {
-      const updated = [newAlbum, ...prev];
+      const updated = [newAlbum, ...prev.filter(a => a.id !== newAlbum.id)];
       try {
         localStorage.setItem('chaurasiya_journey_albums', JSON.stringify(updated));
       } catch (e) {
@@ -68,10 +202,49 @@ export default function App() {
       }
       return updated;
     });
-    // Automatically navigate to the dedicated page for this newly created album post!
+
+    // 2. Persist online to Express backend server so EVERY visitor online sees this post!
+    try {
+      const response = await fetch('/api/albums', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newAlbum),
+      });
+      const data = await response.json();
+      if (data.success && Array.isArray(data.albums)) {
+        setAlbums((prev) => {
+          const mergedMap = new Map<string, Album>();
+          initialJourneyAlbums.forEach(a => mergedMap.set(a.id, a));
+          data.albums.forEach((a: Album) => mergedMap.set(a.id, a));
+          return Array.from(mergedMap.values());
+        });
+      }
+    } catch (err) {
+      console.error('Failed to save album to online server:', err);
+    }
+
+    // 3. Automatically navigate to the dedicated page for this newly created album post!
     setSelectedAlbumId(newAlbum.id);
     setCurrentTab('album-detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDeleteAlbum = async (albumId: string) => {
+    setAlbums((prev) => {
+      const updated = prev.filter((a) => a.id !== albumId);
+      try {
+        localStorage.setItem('chaurasiya_journey_albums', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to update localStorage', e);
+      }
+      return updated;
+    });
+
+    try {
+      await fetch(`/api/albums/${albumId}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete album on server:', err);
+    }
   };
 
   // Single Blog Post Detection (Blogger XML & URL path routing)
@@ -365,6 +538,8 @@ export default function App() {
         lang={lang}
         setLang={setLang}
         onTrackAction={handleTrackAction}
+        isAdmin={isAdmin}
+        onOpenAdminModal={() => setIsAdminModalOpen(true)}
       />
 
       {/* Main body viewport container */}
@@ -383,6 +558,12 @@ export default function App() {
             onSelectAlbum={handleSelectAlbum}
             albums={albums}
             onOpenUploadModal={() => setIsUploadModalOpen(true)}
+            isAdmin={isAdmin}
+            onOpenAdminModal={() => setIsAdminModalOpen(true)}
+            onDeleteAlbum={handleDeleteAlbum}
+            onOpenAddNoticeModal={() => setIsAddNoticeModalOpen(true)}
+            onDeleteNotice={handleDeleteNotice}
+            noticesList={notices}
           />
         )}
 
@@ -407,6 +588,9 @@ export default function App() {
             albums={albums}
             onSelectAlbum={handleSelectAlbum}
             onOpenUploadModal={() => setIsUploadModalOpen(true)}
+            isAdmin={isAdmin}
+            onOpenAdminModal={() => setIsAdminModalOpen(true)}
+            onDeleteAlbum={handleDeleteAlbum}
           />
         )}
 
@@ -440,6 +624,11 @@ export default function App() {
             lang={lang}
             onSubscribe={() => {}}
             onTrackAction={handleTrackAction}
+            isAdmin={isAdmin}
+            onOpenAddNoticeModal={() => setIsAddNoticeModalOpen(true)}
+            onOpenAdminModal={() => setIsAdminModalOpen(true)}
+            noticesList={notices}
+            onDeleteNotice={handleDeleteNotice}
           />
         )}
 
@@ -616,6 +805,24 @@ export default function App() {
         lang={lang}
         onAddAlbum={handleAddAlbum}
         existingAlbums={albums}
+        isAdmin={isAdmin}
+      />
+
+      {/* Admin Login Modal */}
+      <AdminLoginModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        lang={lang}
+        isAdmin={isAdmin}
+        setIsAdmin={setIsAdmin}
+      />
+
+      {/* Add Community Notice Modal */}
+      <AddNoticeModal
+        isOpen={isAddNoticeModalOpen}
+        onClose={() => setIsAddNoticeModalOpen(false)}
+        lang={lang}
+        onAddNotice={handleAddNotice}
       />
     </div>
   );

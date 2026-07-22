@@ -23,6 +23,8 @@ export interface Notice {
   content: LocalizedString;
   date: string;
   category: 'work' | 'notice' | 'press';
+  driveFileUrl?: string;
+  fileUrl?: string;
 }
 
 export interface CommunityEvent {
@@ -108,6 +110,8 @@ export interface Album {
   date: string;
   location: LocalizedString;
   tags: string[];
+  driveFolderUrl?: string;
+  driveFolderId?: string;
   mediaItems: AlbumMediaItem[];
 }
 

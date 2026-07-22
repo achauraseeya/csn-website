@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin } from 'lucide-react';
-import { Album, Language } from '../types';
-import { communityHistory, impactStats, galleryItems, boardMembers, notices, blogPosts } from '../data/communityData';
+import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin, ShieldCheck, Lock, Trash2, Plus, ExternalLink } from 'lucide-react';
+import { Album, Language, Notice } from '../types';
+import { communityHistory, impactStats, galleryItems, boardMembers, notices as defaultNotices, blogPosts } from '../data/communityData';
 import { journeyAlbums as defaultJourneyAlbums } from '../data/albumsData';
 import AlbumDetail from './AlbumDetail';
+import { extractGoogleDriveId } from '../utils/mediaUrl';
 
 interface HistorySectionProps {
   lang: Language;
@@ -14,6 +15,12 @@ interface HistorySectionProps {
   onSelectAlbum?: (albumId: string) => void;
   albums?: Album[];
   onOpenUploadModal?: () => void;
+  isAdmin?: boolean;
+  onOpenAdminModal?: () => void;
+  onDeleteAlbum?: (albumId: string) => void;
+  onOpenAddNoticeModal?: () => void;
+  onDeleteNotice?: (id: string) => void;
+  noticesList?: Notice[];
 }
 
 interface BloggerPost {
@@ -36,6 +43,12 @@ export default function HistorySection({
   onSelectAlbum,
   albums = defaultJourneyAlbums,
   onOpenUploadModal,
+  isAdmin = false,
+  onOpenAdminModal,
+  onDeleteAlbum,
+  onOpenAddNoticeModal,
+  onDeleteNotice,
+  noticesList = defaultNotices,
 }: HistorySectionProps) {
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
@@ -310,19 +323,35 @@ export default function HistorySection({
 
       {/* Notices Section */}
       <section className="space-y-8 py-8">
-        <h3 className="text-2xl sm:text-3xl font-black text-teal-950 text-center uppercase tracking-tight flex items-center justify-center gap-2">
-          <Bell className="w-8 h-8 text-teal-600" />
-          {lang === 'en' ? 'Community Notices' : 'सामुदायिक सूचनाहरू'}
-        </h3>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Bell className="w-8 h-8 text-teal-600" />
+            <h3 className="text-2xl sm:text-3xl font-black text-teal-950 uppercase tracking-tight">
+              {lang === 'en' ? 'Community Notices' : 'सामुदायिक सूचनाहरू'}
+            </h3>
+          </div>
+
+          {/* Admin Add Notice Button ONLY visible when logged in as admin */}
+          {isAdmin && onOpenAddNoticeModal && (
+            <button
+              onClick={onOpenAddNoticeModal}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>{lang === 'en' ? '+ Add Community Notice' : '+ सूचना थप्नुहोस्'}</span>
+            </button>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {notices.map((notice) => (
+          {noticesList.slice(0, 4).map((notice) => (
             <div key={notice.id} className="bg-white rounded-2xl shadow-sm border border-teal-100 overflow-hidden hover:shadow-md transition-shadow">
               <div 
                 className="p-6 cursor-pointer hover:bg-teal-50/50 transition-colors"
                 onClick={() => {
                   setExpandedNoticeId(prev => prev === notice.id ? null : notice.id);
                   setViewPdfNoticeId(null);
-                  onTrackAction(`Toggled notice expansion: ${notice.title.en}`);
+                  onTrackAction(`Toggled notice expansion: ${notice.title.en || notice.title.ne}`);
                 }}
               >
                 <div className="flex items-center justify-between mb-3">
@@ -333,45 +362,115 @@ export default function HistorySection({
                   <ChevronRight className={`w-5 h-5 text-teal-400 transition-transform ${expandedNoticeId === notice.id ? 'rotate-90' : ''}`} />
                 </div>
                 <h4 className="text-xl font-bold text-teal-950 mb-2">
-                  {notice.title[lang]}
+                  {notice.title[lang] || notice.title.en}
                 </h4>
                 <p className="text-gray-600 leading-relaxed text-sm">
-                  {notice.content[lang]}
+                  {notice.content[lang] || notice.content.en}
                 </p>
               </div>
               
               {expandedNoticeId === notice.id && (
-                <div className="px-6 pb-6 pt-2 bg-teal-50/30 border-t border-teal-50">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <button 
-                      onClick={() => {
-                        setViewPdfNoticeId(prev => prev === notice.id ? null : notice.id);
-                        onTrackAction(`Toggled view PDF: ${notice.title.en}`);
-                      }}
-                      className="text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
-                    >
-                      {viewPdfNoticeId === notice.id ? <X className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      {viewPdfNoticeId === notice.id ? (lang === 'en' ? 'Close PDF' : 'PDF बन्द गर्नुहोस्') : (lang === 'en' ? 'View PDF' : 'PDF हेर्नुहोस्')}
-                    </button>
-                    <a 
-                      href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
-                      target="_blank"
-                      download={`Notice_${notice.date}.pdf`}
-                      onClick={() => onTrackAction(`Downloaded notice: ${notice.title.en}`)}
-                      className="text-sm font-bold text-teal-700 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
-                    >
-                      <Download className="w-4 h-4" />
-                      {lang === 'en' ? 'Download PDF' : 'PDF डाउनलोड गर्नुहोस्'}
-                    </a>
+                <div className="px-6 pb-6 pt-3 bg-teal-50/40 border-t border-teal-100 space-y-4">
+                  {/* Attached Google Drive File Link */}
+                  {(notice.driveFileUrl || notice.fileUrl) && (
+                    <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-emerald-950 font-medium">
+                      <div className="flex items-center gap-2">
+                        <span className="p-1.5 bg-emerald-600 text-white rounded-lg">📄</span>
+                        <div>
+                          <span className="font-extrabold block text-emerald-900">
+                            {lang === 'en' ? 'Google Drive Attached Document' : 'गुगल ड्राइभ संलग्न कागजात'}
+                          </span>
+                          <span className="text-[11px] text-emerald-700">
+                            {notice.driveFileUrl || notice.fileUrl}
+                          </span>
+                        </div>
+                      </div>
+
+                      <a
+                        href={notice.driveFileUrl || notice.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>{lang === 'en' ? 'Open in Google Drive ↗' : 'गुगल ड्राइभमा खोल्नुहोस् ↗'}</span>
+                      </a>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button 
+                        onClick={() => {
+                          setViewPdfNoticeId(prev => prev === notice.id ? null : notice.id);
+                          onTrackAction(`Toggled view PDF: ${notice.title.en || notice.title.ne}`);
+                        }}
+                        className="text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                      >
+                        {viewPdfNoticeId === notice.id ? <X className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        {viewPdfNoticeId === notice.id 
+                          ? (lang === 'en' ? 'Close Preview' : 'पूर्वावलोकन बन्द गर्नुहोस्') 
+                          : (lang === 'en' ? 'View Document Preview' : 'कागजात पूर्वावलोकन हेर्नुहोस्')}
+                      </button>
+
+                      {(notice.driveFileUrl || notice.fileUrl) ? (
+                        <a 
+                          href={notice.driveFileUrl || notice.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => onTrackAction(`Opened notice file: ${notice.title.en}`)}
+                          className="text-xs font-bold text-teal-800 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                        >
+                          <Download className="w-3.5 h-3.5 text-teal-600" />
+                          {lang === 'en' ? 'Download / View File' : 'फाइल डाउनलोड / हेर्नुहोस्'}
+                        </a>
+                      ) : (
+                        <a 
+                          href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+                          target="_blank"
+                          download={`Notice_${notice.date}.pdf`}
+                          onClick={() => onTrackAction(`Downloaded notice: ${notice.title.en}`)}
+                          className="text-xs font-bold text-teal-800 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                        >
+                          <Download className="w-3.5 h-3.5 text-teal-600" />
+                          {lang === 'en' ? 'Download PDF' : 'PDF डाउनलोड गर्नुहोस्'}
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Admin Delete Notice Action */}
+                    {isAdmin && onDeleteNotice && (
+                      <button
+                        onClick={() => {
+                          if (confirm(lang === 'en' ? 'Are you sure you want to delete this notice?' : 'के तपाईं निश्चित रूपमा यो सूचना हटाउन चाहनुहुन्छ?')) {
+                            onDeleteNotice(notice.id);
+                          }
+                        }}
+                        className="text-xs font-extrabold text-red-600 hover:text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>{lang === 'en' ? 'Delete Notice (Admin)' : 'सूचना हटाउनुहोस्'}</span>
+                      </button>
+                    )}
                   </div>
                   
                   {viewPdfNoticeId === notice.id && (
-                    <div className="mt-4 rounded-xl overflow-hidden border border-teal-200 shadow-inner bg-gray-100">
-                      <iframe 
-                        src="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf#toolbar=0" 
-                        className="w-full h-[400px]"
-                        title={notice.title.en}
-                      />
+                    <div className="mt-4 rounded-2xl overflow-hidden border border-teal-200 shadow-inner bg-slate-900">
+                      {(() => {
+                        const rawUrl = notice.driveFileUrl || notice.fileUrl;
+                        const driveId = rawUrl ? extractGoogleDriveId(rawUrl) : null;
+                        const embedUrl = driveId 
+                          ? `https://drive.google.com/file/d/${driveId}/preview`
+                          : (rawUrl || "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf#toolbar=0");
+
+                        return (
+                          <iframe 
+                            src={embedUrl} 
+                            className="w-full h-[400px]"
+                            title={notice.title.en || notice.title.ne}
+                          />
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -475,13 +574,16 @@ export default function HistorySection({
             </p>
           </div>
 
-          {onOpenUploadModal && (
+          {/* Upload Journey Post button ONLY visible after central admin login */}
+          {isAdmin && onOpenUploadModal && (
             <button
               onClick={onOpenUploadModal}
-              className="px-5 py-2.5 bg-gradient-to-r from-teal-700 to-emerald-600 hover:from-teal-800 hover:to-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-2xl shadow-md transition-all flex items-center gap-2 shrink-0"
+              className="px-5 py-2.5 font-extrabold text-xs uppercase tracking-wider rounded-2xl shadow-md transition-all flex items-center gap-2 shrink-0 bg-gradient-to-r from-teal-700 to-emerald-600 hover:from-teal-800 hover:to-emerald-700 text-white"
             >
               <Sparkles className="w-4 h-4 text-emerald-300" />
-              <span>{lang === 'en' ? '+ Add Media / Create Page' : '+ मिडिया थप्नुहोस् / पृष्ठ बनाउनुहोस्'}</span>
+              <span>
+                {lang === 'en' ? '+ Upload Journey Post' : '+ मिडिया पोस्ट थप्नुहोस्'}
+              </span>
             </button>
           )}
         </div>
@@ -526,9 +628,24 @@ export default function HistorySection({
                     )}
                   </div>
 
-                  <div className="absolute top-3 right-3 p-2.5 rounded-full bg-emerald-500 text-gray-950 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 shadow-lg">
-                    <Play className="w-4 h-4 fill-current ml-0.5" />
-                  </div>
+                  {isAdmin && onDeleteAlbum ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(lang === 'en' ? 'Are you sure you want to delete this journey post?' : 'के तपाईं निश्चित रूपमा यो मिडिया पोस्ट हटाउन चाहनुहुन्छ?')) {
+                          onDeleteAlbum(album.id);
+                        }
+                      }}
+                      className="absolute top-3 right-3 p-2 rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-lg transition-all z-10 flex items-center gap-1 text-xs font-bold"
+                      title="Delete Post (Admin)"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <div className="absolute top-3 right-3 p-2.5 rounded-full bg-emerald-500 text-gray-950 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 shadow-lg">
+                      <Play className="w-4 h-4 fill-current ml-0.5" />
+                    </div>
+                  )}
                 </div>
 
                 {/* Album Description & Info */}

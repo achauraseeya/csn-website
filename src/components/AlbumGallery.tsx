@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Film, Image as ImageIcon, Search, Calendar, MapPin, Tag, ArrowRight, Play, Eye, 
-  Grid, List, Sparkles, Folder
+  Grid, List, Sparkles, Folder, ShieldCheck, Trash2
 } from 'lucide-react';
 import { Album, Language } from '../types';
 import { journeyAlbums as defaultJourneyAlbums } from '../data/albumsData';
@@ -15,6 +15,9 @@ interface AlbumGalleryProps {
   albums?: Album[];
   onSelectAlbum?: (albumId: string) => void;
   onOpenUploadModal?: () => void;
+  isAdmin?: boolean;
+  onOpenAdminModal?: () => void;
+  onDeleteAlbum?: (albumId: string) => void;
 }
 
 export default function AlbumGallery({ 
@@ -24,7 +27,10 @@ export default function AlbumGallery({
   onBackToHome,
   albums = defaultJourneyAlbums,
   onSelectAlbum,
-  onOpenUploadModal
+  onOpenUploadModal,
+  isAdmin = false,
+  onOpenAdminModal,
+  onDeleteAlbum,
 }: AlbumGalleryProps) {
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(initialSelectedAlbumId || null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,13 +116,16 @@ export default function AlbumGallery({
               </button>
             )}
 
-            {onOpenUploadModal && (
+            {/* Upload Journey Post button ONLY visible after central admin login */}
+            {isAdmin && onOpenUploadModal && (
               <button
                 onClick={onOpenUploadModal}
-                className="text-xs font-extrabold uppercase tracking-wider px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-gray-950 rounded-xl transition-all shadow-lg flex items-center gap-2"
+                className="text-xs font-extrabold uppercase tracking-wider px-5 py-2.5 rounded-xl transition-all shadow-lg flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-gray-950"
               >
                 <Sparkles className="w-4 h-4 fill-current" />
-                <span>{lang === 'en' ? '+ Add Photos/Videos & Create Post' : '+ फोटो/भिडियो थप्नुहोस् र पोस्ट बनाउनुहोस्'}</span>
+                <span>
+                  {lang === 'en' ? '+ Upload Journey Post' : '+ मिडिया पोस्ट थप्नुहोस्'}
+                </span>
               </button>
             )}
           </div>
@@ -215,9 +224,24 @@ export default function AlbumGallery({
                     )}
                   </div>
 
-                  <div className="absolute top-3 right-3 p-2 rounded-full bg-emerald-500 text-gray-950 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 shadow-lg">
-                    <Play className="w-4 h-4 fill-current ml-0.5" />
-                  </div>
+                  {isAdmin && onDeleteAlbum ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(lang === 'en' ? 'Are you sure you want to delete this journey post?' : 'के तपाईं निश्चित रूपमा यो मिडिया पोस्ट हटाउन चाहनुहुन्छ?')) {
+                          onDeleteAlbum(album.id);
+                        }
+                      }}
+                      className="absolute top-3 right-3 p-2 rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-lg transition-all z-10 flex items-center gap-1 text-xs font-bold"
+                      title="Delete Post (Admin)"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <div className="absolute top-3 right-3 p-2 rounded-full bg-emerald-500 text-gray-950 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 shadow-lg">
+                      <Play className="w-4 h-4 fill-current ml-0.5" />
+                    </div>
+                  )}
                 </div>
 
                 {/* Content Body */}

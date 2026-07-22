@@ -1,15 +1,30 @@
 import React, { useState } from 'react';
-import { Mail, Search, Image as ImageIcon, FileText, CheckCircle2, ChevronRight, X, Download, Eye } from 'lucide-react';
+import { Mail, Search, Image as ImageIcon, FileText, CheckCircle2, ChevronRight, X, Download, Eye, Plus, ExternalLink, Trash2, ShieldCheck, Sparkles } from 'lucide-react';
 import { Language, Notice, GalleryItem } from '../types';
-import { notices, galleryItems } from '../data/communityData';
+import { notices as defaultNotices, galleryItems } from '../data/communityData';
+import { extractGoogleDriveId, formatDriveImageUrl } from '../utils/mediaUrl';
 
 interface NoticeGalleryProps {
   lang: Language;
   onSubscribe: (email: string) => void;
   onTrackAction: (actionName: string) => void;
+  isAdmin?: boolean;
+  onOpenAddNoticeModal?: () => void;
+  onOpenAdminModal?: () => void;
+  noticesList?: Notice[];
+  onDeleteNotice?: (id: string) => void;
 }
 
-export default function NoticeGallery({ lang, onSubscribe, onTrackAction }: NoticeGalleryProps) {
+export default function NoticeGallery({
+  lang,
+  onSubscribe,
+  onTrackAction,
+  isAdmin = false,
+  onOpenAddNoticeModal,
+  onOpenAdminModal,
+  noticesList = defaultNotices,
+  onDeleteNotice,
+}: NoticeGalleryProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNoticeCat, setSelectedNoticeCat] = useState<'all' | 'work' | 'notice' | 'press'>('all');
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
@@ -42,10 +57,10 @@ export default function NoticeGallery({ lang, onSubscribe, onTrackAction }: Noti
     close: { en: 'Close', ne: 'बन्द गर्नुहोस्' },
   };
 
-  const filteredNotices = notices.filter((notice) => {
-    const matchesSearch =
-      notice.title[lang].toLowerCase().includes(searchTerm.toLowerCase()) ||
-      notice.content[lang].toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredNotices = noticesList.filter((notice) => {
+    const titleMatch = (notice.title[lang] || notice.title.en || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const contentMatch = (notice.content[lang] || notice.content.en || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = titleMatch || contentMatch;
     const matchesCat = selectedNoticeCat === 'all' || notice.category === selectedNoticeCat;
     return matchesSearch && matchesCat;
   });
@@ -85,24 +100,39 @@ export default function NoticeGallery({ lang, onSubscribe, onTrackAction }: Noti
               </p>
             </div>
 
-            {/* Filter buttons */}
-            <div className="flex flex-wrap gap-1 bg-teal-50 p-1 rounded-lg border border-teal-100 self-start sm:self-auto">
-              {(['all', 'work', 'notice', 'press'] as const).map((cat) => (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              {/* Admin Add Notice Button ONLY visible after central admin login */}
+              {isAdmin && onOpenAddNoticeModal && (
                 <button
-                  key={cat}
-                  onClick={() => {
-                    setSelectedNoticeCat(cat);
-                    onTrackAction(`Filter notices by ${cat}`);
-                  }}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
-                    selectedNoticeCat === cat
-                      ? 'bg-teal-700 text-white shadow-sm'
-                      : 'text-teal-800 hover:bg-teal-100'
-                  }`}
+                  onClick={onOpenAddNoticeModal}
+                  className="px-4 py-2 rounded-xl font-extrabold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white"
                 >
-                  {t[cat][lang]}
+                  <Plus className="w-4 h-4" />
+                  <span>
+                    {lang === 'en' ? '+ Add Community Notice' : '+ सूचना थप्नुहोस्'}
+                  </span>
                 </button>
-              ))}
+              )}
+
+              {/* Filter buttons */}
+              <div className="flex flex-wrap gap-1 bg-teal-50 p-1 rounded-lg border border-teal-100">
+                {(['all', 'work', 'notice', 'press'] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      setSelectedNoticeCat(cat);
+                      onTrackAction(`Filter notices by ${cat}`);
+                    }}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
+                      selectedNoticeCat === cat
+                        ? 'bg-teal-700 text-white shadow-sm'
+                        : 'text-teal-800 hover:bg-teal-100'
+                    }`}
+                  >
+                    {t[cat][lang]}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -162,37 +192,107 @@ export default function NoticeGallery({ lang, onSubscribe, onTrackAction }: Noti
                   </div>
                   
                   {expandedNoticeId === notice.id && (
-                    <div className="px-5 pb-5 pt-2 bg-teal-50/30 border-t border-teal-50">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <button 
-                          onClick={() => {
-                            setViewPdfNoticeId(prev => prev === notice.id ? null : notice.id);
-                            onTrackAction(`Toggled view PDF: ${notice.title.en}`);
-                          }}
-                          className="text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
-                        >
-                          {viewPdfNoticeId === notice.id ? <X className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          {viewPdfNoticeId === notice.id ? (lang === 'en' ? 'Close PDF' : 'PDF बन्द गर्नुहोस्') : (lang === 'en' ? 'View PDF' : 'PDF हेर्नुहोस्')}
-                        </button>
-                        <a 
-                          href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
-                          target="_blank"
-                          download={`Notice_${notice.date}.pdf`}
-                          onClick={() => onTrackAction(`Downloaded notice: ${notice.title.en}`)}
-                          className="text-sm font-bold text-teal-700 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
-                        >
-                          <Download className="w-4 h-4" />
-                          {lang === 'en' ? 'Download PDF' : 'PDF डाउनलोड गर्नुहोस्'}
-                        </a>
+                    <div className="px-5 pb-5 pt-3 bg-teal-50/40 border-t border-teal-100 space-y-4">
+                      {/* Attached File Google Drive Banner */}
+                      {(notice.driveFileUrl || notice.fileUrl) && (
+                        <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-emerald-950 font-medium">
+                          <div className="flex items-center gap-2">
+                            <span className="p-1.5 bg-emerald-600 text-white rounded-lg">📄</span>
+                            <div>
+                              <span className="font-extrabold block text-emerald-900">
+                                {lang === 'en' ? 'Google Drive Attached Document/File' : 'गुगल ड्राइभ संलग्न कागजात/फाइल'}
+                              </span>
+                              <span className="text-[11px] text-emerald-700">
+                                {notice.driveFileUrl || notice.fileUrl}
+                              </span>
+                            </div>
+                          </div>
+
+                          <a
+                            href={notice.driveFileUrl || notice.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-lg shadow-sm transition-all flex items-center gap-1.5 shrink-0"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>{lang === 'en' ? 'Open in Google Drive ↗' : 'गुगल ड्राइभमा खोल्नुहोस् ↗'}</span>
+                          </a>
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <button 
+                            onClick={() => {
+                              setViewPdfNoticeId(prev => prev === notice.id ? null : notice.id);
+                              onTrackAction(`Toggled view PDF: ${notice.title.en}`);
+                            }}
+                            className="text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                          >
+                            {viewPdfNoticeId === notice.id ? <X className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            {viewPdfNoticeId === notice.id 
+                              ? (lang === 'en' ? 'Close Preview' : 'पूर्वप्रदर्शन बन्द गर्नुहोस्') 
+                              : (lang === 'en' ? 'View Document Preview' : 'कागजात पूर्वप्रदर्शन हेर्नुहोस्')}
+                          </button>
+
+                          {(notice.driveFileUrl || notice.fileUrl) ? (
+                            <a 
+                              href={notice.driveFileUrl || notice.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => onTrackAction(`Downloaded/Opened notice file: ${notice.title.en}`)}
+                              className="text-xs font-bold text-teal-800 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                            >
+                              <Download className="w-3.5 h-3.5 text-teal-600" />
+                              {lang === 'en' ? 'Download / View File' : 'फाइल डाउनलोड / हेर्नुहोस्'}
+                            </a>
+                          ) : (
+                            <a 
+                              href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+                              target="_blank"
+                              download={`Notice_${notice.date}.pdf`}
+                              onClick={() => onTrackAction(`Downloaded notice: ${notice.title.en}`)}
+                              className="text-xs font-bold text-teal-800 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                            >
+                              <Download className="w-3.5 h-3.5 text-teal-600" />
+                              {lang === 'en' ? 'Download PDF' : 'PDF डाउनलोड गर्नुहोस्'}
+                            </a>
+                          )}
+                        </div>
+
+                        {/* Admin Delete Notice Action */}
+                        {isAdmin && onDeleteNotice && (
+                          <button
+                            onClick={() => {
+                              if (confirm(lang === 'en' ? 'Are you sure you want to delete this notice?' : 'के तपाईं निश्चित रूपमा यो सूचना हटाउन चाहनुहुन्छ?')) {
+                                onDeleteNotice(notice.id);
+                              }
+                            }}
+                            className="text-xs font-extrabold text-red-600 hover:text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>{lang === 'en' ? 'Delete Notice (Admin)' : 'सूचना हटाउनुहोस्'}</span>
+                          </button>
+                        )}
                       </div>
                       
                       {viewPdfNoticeId === notice.id && (
-                        <div className="mt-4 rounded-xl overflow-hidden border border-teal-200 shadow-inner bg-gray-100">
-                          <iframe 
-                            src="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf#toolbar=0" 
-                            className="w-full h-[400px]"
-                            title={notice.title.en}
-                          />
+                        <div className="mt-4 rounded-2xl overflow-hidden border border-teal-200 shadow-inner bg-slate-900">
+                          {(() => {
+                            const rawUrl = notice.driveFileUrl || notice.fileUrl;
+                            const driveId = rawUrl ? extractGoogleDriveId(rawUrl) : null;
+                            const embedUrl = driveId 
+                              ? `https://drive.google.com/file/d/${driveId}/preview`
+                              : (rawUrl || "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf#toolbar=0");
+
+                            return (
+                              <iframe 
+                                src={embedUrl} 
+                                className="w-full h-[450px]"
+                                title={notice.title.en || notice.title.ne}
+                              />
+                            );
+                          })()}
                         </div>
                       )}
                     </div>

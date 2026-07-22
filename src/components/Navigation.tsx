@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, X, Globe, Leaf } from 'lucide-react';
+import { Menu, X, Globe, ShieldCheck, Lock } from 'lucide-react';
 import { Language } from '../types';
 import logoImg from '../assets/images/chaurasiya_logo_1784519579895.jpg';
 
@@ -9,6 +9,8 @@ interface NavigationProps {
   lang: Language;
   setLang: (lang: Language) => void;
   onTrackAction: (actionName: string) => void;
+  isAdmin: boolean;
+  onOpenAdminModal: () => void;
 }
 
 export default function Navigation({
@@ -17,6 +19,8 @@ export default function Navigation({
   lang,
   setLang,
   onTrackAction,
+  isAdmin,
+  onOpenAdminModal,
 }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -89,19 +93,45 @@ export default function Navigation({
             {/* Language Switcher */}
             <button
               onClick={toggleLanguage}
-              className="ml-4 flex items-center gap-1 px-3 py-2 text-xs font-bold bg-teal-50 text-teal-800 rounded-lg border border-teal-200 hover:bg-teal-100 transition-all uppercase"
+              className="ml-3 flex items-center gap-1 px-3 py-2 text-xs font-bold bg-teal-50 text-teal-800 rounded-lg border border-teal-200 hover:bg-teal-100 transition-all uppercase"
               title="Switch Language / भाषा परिवर्तन गर्नुहोस्"
             >
               <Globe className="w-4 h-4 text-teal-600" />
               <span>{lang === 'en' ? 'नेपाली' : 'English'}</span>
             </button>
+
+            {/* Admin Login Button */}
+            <button
+              onClick={onOpenAdminModal}
+              className={`ml-2 flex items-center gap-1.5 px-3 py-2 text-xs font-extrabold rounded-lg border transition-all uppercase shadow-sm ${
+                isAdmin
+                  ? 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-700'
+                  : 'bg-teal-900 text-teal-100 border-teal-800 hover:bg-teal-950'
+              }`}
+              title={isAdmin ? 'Admin Active' : 'Admin Login'}
+            >
+              {isAdmin ? <ShieldCheck className="w-4 h-4 text-emerald-300" /> : <Lock className="w-3.5 h-3.5 text-teal-300" />}
+              <span>{isAdmin ? (lang === 'en' ? 'Admin Active' : 'प्रशासक सक्रिय') : (lang === 'en' ? 'Admin Login' : 'प्रशासक लगइन')}</span>
+            </button>
           </div>
 
           {/* Mobile menu button */}
-          <div className="flex items-center lg:hidden">
+          <div className="flex items-center lg:hidden gap-1.5">
+            <button
+              onClick={onOpenAdminModal}
+              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-lg border ${
+                isAdmin
+                  ? 'bg-emerald-600 text-white border-emerald-500'
+                  : 'bg-teal-900 text-teal-100 border-teal-800'
+              }`}
+            >
+              {isAdmin ? <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" /> : <Lock className="w-3 h-3 text-teal-300" />}
+              <span>{isAdmin ? 'Admin' : (lang === 'en' ? 'Admin' : 'प्रशासक')}</span>
+            </button>
+
             <button
               onClick={toggleLanguage}
-              className="mr-2 flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold bg-teal-50 text-teal-800 rounded-lg border border-teal-200"
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold bg-teal-50 text-teal-800 rounded-lg border border-teal-200"
             >
               <Globe className="w-3.5 h-3.5" />
               <span>{lang === 'en' ? 'ने' : 'EN'}</span>

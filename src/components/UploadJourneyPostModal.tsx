@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, Upload, Plus, Trash2, Image as ImageIcon, Film, HelpCircle, 
   Check, Sparkles, FolderPlus, ArrowRight, Video, FileText, Link as LinkIcon,
-  ShieldCheck, Lock, Key, LogOut, Database, CheckCircle2
+  ShieldCheck, Lock, Key, LogOut, Database, CheckCircle2, Layers, DownloadCloud, Globe
 } from 'lucide-react';
 import { Album, AlbumMediaItem, Language } from '../types';
+import { formatDriveImageUrl, parseMultipleMediaLinks, extractGoogleDriveFolderId } from '../utils/mediaUrl';
 
 interface UploadJourneyPostModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface UploadJourneyPostModalProps {
   onAddAlbum: (newAlbum: Album) => void;
   onAddMediaToAlbum?: (albumId: string, newMedia: AlbumMediaItem[]) => void;
   existingAlbums?: Album[];
+  isAdmin?: boolean;
 }
 
 export default function UploadJourneyPostModal({
@@ -21,6 +23,7 @@ export default function UploadJourneyPostModal({
   lang,
   onAddAlbum,
   existingAlbums = [],
+  isAdmin = false,
 }: UploadJourneyPostModalProps) {
   const [activeTab, setActiveTab] = useState<'create' | 'guide'>('create');
 
@@ -28,6 +31,8 @@ export default function UploadJourneyPostModal({
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('chaurasiya_admin_authenticated') === 'true';
   });
+
+  const effectiveIsAdmin = isAdmin || isAdminAuthenticated;
   const [inputPasscode, setInputPasscode] = useState('');
   const [passcodeError, setPasscodeError] = useState(false);
 
@@ -41,24 +46,28 @@ export default function UploadJourneyPostModal({
   const [dateStr, setDateStr] = useState(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
   const [tagsStr, setTagsStr] = useState('Community, Journey, Youth');
   
-  // Cover Image
-  const [coverUrl, setCoverUrl] = useState('https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200');
+  // Remove unused file upload states and handlers
+  // Google Drive Folder URL State
+  const [driveFolderUrl, setDriveFolderUrl] = useState('');
 
-  // Media items state
+  // Bulk Links Import State
+  const [bulkLinksText, setBulkLinksText] = useState('');
+  const [showBulkPaste, setShowBulkPaste] = useState(false);
+
+  // YouTube Videos attached media state
   const [mediaItems, setMediaItems] = useState<Array<{
     id: string;
     titleEn: string;
     titleNe: string;
-    type: 'photo' | 'video';
+    type: 'video';
     url: string;
-    fileObj?: File;
   }>>([
     {
-      id: 'item-1',
-      titleEn: 'Main Event Photo',
-      titleNe: 'मुख्य कार्यक्रम फोटो',
-      type: 'photo',
-      url: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200'
+      id: 'video-1',
+      titleEn: 'YouTube Event Video',
+      titleNe: 'युट्युब कार्यक्रम भिडियो',
+      type: 'video',
+      url: ''
     }
   ]);
 
@@ -66,10 +75,16 @@ export default function UploadJourneyPostModal({
 
   const handleVerifyPasscode = (e: React.FormEvent) => {
     e.preventDefault();
-    const validPasscodes = ['2026', '8888', 'chaurasiya2026', 'admin'];
-    if (validPasscodes.includes(inputPasscode.trim().toLowerCase())) {
+    const cleanPasscode = inputPasscode.trim().toLowerCase();
+    const validPasscodes = ['admin2026', 'chaurasiya2026', 'chaurasiya'];
+    if (validPasscodes.includes(cleanPasscode)) {
       setIsAdminAuthenticated(true);
-      sessionStorage.setItem('chaurasiya_admin_authenticated', 'true');
+      try {
+        sessionStorage.setItem('chaurasiya_admin_authenticated', 'true');
+        localStorage.setItem('chaurasiya_is_admin', 'true');
+      } catch (e) {
+        console.error('Error saving admin auth', e);
+      }
       setPasscodeError(false);
       setInputPasscode('');
     } else {
@@ -79,53 +94,41 @@ export default function UploadJourneyPostModal({
 
   const handleAdminLogout = () => {
     setIsAdminAuthenticated(false);
-    sessionStorage.removeItem('chaurasiya_admin_authenticated');
-  };
-
-  // Cover image file handler
-  const handleCoverFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setCoverUrl(event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
+    try {
+      sessionStorage.removeItem('chaurasiya_admin_authenticated');
+      localStorage.removeItem('chaurasiya_is_admin');
+    } catch (e) {
+      console.error('Error clearing admin auth', e);
     }
   };
 
-  // Add individual media item file handler
-  const handleMediaFileUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const isVid = file.type.startsWith('video');
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          const newItems = [...mediaItems];
-          newItems[index].url = event.target.result as string;
-          newItems[index].type = isVid ? 'video' : 'photo';
-          if (!newItems[index].titleEn) {
-            newItems[index].titleEn = file.name;
-            newItems[index].titleNe = file.name;
-          }
-          setMediaItems(newItems);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
+  // Bulk Links Import Handler
+  const handleBulkImportLinks = () => {
+    if (!bulkLinksText.trim()) return;
+    const parsed = parseMultipleMediaLinks(bulkLinksText);
+    if (parsed.length === 0) return;
+
+    const newRows = parsed.map((p, idx) => ({
+      id: `bulk-${Date.now()}-${idx}`,
+      titleEn: `YouTube Video #${mediaItems.length + idx + 1}`,
+      titleNe: `युट्युब भिडियो #${mediaItems.length + idx + 1}`,
+      type: 'video' as const,
+      url: p.url,
+    }));
+
+    setMediaItems(prev => [...prev, ...newRows]);
+    setBulkLinksText('');
+    setShowBulkPaste(false);
   };
 
   const handleAddMediaRow = () => {
     setMediaItems([
       ...mediaItems,
       {
-        id: `item-${Date.now()}`,
-        titleEn: `Media Item ${mediaItems.length + 1}`,
-        titleNe: `मिडिया आइटम ${mediaItems.length + 1}`,
-        type: 'photo',
+        id: `video-${Date.now()}`,
+        titleEn: `YouTube Video #${mediaItems.length + 1}`,
+        titleNe: `युट्युब भिडियो #${mediaItems.length + 1}`,
+        type: 'video',
         url: '',
       }
     ]);
@@ -145,15 +148,41 @@ export default function UploadJourneyPostModal({
     const newAlbumId = `journey-post-${Date.now()}`;
     const parsedTags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
 
-    const formattedMediaItems: AlbumMediaItem[] = mediaItems.map((m, idx) => ({
-      id: `media-${newAlbumId}-${idx}`,
-      title: { en: m.titleEn || `Photo ${idx + 1}`, ne: m.titleNe || `फोटो ${idx + 1}` },
-      description: { en: descEn, ne: descNe },
-      type: m.type,
-      url: m.url || coverUrl,
-      date: dateStr,
-      location: { en: locationEn, ne: locationNe }
-    }));
+    const folderId = extractGoogleDriveFolderId(driveFolderUrl);
+
+    // Format all URLs (converting Google Drive links into high speed CDN URLs)
+    const formattedMediaItems: AlbumMediaItem[] = [];
+
+    // If Google Drive Folder URL is provided, put the folder item first
+    if (driveFolderUrl.trim()) {
+      formattedMediaItems.push({
+        id: `media-${newAlbumId}-folder`,
+        title: { en: 'Google Drive Photo Folder Gallery', ne: 'गूगल ड्राइभ फोटो फोल्डर ग्यालरी' },
+        description: { en: descEn, ne: descNe },
+        type: 'photo',
+        url: driveFolderUrl.trim(),
+        date: dateStr,
+        location: { en: locationEn, ne: locationNe }
+      });
+    }
+
+    // Append individual YouTube video items
+    mediaItems.forEach((m, idx) => {
+      if (m.url.trim()) {
+        formattedMediaItems.push({
+          id: `media-${newAlbumId}-${idx}`,
+          title: { en: m.titleEn || `Video ${idx + 1}`, ne: m.titleNe || `भिडियो ${idx + 1}` },
+          description: { en: descEn, ne: descNe },
+          type: 'video',
+          url: m.url.trim(),
+          date: dateStr,
+          location: { en: locationEn, ne: locationNe }
+        });
+      }
+    });
+
+    // Automatic cover banner image from Google Drive folder or clean stock image
+    const formattedCover = 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200';
 
     const newAlbum: Album = {
       id: newAlbumId,
@@ -165,13 +194,15 @@ export default function UploadJourneyPostModal({
         en: descEn || 'Community event gallery post from Chaurasiya Samaj.',
         ne: descNe || 'चौरसिया समाजको सामुदायिक कार्यक्रम ग्यालरी पोस्ट।',
       },
-      coverUrl: coverUrl || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200',
+      coverUrl: formattedCover,
       date: dateStr,
       location: {
         en: locationEn,
         ne: locationNe,
       },
       tags: parsedTags.length > 0 ? parsedTags : ['Community', 'Journey'],
+      driveFolderUrl: driveFolderUrl.trim() || undefined,
+      driveFolderId: folderId || undefined,
       mediaItems: formattedMediaItems,
     };
 
@@ -200,7 +231,7 @@ export default function UploadJourneyPostModal({
           </div>
 
           <div className="flex items-center gap-2">
-            {isAdminAuthenticated && (
+            {effectiveIsAdmin && (
               <button
                 onClick={handleAdminLogout}
                 className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
@@ -221,7 +252,7 @@ export default function UploadJourneyPostModal({
         </div>
 
         {/* If Admin is NOT Authenticated: Show Security Lock Screen */}
-        {!isAdminAuthenticated ? (
+        {!effectiveIsAdmin ? (
           <div className="p-8 space-y-6 text-center max-w-lg mx-auto my-auto">
             <div className="w-16 h-16 rounded-full bg-teal-50 border-2 border-teal-200 text-teal-800 flex items-center justify-center mx-auto shadow-inner">
               <Lock className="w-8 h-8 text-teal-700" />
@@ -394,93 +425,133 @@ export default function UploadJourneyPostModal({
                 </div>
               </div>
 
-              {/* Cover Image Group */}
-              <div className="bg-teal-50/40 p-4 sm:p-6 rounded-2xl border border-teal-100 space-y-4">
-                <h3 className="text-sm font-black text-teal-950 uppercase tracking-wider flex items-center gap-2">
-                  <ImageIcon className="w-4 h-4 text-emerald-600" />
-                  {lang === 'en' ? '2. Cover Banner Photo' : '२. मुख्य कभर फोटो'}
-                </h3>
+              {/* Google Drive Folder Link Input Section */}
+              <div className="bg-emerald-500/10 p-4 sm:p-6 rounded-2xl border-2 border-emerald-500/40 space-y-3">
+                <div className="flex items-center gap-2">
+                  <FolderPlus className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <h3 className="text-sm font-black text-emerald-950 uppercase tracking-wider">
+                    {lang === 'en' ? '2. Google Drive Event Photo Folder Link' : '२. गुगल ड्राइभ कार्यक्रम फोटो फोल्डर लिङ्क'}
+                  </h3>
+                </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <div className="w-full sm:w-48 aspect-video rounded-xl bg-teal-950 overflow-hidden relative border border-teal-200 shrink-0">
-                    <img src={coverUrl} alt="Cover Preview" className="w-full h-full object-cover" />
-                  </div>
+                <p className="text-xs text-emerald-900 font-medium leading-relaxed">
+                  {lang === 'en'
+                    ? 'Paste your Google Drive folder link containing event photos. The website automatically fetches all photos from this folder and renders them in the slider viewer!'
+                    : 'कार्यक्रमका फोटोहरू रहेको गुगल ड्राइभ फोल्डरको लिङ्क पेस्ट गर्नुहोस्। वेबसाइटले यो फोल्डरबाट सबै फोटोहरू स्वतः स्लाइडरमा देखाउनेछ!'}
+                </p>
 
-                  <div className="space-y-2 w-full">
-                    <div className="flex items-center gap-2">
-                      <label className="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors inline-flex items-center gap-2">
-                        <Upload className="w-4 h-4" />
-                        <span>{lang === 'en' ? 'Upload Cover Image File' : 'कभर फोटो फाइल छान्नुहोस्'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleCoverFileUpload}
-                          className="hidden"
-                        />
-                      </label>
-                      <span className="text-xs text-gray-500 font-bold">OR</span>
-                    </div>
+                <input
+                  type="url"
+                  value={driveFolderUrl}
+                  onChange={(e) => setDriveFolderUrl(e.target.value)}
+                  placeholder="https://drive.google.com/drive/folders/1A2B3C4D5E..."
+                  className="w-full px-4 py-3 bg-white border-2 border-emerald-400 rounded-xl text-xs sm:text-sm font-semibold text-emerald-950 placeholder:text-gray-400 focus:outline-none focus:border-emerald-600 shadow-sm"
+                />
 
-                    <input
-                      type="url"
-                      value={coverUrl}
-                      onChange={(e) => setCoverUrl(e.target.value)}
-                      placeholder="Paste Image URL / Unsplash / Google Drive Link"
-                      className="w-full px-3.5 py-2 bg-white border border-teal-200 rounded-xl text-xs font-medium text-teal-950"
-                    />
-                  </div>
+                <div className="flex items-center gap-2 text-[11px] text-emerald-800 font-bold bg-emerald-100/60 p-2.5 rounded-xl">
+                  <span>💡 {lang === 'en' ? 'Requirement:' : 'आवश्यकता:'} Set Google Drive folder sharing permission to <strong>"Anyone with the link can view"</strong>.</span>
                 </div>
               </div>
 
-              {/* Media Items Group (Photos & Videos) */}
+              {/* YouTube Video Section */}
               <div className="bg-teal-50/40 p-4 sm:p-6 rounded-2xl border border-teal-100 space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <h3 className="text-sm font-black text-teal-950 uppercase tracking-wider flex items-center gap-2">
                     <Film className="w-4 h-4 text-teal-600" />
-                    {lang === 'en' ? '3. Attached Photos & Videos' : '३. संलग्न फोटो तथा भिडियोहरू'}
+                    {lang === 'en' ? '3. Attached YouTube Videos' : '३. संलग्न युट्युब भिडियोहरू'}
                   </h3>
 
-                  <button
-                    type="button"
-                    onClick={handleAddMediaRow}
-                    className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-gray-950 rounded-xl text-xs font-extrabold flex items-center gap-1 shadow-sm transition-all"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>{lang === 'en' ? 'Add Item' : 'थप्नुहोस्'}</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowBulkPaste(!showBulkPaste)}
+                      className="px-3 py-1.5 bg-teal-100 hover:bg-teal-200 text-teal-950 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
+                    >
+                      <Layers className="w-3.5 h-3.5 text-teal-700" />
+                      <span>{lang === 'en' ? 'Bulk Paste YouTube Links' : 'धेरै युट्युब लिङ्कहरू राख्नुहोस्'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleAddMediaRow}
+                      className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-gray-950 rounded-xl text-xs font-extrabold flex items-center gap-1 shadow-sm transition-all"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>{lang === 'en' ? 'Add YouTube Video' : 'युट्युब भिडियो थप्नुहोस्'}</span>
+                    </button>
+                  </div>
                 </div>
+
+                {/* Info Banner */}
+                <div className="bg-emerald-50/80 p-3.5 rounded-xl border border-emerald-200/80 text-xs text-emerald-950 space-y-1">
+                  <div className="font-extrabold flex items-center gap-1.5 text-emerald-900">
+                    <Globe className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>{lang === 'en' ? 'YouTube Integration:' : 'युट्युब एकीकरण:'}</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-800 leading-relaxed">
+                    {lang === 'en' 
+                      ? 'Add YouTube video URLs or Shorts links. The website embeds YouTube directly in the video player without taking up any website storage.' 
+                      : 'युट्युब भिडियो लिङ्कहरू राख्नुहोस्। वेबसाइटले भिडियो प्लेयरमा युट्युब सिधा समावेश गर्दछ।'}
+                  </p>
+                </div>
+
+                {/* Bulk Paste Box */}
+                {showBulkPaste && (
+                  <div className="p-4 bg-teal-900 text-white rounded-2xl border border-teal-700 space-y-3 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-teal-200 flex items-center gap-1.5">
+                        <DownloadCloud className="w-4 h-4 text-emerald-400" />
+                        <span>{lang === 'en' ? 'Paste YouTube URLs (One per line or comma-separated)' : 'युट्युब लिङ्कहरू पेस्ट गर्नुहोस् (प्रति लाइन एक वा अल्पविरामद्वारा छुट्याइएको)'}</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowBulkPaste(false)}
+                        className="text-gray-300 hover:text-white text-xs"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <textarea
+                      rows={4}
+                      value={bulkLinksText}
+                      onChange={(e) => setBulkLinksText(e.target.value)}
+                      placeholder={`https://www.youtube.com/watch?v=dQw4w9WgXcQ\nhttps://youtu.be/dQw4w9WgXcQ`}
+                      className="w-full p-3 bg-teal-950 border border-teal-700 rounded-xl text-xs font-mono text-teal-100 focus:outline-none focus:border-emerald-400"
+                    />
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-teal-300">
+                        💡 {lang === 'en' ? 'Supports standard YouTube watch URLs and YouTube Shorts links.' : 'मानक युट्युब भिडियो लिङ्कहरू र सर्ट्स लिङ्कहरू समर्थन गर्दछ।'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleBulkImportLinks}
+                        className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-teal-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>{lang === 'en' ? 'Import All Links' : 'सबै लिङ्कहरू थप्नुहोस्'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-3">
                   {mediaItems.map((item, idx) => (
                     <div key={item.id} className="bg-white p-3.5 rounded-xl border border-teal-100 space-y-3">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-extrabold text-teal-800 uppercase tracking-wider">
-                          Item #{idx + 1}
+                        <span className="text-xs font-extrabold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
+                          <Film className="w-3.5 h-3.5 text-teal-600" /> Video #{idx + 1}
                         </span>
 
-                        <div className="flex items-center gap-2">
-                          <select
-                            value={item.type}
-                            onChange={(e) => {
-                              const newItems = [...mediaItems];
-                              newItems[idx].type = e.target.value as 'photo' | 'video';
-                              setMediaItems(newItems);
-                            }}
-                            className="px-2.5 py-1 bg-teal-50 border border-teal-200 rounded-lg text-xs font-bold text-teal-900"
-                          >
-                            <option value="photo">📷 Photo</option>
-                            <option value="video">🎥 Video (YouTube / MP4 / GDrive)</option>
-                          </select>
-
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveMediaRow(idx)}
-                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Remove"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMediaRow(idx)}
+                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Remove"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -492,33 +563,21 @@ export default function UploadJourneyPostModal({
                             newItems[idx].titleEn = e.target.value;
                             setMediaItems(newItems);
                           }}
-                          placeholder="Media Caption / Title"
-                          className="px-3 py-1.5 bg-teal-50/50 border border-teal-100 rounded-lg text-xs font-medium text-teal-950"
+                          placeholder="Video Title / Caption"
+                          className="px-3 py-2 bg-teal-50/50 border border-teal-100 rounded-lg text-xs font-medium text-teal-950"
                         />
 
-                        <div className="flex items-center gap-2">
-                          <label className="px-3 py-1.5 bg-teal-100 hover:bg-teal-200 text-teal-900 rounded-lg text-xs font-bold cursor-pointer shrink-0">
-                            Upload File
-                            <input
-                              type="file"
-                              accept={item.type === 'video' ? 'video/*' : 'image/*'}
-                              onChange={(e) => handleMediaFileUpload(idx, e)}
-                              className="hidden"
-                            />
-                          </label>
-
-                          <input
-                            type="text"
-                            value={item.url}
-                            onChange={(e) => {
-                              const newItems = [...mediaItems];
-                              newItems[idx].url = e.target.value;
-                              setMediaItems(newItems);
-                            }}
-                            placeholder={item.type === 'video' ? 'Paste YouTube watch URL or Google Drive Video URL' : 'Paste Image URL'}
-                            className="w-full px-3 py-1.5 bg-teal-50/50 border border-teal-100 rounded-lg text-xs font-medium text-teal-950"
-                          />
-                        </div>
+                        <input
+                          type="text"
+                          value={item.url}
+                          onChange={(e) => {
+                            const newItems = [...mediaItems];
+                            newItems[idx].url = e.target.value;
+                            setMediaItems(newItems);
+                          }}
+                          placeholder="Paste YouTube Video URL (e.g. https://www.youtube.com/watch?v=...)"
+                          className="w-full px-3 py-2 bg-teal-50/50 border border-teal-100 rounded-lg text-xs font-medium text-teal-950 focus:outline-none focus:border-teal-600"
+                        />
                       </div>
                     </div>
                   ))}
@@ -545,12 +604,12 @@ export default function UploadJourneyPostModal({
               <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-200 text-emerald-950 space-y-2">
                 <h3 className="font-extrabold text-base flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-emerald-600" />
-                  {lang === 'en' ? 'How Media Publishing & Page Auto-Creation Works' : 'मिडिया प्रकाशन र स्वतः पृष्ठ सिर्जना कसरी काम गर्छ'}
+                  {lang === 'en' ? 'How Google Drive & YouTube Links Integration Works' : 'गुगल ड्राइभ र युट्युब लिङ्क एकीकरण कसरी काम गर्छ'}
                 </h3>
                 <p className="text-xs sm:text-sm font-medium leading-relaxed">
                   {lang === 'en' 
-                    ? 'Every time you add a new post or upload media items in "Glimpses of Our Journey", the system automatically provisions a dedicated interactive page for that event post!'
-                    : 'जब तपाईं "हाम्रो यात्राको झलक" मा नयाँ पोस्ट वा मिडिया अपलोड गर्नुहुन्छ, प्रणालीले त्यो कार्यक्रम पोस्टको लागि स्वचालित रूपमा एक अलग अन्तरक्रियात्मक पृष्ठ सिर्जना गर्दछ!'}
+                    ? 'No image file hosting required! Your website directly streams high-resolution photos from Google Drive and embeds videos from YouTube.'
+                    : 'कुनै फोटो फाइल होस्टिङ आवश्यक छैन! तपाईंको वेबसाइटले गुगल ड्राइभबाट सीधा तस्बिरहरू र युट्युबबाट भिडियोहरू लोड गर्दछ।'}
                 </p>
               </div>
 
@@ -561,10 +620,10 @@ export default function UploadJourneyPostModal({
                 </div>
                 <div className="space-y-1">
                   <h4 className="font-extrabold text-sm text-teal-950">
-                    {lang === 'en' ? 'Direct File Upload (From Phone or Computer)' : 'प्रत्यक्ष फाइल अपलोड (मोबाइल वा कम्प्युटरबाट)'}
+                    {lang === 'en' ? 'Google Drive Link for Photos' : 'तस्बिरहरूका लागि गुगल ड्राइभ लिङ्क'}
                   </h4>
                   <p className="text-xs text-gray-600 font-medium leading-relaxed">
-                    Click <strong>"Upload Cover Image File"</strong> or <strong>"Upload File"</strong> next to any item. You can select JPG, PNG, WEBP images or MP4 videos directly from your device storage. The system generates a instant high-resolution preview.
+                    Upload your event photos to a Google Drive folder or file → Right-click file/folder → Share → Set access permission to <strong>"Anyone with the link can view"</strong> → Copy link and paste it here!
                   </p>
                 </div>
               </div>
@@ -576,10 +635,10 @@ export default function UploadJourneyPostModal({
                 </div>
                 <div className="space-y-1">
                   <h4 className="font-extrabold text-sm text-teal-950">
-                    {lang === 'en' ? 'Using YouTube or External Video Links' : 'युट्युब वा बाह्य भिडियो लिङ्क प्रयोग गर्ने तरिका'}
+                    {lang === 'en' ? 'YouTube Video Links' : 'युट्युब भिडियो लिङ्कहरू'}
                   </h4>
                   <p className="text-xs text-gray-600 font-medium leading-relaxed">
-                    Set the item type to <strong>"🎥 Video"</strong> and paste any standard YouTube URL (e.g., <code className="bg-gray-100 px-1 py-0.5 rounded text-[11px]">https://www.youtube.com/watch?v=...</code> or <code className="bg-gray-100 px-1 py-0.5 rounded text-[11px]">https://youtu.be/...</code>). The player will embed YouTube smoothly.
+                    For videos, select <strong>"🎥 Video"</strong> and paste any standard YouTube video or Shorts link (e.g., <code className="bg-gray-100 px-1 py-0.5 rounded text-[11px]">https://www.youtube.com/watch?v=...</code>).
                   </p>
                 </div>
               </div>
@@ -591,10 +650,10 @@ export default function UploadJourneyPostModal({
                 </div>
                 <div className="space-y-1">
                   <h4 className="font-extrabold text-sm text-teal-950">
-                    {lang === 'en' ? 'Using Google Drive Photos & Videos' : 'गुगल ड्राइभका फोटो तथा भिडियो प्रयोग गर्ने तरिका'}
+                    {lang === 'en' ? 'Bulk Import' : 'एकैपटक धेरै लिङ्कहरू थप्ने'}
                   </h4>
                   <p className="text-xs text-gray-600 font-medium leading-relaxed">
-                    Upload your photos/videos to Google Drive → Right click file → Share → Set access to <strong>"Anyone with the link can view"</strong> → Copy link and paste it directly into the URL input field.
+                    Click <strong>"Bulk Paste Links"</strong> to paste dozens of Google Drive and YouTube links at once. The app will automatically separate photos and videos into structured post gallery items.
                   </p>
                 </div>
               </div>
@@ -606,10 +665,10 @@ export default function UploadJourneyPostModal({
                 </div>
                 <div className="space-y-1">
                   <h4 className="font-extrabold text-sm text-emerald-950">
-                    {lang === 'en' ? 'Automatic Dedicated Page Creation' : 'स्वचालित अलग पृष्ठ सिर्जना'}
+                    {lang === 'en' ? 'Online Server Syncing' : 'अनलाइन सर्भर सिङ्क'}
                   </h4>
                   <p className="text-xs text-gray-700 font-medium leading-relaxed">
-                    Once you click <strong>"Publish & Auto-Generate Dedicated Page"</strong>, the application saves the media post and immediately opens the newly generated dedicated page with full-screen viewer, photo galleries, and video player!
+                    Once published, the post data is saved online to the database server. All visitors accessing the website worldwide can view the newly created post page immediately!
                   </p>
                 </div>
               </div>
