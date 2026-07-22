@@ -1,4 +1,4 @@
-import { Member, Notice, CommunityEvent, GalleryItem, ImpactStat, AbhishekProfile } from '../types';
+import { Member, Notice, CommunityEvent, GalleryItem, ImpactStat, AbhishekProfile, Document } from '../types';
 
 export const communityHistory = {
   title: {
@@ -313,7 +313,7 @@ export const projects = [
   }
 ];
 
-export const documents = [
+export const documents: Document[] = [
   {
     id: 'd1',
     title: { en: 'Annual Audit Report 2025', ne: 'वार्षिक लेखापरीक्षण रिपोर्ट २०२५' },

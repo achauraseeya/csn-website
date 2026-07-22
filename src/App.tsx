@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail } from 'lucide-react';
-import { Language, AnalyticsMetric, Member, Album } from './types';
-import { notices as initialNotices, boardMembers as initialMembers } from './data/communityData';
+import { Language, AnalyticsMetric, Member, Album, Notice, Document, CommunityEvent } from './types';
+import { notices as initialNotices, boardMembers as initialMembers, upcomingEvents as initialEvents, documents as initialDocuments } from './data/communityData';
 import { journeyAlbums as initialJourneyAlbums } from './data/albumsData';
 import logoImg from './assets/images/chaurasiya_logo_1784519579895.jpg';
 
@@ -23,16 +23,49 @@ import ContactSection from './components/ContactSection';
 import UploadJourneyPostModal from './components/UploadJourneyPostModal';
 import AdminLoginModal from './components/AdminLoginModal';
 import AddNoticeModal from './components/AddNoticeModal';
-import { Notice } from './types';
 
 export default function App() {
-  const [lang, setLang] = useState<Language>('ne');
+  // Default language turned to 'en' (English) as requested
+  const [lang, setLang] = useState<Language>('en');
   const [currentTab, setCurrentTab] = useState<string>('history');
   const [selectedLeaderId, setSelectedLeaderId] = useState<string | null>(null);
   const [selectedBlogPost, setSelectedBlogPost] = useState<SinglePostData | null>(null);
   
   // Dynamic Member Directory list
-  const [members, setMembers] = useState<Member[]>(initialMembers);
+  const [members, setMembers] = useState<Member[]>(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_members');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return initialMembers;
+  });
+
+  // Dynamic Community Events list
+  const [events, setEvents] = useState<CommunityEvent[]>(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_events');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return initialEvents;
+  });
+
+  // Dynamic Documents list
+  const [documentsList, setDocumentsList] = useState<Document[]>(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_documents');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return initialDocuments;
+  });
 
   // Admin Authentication State
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
@@ -247,6 +280,172 @@ export default function App() {
     }
   };
 
+  // --- EVENTS API & Handlers ---
+  useEffect(() => {
+    fetch('/api/events')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.events)) {
+          if (data.events.length === 0) {
+            // First time seeding the backend
+            initialEvents.forEach(async (evt) => {
+              try {
+                await fetch('/api/events', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(evt),
+                });
+              } catch (e) {}
+            });
+            setEvents(initialEvents);
+          } else {
+            setEvents(data.events);
+          }
+        }
+      })
+      .catch((err) => console.warn('Offline events endpoint:', err));
+  }, []);
+
+  const handleAddEvent = async (newEvent: CommunityEvent) => {
+    setEvents((prev) => {
+      const updated = [newEvent, ...prev.filter((e) => e.id !== newEvent.id)];
+      try {
+        localStorage.setItem('chaurasiya_events', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    try {
+      await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEvent),
+      });
+    } catch (err) {
+      console.error('Failed to save event on server:', err);
+    }
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    setEvents((prev) => {
+      const updated = prev.filter((e) => e.id !== id);
+      try {
+        localStorage.setItem('chaurasiya_events', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    try {
+      await fetch(`/api/events/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete event on server:', err);
+    }
+  };
+
+  // --- MEMBERS API & Handlers ---
+  useEffect(() => {
+    fetch('/api/members')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.members)) {
+          if (data.members.length === 0) {
+            // First time seeding the backend
+            initialMembers.forEach(async (m) => {
+              try {
+                await fetch('/api/members', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(m),
+                });
+              } catch (e) {}
+            });
+            setMembers(initialMembers);
+          } else {
+            setMembers(data.members);
+          }
+        }
+      })
+      .catch((err) => console.warn('Offline members endpoint:', err));
+  }, []);
+
+  const handleDeleteMember = async (id: string) => {
+    setMembers((prev) => {
+      const updated = prev.filter((m) => m.id !== id);
+      try {
+        localStorage.setItem('chaurasiya_members', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    try {
+      await fetch(`/api/members/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete member on server:', err);
+    }
+  };
+
+  // --- DOCUMENTS API & Handlers ---
+  useEffect(() => {
+    fetch('/api/documents')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.documents)) {
+          if (data.documents.length === 0) {
+            // First time seeding the backend
+            initialDocuments.forEach(async (d) => {
+              try {
+                await fetch('/api/documents', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(d),
+                });
+              } catch (e) {}
+            });
+            setDocumentsList(initialDocuments);
+          } else {
+            setDocumentsList(data.documents);
+          }
+        }
+      })
+      .catch((err) => console.warn('Offline documents endpoint:', err));
+  }, []);
+
+  const handleAddDocument = async (newDoc: Document) => {
+    setDocumentsList((prev) => {
+      const updated = [newDoc, ...prev.filter((d) => d.id !== newDoc.id)];
+      try {
+        localStorage.setItem('chaurasiya_documents', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    try {
+      await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newDoc),
+      });
+    } catch (err) {
+      console.error('Failed to save document on server:', err);
+    }
+  };
+
+  const handleDeleteDocument = async (id: string) => {
+    setDocumentsList((prev) => {
+      const updated = prev.filter((d) => d.id !== id);
+      try {
+        localStorage.setItem('chaurasiya_documents', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    try {
+      await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete document on server:', err);
+    }
+  };
+
   // Single Blog Post Detection (Blogger XML & URL path routing)
   useEffect(() => {
     const pathname = window.location.pathname;
@@ -432,16 +631,32 @@ export default function App() {
     });
   }, []);
 
-  const handleAddMemberNomination = (newMember: Omit<Member, 'id'>) => {
+  const handleAddMemberNomination = async (newMember: Omit<Member, 'id'>) => {
     const memberWithId: Member = {
       ...newMember,
       id: `m-nom-${Date.now()}`,
     };
-    setMembers((prev) => [...prev, memberWithId]);
+    setMembers((prev) => {
+      const updated = [...prev, memberWithId];
+      try {
+        localStorage.setItem('chaurasiya_members', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
     setMetrics((prev) => ({
       ...prev,
       membersRegistered: prev.membersRegistered + 1,
     }));
+
+    try {
+      await fetch('/api/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(memberWithId),
+      });
+    } catch (e) {
+      console.error('Failed to save member to server:', e);
+    }
   };
 
   const handleNewsletterSubscribe = (e: React.FormEvent) => {
@@ -637,6 +852,9 @@ export default function App() {
             lang={lang}
             onAddMember={handleAddMemberNomination}
             onTrackAction={handleTrackAction}
+            isAdmin={isAdmin}
+            membersList={members}
+            onDeleteMember={handleDeleteMember}
           />
         )}
 
@@ -645,6 +863,10 @@ export default function App() {
             lang={lang}
             onRegisterVolunteer={() => handleTrackAction('Submit Volunteer signup')}
             onTrackAction={handleTrackAction}
+            isAdmin={isAdmin}
+            eventsList={events}
+            onAddEvent={handleAddEvent}
+            onDeleteEvent={handleDeleteEvent}
           />
         )}
 
@@ -690,6 +912,10 @@ export default function App() {
           <TransparencySection
             lang={lang}
             onTrackAction={handleTrackAction}
+            isAdmin={isAdmin}
+            documentsList={documentsList}
+            onAddDocument={handleAddDocument}
+            onDeleteDocument={handleDeleteDocument}
           />
         )}
 

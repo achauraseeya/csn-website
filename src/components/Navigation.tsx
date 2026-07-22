@@ -126,7 +126,7 @@ export default function Navigation({
               }`}
             >
               {isAdmin ? <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" /> : <Lock className="w-3 h-3 text-teal-300" />}
-              <span>{isAdmin ? 'Admin' : (lang === 'en' ? 'Admin' : 'प्रशासक')}</span>
+              <span>{isAdmin ? (lang === 'en' ? 'Admin Active' : 'प्रशासक') : (lang === 'en' ? 'Admin Login' : 'प्रशासक लगइन')}</span>
             </button>
 
             <button

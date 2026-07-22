@@ -1,15 +1,26 @@
 import React, { useState } from 'react';
-import { Search, UserCheck, Shield, BookOpen, MapPin, Phone, Mail, CheckCircle2, UserPlus } from 'lucide-react';
+import { Search, UserCheck, Shield, BookOpen, MapPin, Phone, Mail, CheckCircle2, UserPlus, Trash2, Plus, Sparkles } from 'lucide-react';
 import { Language, Member } from '../types';
-import { boardMembers } from '../data/communityData';
+import { boardMembers as initialBoardMembers } from '../data/communityData';
 
 interface DirectorySectionProps {
   lang: Language;
   onAddMember: (member: Omit<Member, 'id'>) => void;
   onTrackAction: (actionName: string) => void;
+  isAdmin?: boolean;
+  membersList?: Member[];
+  onDeleteMember?: (id: string) => void;
 }
 
-export default function DirectorySection({ lang, onAddMember, onTrackAction }: DirectorySectionProps) {
+export default function DirectorySection({
+  lang,
+  onAddMember,
+  onTrackAction,
+  isAdmin = false,
+  membersList = initialBoardMembers,
+  onDeleteMember,
+}: DirectorySectionProps) {
+  const members = membersList.length > 0 ? membersList : initialBoardMembers;
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCat, setSelectedCat] = useState<'all' | 'chief' | 'secretary' | 'board' | 'general'>('all');
   
@@ -27,6 +38,31 @@ export default function DirectorySection({ lang, onAddMember, onTrackAction }: D
   const [nomineeBioEn, setNomineeBioEn] = useState('');
   const [nomineeBioNe, setNomineeBioNe] = useState('');
   const [formSuccess, setFormSuccess] = useState(false);
+  const [photoBase64, setPhotoBase64] = useState<string>('');
+  const [photoName, setPhotoName] = useState<string>('');
+  const [uploadProgress, setUploadProgress] = useState<boolean>(false);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 1 * 1024 * 1024) {
+        alert(lang === 'en' ? 'File is too large! Maximum size allowed is 1MB.' : 'फाइल धेरै ठूलो छ! अधिकतम स्वीकृत आकार १MB हो।');
+        return;
+      }
+      setPhotoName(file.name);
+      setUploadProgress(true);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoBase64(reader.result as string);
+        setUploadProgress(false);
+      };
+      reader.onerror = () => {
+        setUploadProgress(false);
+        alert(lang === 'en' ? 'Failed to read photo file.' : 'फोटो फाइल पढ्न असफल भयो।');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const t = {
     title: { en: 'Esteemed Members & Leadership Directory', ne: 'प्रतिष्ठित सदस्य र नेतृत्व निर्देशिका' },
@@ -53,7 +89,7 @@ export default function DirectorySection({ lang, onAddMember, onTrackAction }: D
     },
   };
 
-  const filteredMembers = boardMembers.filter((m) => {
+  const filteredMembers = members.filter((m) => {
     const matchesSearch =
       m.name[lang].toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.role[lang].toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -76,7 +112,9 @@ export default function DirectorySection({ lang, onAddMember, onTrackAction }: D
       email: nomineeEmail,
       address: { en: nomineeAddrEn || 'Nepal', ne: nomineeAddrNe || 'नेपाल' },
       bio: { en: nomineeBioEn || 'Nominated Community Member', ne: nomineeBioNe || 'मनोनित सामुदायिक सदस्य' },
-      avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200',
+      avatarUrl: photoBase64 ? '' : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200',
+      photoBase64: photoBase64 || undefined,
+      photoName: photoName || undefined,
     };
 
     onAddMember(newNominee);
@@ -98,6 +136,8 @@ export default function DirectorySection({ lang, onAddMember, onTrackAction }: D
       setNomineeAddrNe('');
       setNomineeBioEn('');
       setNomineeBioNe('');
+      setPhotoBase64('');
+      setPhotoName('');
     }, 5000);
   };
 
@@ -121,7 +161,7 @@ export default function DirectorySection({ lang, onAddMember, onTrackAction }: D
           className="w-full md:w-auto px-5 py-3.5 bg-teal-700 hover:bg-teal-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
         >
           <UserPlus className="w-4 h-4 text-teal-300" />
-          {t.nominateBtn[lang]}
+          {isAdmin ? (lang === 'en' ? 'Add Member' : 'सदस्य थप्नुहोस्') : t.nominateBtn[lang]}
         </button>
       </section>
 
@@ -131,9 +171,11 @@ export default function DirectorySection({ lang, onAddMember, onTrackAction }: D
           <div className="border-b border-teal-200 pb-4">
             <h3 className="text-xl font-bold text-teal-950 flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-teal-700" />
-              {t.formTitle[lang]}
+              {isAdmin ? (lang === 'en' ? 'Add New Member Profile' : 'नयाँ सदस्य थप्नुहोस्') : t.formTitle[lang]}
             </h3>
-            <p className="text-xs text-gray-500 mt-1">{t.formSub[lang]}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {isAdmin ? (lang === 'en' ? 'Fill out the form below to publish this member directly to the directory.' : 'डाइरेक्टरीमा प्रकाशित गर्न तलको फारम भर्नुहोस्।') : t.formSub[lang]}
+            </p>
           </div>
 
           {formSuccess ? (
@@ -247,6 +289,78 @@ export default function DirectorySection({ lang, onAddMember, onTrackAction }: D
                   rows={2}
                   className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
                 />
+              </div>
+
+              {/* Photo Upload Field */}
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-bold text-teal-950 block mb-1">
+                  {lang === 'en' ? "Profile Photo (Optional)" : "प्रोफाइल फोटो (वैकल्पिक)"}
+                </label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-teal-300 border-dashed rounded-xl bg-white hover:bg-teal-50/20 transition-all">
+                  <div className="space-y-1 text-center">
+                    {photoBase64 ? (
+                      <div className="flex flex-col items-center space-y-2">
+                        <img
+                          src={photoBase64}
+                          alt="Preview"
+                          className="w-20 h-20 rounded-full object-cover border-2 border-teal-600 shadow-md"
+                          referrerPolicy="no-referrer"
+                        />
+                        <span className="text-xs text-teal-800 font-semibold">{photoName}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPhotoBase64('');
+                            setPhotoName('');
+                          }}
+                          className="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-[10px] font-bold uppercase transition-colors"
+                        >
+                          {lang === 'en' ? 'Remove Photo' : 'फोटो हटाउनुहोस्'}
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <svg
+                          className="mx-auto h-10 w-10 text-teal-400"
+                          stroke="currentColor"
+                          fill="none"
+                          viewBox="0 0 48 48"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        <div className="flex text-sm text-gray-600 justify-center">
+                          <label
+                            htmlFor="photo-upload"
+                            className="relative cursor-pointer bg-white rounded-md font-bold text-teal-700 hover:text-teal-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500"
+                          >
+                            <span>{lang === 'en' ? 'Upload a photo' : 'फोटो अपलोड गर्नुहोस्'}</span>
+                            <input
+                              id="photo-upload"
+                              name="photo-upload"
+                              type="file"
+                              accept="image/*"
+                              className="sr-only"
+                              onChange={handlePhotoChange}
+                            />
+                          </label>
+                          <p className="pl-1">{lang === 'en' ? 'or click' : 'वा क्लिक गर्नुहोस्'}</p>
+                        </div>
+                        <p className="text-xs text-gray-400">{lang === 'en' ? 'PNG, JPG, GIF up to 1MB' : 'PNG, JPG, GIF अधिकतम १MB सम्म'}</p>
+                      </>
+                    )}
+                    {uploadProgress && (
+                      <div className="text-xs text-teal-600 font-medium animate-pulse mt-2">
+                        {lang === 'en' ? 'Processing file...' : 'फाइल प्रक्रियामा छ...'}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="md:col-span-2 pt-2">
@@ -382,7 +496,22 @@ export default function DirectorySection({ lang, onAddMember, onTrackAction }: D
               </div>
 
               {/* Contact Button Action */}
-              <div className="pt-4 mt-4 border-t border-teal-50 flex justify-end">
+              <div className="pt-4 mt-4 border-t border-teal-50 flex items-center justify-between">
+                {isAdmin && onDeleteMember ? (
+                  <button
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to remove "${member.name[lang]}" from the directory?`)) {
+                        onDeleteMember(member.id);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-bold rounded-lg transition-colors"
+                    title="Delete Member"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </button>
+                ) : <div />}
+
                 <a
                   href={member.email ? `mailto:${member.email}` : '#'}
                   onClick={() => onTrackAction(`Click Contact Member: ${member.name[lang]}`)}

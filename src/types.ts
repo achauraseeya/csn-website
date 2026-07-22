@@ -15,6 +15,8 @@ export interface Member {
   address: LocalizedString;
   bio?: LocalizedString;
   avatarUrl?: string;
+  photoBase64?: string;
+  photoName?: string;
 }
 
 export interface Notice {
@@ -87,6 +89,8 @@ export interface Document {
   year: string;
   type: string;
   size: string;
+  driveUrl?: string;
+  downloadUrl?: string;
 }
 
 export type MediaType = 'photo' | 'video';

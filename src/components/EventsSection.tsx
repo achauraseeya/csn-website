@@ -1,21 +1,45 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, Clock, CheckCircle2, Award, ClipboardList, Info } from 'lucide-react';
-import { Language } from '../types';
-import { upcomingEvents } from '../data/communityData';
+import { Calendar, MapPin, Clock, CheckCircle2, Award, ClipboardList, Info, Plus, Trash2, X, Sparkles } from 'lucide-react';
+import { Language, CommunityEvent } from '../types';
+import { upcomingEvents as initialUpcomingEvents } from '../data/communityData';
 
 interface EventsSectionProps {
   lang: Language;
   onRegisterVolunteer: (regData: any) => void;
   onTrackAction: (actionName: string) => void;
+  isAdmin?: boolean;
+  eventsList?: CommunityEvent[];
+  onAddEvent?: (newEvent: CommunityEvent) => void;
+  onDeleteEvent?: (id: string) => void;
 }
 
-export default function EventsSection({ lang, onRegisterVolunteer, onTrackAction }: EventsSectionProps) {
-  const [selectedEventId, setSelectedEventId] = useState<string>(upcomingEvents[0]?.id || '');
+export default function EventsSection({
+  lang,
+  onRegisterVolunteer,
+  onTrackAction,
+  isAdmin = false,
+  eventsList = initialUpcomingEvents,
+  onAddEvent,
+  onDeleteEvent,
+}: EventsSectionProps) {
+  const events = eventsList.length > 0 ? eventsList : initialUpcomingEvents;
+  const [selectedEventId, setSelectedEventId] = useState<string>(events[0]?.id || '');
   const [volunteerName, setVolunteerName] = useState('');
   const [volunteerPhone, setVolunteerPhone] = useState('');
   const [volunteerEmail, setVolunteerEmail] = useState('');
   const [volunteerSkills, setVolunteerSkills] = useState('');
   const [successMsg, setSuccessMsg] = useState(false);
+
+  // Add Event Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [eventTitleEn, setEventTitleEn] = useState('');
+  const [eventTitleNe, setEventTitleNe] = useState('');
+  const [eventDescEn, setEventDescEn] = useState('');
+  const [eventDescNe, setEventDescNe] = useState('');
+  const [eventDate, setEventDate] = useState('');
+  const [eventTime, setEventTime] = useState('');
+  const [eventLocEn, setEventLocEn] = useState('');
+  const [eventLocNe, setEventLocNe] = useState('');
 
   const t = {
     title: { en: 'Community Events Schedule & Calendar', ne: 'सामुदायिक कार्यक्रम तालिका र पात्रो' },
@@ -36,7 +60,37 @@ export default function EventsSection({ lang, onRegisterVolunteer, onTrackAction
     calendarTitle: { en: 'July - September 2026 Calendar Overview', ne: 'जुलाई - सेप्टेम्बर २०२६ पात्रो सिंहावलोकन' },
   };
 
-  const selectedEvent = upcomingEvents.find((e) => e.id === selectedEventId) || upcomingEvents[0];
+  const selectedEvent = events.find((e) => e.id === selectedEventId) || events[0] || initialUpcomingEvents[0];
+
+  const handleAddEventSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!eventTitleEn || !eventDate || !eventLocEn) return;
+
+    const newEvt: CommunityEvent = {
+      id: `evt_${Date.now()}`,
+      title: { en: eventTitleEn, ne: eventTitleNe || eventTitleEn },
+      description: { en: eventDescEn || 'Community Event', ne: eventDescNe || 'सामुदायिक कार्यक्रम' },
+      date: eventDate,
+      time: eventTime || '10:00 AM onwards',
+      location: { en: eventLocEn, ne: eventLocNe || eventLocEn },
+      status: 'upcoming',
+    };
+
+    if (onAddEvent) {
+      onAddEvent(newEvt);
+    }
+    onTrackAction(`Admin added event: ${eventTitleEn}`);
+    setShowAddModal(false);
+    // Reset form
+    setEventTitleEn('');
+    setEventTitleNe('');
+    setEventDescEn('');
+    setEventDescNe('');
+    setEventDate('');
+    setEventTime('');
+    setEventLocEn('');
+    setEventLocNe('');
+  };
 
   const handleVolunteerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,15 +166,161 @@ export default function EventsSection({ lang, onRegisterVolunteer, onTrackAction
   return (
     <div className="space-y-12 animate-in fade-in duration-300">
       {/* Intro Header */}
-      <section className="bg-gradient-to-r from-teal-900 to-emerald-900 p-8 rounded-2xl text-white shadow-md">
-        <h2 className="text-2xl sm:text-3xl font-extrabold flex items-center gap-3">
-          <Calendar className="w-8 h-8 text-emerald-400" />
-          {t.title[lang]}
-        </h2>
-        <p className="text-teal-100 text-sm sm:text-base mt-2 max-w-2xl">
-          {t.subtitle[lang]}
-        </p>
+      <section className="bg-gradient-to-r from-teal-900 to-emerald-900 p-8 rounded-2xl text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold flex items-center gap-3">
+            <Calendar className="w-8 h-8 text-emerald-400" />
+            {t.title[lang]}
+          </h2>
+          <p className="text-teal-100 text-sm sm:text-base mt-2 max-w-2xl">
+            {t.subtitle[lang]}
+          </p>
+        </div>
+
+        {/* Admin Add Event Button */}
+        {isAdmin && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center gap-2 shrink-0 self-start md:self-auto"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{lang === 'en' ? '+ Add Community Event' : '+ कार्यक्रम थप्नुहोस्'}</span>
+          </button>
+        )}
       </section>
+
+      {/* Admin Add Event Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setShowAddModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
+              <Sparkles className="w-5 h-5 text-emerald-600" />
+              <h3 className="text-lg font-bold text-teal-950">
+                {lang === 'en' ? 'Add New Community Event' : 'नयाँ सामुदायिक कार्यक्रम थप्नुहोस्'}
+              </h3>
+            </div>
+
+            <form onSubmit={handleAddEventSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700">Event Title (English) *</label>
+                  <input
+                    type="text"
+                    required
+                    value={eventTitleEn}
+                    onChange={(e) => setEventTitleEn(e.target.value)}
+                    placeholder="e.g. Free Eye Checkup Camp"
+                    className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700">कार्यक्रम शीर्षक (नेपाली)</label>
+                  <input
+                    type="text"
+                    value={eventTitleNe}
+                    onChange={(e) => setEventTitleNe(e.target.value)}
+                    placeholder="उदा. नि:शुल्क आँखा जाँच शिविर"
+                    className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700">Date (e.g., Aug 25, 2026) *</label>
+                  <input
+                    type="text"
+                    required
+                    value={eventDate}
+                    onChange={(e) => setEventDate(e.target.value)}
+                    placeholder="Aug 25, 2026"
+                    className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700">Time (e.g., 10:00 AM - 4:00 PM)</label>
+                  <input
+                    type="text"
+                    value={eventTime}
+                    onChange={(e) => setEventTime(e.target.value)}
+                    placeholder="10:00 AM - 4:00 PM"
+                    className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700">Location (English) *</label>
+                  <input
+                    type="text"
+                    required
+                    value={eventLocEn}
+                    onChange={(e) => setEventLocEn(e.target.value)}
+                    placeholder="Community Hall, Birgunj"
+                    className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700">स्थान (नेपाली)</label>
+                  <input
+                    type="text"
+                    value={eventLocNe}
+                    onChange={(e) => setEventLocNe(e.target.value)}
+                    placeholder="सामुदायिक हल, वीरगन्ज"
+                    className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-700">Description (English)</label>
+                <textarea
+                  value={eventDescEn}
+                  onChange={(e) => setEventDescEn(e.target.value)}
+                  placeholder="Details about the event, medical staff, registration info..."
+                  rows={2}
+                  className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-700">विवरण (नेपाली)</label>
+                <textarea
+                  value={eventDescNe}
+                  onChange={(e) => setEventDescNe(e.target.value)}
+                  placeholder="कार्यक्रमको विस्तृत विवरण..."
+                  rows={2}
+                  className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow"
+                >
+                  Save Event
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Grid: Left Column (Events list & details), Right Column (Calendar & Registration Form) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -163,7 +363,7 @@ export default function EventsSection({ lang, onRegisterVolunteer, onTrackAction
 
           {/* Upcoming Event Cards list */}
           <div className="space-y-4">
-            {upcomingEvents.map((evt) => {
+            {events.map((evt) => {
               const isSelected = evt.id === selectedEventId;
               return (
                 <div
@@ -172,13 +372,13 @@ export default function EventsSection({ lang, onRegisterVolunteer, onTrackAction
                     setSelectedEventId(evt.id);
                     onTrackAction(`Select event: ${evt.title[lang]}`);
                   }}
-                  className={`p-5 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${
+                  className={`p-5 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative group ${
                     isSelected
                       ? 'bg-teal-700 text-white border-teal-800 shadow-md transform translate-x-1'
                       : 'bg-white text-teal-950 border-teal-100 hover:border-teal-300 hover:bg-teal-50/20'
                   }`}
                 >
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 flex-1 pr-8 sm:pr-0">
                     <h4 className="font-extrabold text-base leading-tight">
                       {evt.title[lang]}
                     </h4>
@@ -190,15 +390,34 @@ export default function EventsSection({ lang, onRegisterVolunteer, onTrackAction
                       <span className="truncate max-w-[180px]">{evt.location[lang]}</span>
                     </div>
                   </div>
-                  <span
-                    className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border shrink-0 ${
-                      isSelected
-                        ? 'bg-teal-800 text-emerald-300 border-teal-900'
-                        : 'bg-emerald-100 text-teal-800 border-teal-200'
-                    }`}
-                  >
-                    SELECT
-                  </span>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border shrink-0 ${
+                        isSelected
+                          ? 'bg-teal-800 text-emerald-300 border-teal-900'
+                          : 'bg-emerald-100 text-teal-800 border-teal-200'
+                      }`}
+                    >
+                      SELECT
+                    </span>
+
+                    {/* Admin Delete Event Button */}
+                    {isAdmin && onDeleteEvent && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Are you sure you want to delete "${evt.title[lang]}"?`)) {
+                            onDeleteEvent(evt.id);
+                          }
+                        }}
+                        className="p-1.5 text-red-400 hover:text-red-200 hover:bg-red-950/40 rounded-lg transition-colors"
+                        title="Delete Event"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -323,7 +542,7 @@ export default function EventsSection({ lang, onRegisterVolunteer, onTrackAction
                     onChange={(e) => setSelectedEventId(e.target.value)}
                     className="w-full p-2.5 bg-teal-950/80 border border-teal-800 text-sm text-white rounded-lg focus:outline-none focus:border-emerald-400"
                   >
-                    {upcomingEvents.map((evt) => (
+                    {events.map((evt) => (
                       <option key={evt.id} value={evt.id} className="text-teal-950 font-semibold">
                         {evt.title[lang]}
                       </option>
