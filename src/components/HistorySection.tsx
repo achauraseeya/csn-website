@@ -395,12 +395,9 @@ export default function HistorySection({ lang, onNavigate, onTrackAction, onSele
             <a 
               key={post.id} 
               href={post.link || '#'}
+              target="_top"
               onClick={(e) => {
-                if (onSelectPost) {
-                  e.preventDefault();
-                  onSelectPost(post);
-                  onTrackAction(`Read live blog post: ${post.title.en || post.title.ne}`);
-                } else if (!post.link || post.link === '#') {
+                if (!post.link || post.link === '#') {
                   e.preventDefault();
                   alert(lang === 'en' ? 'Full blog posts are available on our official Blogger site.' : 'पूर्ण ब्लग पोस्टहरू हाम्रो आधिकारिक ब्लगर साइटमा उपलब्ध छन्।');
                 } else {

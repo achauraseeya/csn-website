@@ -57,15 +57,17 @@ export function generateBloggerXml(
     <b:section id='main' showaddelement='yes'>
       <b:widget id='Blog1' locked='true' title='Blog Posts' type='Blog' visible='true'>
         <b:includable id='main' var='top'>
-          <b:loop values='data:posts' var='post'>
-            <div id='blogger-post-data' class='blogger-post-container'>
-              <div id='blogger-post-title'><data:post.title/></div>
-              <div id='blogger-post-author'><data:post.author/></div>
-              <div id='blogger-post-date'><data:post.dateHeader/></div>
-              <div id='blogger-post-url'><data:post.url/></div>
-              <div id='blogger-post-content'><data:post.body/></div>
-            </div>
-          </b:loop>
+          <b:if cond='data:blog.pageType in {"item", "static_page"}'>
+            <b:loop values='data:posts' var='post'>
+              <div id='blogger-post-data' class='blogger-post-container'>
+                <div id='blogger-post-title'><data:post.title/></div>
+                <div id='blogger-post-author'><data:post.author/></div>
+                <div id='blogger-post-date'><data:post.dateHeader/></div>
+                <div id='blogger-post-url'><data:post.url/></div>
+                <div id='blogger-post-content'><data:post.body/></div>
+              </div>
+            </b:loop>
+          </b:if>
         </b:includable>
       </b:widget>
     </b:section>

@@ -30,6 +30,20 @@ export default function App() {
 
   // Single Blog Post Detection (Blogger XML & URL path routing)
   useEffect(() => {
+    const pathname = window.location.pathname;
+    const isHomepagePath = 
+      pathname === '/' || 
+      pathname === '/index.html' || 
+      pathname === '' || 
+      pathname.endsWith('/dist/') || 
+      pathname.endsWith('/dist/index.html');
+
+    if (isHomepagePath) {
+      setCurrentTab('history');
+      setSelectedBlogPost(null);
+      return;
+    }
+
     const detectPost = () => {
       // 1. Check if Blogger XML injected native post data in #blogger-post-data
       const postElem = document.getElementById('blogger-post-data');
