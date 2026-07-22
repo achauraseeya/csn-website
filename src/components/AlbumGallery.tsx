@@ -4,7 +4,7 @@ import {
   Grid, List, Sparkles, Folder
 } from 'lucide-react';
 import { Album, Language } from '../types';
-import { journeyAlbums } from '../data/albumsData';
+import { journeyAlbums as defaultJourneyAlbums } from '../data/albumsData';
 import AlbumDetail from './AlbumDetail';
 
 interface AlbumGalleryProps {
@@ -12,20 +12,31 @@ interface AlbumGalleryProps {
   onTrackAction: (actionName: string) => void;
   initialSelectedAlbumId?: string | null;
   onBackToHome?: () => void;
+  albums?: Album[];
+  onSelectAlbum?: (albumId: string) => void;
+  onOpenUploadModal?: () => void;
 }
 
-export default function AlbumGallery({ lang, onTrackAction, initialSelectedAlbumId, onBackToHome }: AlbumGalleryProps) {
+export default function AlbumGallery({ 
+  lang, 
+  onTrackAction, 
+  initialSelectedAlbumId, 
+  onBackToHome,
+  albums = defaultJourneyAlbums,
+  onSelectAlbum,
+  onOpenUploadModal
+}: AlbumGalleryProps) {
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(initialSelectedAlbumId || null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Extract unique tags across all albums
-  const allTags = Array.from(new Set(journeyAlbums.flatMap((a) => a.tags)));
+  const allTags = Array.from(new Set(albums.flatMap((a) => a.tags)));
 
-  const selectedAlbum = journeyAlbums.find((a) => a.id === selectedAlbumId);
+  const selectedAlbum = albums.find((a) => a.id === selectedAlbumId);
 
-  const filteredAlbums = journeyAlbums.filter((album) => {
+  const filteredAlbums = albums.filter((album) => {
     const matchesSearch = 
       album.title[lang].toLowerCase().includes(searchTerm.toLowerCase()) ||
       album.description[lang].toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -37,8 +48,12 @@ export default function AlbumGallery({ lang, onTrackAction, initialSelectedAlbum
   });
 
   const handleOpenAlbum = (albumId: string) => {
-    setSelectedAlbumId(albumId);
-    const album = journeyAlbums.find(a => a.id === albumId);
+    if (onSelectAlbum) {
+      onSelectAlbum(albumId);
+    } else {
+      setSelectedAlbumId(albumId);
+    }
+    const album = albums.find(a => a.id === albumId);
     if (album) {
       onTrackAction(`Opened album: ${album.title.en}`);
     }
@@ -85,16 +100,26 @@ export default function AlbumGallery({ lang, onTrackAction, initialSelectedAlbum
             {t.sub[lang]}
           </p>
 
-          {onBackToHome && (
-            <div className="pt-2">
+          <div className="pt-2 flex flex-wrap items-center gap-3">
+            {onBackToHome && (
               <button
                 onClick={onBackToHome}
-                className="text-xs font-bold uppercase tracking-wider px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all border border-white/20"
+                className="text-xs font-bold uppercase tracking-wider px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all border border-white/20"
               >
                 ← {lang === 'en' ? 'Back to Homepage' : 'गृहपृष्ठमा फर्कनुहोस्'}
               </button>
-            </div>
-          )}
+            )}
+
+            {onOpenUploadModal && (
+              <button
+                onClick={onOpenUploadModal}
+                className="text-xs font-extrabold uppercase tracking-wider px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-gray-950 rounded-xl transition-all shadow-lg flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4 fill-current" />
+                <span>{lang === 'en' ? '+ Add Photos/Videos & Create Post' : '+ फोटो/भिडियो थप्नुहोस् र पोस्ट बनाउनुहोस्'}</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

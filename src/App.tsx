@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail } from 'lucide-react';
-import { Language, AnalyticsMetric, Member } from './types';
+import { Language, AnalyticsMetric, Member, Album } from './types';
 import { boardMembers as initialMembers } from './data/communityData';
+import { journeyAlbums as initialJourneyAlbums } from './data/albumsData';
 import logoImg from './assets/images/chaurasiya_logo_1784519579895.jpg';
 
 import Navigation from './components/Navigation';
 import HistorySection from './components/HistorySection';
 import AlbumGallery from './components/AlbumGallery';
+import AlbumDetail from './components/AlbumDetail';
 import BlogPostDetail, { SinglePostData } from './components/BlogPostDetail';
 import NoticeGallery from './components/NoticeGallery';
 import DirectorySection from './components/DirectorySection';
@@ -18,6 +20,7 @@ import BloggerXmlExporter from './components/BloggerXmlExporter';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import TransparencySection from './components/TransparencySection';
 import ContactSection from './components/ContactSection';
+import UploadJourneyPostModal from './components/UploadJourneyPostModal';
 
 export default function App() {
   const [lang, setLang] = useState<Language>('ne');
@@ -27,6 +30,49 @@ export default function App() {
   
   // Dynamic Member Directory list
   const [members, setMembers] = useState<Member[]>(initialMembers);
+
+  // Glimpses of Our Journey Albums State (Initial + LocalStorage saved)
+  const [albums, setAlbums] = useState<Album[]>(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_journey_albums');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Merge custom albums with default ones to avoid duplicate IDs
+          const customOnly = parsed.filter(p => !initialJourneyAlbums.some(i => i.id === p.id));
+          return [...initialJourneyAlbums, ...customOnly];
+        }
+      }
+    } catch (e) {
+      console.error('Error loading custom albums from localStorage', e);
+    }
+    return initialJourneyAlbums;
+  });
+
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+  const handleSelectAlbum = (albumId: string) => {
+    setSelectedAlbumId(albumId);
+    setCurrentTab('album-detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAddAlbum = (newAlbum: Album) => {
+    setAlbums((prev) => {
+      const updated = [newAlbum, ...prev];
+      try {
+        localStorage.setItem('chaurasiya_journey_albums', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save album to localStorage', e);
+      }
+      return updated;
+    });
+    // Automatically navigate to the dedicated page for this newly created album post!
+    setSelectedAlbumId(newAlbum.id);
+    setCurrentTab('album-detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Single Blog Post Detection (Blogger XML & URL path routing)
   useEffect(() => {
@@ -334,6 +380,9 @@ export default function App() {
               setCurrentTab('single-post');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
+            onSelectAlbum={handleSelectAlbum}
+            albums={albums}
+            onOpenUploadModal={() => setIsUploadModalOpen(true)}
           />
         )}
 
@@ -355,7 +404,27 @@ export default function App() {
             lang={lang}
             onTrackAction={handleTrackAction}
             onBackToHome={() => handleNavigate('history')}
+            albums={albums}
+            onSelectAlbum={handleSelectAlbum}
+            onOpenUploadModal={() => setIsUploadModalOpen(true)}
           />
+        )}
+
+        {currentTab === 'album-detail' && (
+          <div className="space-y-6">
+            {(() => {
+              const currentAlbum = albums.find((a) => a.id === selectedAlbumId) || albums[0];
+              if (!currentAlbum) return null;
+              return (
+                <AlbumDetail
+                  album={currentAlbum}
+                  lang={lang}
+                  onClose={() => handleNavigate('albums-gallery')}
+                  onTrackAction={handleTrackAction}
+                />
+              );
+            })()}
+          </div>
         )}
 
         {currentTab === 'leader-bio' && (
@@ -539,6 +608,15 @@ export default function App() {
       >
         <MessageCircle className="w-7 h-7" />
       </a>
+
+      {/* Upload Journey Post & Media Creation Modal */}
+      <UploadJourneyPostModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        lang={lang}
+        onAddAlbum={handleAddAlbum}
+        existingAlbums={albums}
+      />
     </div>
   );
 }

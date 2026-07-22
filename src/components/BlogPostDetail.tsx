@@ -76,11 +76,6 @@ export default function BlogPostDetail({
           <ArrowLeft className="w-4 h-4" />
           <span>{lang === 'en' ? 'Back to Homepage' : 'गृहपृष्ठमा फर्कनुहोस्'}</span>
         </button>
-
-        <div className="text-xs font-bold text-teal-700 flex items-center gap-1.5">
-          <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
-          <span>{lang === 'en' ? 'Official Blog Post' : 'आधिकारिक ब्लग पोस्ट'}</span>
-        </div>
       </div>
 
       {/* Main Post Container */}
@@ -173,7 +168,7 @@ export default function BlogPostDetail({
             )}
           </div>
 
-          {/* Footer Navigation & Link */}
+          {/* Footer Navigation */}
           <div className="pt-8 border-t border-teal-100 flex flex-col sm:flex-row items-center justify-between gap-4">
             <button
               onClick={onBackToHome}
@@ -182,18 +177,6 @@ export default function BlogPostDetail({
               <ArrowLeft className="w-4 h-4" />
               <span>{lang === 'en' ? 'Back to Homepage' : 'गृहपृष्ठमा फर्कनुहोस्'}</span>
             </button>
-
-            {post.link && post.link !== '#' && (
-              <a
-                href={post.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-bold text-teal-700 hover:text-teal-900 inline-flex items-center gap-1.5 underline"
-              >
-                <span>{lang === 'en' ? 'Open Original Post on Blogger' : 'ब्लगरमा मूल पोस्ट हेर्नुहोस्'}</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            )}
           </div>
         </div>
       </article>
