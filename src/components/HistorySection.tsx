@@ -10,6 +10,7 @@ interface HistorySectionProps {
   onNavigate: (tabId: string) => void;
   onTrackAction: (actionName: string) => void;
   onSelectLeader: (id: string) => void;
+  onSelectPost?: (post: any) => void;
 }
 
 interface BloggerPost {
@@ -23,12 +24,12 @@ interface BloggerPost {
   tags?: string[];
 }
 
-export default function HistorySection({ lang, onNavigate, onTrackAction, onSelectLeader }: HistorySectionProps) {
+export default function HistorySection({ lang, onNavigate, onTrackAction, onSelectLeader, onSelectPost }: HistorySectionProps) {
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
   const [viewPdfNoticeId, setViewPdfNoticeId] = useState<string | null>(null);
-  const [livePosts, setLivePosts] = useState<BloggerPost[]>([]);
+  const [livePosts, setLivePosts] = useState<any[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
   useEffect(() => {
@@ -64,6 +65,10 @@ export default function HistorySection({ lang, onNavigate, onTrackAction, onSele
             excerpt: {
               en: stripped,
               ne: stripped
+            },
+            content: {
+              en: contentStr,
+              ne: contentStr
             },
             date: new Date(entry.published.$t).toLocaleDateString(),
             author: entry.author?.[0]?.name?.$t || 'Admin',
@@ -390,13 +395,16 @@ export default function HistorySection({ lang, onNavigate, onTrackAction, onSele
             <a 
               key={post.id} 
               href={post.link || '#'}
-              target={post.link && post.link !== '#' ? "_top" : "_self"}
               onClick={(e) => {
-                if (!post.link || post.link === '#') {
+                if (onSelectPost) {
+                  e.preventDefault();
+                  onSelectPost(post);
+                  onTrackAction(`Read live blog post: ${post.title.en || post.title.ne}`);
+                } else if (!post.link || post.link === '#') {
                   e.preventDefault();
                   alert(lang === 'en' ? 'Full blog posts are available on our official Blogger site.' : 'पूर्ण ब्लग पोस्टहरू हाम्रो आधिकारिक ब्लगर साइटमा उपलब्ध छन्।');
                 } else {
-                  onTrackAction(`Read live blog post: ${post.title.en}`);
+                  onTrackAction(`Read live blog post: ${post.title.en || post.title.ne}`);
                 }
               }}
               className="bg-white rounded-2xl shadow-sm border border-teal-100 overflow-hidden hover:shadow-md transition-shadow group block cursor-pointer"

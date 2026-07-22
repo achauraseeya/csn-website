@@ -12,6 +12,7 @@ export function generateBloggerXml(
   // It provides the required layoutVersion='2' and b:skin tags.
   // This shell delegates all rendering to the React app hosted on GitHub Pages.
 
+  const versionTag = `?v=${Date.now()}`;
   const basePath = useDistFolder 
     ? `https://${githubUsername}.github.io/${githubRepo}/dist/assets`
     : `https://${githubUsername}.github.io/${githubRepo}/assets`;
@@ -37,8 +38,8 @@ export function generateBloggerXml(
     }
   ]]></b:skin>
 
-  <!-- Connect to GitHub Pages Hosted Assets -->
-  <link rel="stylesheet" crossorigin="anonymous" href="${basePath}/index.css" />
+  <!-- Connect to GitHub Pages Hosted Assets (with cache buster) -->
+  <link rel="stylesheet" crossorigin="anonymous" href="${basePath}/index.css${versionTag}" />
 </head>
 <body>
 
@@ -51,19 +52,29 @@ export function generateBloggerXml(
   </div>
 
   <!-- Blogger Required Structural Section -->
-  <!-- This is hidden because our React app handles the UI, but Blogger requires at least one b:section -->
+  <!-- On single post or static pages, Blogger renders the post data here so React can display it cleanly -->
   <div style="display: none;">
     <b:section id='main' showaddelement='yes'>
       <b:widget id='Blog1' locked='true' title='Blog Posts' type='Blog' visible='true'>
         <b:includable id='main' var='top'>
-           <!-- Minimal includable to satisfy Blogger validation -->
+          <b:if cond='data:blog.pageType in {"item", "static_page"}'>
+            <b:loop values='data:posts' var='post'>
+              <div id='blogger-post-data'>
+                <div id='blogger-post-title'><data:post.title/></div>
+                <div id='blogger-post-author'><data:post.author.name/></div>
+                <div id='blogger-post-date'><data:post.timestamp/></div>
+                <div id='blogger-post-url'><data:post.url/></div>
+                <div id='blogger-post-content'><data:post.body/></div>
+              </div>
+            </b:loop>
+          </b:if>
         </b:includable>
       </b:widget>
     </b:section>
   </div>
 
-  <!-- Load the compiled React JS from GitHub Pages -->
-  <script type="module" crossorigin="anonymous" src="${basePath}/index.js"></script>
+  <!-- Load the compiled React JS from GitHub Pages (with cache buster) -->
+  <script type="module" crossorigin="anonymous" src="${basePath}/index.js${versionTag}"></script>
 
 </body>
 </html>`;

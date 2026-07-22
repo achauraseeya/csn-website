@@ -7,6 +7,7 @@ import logoImg from './assets/images/chaurasiya_logo_1784519579895.jpg';
 import Navigation from './components/Navigation';
 import HistorySection from './components/HistorySection';
 import AlbumGallery from './components/AlbumGallery';
+import BlogPostDetail, { SinglePostData } from './components/BlogPostDetail';
 import NoticeGallery from './components/NoticeGallery';
 import DirectorySection from './components/DirectorySection';
 import EventsSection from './components/EventsSection';
@@ -22,9 +23,70 @@ export default function App() {
   const [lang, setLang] = useState<Language>('ne');
   const [currentTab, setCurrentTab] = useState<string>('history');
   const [selectedLeaderId, setSelectedLeaderId] = useState<string | null>(null);
+  const [selectedBlogPost, setSelectedBlogPost] = useState<SinglePostData | null>(null);
   
   // Dynamic Member Directory list
   const [members, setMembers] = useState<Member[]>(initialMembers);
+
+  // Single Blog Post Detection (Blogger XML & URL path routing)
+  useEffect(() => {
+    // 1. Check if Blogger XML injected native post data in #blogger-post-data
+    const postElem = document.getElementById('blogger-post-data');
+    if (postElem) {
+      const title = document.getElementById('blogger-post-title')?.innerText?.trim() || '';
+      const author = document.getElementById('blogger-post-author')?.innerText?.trim() || 'Chaurasiya Samaj Admin';
+      const date = document.getElementById('blogger-post-date')?.innerText?.trim() || '';
+      const url = document.getElementById('blogger-post-url')?.innerText?.trim() || window.location.href;
+      const contentHtml = document.getElementById('blogger-post-content')?.innerHTML || '';
+
+      if (title || contentHtml) {
+        setSelectedBlogPost({
+          id: 'blogger-single-post-native',
+          title: { en: title, ne: title },
+          content: { en: contentHtml, ne: contentHtml },
+          date: date || new Date().toLocaleDateString(),
+          author,
+          link: url,
+        });
+        setCurrentTab('single-post');
+        return;
+      }
+    }
+
+    // 2. Check if window pathname is a Blogger item page (e.g. /2026/07/post.html or /p/page.html)
+    const pathname = window.location.pathname;
+    if (pathname.length > 5 && (pathname.includes('/20') || pathname.includes('/p/') || pathname.endsWith('.html'))) {
+      fetch('/feeds/posts/default?alt=json')
+        .then((res) => res.json())
+        .then((data) => {
+          const entries = data.feed?.entry || [];
+          const matched = entries.find((e: any) => {
+            const altLink = e.link?.find((l: any) => l.rel === 'alternate')?.href || '';
+            return altLink.includes(pathname) || pathname.includes(e.id?.$t);
+          });
+
+          if (matched) {
+            const contentStr = matched.content?.$t || matched.summary?.$t || '';
+            const imgMatch = contentStr.match(/<img[^>]+src="([^">]+)"/i);
+            const imageUrl = imgMatch ? imgMatch[1] : undefined;
+            const link = matched.link?.find((l: any) => l.rel === 'alternate')?.href || window.location.href;
+
+            setSelectedBlogPost({
+              id: matched.id?.$t || 'matched-post',
+              title: { en: matched.title?.$t || 'Blog Article', ne: matched.title?.$t || 'ब्लग पोस्ट' },
+              content: { en: contentStr, ne: contentStr },
+              date: new Date(matched.published?.$t || Date.now()).toLocaleDateString(),
+              author: matched.author?.[0]?.name?.$t || 'Admin',
+              imageUrl,
+              link,
+              tags: matched.category ? matched.category.map((c: any) => c.term) : [],
+            });
+            setCurrentTab('single-post');
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   // Simulated live metrics state
   const [metrics, setMetrics] = useState<AnalyticsMetric>({
@@ -150,7 +212,17 @@ export default function App() {
   // Switch tab scroll helper
   const handleNavigate = (tabId: string) => {
     setCurrentTab(tabId);
+    if (tabId !== 'single-post') {
+      setSelectedBlogPost(null);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // If currently on a Blogger single post URL and user clicks Home / Navigation
+    if (window.location.pathname.includes('.html') || window.location.pathname.includes('/20')) {
+      if (tabId === 'history') {
+        window.location.href = '/';
+      }
+    }
   };
 
   const t = {
@@ -204,6 +276,24 @@ export default function App() {
             onNavigate={handleNavigate}
             onTrackAction={handleTrackAction}
             onSelectLeader={setSelectedLeaderId}
+            onSelectPost={(post) => {
+              setSelectedBlogPost(post);
+              setCurrentTab('single-post');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
+
+        {currentTab === 'single-post' && selectedBlogPost && (
+          <BlogPostDetail
+            post={selectedBlogPost}
+            lang={lang}
+            onBackToHome={() => handleNavigate('history')}
+            onTrackAction={handleTrackAction}
+            onSelectPost={(post) => {
+              setSelectedBlogPost(post);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         )}
 
