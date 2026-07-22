@@ -30,62 +30,101 @@ export default function App() {
 
   // Single Blog Post Detection (Blogger XML & URL path routing)
   useEffect(() => {
-    // 1. Check if Blogger XML injected native post data in #blogger-post-data
-    const postElem = document.getElementById('blogger-post-data');
-    if (postElem) {
-      const title = document.getElementById('blogger-post-title')?.innerText?.trim() || '';
-      const author = document.getElementById('blogger-post-author')?.innerText?.trim() || 'Chaurasiya Samaj Admin';
-      const date = document.getElementById('blogger-post-date')?.innerText?.trim() || '';
-      const url = document.getElementById('blogger-post-url')?.innerText?.trim() || window.location.href;
-      const contentHtml = document.getElementById('blogger-post-content')?.innerHTML || '';
+    const detectPost = () => {
+      // 1. Check if Blogger XML injected native post data in #blogger-post-data
+      const postElem = document.getElementById('blogger-post-data');
+      if (postElem) {
+        const title = document.getElementById('blogger-post-title')?.innerText?.trim() || '';
+        const author = document.getElementById('blogger-post-author')?.innerText?.trim() || 'Chaurasiya Samaj Admin';
+        const date = document.getElementById('blogger-post-date')?.innerText?.trim() || '';
+        const url = document.getElementById('blogger-post-url')?.innerText?.trim() || window.location.href;
+        const contentHtml = document.getElementById('blogger-post-content')?.innerHTML || '';
 
-      if (title || contentHtml) {
-        setSelectedBlogPost({
-          id: 'blogger-single-post-native',
-          title: { en: title, ne: title },
-          content: { en: contentHtml, ne: contentHtml },
-          date: date || new Date().toLocaleDateString(),
-          author,
-          link: url,
-        });
-        setCurrentTab('single-post');
-        return;
-      }
-    }
-
-    // 2. Check if window pathname is a Blogger item page (e.g. /2026/07/post.html or /p/page.html)
-    const pathname = window.location.pathname;
-    if (pathname.length > 5 && (pathname.includes('/20') || pathname.includes('/p/') || pathname.endsWith('.html'))) {
-      fetch('/feeds/posts/default?alt=json')
-        .then((res) => res.json())
-        .then((data) => {
-          const entries = data.feed?.entry || [];
-          const matched = entries.find((e: any) => {
-            const altLink = e.link?.find((l: any) => l.rel === 'alternate')?.href || '';
-            return altLink.includes(pathname) || pathname.includes(e.id?.$t);
+        if (title || (contentHtml && contentHtml.length > 10)) {
+          setSelectedBlogPost({
+            id: 'blogger-single-post-native',
+            title: { en: title, ne: title },
+            content: { en: contentHtml, ne: contentHtml },
+            date: date || new Date().toLocaleDateString(),
+            author,
+            link: url,
           });
+          setCurrentTab('single-post');
+          return true;
+        }
+      }
 
-          if (matched) {
-            const contentStr = matched.content?.$t || matched.summary?.$t || '';
-            const imgMatch = contentStr.match(/<img[^>]+src="([^">]+)"/i);
-            const imageUrl = imgMatch ? imgMatch[1] : undefined;
-            const link = matched.link?.find((l: any) => l.rel === 'alternate')?.href || window.location.href;
+      // 2. Check if URL pathname is a Blogger item or page URL (e.g. /2026/07/post.html or /p/notice.html)
+      const pathname = window.location.pathname;
+      if (pathname.length > 3 && (pathname.includes('/20') || pathname.includes('/p/') || pathname.endsWith('.html'))) {
+        // Try fetching exact post via Blogger Path Feed API
+        const pathFeedUrl = `/feeds/posts/default?alt=json&path=${encodeURIComponent(pathname)}`;
+        fetch(pathFeedUrl)
+          .then((res) => res.json())
+          .then((data) => {
+            const entry = data.feed?.entry?.[0] || data.entry;
+            if (entry) {
+              const contentStr = entry.content?.$t || entry.summary?.$t || '';
+              const imgMatch = contentStr.match(/<img[^>]+src="([^">]+)"/i);
+              const imageUrl = imgMatch ? imgMatch[1] : undefined;
+              const link = entry.link?.find((l: any) => l.rel === 'alternate')?.href || window.location.href;
+              const titleText = entry.title?.$t || 'Blog Article';
 
-            setSelectedBlogPost({
-              id: matched.id?.$t || 'matched-post',
-              title: { en: matched.title?.$t || 'Blog Article', ne: matched.title?.$t || 'ब्लग पोस्ट' },
-              content: { en: contentStr, ne: contentStr },
-              date: new Date(matched.published?.$t || Date.now()).toLocaleDateString(),
-              author: matched.author?.[0]?.name?.$t || 'Admin',
-              imageUrl,
-              link,
-              tags: matched.category ? matched.category.map((c: any) => c.term) : [],
-            });
-            setCurrentTab('single-post');
-          }
-        })
-        .catch(() => {});
-    }
+              setSelectedBlogPost({
+                id: entry.id?.$t || 'path-post',
+                title: { en: titleText, ne: titleText },
+                content: { en: contentStr, ne: contentStr },
+                date: new Date(entry.published?.$t || Date.now()).toLocaleDateString(),
+                author: entry.author?.[0]?.name?.$t || 'Admin',
+                imageUrl,
+                link,
+                tags: entry.category ? entry.category.map((c: any) => c.term) : [],
+              });
+              setCurrentTab('single-post');
+              return;
+            }
+            throw new Error('Path feed empty');
+          })
+          .catch(() => {
+            // Fallback: fetch default recent posts feed and search by pathname
+            fetch('/feeds/posts/default?alt=json')
+              .then((res) => res.json())
+              .then((data) => {
+                const entries = data.feed?.entry || [];
+                const cleanPath = pathname.replace(/^\/+|\/+$/g, '');
+                const matched = entries.find((e: any) => {
+                  const altLink = e.link?.find((l: any) => l.rel === 'alternate')?.href || '';
+                  return altLink.includes(cleanPath) || pathname.includes(e.id?.$t);
+                });
+
+                if (matched) {
+                  const contentStr = matched.content?.$t || matched.summary?.$t || '';
+                  const imgMatch = contentStr.match(/<img[^>]+src="([^">]+)"/i);
+                  const imageUrl = imgMatch ? imgMatch[1] : undefined;
+                  const link = matched.link?.find((l: any) => l.rel === 'alternate')?.href || window.location.href;
+
+                  setSelectedBlogPost({
+                    id: matched.id?.$t || 'matched-post',
+                    title: { en: matched.title?.$t || 'Blog Article', ne: matched.title?.$t || 'ब्लग पोस्ट' },
+                    content: { en: contentStr, ne: contentStr },
+                    date: new Date(matched.published?.$t || Date.now()).toLocaleDateString(),
+                    author: matched.author?.[0]?.name?.$t || 'Admin',
+                    imageUrl,
+                    link,
+                    tags: matched.category ? matched.category.map((c: any) => c.term) : [],
+                  });
+                  setCurrentTab('single-post');
+                }
+              })
+              .catch(() => {});
+          });
+      }
+      return false;
+    };
+
+    detectPost();
+    const timer = setTimeout(detectPost, 400);
+    return () => clearTimeout(timer);
   }, []);
 
   // Simulated live metrics state
