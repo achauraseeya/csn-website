@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Download, FileText, ShieldCheck, CheckCircle2, Search, ExternalLink, Plus, Trash2, X, Sparkles, Link as LinkIcon } from 'lucide-react';
 import { Language, Document } from '../types';
 import { documents as initialDocuments } from '../data/communityData';
+import { formatNumber } from '../utils/mediaUrl';
 
 interface TransparencySectionProps {
   lang: Language;
@@ -293,7 +294,7 @@ export default function TransparencySection({
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900 text-lg mb-1 flex items-center gap-2">
-                      {doc.title[lang] || doc.title.en}
+                      {formatNumber(doc.title[lang] || doc.title.en, lang)}
                       {doc.driveUrl && (
                         <span className="text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full uppercase flex items-center gap-1">
                           <ExternalLink className="w-3 h-3" />
@@ -302,10 +303,10 @@ export default function TransparencySection({
                       )}
                     </h3>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                      <span className="px-2.5 py-0.5 bg-gray-100 rounded-full font-medium">{doc.category[lang] || doc.category.en}</span>
-                      <span>• {doc.year}</span>
+                      <span className="px-2.5 py-0.5 bg-gray-100 rounded-full font-medium">{formatNumber(doc.category[lang] || doc.category.en, lang)}</span>
+                      <span>• {formatNumber(doc.year, lang)}</span>
                       <span>• {doc.type}</span>
-                      <span>• {doc.size}</span>
+                      <span>• {formatNumber(doc.size, lang)}</span>
                     </div>
                   </div>
                 </div>

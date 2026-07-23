@@ -174,7 +174,12 @@ export interface NetworkBranch {
   description: LocalizedString;
   location: LocalizedString;
   established?: string;
+  establishedDate?: string;
   avatarUrl?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  heroImagesJson?: string;
+  impactStatsJson?: string;
 }
 
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, MapPin, Clock, CheckCircle2, Award, ClipboardList, Info, Plus, Trash2, X, Sparkles } from 'lucide-react';
 import { Language, CommunityEvent } from '../types';
 import { upcomingEvents as initialUpcomingEvents } from '../data/communityData';
+import { formatNumber } from '../utils/mediaUrl';
 
 interface EventsSectionProps {
   lang: Language;
@@ -332,24 +333,24 @@ export default function EventsSection({
               Selected Agenda
             </span>
             <h3 className="text-xl sm:text-2xl font-extrabold text-teal-950">
-              {selectedEvent.title[lang]}
+              {formatNumber(selectedEvent.title[lang], lang)}
             </h3>
             <p className="text-gray-600 text-sm leading-relaxed">
-              {selectedEvent.description[lang]}
+              {formatNumber(selectedEvent.description[lang], lang)}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-teal-50/50 p-4 rounded-xl border border-teal-100/60 text-xs font-semibold text-teal-900">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-teal-700 shrink-0" />
-                <span>Date: {selectedEvent.date}</span>
+                <span>Date: {formatNumber(selectedEvent.date, lang)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-teal-700 shrink-0" />
-                <span>Time: {selectedEvent.time}</span>
+                <span>Time: {formatNumber(selectedEvent.time, lang)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-teal-700 shrink-0" />
-                <span>{selectedEvent.location[lang]}</span>
+                <span>{formatNumber(selectedEvent.location[lang], lang)}</span>
               </div>
             </div>
 
@@ -380,14 +381,14 @@ export default function EventsSection({
                 >
                   <div className="space-y-1.5 flex-1 pr-8 sm:pr-0">
                     <h4 className="font-extrabold text-base leading-tight">
-                      {evt.title[lang]}
+                      {formatNumber(evt.title[lang], lang)}
                     </h4>
                     <div className={`flex items-center gap-2 text-xs ${isSelected ? 'text-teal-200' : 'text-gray-500'}`}>
                       <Calendar className="w-3.5 h-3.5" />
-                      <span>{evt.date}</span>
+                      <span>{formatNumber(evt.date, lang)}</span>
                       <span>•</span>
                       <MapPin className="w-3.5 h-3.5" />
-                      <span className="truncate max-w-[180px]">{evt.location[lang]}</span>
+                      <span className="truncate max-w-[180px]">{formatNumber(evt.location[lang], lang)}</span>
                     </div>
                   </div>
 
@@ -460,7 +461,7 @@ export default function EventsSection({
                         : 'bg-gray-50/50 text-gray-300 border-transparent'
                     }`}
                   >
-                    <span className="font-bold">{c.day}</span>
+                    <span className="font-bold">{formatNumber(c.day, lang)}</span>
                     {c.label && (
                       <span className="text-[7px] font-bold text-teal-600 uppercase absolute top-0.5 left-0.5">{c.label}</span>
                     )}

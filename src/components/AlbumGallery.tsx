@@ -3,7 +3,7 @@ import {
   Film, Image as ImageIcon, Search, Calendar, MapPin, Tag, ArrowRight, Play, Eye, 
   Grid, List, Sparkles, Folder, ShieldCheck, Trash2
 } from 'lucide-react';
-import { Album, Language } from '../types';
+import { Album, AlbumMediaItem, Language } from '../types';
 import { journeyAlbums as defaultJourneyAlbums } from '../data/albumsData';
 import { getBestAlbumCover } from '../utils/mediaUrl';
 import AlbumDetail from './AlbumDetail';
@@ -19,6 +19,7 @@ interface AlbumGalleryProps {
   isAdmin?: boolean;
   onOpenAdminModal?: () => void;
   onDeleteAlbum?: (albumId: string) => void;
+  onAddMedia?: (albumId: string, media: AlbumMediaItem) => void;
 }
 
 export default function AlbumGallery({ 
@@ -32,6 +33,7 @@ export default function AlbumGallery({
   isAdmin = false,
   onOpenAdminModal,
   onDeleteAlbum,
+  onAddMedia,
 }: AlbumGalleryProps) {
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(initialSelectedAlbumId || null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,8 +86,10 @@ export default function AlbumGallery({
         <AlbumDetail
           album={selectedAlbum}
           lang={lang}
+          isAdmin={isAdmin}
           onClose={() => setSelectedAlbumId(null)}
           onTrackAction={onTrackAction}
+          onAddMedia={onAddMedia}
         />
       </div>
     );

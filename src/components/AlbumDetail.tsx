@@ -5,21 +5,31 @@ import {
   Check, FolderPlus
 } from 'lucide-react';
 import { Album, AlbumMediaItem, Language } from '../types';
-import { parseMediaUrl, extractGoogleDriveFolderId, getGoogleDriveFolderViewUrl, getBestAlbumCover } from '../utils/mediaUrl';
+import { parseMediaUrl, extractGoogleDriveFolderId, getGoogleDriveFolderViewUrl, getBestAlbumCover, formatNumber } from '../utils/mediaUrl';
 
 interface AlbumDetailProps {
   album: Album;
   lang: Language;
   onClose: () => void;
   onTrackAction: (actionName: string) => void;
+  onAddMedia?: (albumId: string, media: AlbumMediaItem) => void;
+  isAdmin?: boolean;
 }
 
-export default function AlbumDetail({ album, lang, onClose, onTrackAction }: AlbumDetailProps) {
+export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAddMedia, isAdmin }: AlbumDetailProps) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [filter, setFilter] = useState<'all' | 'photo' | 'video'>('all');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showInfo, setShowInfo] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
+
+  // Quick inline add media form inside AlbumDetail
+  const [isAddingInline, setIsAddingInline] = useState(false);
+  const [newTitleEn, setNewTitleEn] = useState('');
+  const [newTitleNe, setNewTitleNe] = useState('');
+  const [newType, setNewType] = useState<'photo' | 'video'>('photo');
+  const [newUrl, setNewUrl] = useState('');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const filteredItems = album.mediaItems.filter((item) => {
     if (filter === 'photo') return item.type === 'photo';
@@ -71,21 +81,43 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction }: Alb
   const photoCount = album.mediaItems.filter((i) => i.type === 'photo').length;
   const videoCount = album.mediaItems.filter((i) => i.type === 'video').length;
 
-  if (!currentItem) {
-    return (
-      <div className="bg-white rounded-3xl p-8 border border-teal-100 text-center space-y-4">
-        <p className="text-gray-500 font-medium">No media items found in this album category.</p>
-        <button
-          onClick={() => setFilter('all')}
-          className="px-4 py-2 bg-teal-700 text-white font-bold rounded-lg text-sm"
-        >
-          Reset Filter
-        </button>
-      </div>
-    );
-  }
+  const handleAddMediaSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUrl.trim() || !onAddMedia) return;
 
-  const parsed = parseMediaUrl(currentItem.url, currentItem.type);
+    let finalUrl = newUrl.trim();
+    if (newType === 'photo') {
+      const match = finalUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || finalUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        finalUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
+      }
+    } else if (newType === 'video') {
+      if (finalUrl.includes('youtube.com/watch')) {
+        try {
+          const v = new URL(finalUrl).searchParams.get('v');
+          if (v) finalUrl = `https://www.youtube.com/embed/${v}`;
+        } catch (err) {}
+      } else if (finalUrl.includes('youtu.be/')) {
+        const parts = finalUrl.split('youtu.be/');
+        if (parts[1]) finalUrl = `https://www.youtube.com/embed/${parts[1].split('?')[0]}`;
+      }
+    }
+
+    const newMedia: AlbumMediaItem = {
+      id: `med_${Date.now()}`,
+      title: { en: newTitleEn || 'Photo / Slide', ne: newTitleNe || newTitleEn || 'फोटो / स्लाइड' },
+      type: newType,
+      url: finalUrl,
+    };
+
+    onAddMedia(album.id, newMedia);
+    setIsAddingInline(false);
+    setNewTitleEn('');
+    setNewTitleNe('');
+    setNewUrl('');
+  };
+
+  const parsed = currentItem ? parseMediaUrl(currentItem.url, currentItem.type) : null;
 
   return (
     <div className={`transition-all duration-300 ${isFullscreen ? 'fixed inset-0 z-50 bg-black flex flex-col justify-between overflow-hidden p-0' : 'space-y-8 bg-slate-900 text-white rounded-3xl p-4 sm:p-8 shadow-2xl border border-teal-800'}`}>
@@ -102,12 +134,12 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction }: Alb
           </button>
           <div>
             <h2 className="text-lg sm:text-2xl font-black text-white line-clamp-1">
-              {album.title[lang]}
+              {formatNumber(album.title[lang], lang)}
             </h2>
             <div className="flex items-center gap-3 text-xs text-teal-400 font-semibold mt-0.5 flex-wrap">
-              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {album.date}</span>
-              <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {album.location[lang]}</span>
-              {(album.driveFolderUrl || extractGoogleDriveFolderId(currentItem?.url || '')) && (
+              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {formatNumber(album.date, lang)}</span>
+              <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {formatNumber(album.location[lang], lang)}</span>
+              {(album.driveFolderUrl || (currentItem && extractGoogleDriveFolderId(currentItem.url))) && (
                 <a
                   href={album.driveFolderUrl || getGoogleDriveFolderViewUrl(extractGoogleDriveFolderId(currentItem?.url || '') || '')}
                   target="_blank"
@@ -130,21 +162,30 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction }: Alb
               onClick={() => { setFilter('all'); setActiveIdx(0); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filter === 'all' ? 'bg-emerald-500 text-gray-950 shadow-sm' : 'text-gray-300 hover:text-white'}`}
             >
-              {lang === 'en' ? 'All' : 'सबै'} ({album.mediaItems.length})
+              {lang === 'en' ? 'All' : 'सबै'} ({formatNumber(album.mediaItems.length, lang)})
             </button>
             <button
               onClick={() => { setFilter('photo'); setActiveIdx(0); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${filter === 'photo' ? 'bg-emerald-500 text-gray-950 shadow-sm' : 'text-gray-300 hover:text-white'}`}
             >
-              <ImageIcon className="w-3.5 h-3.5" /> {photoCount}
+              <ImageIcon className="w-3.5 h-3.5" /> {formatNumber(photoCount, lang)}
             </button>
             <button
               onClick={() => { setFilter('video'); setActiveIdx(0); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${filter === 'video' ? 'bg-emerald-500 text-gray-950 shadow-sm' : 'text-gray-300 hover:text-white'}`}
             >
-              <Film className="w-3.5 h-3.5" /> {videoCount}
+              <Film className="w-3.5 h-3.5" /> {formatNumber(videoCount, lang)}
             </button>
           </div>
+
+          {(onAddMedia || isAdmin) && (
+            <button
+              onClick={() => setIsAddingInline(!isAddingInline)}
+              className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+            >
+              <span>+ Add Media</span>
+            </button>
+          )}
 
           <button
             onClick={handleShare}
@@ -181,99 +222,199 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction }: Alb
         </div>
       </div>
 
+      {/* Inline Form to add media directly inside AlbumDetail */}
+      {isAddingInline && onAddMedia && (
+        <form onSubmit={handleAddMediaSubmit} className="bg-slate-800 p-4 rounded-2xl border border-emerald-500/40 space-y-3 animate-in fade-in duration-200">
+          <div className="flex justify-between items-center text-xs font-extrabold text-emerald-400 uppercase tracking-wider">
+            <span>Add New Photo or Video to Album</span>
+            <button type="button" onClick={() => setIsAddingInline(false)} className="text-gray-400 hover:text-white"><X className="w-4 h-4" /></button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <input
+              type="text"
+              placeholder="Title (English)"
+              value={newTitleEn}
+              onChange={e => setNewTitleEn(e.target.value)}
+              className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-emerald-500"
+            />
+            <select
+              value={newType}
+              onChange={e => setNewType(e.target.value as any)}
+              className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-emerald-500"
+            >
+              <option value="photo">Photo (URL / Drive Link)</option>
+              <option value="video">Video (YouTube URL)</option>
+            </select>
+            <input
+              type="text"
+              required
+              placeholder={newType === 'photo' ? "Photo URL (Google Drive share link or direct URL)" : "YouTube Video URL"}
+              value={newUrl}
+              onChange={e => setNewUrl(e.target.value)}
+              className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all"
+            >
+              Save to Album
+            </button>
+          </div>
+        </form>
+      )}
+
       {/* Main Interactive Media Viewport Slider */}
       <div className="relative group bg-black/90 rounded-2xl overflow-hidden border border-gray-800 flex items-center justify-center min-h-[350px] sm:min-h-[520px] max-h-[750px]">
         
-        {/* Navigation Arrow Left */}
-        <button
-          onClick={handlePrev}
-          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-3 sm:p-4 rounded-full bg-black/60 hover:bg-emerald-500 hover:text-gray-950 text-white backdrop-blur-md border border-white/10 transition-all shadow-2xl opacity-90 group-hover:opacity-100"
-          title="Previous (Left Arrow)"
-        >
-          <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
-        </button>
-
-        {/* Media Render Engine: Photo OR Video (HTML5, Google Drive Folder/Embed, YouTube Embed) */}
-        <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
-          {parsed.isEmbed ? (
-            <div className="w-full aspect-video min-h-[420px] sm:min-h-[540px] max-w-5xl rounded-xl overflow-hidden shadow-2xl bg-black border border-gray-800 relative">
-              <iframe
-                src={parsed.formattedUrl}
-                title={currentItem.title[lang]}
-                className="w-full h-full min-h-[420px] sm:min-h-[540px] border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
+        {!currentItem ? (
+          <div className="flex flex-col items-center justify-center text-center p-8 space-y-4 max-w-md mx-auto">
+            <div className="w-16 h-16 rounded-full bg-slate-800 border border-teal-500/30 flex items-center justify-center text-teal-400">
+              <ImageIcon className="w-8 h-8" />
             </div>
-          ) : currentItem.type === 'video' ? (
-            <video
-              key={currentItem.id}
-              controls
-              autoPlay={false}
-              poster={currentItem.thumbnailUrl || getBestAlbumCover(album)}
-              className="max-w-full max-h-[600px] rounded-xl object-contain shadow-2xl"
-            >
-              <source src={parsed.formattedUrl} type="video/mp4" />
-              Your browser does not support video playback.
-            </video>
-          ) : (
-            <img
-              key={currentItem.id}
-              src={parsed.formattedUrl}
-              alt={currentItem.title[lang]}
-              referrerPolicy="no-referrer"
-              className="max-w-full max-h-[600px] object-contain rounded-xl shadow-2xl select-none transition-opacity duration-300"
-            />
-          )}
-        </div>
-
-        {/* Navigation Arrow Right */}
-        <button
-          onClick={handleNext}
-          className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-3 sm:p-4 rounded-full bg-black/60 hover:bg-emerald-500 hover:text-gray-950 text-white backdrop-blur-md border border-white/10 transition-all shadow-2xl opacity-90 group-hover:opacity-100"
-          title="Next (Right Arrow)"
-        >
-          <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
-        </button>
-
-        {/* Counter Badge */}
-        <div className="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-xs font-mono font-bold text-emerald-400">
-          {activeIdx + 1} / {filteredItems.length}
-        </div>
-
-        {/* Media Type Badge */}
-        <div className="absolute top-4 right-4 z-10 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-xs font-bold text-white flex items-center gap-1.5">
-          {currentItem.type === 'video' ? (
-            <>
-              <Film className="w-3.5 h-3.5 text-amber-400" />
-              <span className="uppercase tracking-wider text-[10px] text-amber-300">Video Content</span>
-            </>
-          ) : (
-            <>
-              <ImageIcon className="w-3.5 h-3.5 text-teal-400" />
-              <span className="uppercase tracking-wider text-[10px] text-teal-300">High-Res Photo</span>
-            </>
-          )}
-        </div>
-
-        {/* Optional Caption Info Overlay at bottom of slider */}
-        {showInfo && (
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-4 sm:p-6 text-white backdrop-blur-sm border-t border-white/5">
-            <h3 className="text-base sm:text-lg font-extrabold text-teal-200">
-              {currentItem.title[lang]}
-            </h3>
-            {currentItem.description && (
-              <p className="text-xs sm:text-sm text-gray-300 font-medium max-w-4xl mt-1 leading-relaxed line-clamp-2 sm:line-clamp-none">
-                {currentItem.description[lang]}
+            <div>
+              <h3 className="text-lg font-bold text-white">
+                {album.mediaItems.length === 0
+                  ? (lang === 'en' ? 'No Media Items in this Album Yet' : 'यस एल्बममा हाल कुनै फोटो/भिडियो छैन')
+                  : (lang === 'en' ? `No ${filter} items found` : `कुनै ${filter} भेटिएन`)}
+              </h3>
+              <p className="text-xs text-gray-400 mt-1">
+                {album.mediaItems.length === 0
+                  ? (lang === 'en' 
+                      ? 'No media items have been uploaded to this album. You can add photos or view the Google Drive folder if available.'
+                      : 'यस एल्बममा फोटो वा भिडियोहरू थपिएका छैनन्।')
+                  : (lang === 'en' ? 'Try changing or resetting your media filter.' : 'फिल्टर परिवर्तन गर्नुहोस्।')}
               </p>
+            </div>
+            <div className="flex flex-wrap gap-2 justify-center pt-2">
+              {filter !== 'all' && album.mediaItems.length > 0 && (
+                <button
+                  onClick={() => setFilter('all')}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition-all"
+                >
+                  Show All Media ({album.mediaItems.length})
+                </button>
+              )}
+              {album.driveFolderUrl && (
+                <a
+                  href={album.driveFolderUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-teal-700 hover:bg-teal-600 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5"
+                >
+                  <FolderPlus className="w-4 h-4" />
+                  <span>Open Drive Folder ↗</span>
+                </a>
+              )}
+              {(onAddMedia || isAdmin) && (
+                <button
+                  onClick={() => setIsAddingInline(true)}
+                  className="px-4 py-2 bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl shadow-md hover:bg-emerald-400 transition-all"
+                >
+                  + Add Photos / Videos Now
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Navigation Arrow Left */}
+            {filteredItems.length > 1 && (
+              <button
+                onClick={handlePrev}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-3 sm:p-4 rounded-full bg-black/60 hover:bg-emerald-500 hover:text-gray-950 text-white backdrop-blur-md border border-white/10 transition-all shadow-2xl opacity-90 group-hover:opacity-100"
+                title="Previous (Left Arrow)"
+              >
+                <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
+              </button>
             )}
-            {currentItem.location && (
-              <div className="flex items-center gap-2 mt-2 text-[11px] font-semibold text-emerald-400">
-                <MapPin className="w-3 h-3" />
-                <span>{currentItem.location[lang]}</span>
+
+            {/* Media Render Engine: Photo OR Video */}
+            <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
+              {parsed && parsed.isEmbed ? (
+                <div className="w-full aspect-video min-h-[420px] sm:min-h-[540px] max-w-5xl rounded-xl overflow-hidden shadow-2xl bg-black border border-gray-800 relative">
+                  <iframe
+                    src={parsed.formattedUrl}
+                    title={currentItem.title[lang]}
+                    className="w-full h-full min-h-[420px] sm:min-h-[540px] border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+              ) : currentItem.type === 'video' ? (
+                <video
+                  key={currentItem.id}
+                  controls
+                  autoPlay={false}
+                  poster={currentItem.thumbnailUrl || getBestAlbumCover(album)}
+                  className="max-w-full max-h-[600px] rounded-xl object-contain shadow-2xl"
+                >
+                  <source src={parsed?.formattedUrl || currentItem.url} type="video/mp4" />
+                  Your browser does not support video playback.
+                </video>
+              ) : (
+                <img
+                  key={currentItem.id}
+                  src={parsed?.formattedUrl || currentItem.url}
+                  alt={currentItem.title[lang]}
+                  referrerPolicy="no-referrer"
+                  className="max-w-full max-h-[600px] object-contain rounded-xl shadow-2xl select-none transition-opacity duration-300"
+                />
+              )}
+            </div>
+
+            {/* Navigation Arrow Right */}
+            {filteredItems.length > 1 && (
+              <button
+                onClick={handleNext}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-3 sm:p-4 rounded-full bg-black/60 hover:bg-emerald-500 hover:text-gray-950 text-white backdrop-blur-md border border-white/10 transition-all shadow-2xl opacity-90 group-hover:opacity-100"
+                title="Next (Right Arrow)"
+              >
+                <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
+              </button>
+            )}
+
+            {/* Counter Badge */}
+            <div className="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-xs font-mono font-bold text-emerald-400">
+              {activeIdx + 1} / {filteredItems.length}
+            </div>
+
+            {/* Media Type Badge */}
+            <div className="absolute top-4 right-4 z-10 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-xs font-bold text-white flex items-center gap-1.5">
+              {currentItem.type === 'video' ? (
+                <>
+                  <Film className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="uppercase tracking-wider text-[10px] text-amber-300">Video Content</span>
+                </>
+              ) : (
+                <>
+                  <ImageIcon className="w-3.5 h-3.5 text-teal-400" />
+                  <span className="uppercase tracking-wider text-[10px] text-teal-300">High-Res Photo</span>
+                </>
+              )}
+            </div>
+
+            {/* Caption Info Overlay */}
+            {showInfo && (
+              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-4 sm:p-6 text-white backdrop-blur-sm border-t border-white/5">
+                <h3 className="text-base sm:text-lg font-extrabold text-teal-200">
+                  {currentItem.title[lang]}
+                </h3>
+                {currentItem.description && (
+                  <p className="text-xs sm:text-sm text-gray-300 font-medium max-w-4xl mt-1 leading-relaxed line-clamp-2 sm:line-clamp-none">
+                    {currentItem.description[lang]}
+                  </p>
+                )}
+                {currentItem.location && (
+                  <div className="flex items-center gap-2 mt-2 text-[11px] font-semibold text-emerald-400">
+                    <MapPin className="w-3 h-3" />
+                    <span>{currentItem.location[lang]}</span>
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
 

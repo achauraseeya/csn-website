@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, UserCheck, Shield, BookOpen, MapPin, Phone, Mail, CheckCircle2, UserPlus, Trash2, Plus, Sparkles, Edit, Save, X } from 'lucide-react';
 import { Language, Member } from '../types';
 import { boardMembers as initialBoardMembers } from '../data/communityData';
+import { formatNumber } from '../utils/mediaUrl';
 
 interface DirectorySectionProps {
   lang: Language;
@@ -760,11 +761,11 @@ export default function DirectorySection({
                   </div>
                   <div>
                     <h3 className="text-lg font-extrabold text-teal-950 group-hover:text-teal-700 transition-colors">
-                      {member.name[lang]}
+                      {formatNumber(member.name[lang], lang)}
                     </h3>
                     <p className="text-xs font-bold text-teal-600/90 uppercase tracking-wide flex items-center gap-1 mt-0.5">
                       <Shield className="w-3.5 h-3.5 text-teal-500" />
-                      {member.role[lang]}
+                      {formatNumber(member.role[lang], lang)}
                     </p>
                     <span className="inline-block mt-1.5 text-[9px] font-black bg-teal-50 text-teal-800 border border-teal-200 px-2 py-0.5 rounded uppercase">
                       {member.category === 'chief'
@@ -781,7 +782,7 @@ export default function DirectorySection({
                 {/* Bio text */}
                 {member.bio && (
                   <p className="text-gray-600 text-xs leading-relaxed border-t border-teal-50/50 pt-3">
-                    {member.bio[lang]}
+                    {formatNumber(member.bio[lang], lang)}
                   </p>
                 )}
 
@@ -789,12 +790,12 @@ export default function DirectorySection({
                 <div className="space-y-1.5 pt-2 text-xs text-gray-500 font-medium">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-3.5 h-3.5 text-teal-600/70 shrink-0" />
-                    <span>{member.address[lang]}</span>
+                    <span>{formatNumber(member.address[lang], lang)}</span>
                   </div>
                   {member.phone && (
                     <div className="flex items-center gap-2">
                       <Phone className="w-3.5 h-3.5 text-teal-600/70 shrink-0" />
-                      <span>{member.phone}</span>
+                      <span>{formatNumber(member.phone, lang)}</span>
                     </div>
                   )}
                   {member.email && (

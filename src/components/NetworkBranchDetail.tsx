@@ -9,7 +9,9 @@ import {
   Language, Member, CommunityEvent, Notice, Album, 
   NetworkBranch, AlbumMediaItem 
 } from '../types';
-import { getBestAlbumCover, getGoogleDriveDownloadUrl } from '../utils/mediaUrl';
+import { getBestAlbumCover, getGoogleDriveDownloadUrl, formatDriveImageUrl, formatNumber } from '../utils/mediaUrl';
+import { uploadImageToGithub } from '../utils/githubDb';
+import AlbumDetail from './AlbumDetail';
 
 interface NetworkBranchDetailProps {
   branch: NetworkBranch;
@@ -247,15 +249,49 @@ export default function NetworkBranchDetail({
     setAlbumLocNe('');
   };
 
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+
+  const handlePhotoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert(lang === 'en' ? 'File size exceeds 2MB limit.' : 'फाइल आकार २MB भन्दा बढी भयो।');
+      return;
+    }
+    setIsUploadingMedia(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result as string;
+      const fileName = `chap_${branch.id}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      try {
+        const uploadedUrl = await uploadImageToGithub(fileName, base64, `Upload chapter photo ${file.name}`);
+        setMediaUrl(uploadedUrl);
+      } catch (err) {
+        setMediaUrl(base64);
+      } finally {
+        setIsUploadingMedia(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAlbumSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!albumTitleEn) return;
+
+    let finalCover = albumCoverUrl.trim();
+    if (finalCover) {
+      const match = finalCover.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || finalCover.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        finalCover = `https://lh3.googleusercontent.com/d/${match[1]}`;
+      }
+    }
 
     const newAlbum: Album = {
       id: `alb_${Date.now()}`,
       title: { en: albumTitleEn, ne: albumTitleNe || albumTitleEn },
       description: { en: albumDescEn, ne: albumDescNe || albumDescEn },
-      coverUrl: '',
+      coverUrl: finalCover,
       date: albumDate || new Date().toISOString().split('T')[0],
       location: { en: albumLocEn || branch.location.en, ne: albumLocNe || branch.location.ne },
       tags: [branch.id, 'chapter'],
@@ -270,38 +306,50 @@ export default function NetworkBranchDetail({
 
   const handleAddMediaSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedAlbumForMedia || !mediaUrl) return;
+    if (!selectedAlbumForMedia) return;
 
-    // Support extracting YouTube ID if a standard YouTube link is provided
-    let finalUrl = mediaUrl;
-    if (mediaType === 'video' && mediaUrl.includes('youtube.com/watch')) {
-      try {
-        const urlObj = new URL(mediaUrl);
-        const vParam = urlObj.searchParams.get('v');
-        if (vParam) {
-          finalUrl = `https://www.youtube.com/embed/${vParam}`;
-        }
-      } catch (e) {}
-    } else if (mediaType === 'video' && mediaUrl.includes('youtu.be/')) {
-      try {
-        const parts = mediaUrl.split('youtu.be/');
-        if (parts.length > 1) {
-          finalUrl = `https://www.youtube.com/embed/${parts[1].split('?')[0]}`;
-        }
-      } catch (e) {}
+    let finalUrl = mediaUrl.trim();
+
+    if (mediaType === 'photo') {
+      const match = finalUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || finalUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        finalUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
+      }
+    } else if (mediaType === 'video') {
+      if (finalUrl.includes('youtube.com/watch')) {
+        try {
+          const urlObj = new URL(finalUrl);
+          const vParam = urlObj.searchParams.get('v');
+          if (vParam) {
+            finalUrl = `https://www.youtube.com/embed/${vParam}`;
+          }
+        } catch (e) {}
+      } else if (finalUrl.includes('youtu.be/')) {
+        try {
+          const parts = finalUrl.split('youtu.be/');
+          if (parts.length > 1) {
+            finalUrl = `https://www.youtube.com/embed/${parts[1].split('?')[0]}`;
+          }
+        } catch (e) {}
+      }
     }
+
+    if (!finalUrl) return;
 
     const newMedia: AlbumMediaItem = {
       id: `med_${Date.now()}`,
-      title: { en: mediaTitleEn || 'Media Item', ne: mediaTitleNe || mediaTitleEn || 'मिडिया' },
+      title: { en: mediaTitleEn || 'Photo / Slide', ne: mediaTitleNe || mediaTitleEn || 'फोटो' },
       type: mediaType,
       url: finalUrl,
       thumbnailUrl: mediaType === 'video' ? 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&q=80&w=400' : undefined
     };
 
+    const latestAlbumState = branchAlbums.find(a => a.id === selectedAlbumForMedia.id) || selectedAlbumForMedia;
+
     const updatedAlbum: Album = {
-      ...selectedAlbumForMedia,
-      mediaItems: [...selectedAlbumForMedia.mediaItems, newMedia]
+      ...latestAlbumState,
+      coverUrl: latestAlbumState.coverUrl || (mediaType === 'photo' ? finalUrl : latestAlbumState.coverUrl),
+      mediaItems: [...(latestAlbumState.mediaItems || []), newMedia]
     };
 
     onAddAlbum(updatedAlbum);
@@ -393,7 +441,7 @@ export default function NetworkBranchDetail({
           <Users className="w-4 h-4" />
           {lang === 'en' ? 'Committee Members' : 'कार्यसमिति सदस्यहरू'}
           <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-teal-50 dark:bg-slate-800 text-teal-700 dark:text-teal-300 font-black">
-            {branchMembers.length}
+            {formatNumber(branchMembers.length, lang)}
           </span>
         </button>
 
@@ -408,7 +456,7 @@ export default function NetworkBranchDetail({
           <Calendar className="w-4 h-4" />
           {lang === 'en' ? 'Events' : 'कार्यक्रमहरू'}
           <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-teal-50 dark:bg-slate-800 text-teal-700 dark:text-teal-300 font-black">
-            {branchEvents.length}
+            {formatNumber(branchEvents.length, lang)}
           </span>
         </button>
 
@@ -423,7 +471,7 @@ export default function NetworkBranchDetail({
           <Bell className="w-4 h-4" />
           {lang === 'en' ? 'Notices' : 'सूचनाहरू'}
           <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-teal-50 dark:bg-slate-800 text-teal-700 dark:text-teal-300 font-black">
-            {branchNotices.length}
+            {formatNumber(branchNotices.length, lang)}
           </span>
         </button>
 
@@ -438,7 +486,7 @@ export default function NetworkBranchDetail({
           <ImageIcon className="w-4 h-4" />
           {lang === 'en' ? 'Gallery & Slides' : 'ग्यालरी र स्लाइडहरू'}
           <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-teal-50 dark:bg-slate-800 text-teal-700 dark:text-teal-300 font-black">
-            {branchAlbums.length}
+            {formatNumber(branchAlbums.length, lang)}
           </span>
         </button>
       </div>
@@ -815,18 +863,19 @@ export default function NetworkBranchDetail({
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                       
-                      {album.mediaItems.length > 0 && (
-                        <button 
-                          onClick={() => openSlideshow(album.id)}
-                          className="absolute bottom-3 right-3 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[10px] rounded-lg tracking-wider uppercase flex items-center gap-1 shadow-sm transition-all"
-                        >
-                          <Play className="w-3 h-3 fill-white" />
-                          <span>{lang === 'en' ? 'Launch Slider' : 'स्लाइडर सुरु गर्नुहोस्'} ({album.mediaItems.length})</span>
-                        </button>
-                      )}
+                      <button 
+                        onClick={() => openSlideshow(album.id)}
+                        className="absolute bottom-3 right-3 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[10px] rounded-lg tracking-wider uppercase flex items-center gap-1 shadow-sm transition-all"
+                      >
+                        <Play className="w-3 h-3 fill-white" />
+                        <span>{lang === 'en' ? 'Open Gallery' : 'ग्यालरी खोल्नुहोस्'} ({album.mediaItems.length})</span>
+                      </button>
                     </div>
 
-                    <div className="p-4 flex-grow flex flex-col justify-between space-y-3">
+                    <div 
+                      onClick={() => openSlideshow(album.id)}
+                      className="p-4 flex-grow flex flex-col justify-between space-y-3 cursor-pointer hover:bg-teal-50/20 dark:hover:bg-slate-850 transition-colors"
+                    >
                       <div className="space-y-1">
                         <span className="text-[9px] text-teal-600 dark:text-teal-400 font-extrabold uppercase tracking-widest block">
                           📅 {album.date} | 📍 {album.location[lang]}
@@ -894,110 +943,27 @@ export default function NetworkBranchDetail({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/95 z-50 flex flex-col justify-between p-4 md:p-8"
+            className="fixed inset-0 bg-black/95 z-50 overflow-y-auto p-3 sm:p-6"
           >
-            {/* Header */}
-            <div className="flex justify-between items-center text-white pb-4 border-b border-white/10 shrink-0">
-              <div className="min-w-0">
-                <span className="text-[9px] text-emerald-400 font-extrabold uppercase tracking-widest block">
-                  Interactive Album Slider
-                </span>
-                <h3 className="font-extrabold text-base md:text-lg truncate">
-                  {currentAlbumForSlideshow.title[lang]}
-                </h3>
-              </div>
-              <button 
-                onClick={() => setActiveAlbumId(null)}
-                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors shrink-0"
-                title="Close Slider"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Slide Stage */}
-            <div className="flex-grow flex items-center justify-center relative py-6">
-              {currentAlbumForSlideshow.mediaItems.length > 0 ? (
-                (() => {
-                  const currentItem = currentAlbumForSlideshow.mediaItems[currentSlideIndex];
-                  if (!currentItem) return null;
-
-                  return (
-                    <div className="w-full max-w-4xl max-h-[70vh] flex flex-col items-center justify-center relative">
-                      
-                      {/* Left Button */}
-                      <button
-                        onClick={() => setCurrentSlideIndex(prev => prev > 0 ? prev - 1 : currentAlbumForSlideshow.mediaItems.length - 1)}
-                        className="absolute left-2 md:-left-12 p-3 bg-white/10 hover:bg-white/25 text-white rounded-full transition-all hover:scale-105 z-10"
-                      >
-                        <ChevronLeft className="w-6 h-6" />
-                      </button>
-
-                      {/* Frame */}
-                      <div className="w-full h-full max-h-[60vh] flex items-center justify-center bg-zinc-950 rounded-2xl overflow-hidden border border-white/5 relative">
-                        {currentItem.type === 'video' ? (
-                          currentItem.url.includes('embed') || currentItem.url.includes('youtube.com') ? (
-                            <iframe 
-                              src={currentItem.url}
-                              title={currentItem.title[lang]}
-                              className="w-full aspect-video max-h-[55vh]"
-                              allowFullScreen
-                              referrerPolicy="no-referrer"
-                            />
-                          ) : (
-                            <video 
-                              src={currentItem.url}
-                              controls
-                              className="w-full max-h-[55vh]"
-                            />
-                          )
-                        ) : (
-                          <img 
-                            src={currentItem.url} 
-                            alt={currentItem.title[lang]} 
-                            referrerPolicy="no-referrer"
-                            className="max-w-full max-h-[55vh] object-contain"
-                          />
-                        )}
-                      </div>
-
-                      {/* Right Button */}
-                      <button
-                        onClick={() => setCurrentSlideIndex(prev => prev < currentAlbumForSlideshow.mediaItems.length - 1 ? prev + 1 : 0)}
-                        className="absolute right-2 md:-right-12 p-3 bg-white/10 hover:bg-white/25 text-white rounded-full transition-all hover:scale-105 z-10"
-                      >
-                        <ChevronRight className="w-6 h-6" />
-                      </button>
-
-                    </div>
-                  );
-                })()
-              ) : (
-                <p className="text-zinc-500 italic">No media items available.</p>
-              )}
-            </div>
-
-            {/* Footer / Caption */}
-            <div className="text-center text-white shrink-0 space-y-2 border-t border-white/10 pt-4">
-              {currentAlbumForSlideshow.mediaItems[currentSlideIndex] && (
-                <div className="max-w-xl mx-auto space-y-1">
-                  <h4 className="font-extrabold text-sm text-emerald-300">
-                    {currentAlbumForSlideshow.mediaItems[currentSlideIndex].title[lang]}
-                  </h4>
-                  {currentAlbumForSlideshow.mediaItems[currentSlideIndex].description && (
-                    <p className="text-xs text-zinc-400">
-                      {currentAlbumForSlideshow.mediaItems[currentSlideIndex].description?.[lang]}
-                    </p>
-                  )}
-                </div>
-              )}
-              
-              <div className="flex justify-center gap-1 text-[11px] font-bold text-zinc-500">
-                <span>Slide</span>
-                <span className="text-emerald-400">{currentSlideIndex + 1}</span>
-                <span>/</span>
-                <span>{currentAlbumForSlideshow.mediaItems.length}</span>
-              </div>
+            <div className="max-w-6xl mx-auto my-auto">
+              <AlbumDetail
+                album={currentAlbumForSlideshow}
+                lang={lang}
+                isAdmin={isAdmin}
+                onClose={() => setActiveAlbumId(null)}
+                onTrackAction={() => {}}
+                onAddMedia={(albumId, media) => {
+                  const alb = branchAlbums.find(a => a.id === albumId);
+                  if (alb) {
+                    const updated = {
+                      ...alb,
+                      coverUrl: alb.coverUrl || (media.type === 'photo' ? media.url : alb.coverUrl),
+                      mediaItems: [...alb.mediaItems, media]
+                    };
+                    onAddAlbum(updated);
+                  }
+                }}
+              />
             </div>
           </motion.div>
         )}
@@ -1519,15 +1485,30 @@ export default function NetworkBranchDetail({
                 />
               </div>
 
+              {mediaType === 'photo' && (
+                <div className="space-y-1.5 p-3 bg-teal-50/40 dark:bg-slate-950/50 rounded-2xl border border-teal-100 dark:border-slate-800">
+                  <label className="text-gray-600 dark:text-gray-300 font-bold uppercase tracking-wider block text-[11px]">
+                    Upload Photo File (Saved to Repo)
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoFileUpload}
+                    className="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 cursor-pointer"
+                  />
+                  {isUploadingMedia && <p className="text-emerald-500 text-[10px] animate-pulse">Uploading photo...</p>}
+                </div>
+              )}
+
               <div className="space-y-1">
                 <label className="text-gray-500 uppercase tracking-wider block">
-                  {mediaType === 'photo' ? 'Photo Image URL (Google Drive / Unsplash, etc.)' : 'YouTube Video URL'}
+                  {mediaType === 'photo' ? 'OR Photo URL / Google Drive Share Link' : 'YouTube Video URL'}
                 </label>
                 <input 
                   type="url" 
                   value={mediaUrl} 
                   onChange={e => setMediaUrl(e.target.value)} 
-                  placeholder={mediaType === 'photo' ? 'https://...' : 'https://www.youtube.com/watch?v=...'}
+                  placeholder={mediaType === 'photo' ? 'https://drive.google.com/file/d/...' : 'https://www.youtube.com/watch?v=...'}
                   required
                   className="w-full px-3.5 py-2 rounded-xl border border-teal-100/75 dark:border-slate-800 bg-teal-50/20 dark:bg-slate-950 focus:outline-none focus:border-teal-500 text-teal-950 dark:text-white"
                 />

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Search, Image as ImageIcon, FileText, CheckCircle2, ChevronRight, X, Download, Eye, Plus, ExternalLink, Trash2, ShieldCheck, Sparkles } from 'lucide-react';
 import { Language, Notice, GalleryItem } from '../types';
 import { notices as defaultNotices, galleryItems } from '../data/communityData';
-import { extractGoogleDriveId, formatDriveImageUrl, getGoogleDriveDownloadUrl } from '../utils/mediaUrl';
+import { extractGoogleDriveId, formatDriveImageUrl, getGoogleDriveDownloadUrl, formatNumber } from '../utils/mediaUrl';
 
 interface NoticeGalleryProps {
   lang: Language;
@@ -178,16 +178,16 @@ export default function NoticeGallery({
                           {t[notice.category][lang]}
                         </span>
                         <span className="text-xs font-semibold text-teal-600/80 font-mono">
-                          🗓️ {notice.date}
+                          🗓️ {formatNumber(notice.date, lang)}
                         </span>
                       </div>
                       <ChevronRight className={`w-5 h-5 text-teal-400 transition-transform ${expandedNoticeId === notice.id ? 'rotate-90' : ''}`} />
                     </div>
                     <h3 className="text-lg font-extrabold text-teal-950 transition-colors">
-                      {notice.title[lang]}
+                      {formatNumber(notice.title[lang], lang)}
                     </h3>
                     <p className="text-gray-600 text-sm mt-3 leading-relaxed">
-                      {notice.content[lang]}
+                      {formatNumber(notice.content[lang], lang)}
                     </p>
                   </div>
                   

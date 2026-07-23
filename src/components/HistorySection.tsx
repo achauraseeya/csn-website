@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin, ShieldCheck, Lock, Trash2, Plus, ExternalLink, Edit, Save } from 'lucide-react';
-import { Album, Language, Notice, SiteTexts, NetworkBranch } from '../types';
+import { Album, Language, Notice, SiteTexts, NetworkBranch, Member } from '../types';
+import { uploadImageToGithub } from '../utils/githubDb';
 import { communityHistory, impactStats, galleryItems, boardMembers, notices as defaultNotices, blogPosts } from '../data/communityData';
 import { journeyAlbums as defaultJourneyAlbums } from '../data/albumsData';
 import AlbumDetail from './AlbumDetail';
-import { extractGoogleDriveId } from '../utils/mediaUrl';
+import { extractGoogleDriveId, formatNumber } from '../utils/mediaUrl';
 
 interface HistorySectionProps {
   lang: Language;
@@ -14,6 +15,7 @@ interface HistorySectionProps {
   onSelectPost?: (post: any) => void;
   onSelectAlbum?: (albumId: string) => void;
   albums?: Album[];
+  membersList?: Member[];
   onOpenUploadModal?: () => void;
   isAdmin?: boolean;
   onOpenAdminModal?: () => void;
@@ -61,6 +63,7 @@ export default function HistorySection({
   onSelectNetwork,
   onAddNetwork,
   onDeleteNetwork,
+  membersList,
 }: HistorySectionProps) {
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
@@ -167,25 +170,9 @@ export default function HistorySection({
       reader.onload = async () => {
         const base64 = reader.result as string;
         try {
-          const password = localStorage.getItem('chaurasiya_admin_password') || '';
-          const res = await fetch('/api/upload', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${password}`,
-              'x-admin-password': password
-            },
-            body: JSON.stringify({
-              fileBase64: base64,
-              fileName: file.name
-            })
-          });
-          const data = await res.json();
-          if (data.success && data.url) {
-            resolve(data.url);
-          } else {
-            reject(new Error(data.error || 'Failed to upload'));
-          }
+          const fileName = `${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi, '_')}`;
+          const url = await uploadImageToGithub(fileName, base64, `Upload image ${file.name}`);
+          resolve(url);
         } catch (e: any) {
           reject(e);
         }
@@ -1158,26 +1145,44 @@ export default function HistorySection({
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div>
                     <h4 className="text-sm font-extrabold text-teal-950 uppercase tracking-wide">Manage Featured Leadership Section</h4>
-                    <p className="text-xs text-gray-500">Add, edit, or delete key leaders displayed on the homepage. More than 2 can be added!</p>
+                    <p className="text-xs text-gray-500">Select key leaders from the available Member Directory to display on the homepage.</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newLeader = {
-                        id: 'leader_' + Date.now(),
-                        name: { en: 'New Leader Name', ne: 'नयाँ नेतृत्व नाम' },
-                        role: { en: 'Role Name', ne: 'भूमिका नाम' },
-                        category: 'board',
-                        address: { en: 'Nepal', ne: 'नेपाल' },
-                        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
-                      };
-                      setEditLeadership([...editLeadership, newLeader]);
-                    }}
-                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold uppercase rounded-lg flex items-center gap-1 shadow-sm transition-all shrink-0"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Key Leader</span>
-                  </button>
+                  {membersList && membersList.length > 0 && (
+                    <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                      <select
+                        className="w-full sm:w-auto px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold uppercase rounded-xl border border-emerald-600 focus:outline-none shadow-sm cursor-pointer"
+                        onChange={(e) => {
+                          const m = membersList.find(x => x.id === e.target.value);
+                          if (m) {
+                            if (editLeadership.some(l => l.id === m.id)) {
+                              alert(lang === 'en' ? 'This member is already added to featured leadership.' : 'यो सदस्य पहिल्यै फिचर्ड नेतृत्वमा थपिसकिएको छ।');
+                              e.target.value = "";
+                              return;
+                            }
+                            const newLeader = {
+                              id: m.id,
+                              name: m.name,
+                              role: m.role,
+                              category: m.category,
+                              address: m.address,
+                              avatarUrl: m.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+                            };
+                            setEditLeadership([...editLeadership, newLeader]);
+                          }
+                          e.target.value = "";
+                        }}
+                      >
+                        <option value="" className="bg-slate-900 text-white font-bold">
+                          + Select & Add from Member Directory ({membersList.length} Members)...
+                        </option>
+                        {membersList.map(m => (
+                          <option key={m.id} value={m.id} className="bg-slate-900 text-white font-medium">
+                            {m.name[lang] || m.name.en} ({m.role[lang] || m.role.en})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1475,10 +1480,10 @@ export default function HistorySection({
               <Leaf className="w-6 h-6" />
             </div>
             <h3 className="text-xl font-extrabold text-teal-900 dark:text-emerald-400 mb-4 ml-6">
-              {lang === 'en' ? siteTexts.paanStoryTitleEn : siteTexts.paanStoryTitleNe}
+              {formatNumber(lang === 'en' ? siteTexts.paanStoryTitleEn : siteTexts.paanStoryTitleNe, lang)}
             </h3>
             <p className="text-teal-800 dark:text-teal-200 leading-relaxed font-medium text-[15px]">
-              {lang === 'en' ? siteTexts.paanStoryEn : siteTexts.paanStoryNe}
+              {formatNumber(lang === 'en' ? siteTexts.paanStoryEn : siteTexts.paanStoryNe, lang)}
             </p>
           </div>
         </div>
@@ -1490,10 +1495,10 @@ export default function HistorySection({
              <div className="relative z-10">
                 <h3 className="text-2xl font-black text-emerald-300 mb-4 flex items-center gap-2">
                   <Map className="w-6 h-6" />
-                  {lang === 'en' ? siteTexts.missionTitleEn : siteTexts.missionTitleNe}
+                  {formatNumber(lang === 'en' ? siteTexts.missionTitleEn : siteTexts.missionTitleNe, lang)}
                 </h3>
                 <p className="text-teal-50 text-[15px] leading-relaxed font-medium">
-                  {lang === 'en' ? siteTexts.missionEn : siteTexts.missionNe}
+                  {formatNumber(lang === 'en' ? siteTexts.missionEn : siteTexts.missionNe, lang)}
                 </p>
              </div>
           </div>
@@ -1503,7 +1508,7 @@ export default function HistorySection({
       {/* Impact Stats */}
       <section className="space-y-8">
         <h3 className="text-2xl sm:text-3xl font-black text-teal-950 dark:text-teal-50 text-center uppercase tracking-tight">
-          {lang === 'en' ? siteTexts.impactHeaderEn : siteTexts.impactHeaderNe}
+          {formatNumber(lang === 'en' ? siteTexts.impactHeaderEn : siteTexts.impactHeaderNe, lang)}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {activeImpactStats.map((stat, idx) => {
@@ -1515,14 +1520,14 @@ export default function HistorySection({
                   <Icon className="w-8 h-8" />
                 </div>
                 <div className="text-4xl font-black text-teal-950 dark:text-teal-50 tracking-tight">
-                  {stat.value}
+                  {formatNumber(stat.value, lang)}
                 </div>
                 <div>
                   <h4 className="font-extrabold text-teal-700 dark:text-emerald-400 uppercase text-xs tracking-wider mb-2">
-                    {stat.label?.[lang] || ''}
+                    {formatNumber(stat.label?.[lang] || '', lang)}
                   </h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                    {stat.desc?.[lang] || ''}
+                    {formatNumber(stat.desc?.[lang] || '', lang)}
                   </p>
                 </div>
               </div>
@@ -1567,15 +1572,15 @@ export default function HistorySection({
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2 text-sm text-teal-600 dark:text-teal-400 font-bold">
                     <Calendar className="w-4 h-4" />
-                    {notice.date}
+                    {formatNumber(notice.date, lang)}
                   </div>
                   <ChevronRight className={`w-5 h-5 text-teal-400 transition-transform ${expandedNoticeId === notice.id ? 'rotate-90' : ''}`} />
                 </div>
                 <h4 className="text-xl font-bold text-teal-950 dark:text-teal-50 mb-2">
-                  {notice.title[lang] || notice.title.en}
+                  {formatNumber(notice.title[lang] || notice.title.en, lang)}
                 </h4>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">
-                  {notice.content[lang] || notice.content.en}
+                  {formatNumber(notice.content[lang] || notice.content.en, lang)}
                 </p>
               </div>
               
@@ -1736,7 +1741,7 @@ export default function HistorySection({
               </div>
               <div className="p-6 flex flex-col h-full">
                 <div className="flex items-center justify-between text-xs font-bold text-teal-600 mb-3">
-                  <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {post.date}</span>
+                  <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {formatNumber(post.date, lang)}</span>
                   <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {post.author}</span>
                 </div>
                 {post.tags && post.tags.length > 0 && (
@@ -1829,11 +1834,11 @@ export default function HistorySection({
                   {/* Count Badges */}
                   <div className="absolute bottom-3 left-3 flex gap-2">
                     <span className="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[11px] font-bold text-teal-300 flex items-center gap-1 border border-white/10">
-                      <ImageIcon className="w-3 h-3 text-teal-400" /> {photosCount} {lang === 'en' ? 'Photos' : 'फोटो'}
+                      <ImageIcon className="w-3 h-3 text-teal-400" /> {formatNumber(photosCount, lang)} {lang === 'en' ? 'Photos' : 'फोटो'}
                     </span>
                     {videosCount > 0 && (
                       <span className="px-2.5 py-1 rounded-lg bg-amber-950/80 backdrop-blur-md text-[11px] font-bold text-amber-300 flex items-center gap-1 border border-amber-500/30">
-                        <Film className="w-3 h-3 text-amber-400" /> {videosCount} {lang === 'en' ? 'Videos' : 'भिडियो'}
+                        <Film className="w-3 h-3 text-amber-400" /> {formatNumber(videosCount, lang)} {lang === 'en' ? 'Videos' : 'भिडियो'}
                       </span>
                     )}
                   </div>
@@ -1862,14 +1867,14 @@ export default function HistorySection({
                 <div className="p-6 flex-grow flex flex-col justify-between space-y-3">
                   <div>
                     <div className="flex items-center gap-3 text-xs font-bold text-teal-600 mb-2">
-                      <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {album.date}</span>
-                          <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {album.location[lang]}</span>
+                      <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {formatNumber(album.date, lang)}</span>
+                          <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {formatNumber(album.location[lang], lang)}</span>
                         </div>
                         <h4 className="text-lg font-extrabold text-teal-950 group-hover:text-teal-700 transition-colors line-clamp-2">
-                          {album.title[lang]}
+                          {formatNumber(album.title[lang], lang)}
                         </h4>
                         <p className="text-gray-600 text-xs sm:text-sm mt-2 line-clamp-2 font-medium leading-relaxed">
-                          {album.description[lang]}
+                          {formatNumber(album.description[lang], lang)}
                         </p>
                       </div>
 

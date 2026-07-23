@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram } from 'lucide-react';
-import { Language, AnalyticsMetric, Member, Album, Notice, Document, CommunityEvent, NetworkBranch } from './types';
+import { Language, AnalyticsMetric, Member, Album, AlbumMediaItem, Notice, Document, CommunityEvent, NetworkBranch } from './types';
+import { initialNetworks } from './data/networkData';
 import { notices as initialNotices, boardMembers as initialMembers, upcomingEvents as initialEvents, documents as initialDocuments } from './data/communityData';
 import { journeyAlbums as initialJourneyAlbums } from './data/albumsData';
 import logoImg from './assets/images/chaurasiya_logo_1784519579895.jpg';
@@ -27,7 +28,8 @@ import AddNoticeModal from './components/AddNoticeModal';
 import PrivacySection from './components/PrivacySection';
 import TermsSection from './components/TermsSection';
 import { SiteTexts } from './types';
-import { apiFetch, apiSave, apiDelete, saveFileToGithub, getGithubSettings } from './utils/githubDb';
+import { apiFetch, apiSave, apiDelete, saveFileToGithub, getGithubSettings, uploadImageToGithub } from './utils/githubDb';
+import { formatNumber } from './utils/mediaUrl';
 
 const defaultSiteTexts: SiteTexts = {
   heroTitleEn: 'Chaurasiya Samaj Nepal',
@@ -108,7 +110,7 @@ export default function App() {
   
   // Dynamic Network/Chapters State
   const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null);
-  const [networks, setNetworks] = useState<NetworkBranch[]>([]);
+  const [networks, setNetworks] = useState<NetworkBranch[]>(initialNetworks);
 
   // Dynamic Site Texts State
   const [siteTexts, setSiteTexts] = useState<SiteTexts>(defaultSiteTexts);
@@ -315,6 +317,7 @@ export default function App() {
   const handleSelectAlbum = (albumId: string) => {
     setSelectedAlbumId(albumId);
     setCurrentTab('album-detail');
+    window.history.pushState({ tab: 'album-detail', albumId }, '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -356,6 +359,17 @@ export default function App() {
     setSelectedAlbumId(newAlbum.id);
     setCurrentTab('album-detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAddMediaToAlbum = (albumId: string, media: AlbumMediaItem) => {
+    const album = albums.find(a => a.id === albumId);
+    if (!album) return;
+    const updatedAlbum: Album = {
+      ...album,
+      coverUrl: album.coverUrl || (media.type === 'photo' ? media.url : album.coverUrl),
+      mediaItems: [...(album.mediaItems || []), media]
+    };
+    handleAddAlbum(updatedAlbum);
   };
 
   const handleDeleteAlbum = async (albumId: string) => {
@@ -593,7 +607,7 @@ export default function App() {
 
   // --- NETWORKS/CHAPTERS API & Handlers ---
   useEffect(() => {
-    apiFetch<NetworkBranch[]>('/api/networks', 'community_networks.json', [])
+    apiFetch<NetworkBranch[]>('/api/networks', 'community_networks.json', initialNetworks)
       .then((serverNetworks) => {
         if (Array.isArray(serverNetworks) && serverNetworks.length > 0) {
           setNetworks(serverNetworks);
@@ -866,16 +880,30 @@ export default function App() {
       ...newMember,
       id: `m-nom-${Date.now()}`,
     };
-    
-    // Fallback: update local state instantly using either base64 or temporary avatarUrl
-    setMembers((prev) => {
-      const exists = prev.some((m) => m.id === memberWithId.id);
-      const displayMember = { ...memberWithId };
-      if (!displayMember.avatarUrl && displayMember.photoBase64) {
-        displayMember.avatarUrl = displayMember.photoBase64;
+
+    let displayMember = { ...memberWithId };
+
+    if (displayMember.photoBase64 && displayMember.photoName) {
+      try {
+        const fileName = `${Date.now()}_${displayMember.photoName.replace(/[^a-z0-9.]/gi, '_')}`;
+        const uploadedUrl = await uploadImageToGithub(fileName, displayMember.photoBase64, `Upload photo for member ${displayMember.name.en}`);
+        displayMember.avatarUrl = uploadedUrl;
+        displayMember.photoBase64 = undefined;
+        displayMember.photoName = undefined;
+      } catch (err) {
+        console.error("Failed to upload image to Github", err);
+        if (!displayMember.avatarUrl) {
+          displayMember.avatarUrl = displayMember.photoBase64;
+        }
       }
+    } else if (!displayMember.avatarUrl && displayMember.photoBase64) {
+      displayMember.avatarUrl = displayMember.photoBase64;
+    }
+
+    setMembers((prev) => {
+      const exists = prev.some((m) => m.id === displayMember.id);
       const updated = exists
-        ? prev.map((m) => (m.id === memberWithId.id ? displayMember : m))
+        ? prev.map((m) => (m.id === displayMember.id ? displayMember : m))
         : [...prev, displayMember];
       try {
         localStorage.setItem('chaurasiya_members', JSON.stringify(updated));
@@ -883,7 +911,7 @@ export default function App() {
       return updated;
     });
 
-    if (!hasId) {
+    if (!hasId && !displayMember.chapterId) {
       setMetrics((prev) => ({
         ...prev,
         membersRegistered: prev.membersRegistered + 1,
@@ -891,19 +919,15 @@ export default function App() {
     }
 
     try {
-      const displayMember = { ...memberWithId };
-      if (!displayMember.avatarUrl && displayMember.photoBase64) {
-        displayMember.avatarUrl = displayMember.photoBase64;
-      }
-      const cleanList = members.filter(m => m.id !== memberWithId.id);
+      // Need members array from state. We use members from scope.
+      const cleanList = members.filter(m => m.id !== displayMember.id);
       const fullList = [...cleanList, displayMember];
-
       const updatedList = await apiSave<Member>(
         '/api/members',
         'community_members.json',
         fullList,
-        memberWithId,
-        `Nominate community member: ${memberWithId.name.en}`,
+        displayMember,
+        `Nominate/Update community member: ${displayMember.name.en}`,
         getAuthHeaders()
       );
       setMembers(updatedList);
@@ -952,11 +976,54 @@ export default function App() {
     });
   };
 
+  // Mobile Browser & History Back Button Management
+  useEffect(() => {
+    // Standardize initial history state as homepage root
+    if (!window.history.state) {
+      window.history.replaceState({ tab: 'history' }, '');
+    }
+
+    const handlePopState = (event: PopStateEvent) => {
+      const state = event.state;
+      if (state && state.tab && state.tab !== 'history') {
+        setCurrentTab(state.tab);
+        setSelectedLeaderId(state.leaderId || null);
+        setSelectedNetworkId(state.networkId || null);
+        setSelectedAlbumId(state.albumId || null);
+        if (!state.postId) {
+          setSelectedBlogPost(null);
+        }
+      } else {
+        // Mobile back button pressed or popped to base: Cancel any active page and return to Homepage!
+        setCurrentTab('history');
+        setSelectedLeaderId(null);
+        setSelectedNetworkId(null);
+        setSelectedAlbumId(null);
+        setSelectedBlogPost(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   // Switch tab scroll helper
   const handleNavigate = (tabId: string) => {
+    if (tabId !== currentTab) {
+      window.history.pushState({ tab: tabId }, '');
+    }
     setCurrentTab(tabId);
     if (tabId !== 'single-post') {
       setSelectedBlogPost(null);
+    }
+    if (tabId !== 'leader-detail') {
+      setSelectedLeaderId(null);
+    }
+    if (tabId !== 'chapter-detail') {
+      setSelectedNetworkId(null);
+    }
+    if (tabId !== 'album-detail') {
+      setSelectedAlbumId(null);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -966,6 +1033,28 @@ export default function App() {
         window.location.href = '/';
       }
     }
+  };
+
+  const handleSelectLeader = (id: string | null) => {
+    setSelectedLeaderId(id);
+    if (id) {
+      window.history.pushState({ tab: 'history', leaderId: id }, '');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleSelectPost = (post: SinglePostData) => {
+    setSelectedBlogPost(post);
+    setCurrentTab('single-post');
+    window.history.pushState({ tab: 'single-post', postId: post.id }, '');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSelectNetwork = (id: string) => {
+    setSelectedNetworkId(id);
+    setCurrentTab('chapter-detail');
+    window.history.pushState({ tab: 'chapter-detail', networkId: id }, '');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const t = {
@@ -1023,12 +1112,9 @@ export default function App() {
             lang={lang}
             onNavigate={handleNavigate}
             onTrackAction={handleTrackAction}
-            onSelectLeader={setSelectedLeaderId}
-            onSelectPost={(post) => {
-              setSelectedBlogPost(post);
-              setCurrentTab('single-post');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+            onSelectLeader={handleSelectLeader}
+            membersList={members.filter(m => !m.chapterId)}
+            onSelectPost={handleSelectPost}
             onSelectAlbum={handleSelectAlbum}
             albums={albums.filter(a => !a.chapterId)}
             onOpenUploadModal={() => setIsUploadModalOpen(true)}
@@ -1041,11 +1127,7 @@ export default function App() {
             siteTexts={siteTexts}
             onUpdateSiteTexts={handleUpdateSiteTexts}
             networks={networks}
-            onSelectNetwork={(id) => {
-              setSelectedNetworkId(id);
-              setCurrentTab('chapter-detail');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+            onSelectNetwork={handleSelectNetwork}
             onAddNetwork={handleAddNetwork}
             onDeleteNetwork={handleDeleteNetwork}
           />
@@ -1122,6 +1204,7 @@ export default function App() {
             isAdmin={isAdmin}
             onOpenAdminModal={() => setIsAdminModalOpen(true)}
             onDeleteAlbum={handleDeleteAlbum}
+            onAddMedia={handleAddMediaToAlbum}
           />
         )}
 
@@ -1134,8 +1217,10 @@ export default function App() {
                 <AlbumDetail
                   album={currentAlbum}
                   lang={lang}
+                  isAdmin={isAdmin}
                   onClose={() => handleNavigate('albums-gallery')}
                   onTrackAction={handleTrackAction}
+                  onAddMedia={handleAddMediaToAlbum}
                 />
               );
             })()}
@@ -1297,7 +1382,7 @@ export default function App() {
               </p>
               <p className="flex items-center gap-2">
                 <span className="text-emerald-500">📞</span> 
-                {siteTexts.footerPhone}
+                {formatNumber(siteTexts.footerPhone, lang)}
               </p>
               <p className="flex items-center gap-2">
                 <span className="text-emerald-500">✉️</span> 
@@ -1328,7 +1413,7 @@ export default function App() {
 
         {/* Footer Credit Line */}
         <div className="max-w-7xl mx-auto pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500 font-medium">
-          <span>{t.rights[lang]} | Reg: 12345/071</span>
+          <span>{formatNumber(t.rights[lang], lang)} | {formatNumber(lang === 'en' ? 'Reg: 12345/071' : 'दर्ता नं: १२३४५/०७१', lang)}</span>
           <div className="flex flex-wrap items-center justify-center gap-6">
             <button onClick={() => handleNavigate('privacy')} className="hover:text-emerald-400 transition-colors">{lang === 'en' ? 'Privacy Policy' : 'गोपनीयता नीति'}</button>
             <button onClick={() => handleNavigate('terms')} className="hover:text-emerald-400 transition-colors">{lang === 'en' ? 'Terms of Service' : 'सेवाका सर्तहरू'}</button>

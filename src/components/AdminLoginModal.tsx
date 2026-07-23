@@ -20,22 +20,45 @@ export default function AdminLoginModal({
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   useEffect(() => {
     // Basic initialization if needed
   }, []);
 
   if (!isOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
-    if (password.length > 10 && password.startsWith('github_pat_')) {
-      localStorage.setItem('chaurasiya_admin_password', password);
-      localStorage.setItem('chaurasiya_is_admin', 'true');
-      setIsAdmin(true);
-      onClose();
-    } else {
-      setErrorMsg(lang === 'en' ? 'Invalid Github PAT' : 'अवैध Github PAT');
+    
+    if (!password.trim()) {
+      setErrorMsg(lang === 'en' ? 'Please enter a valid PAT' : 'कृपया मान्य PAT प्रविष्ट गर्नुहोस्');
+      return;
+    }
+
+    setIsAuthenticating(true);
+    try {
+      // Authenticate by hitting the GitHub API
+      const res = await fetch('https://api.github.com/user', {
+        headers: {
+          'Authorization': `token ${password}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      
+      if (res.ok) {
+        localStorage.setItem('chaurasiya_admin_password', password);
+        localStorage.setItem('chaurasiya_is_admin', 'true');
+        setIsAdmin(true);
+        onClose();
+      } else {
+        setErrorMsg(lang === 'en' ? 'Invalid GitHub PAT or insufficient permissions' : 'अवैध Github PAT वा अपर्याप्त अनुमतिहरू');
+      }
+    } catch (err) {
+      setErrorMsg(lang === 'en' ? 'Authentication failed. Check your internet connection.' : 'प्रमाणीकरण असफल भयो। आफ्नो इन्टरनेट जडान जाँच गर्नुहोस्।');
+    } finally {
+      setIsAuthenticating(false);
     }
   };
 
@@ -110,7 +133,7 @@ export default function AdminLoginModal({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono text-sm"
-                  placeholder="github_pat_..."
+                  placeholder="ghp_... or github_pat_..."
                   required
                 />
               </div>
@@ -123,10 +146,15 @@ export default function AdminLoginModal({
 
               <button
                 type="submit"
-                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                disabled={isAuthenticating}
+                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                <LogIn className="w-4 h-4" />
-                <span>{lang === 'en' ? 'Authenticate' : 'प्रमाणीकरण गर्नुहोस्'}</span>
+                {isAuthenticating ? (
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <LogIn className="w-4 h-4" />
+                )}
+                <span>{isAuthenticating ? (lang === 'en' ? 'Authenticating...' : 'प्रमाणीकरण गर्दै...') : (lang === 'en' ? 'Authenticate' : 'प्रमाणीकरण गर्नुहोस्')}</span>
               </button>
             </form>
           )}
