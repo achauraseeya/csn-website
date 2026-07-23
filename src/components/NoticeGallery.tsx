@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Search, Image as ImageIcon, FileText, CheckCircle2, ChevronRight, X, Download, Eye, Plus, ExternalLink, Trash2, ShieldCheck, Sparkles } from 'lucide-react';
 import { Language, Notice, GalleryItem } from '../types';
 import { notices as defaultNotices, galleryItems } from '../data/communityData';
-import { extractGoogleDriveId, formatDriveImageUrl } from '../utils/mediaUrl';
+import { extractGoogleDriveId, formatDriveImageUrl, getGoogleDriveDownloadUrl } from '../utils/mediaUrl';
 
 interface NoticeGalleryProps {
   lang: Language;
@@ -236,16 +236,29 @@ export default function NoticeGallery({
                           </button>
 
                           {(notice.driveFileUrl || notice.fileUrl) ? (
-                            <a 
-                              href={notice.driveFileUrl || notice.fileUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={() => onTrackAction(`Downloaded/Opened notice file: ${notice.title.en}`)}
-                              className="text-xs font-bold text-teal-800 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
-                            >
-                              <Download className="w-3.5 h-3.5 text-teal-600" />
-                              {lang === 'en' ? 'Download / View File' : 'फाइल डाउनलोड / हेर्नुहोस्'}
-                            </a>
+                            <>
+                              <a 
+                                href={notice.driveFileUrl || notice.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => onTrackAction(`Opened notice file in Drive: ${notice.title.en}`)}
+                                className="text-xs font-bold text-teal-800 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5 text-teal-600" />
+                                {lang === 'en' ? 'View on Google Drive' : 'गुगल ड्राइभमा हेर्नुहोस्'}
+                              </a>
+                              <a 
+                                href={getGoogleDriveDownloadUrl(notice.driveFileUrl || notice.fileUrl)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download={`Notice_${notice.date || 'file'}`}
+                                onClick={() => onTrackAction(`Downloaded notice file directly: ${notice.title.en}`)}
+                                className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                              >
+                                <Download className="w-3.5 h-3.5 text-emerald-600" />
+                                {lang === 'en' ? 'Direct Download File' : 'फाइल सिधा डाउनलोड गर्नुहोस्'}
+                              </a>
+                            </>
                           ) : (
                             <a 
                               href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"

@@ -1,3 +1,5 @@
+import { Album } from '../types';
+
 /**
  * Media URL utility helper for Google Drive, YouTube, and direct media URLs.
  * Works seamlessly with Google Drive share links, YouTube links, mp4/webm, and image hosting services.
@@ -164,3 +166,66 @@ export function parseMediaUrl(url: string, mediaType: 'photo' | 'video'): Parsed
     originalUrl: url,
   };
 }
+
+/**
+ * Dynamically selects the best cover image from an album's mediaItems.
+ * It favors photos first, then video thumbnails, and defaults to a scenic Nepal landscape.
+ */
+export function getBestAlbumCover(album: Album): string {
+  if (!album) {
+    return 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=1200';
+  }
+
+  // 1. Check if we have individual photo media items
+  if (album.mediaItems && album.mediaItems.length > 0) {
+    const firstPhoto = album.mediaItems.find(item => item.type === 'photo');
+    if (firstPhoto && firstPhoto.url) {
+      return formatDriveImageUrl(firstPhoto.url);
+    }
+
+    // 2. No photos, check for a video and use its YouTube thumbnail if possible
+    const firstVideo = album.mediaItems.find(item => item.type === 'video');
+    if (firstVideo && firstVideo.url) {
+      const ytId = extractYouTubeId(firstVideo.url);
+      if (ytId) {
+        return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+      }
+    }
+  }
+
+  // 3. Fallback scenic Nepal view
+  return 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=1200';
+}
+
+/**
+ * Generates a direct Google Drive download link if the URL is a Google Drive file.
+ */
+export function getGoogleDriveDownloadUrl(url: string): string {
+  if (!url) return '';
+  const driveId = extractGoogleDriveId(url);
+  if (driveId) {
+    return `https://drive.google.com/uc?export=download&id=${driveId}`;
+  }
+  return url;
+}
+
+/**
+ * Automatically detects if a URL is a video (YouTube, MP4, etc.) or default photo
+ */
+export function detectMediaType(url: string): 'photo' | 'video' {
+  if (!url) return 'photo';
+  const cleanUrl = url.trim().toLowerCase();
+  
+  // Check if YouTube
+  if (extractYouTubeId(cleanUrl)) {
+    return 'video';
+  }
+  
+  // Check if standard video format
+  if (/\.(mp4|webm|ogg|m4v|mov|avi)($|\?)/.test(cleanUrl)) {
+    return 'video';
+  }
+  
+  return 'photo';
+}
+

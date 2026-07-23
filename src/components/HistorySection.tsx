@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin, ShieldCheck, Lock, Trash2, Plus, ExternalLink, Edit, Save } from 'lucide-react';
-import { Album, Language, Notice, SiteTexts } from '../types';
+import { Album, Language, Notice, SiteTexts, NetworkBranch } from '../types';
 import { communityHistory, impactStats, galleryItems, boardMembers, notices as defaultNotices, blogPosts } from '../data/communityData';
 import { journeyAlbums as defaultJourneyAlbums } from '../data/albumsData';
 import AlbumDetail from './AlbumDetail';
@@ -23,6 +23,10 @@ interface HistorySectionProps {
   noticesList?: Notice[];
   siteTexts: SiteTexts;
   onUpdateSiteTexts: (texts: Partial<SiteTexts>) => Promise<void>;
+  networks?: NetworkBranch[];
+  onSelectNetwork?: (id: string) => void;
+  onAddNetwork?: (network: NetworkBranch) => void;
+  onDeleteNetwork?: (id: string) => void;
 }
 
 interface BloggerPost {
@@ -53,6 +57,10 @@ export default function HistorySection({
   noticesList = defaultNotices,
   siteTexts,
   onUpdateSiteTexts,
+  networks = [],
+  onSelectNetwork,
+  onAddNetwork,
+  onDeleteNetwork,
 }: HistorySectionProps) {
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
@@ -60,6 +68,16 @@ export default function HistorySection({
   const [viewPdfNoticeId, setViewPdfNoticeId] = useState<string | null>(null);
   const [livePosts, setLivePosts] = useState<any[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
+
+  // Network creation modal states
+  const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
+  const [netNameEn, setNetNameEn] = useState('');
+  const [netNameNe, setNetNameNe] = useState('');
+  const [netType, setNetType] = useState<'chapter' | 'sister'>('chapter');
+  const [netDescEn, setNetDescEn] = useState('');
+  const [netDescNe, setNetDescNe] = useState('');
+  const [netLocEn, setNetLocEn] = useState('');
+  const [netLocNe, setNetLocNe] = useState('');
 
   // Editable site texts state
   const [isEditingTexts, setIsEditingTexts] = useState(false);
@@ -110,6 +128,28 @@ export default function HistorySection({
     return [...galleryItems];
   });
 
+  // Dynamic statistics editor state
+  const [editImpactStats, setEditImpactStats] = useState<any[]>(() => {
+    try {
+      if (siteTexts.impactStatsJson) {
+        const parsed = JSON.parse(siteTexts.impactStatsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [...impactStats];
+  });
+
+  // Dynamic homepage featured leadership state
+  const [editLeadership, setEditLeadership] = useState<any[]>(() => {
+    try {
+      if (siteTexts.leadershipIdsJson) {
+        const parsed = JSON.parse(siteTexts.leadershipIdsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return boardMembers.filter(m => m.id === '1' || m.id === 'vc1');
+  });
+
   // State for adding a new hero slider image
   const [newSlideImage, setNewSlideImage] = useState('');
   const [newSlideTitleEn, setNewSlideTitleEn] = useState('');
@@ -127,7 +167,7 @@ export default function HistorySection({
       reader.onload = async () => {
         const base64 = reader.result as string;
         try {
-          const password = localStorage.getItem('chaurasiya_admin_password') || 'admin2026';
+          const password = localStorage.getItem('chaurasiya_admin_password') || '';
           const res = await fetch('/api/upload', {
             method: 'POST',
             headers: {
@@ -197,11 +237,45 @@ export default function HistorySection({
         const parsed = JSON.parse(siteTexts.heroImagesJson);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setEditHeroImages(parsed);
-          return;
+        } else {
+          setEditHeroImages([...galleryItems]);
         }
+      } else {
+        setEditHeroImages([...galleryItems]);
       }
-    } catch (e) {}
-    setEditHeroImages([...galleryItems]);
+    } catch (e) {
+      setEditHeroImages([...galleryItems]);
+    }
+
+    try {
+      if (siteTexts.impactStatsJson) {
+        const parsed = JSON.parse(siteTexts.impactStatsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setEditImpactStats(parsed);
+        } else {
+          setEditImpactStats([...impactStats]);
+        }
+      } else {
+        setEditImpactStats([...impactStats]);
+      }
+    } catch (e) {
+      setEditImpactStats([...impactStats]);
+    }
+
+    try {
+      if (siteTexts.leadershipIdsJson) {
+        const parsed = JSON.parse(siteTexts.leadershipIdsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setEditLeadership(parsed);
+        } else {
+          setEditLeadership(boardMembers.filter(m => m.id === '1' || m.id === 'vc1'));
+        }
+      } else {
+        setEditLeadership(boardMembers.filter(m => m.id === '1' || m.id === 'vc1'));
+      }
+    } catch (e) {
+      setEditLeadership(boardMembers.filter(m => m.id === '1' || m.id === 'vc1'));
+    }
   }, [siteTexts]);
 
   const handleSaveTexts = async (e: React.FormEvent) => {
@@ -243,7 +317,9 @@ export default function HistorySection({
         socialFb: editSocialFb,
         socialTw: editSocialTw,
         socialIg: editSocialIg,
-        heroImagesJson: JSON.stringify(editHeroImages)
+        heroImagesJson: JSON.stringify(editHeroImages),
+        impactStatsJson: JSON.stringify(editImpactStats),
+        leadershipIdsJson: JSON.stringify(editLeadership)
       });
       setIsEditingTexts(false);
       onTrackAction('Save Homepage Site Texts via Admin');
@@ -327,7 +403,33 @@ export default function HistorySection({
     return galleryItems;
   };
 
+  const getActiveImpactStats = (): any[] => {
+    try {
+      if (siteTexts.impactStatsJson) {
+        const parsed = JSON.parse(siteTexts.impactStatsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return impactStats;
+  };
+
+  const getActiveLeadership = (): any[] => {
+    try {
+      if (siteTexts.leadershipIdsJson) {
+        const parsed = JSON.parse(siteTexts.leadershipIdsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return boardMembers.filter(m => m.id === '1' || m.id === 'vc1');
+  };
+
   const activeHeroImages = getActiveHeroImages();
+  const activeImpactStats = getActiveImpactStats();
+  const activeLeadership = getActiveLeadership();
 
   const nextImage = () => {
     setCurrentImageIdx((prev) => (prev + 1) % activeHeroImages.length);
@@ -351,35 +453,22 @@ export default function HistorySection({
     impactHeader: { en: 'Empowering & Transforming Lives', ne: 'सशक्तिकरण र जीवन परिवर्तन' },
   };
 
-  return (
-    <div className="space-y-16">
-      {/* Admin Edit Homepage Content Button */}
-      {isAdmin && !isEditingTexts && (
-        <div className="flex justify-end -mb-8">
-          <button
-            onClick={() => setIsEditingTexts(true)}
-            className="px-4 py-2.5 bg-teal-800 hover:bg-teal-700 text-white text-xs font-extrabold uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 border border-teal-700 z-20"
-          >
-            <Edit className="w-4 h-4 text-teal-300" />
-            <span>Edit Homepage Content</span>
-          </button>
-        </div>
-      )}
-
-      {/* Admin Edit Homepage Content Panel */}
-      {isAdmin && isEditingTexts && (
-        <section className="bg-teal-50 border-2 border-emerald-500 p-6 sm:p-8 rounded-3xl shadow-lg space-y-6 animate-in fade-in duration-200">
+  if (isAdmin && isEditingTexts) {
+    return (
+      <div className="space-y-6">
+        <section className="bg-teal-50 dark:bg-slate-900 border-2 border-emerald-500 p-6 sm:p-8 rounded-3xl shadow-lg space-y-6 animate-in fade-in duration-200">
           <div className="border-b border-emerald-500 pb-4 flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-bold text-teal-950 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-teal-950 dark:text-teal-50 flex items-center gap-2">
                 <Edit className="w-5 h-5 text-emerald-600 animate-pulse" />
                 <span>Edit Homepage Text Content</span>
               </h3>
-              <p className="text-xs text-gray-500 mt-1">Changes are saved online instantly to the server database.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Changes are saved online instantly to the server database.</p>
             </div>
             <button
+              type="button"
               onClick={() => setIsEditingTexts(false)}
-              className="p-1.5 bg-gray-200/50 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+              className="p-1.5 bg-gray-200/50 dark:bg-slate-800 hover:bg-gray-200 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -925,11 +1014,303 @@ export default function HistorySection({
                       setNewSlideDescEn('');
                       setNewSlideDescNe('');
                     }}
-                    className="px-4 py-2 bg-teal-850 hover:bg-teal-800 text-white disabled:opacity-50 text-xs font-bold uppercase rounded-lg transition-colors flex items-center gap-1 border border-teal-700"
+                    className="px-4 py-2 bg-teal-700 hover:bg-teal-850 text-white disabled:opacity-50 text-xs font-bold uppercase rounded-lg transition-colors flex items-center gap-1 shadow-sm border border-teal-800"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Add to Slider List</span>
                   </button>
+                </div>
+              </div>
+
+              {/* Impact Statistics Manager */}
+              <div className="md:col-span-2 border-t border-teal-200 pt-6 mt-6 space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-extrabold text-teal-950 uppercase tracking-wide">Manage Impact Statistics</h4>
+                    <p className="text-xs text-gray-500">Add, edit, or delete statistics displayed below 'Empowering & Transforming Lives'</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newStat = {
+                        id: 'stat_' + Date.now(),
+                        value: '100+',
+                        label: { en: 'New Stat Label', ne: 'नयाँ तथ्याङ्क लेबल' },
+                        desc: { en: 'New description detail', ne: 'नयाँ विवरण विवरण' }
+                      };
+                      setEditImpactStats([...editImpactStats, newStat]);
+                    }}
+                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold uppercase rounded-lg flex items-center gap-1 shadow-sm transition-all shrink-0"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Statistic</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {editImpactStats.map((stat, sIdx) => (
+                    <div key={stat.id || sIdx} className="p-4 bg-white rounded-2xl border border-teal-150 space-y-3 relative group shadow-sm">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditImpactStats(editImpactStats.filter((_, idx) => idx !== sIdx));
+                        }}
+                        className="absolute top-3 right-3 p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors border border-red-200"
+                        title="Delete Statistic"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      <div className="grid grid-cols-3 gap-2 pr-6">
+                        {/* Stat Value */}
+                        <div className="col-span-1 space-y-1">
+                          <label className="text-[10px] font-bold text-teal-900 uppercase">Value</label>
+                          <input
+                            type="text"
+                            required
+                            value={stat.value}
+                            onChange={(e) => {
+                              const updated = [...editImpactStats];
+                              updated[sIdx] = { ...updated[sIdx], value: e.target.value };
+                              setEditImpactStats(updated);
+                            }}
+                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs font-bold text-teal-950 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Stat Label English */}
+                        <div className="col-span-2 space-y-1">
+                          <label className="text-[10px] font-bold text-teal-900 uppercase">Label (EN)</label>
+                          <input
+                            type="text"
+                            required
+                            value={stat.label?.en || ''}
+                            onChange={(e) => {
+                              const updated = [...editImpactStats];
+                              const label = { ...(updated[sIdx].label || { en: '', ne: '' }), en: e.target.value };
+                              updated[sIdx] = { ...updated[sIdx], label };
+                              setEditImpactStats(updated);
+                            }}
+                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {/* Label Nepali */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-teal-900 uppercase">Label (NE)</label>
+                          <input
+                            type="text"
+                            required
+                            value={stat.label?.ne || ''}
+                            onChange={(e) => {
+                              const updated = [...editImpactStats];
+                              const label = { ...(updated[sIdx].label || { en: '', ne: '' }), ne: e.target.value };
+                              updated[sIdx] = { ...updated[sIdx], label };
+                              setEditImpactStats(updated);
+                            }}
+                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Desc English */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-teal-900 uppercase">Desc (EN)</label>
+                          <input
+                            type="text"
+                            required
+                            value={stat.desc?.en || ''}
+                            onChange={(e) => {
+                              const updated = [...editImpactStats];
+                              const desc = { ...(updated[sIdx].desc || { en: '', ne: '' }), en: e.target.value };
+                              updated[sIdx] = { ...updated[sIdx], desc };
+                              setEditImpactStats(updated);
+                            }}
+                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Desc Nepali */}
+                        <div className="space-y-1 sm:col-span-2">
+                          <label className="text-[10px] font-bold text-teal-900 uppercase">Desc (NE)</label>
+                          <input
+                            type="text"
+                            required
+                            value={stat.desc?.ne || ''}
+                            onChange={(e) => {
+                              const updated = [...editImpactStats];
+                              const desc = { ...(updated[sIdx].desc || { en: '', ne: '' }), ne: e.target.value };
+                              updated[sIdx] = { ...updated[sIdx], desc };
+                              setEditImpactStats(updated);
+                            }}
+                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Featured Leadership Manager */}
+              <div className="md:col-span-2 border-t border-teal-200 pt-6 mt-6 space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-extrabold text-teal-950 uppercase tracking-wide">Manage Featured Leadership Section</h4>
+                    <p className="text-xs text-gray-500">Add, edit, or delete key leaders displayed on the homepage. More than 2 can be added!</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newLeader = {
+                        id: 'leader_' + Date.now(),
+                        name: { en: 'New Leader Name', ne: 'नयाँ नेतृत्व नाम' },
+                        role: { en: 'Role Name', ne: 'भूमिका नाम' },
+                        category: 'board',
+                        address: { en: 'Nepal', ne: 'नेपाल' },
+                        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+                      };
+                      setEditLeadership([...editLeadership, newLeader]);
+                    }}
+                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold uppercase rounded-lg flex items-center gap-1 shadow-sm transition-all shrink-0"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Key Leader</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {editLeadership.map((member, lIdx) => (
+                    <div key={member.id || lIdx} className="p-4 bg-white rounded-2xl border border-teal-150 space-y-3 relative group shadow-sm">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditLeadership(editLeadership.filter((_, idx) => idx !== lIdx));
+                        }}
+                        className="absolute top-3 right-3 p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors border border-red-200"
+                        title="Delete Leader"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      <div className="flex flex-col gap-3 border-b border-teal-100 pb-3 pr-6">
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-12 h-12 rounded-full overflow-hidden border border-teal-200 shrink-0 bg-teal-50 flex items-center justify-center">
+                            <img src={member.avatarUrl} alt="" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="space-y-1 w-full">
+                            <label className="text-[10px] font-bold text-teal-900 uppercase block">Leader Photo (Upload or URL)</label>
+                            <div className="flex gap-1.5">
+                              <input
+                                type="text"
+                                placeholder="Image URL"
+                                required
+                                value={member.avatarUrl}
+                                onChange={(e) => {
+                                  const updated = [...editLeadership];
+                                  updated[lIdx] = { ...updated[lIdx], avatarUrl: e.target.value };
+                                  setEditLeadership(updated);
+                                }}
+                                className="w-full p-1.5 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                              />
+                              <label className="px-2.5 py-1.5 bg-teal-700 hover:bg-teal-800 text-white rounded-lg text-[10px] font-bold uppercase cursor-pointer flex items-center justify-center whitespace-nowrap shadow-sm">
+                                Upload
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      try {
+                                        const url = await handleFileUpload(file);
+                                        const updated = [...editLeadership];
+                                        updated[lIdx] = { ...updated[lIdx], avatarUrl: url };
+                                        setEditLeadership(updated);
+                                      } catch (err: any) {
+                                        alert(err.message || 'Failed to upload photo');
+                                      }
+                                    }
+                                  }}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        {/* Name English */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-teal-900 uppercase">Name (EN)</label>
+                          <input
+                            type="text"
+                            required
+                            value={member.name?.en || ''}
+                            onChange={(e) => {
+                              const updated = [...editLeadership];
+                              const name = { ...(updated[lIdx].name || { en: '', ne: '' }), en: e.target.value };
+                              updated[lIdx] = { ...updated[lIdx], name };
+                              setEditLeadership(updated);
+                            }}
+                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs font-bold text-teal-950 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Name Nepali */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-teal-900 uppercase">Name (NE)</label>
+                          <input
+                            type="text"
+                            required
+                            value={member.name?.ne || ''}
+                            onChange={(e) => {
+                              const updated = [...editLeadership];
+                              const name = { ...(updated[lIdx].name || { en: '', ne: '' }), ne: e.target.value };
+                              updated[lIdx] = { ...updated[lIdx], name };
+                              setEditLeadership(updated);
+                            }}
+                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs font-bold text-teal-950 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Role English */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-teal-900 uppercase">Role (EN)</label>
+                          <input
+                            type="text"
+                            required
+                            value={member.role?.en || ''}
+                            onChange={(e) => {
+                              const updated = [...editLeadership];
+                              const role = { ...(updated[lIdx].role || { en: '', ne: '' }), en: e.target.value };
+                              updated[lIdx] = { ...updated[lIdx], role };
+                              setEditLeadership(updated);
+                            }}
+                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Role Nepali */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-teal-900 uppercase">Role (NE)</label>
+                          <input
+                            type="text"
+                            required
+                            value={member.role?.ne || ''}
+                            onChange={(e) => {
+                              const updated = [...editLeadership];
+                              const role = { ...(updated[lIdx].role || { en: '', ne: '' }), ne: e.target.value };
+                              updated[lIdx] = { ...updated[lIdx], role };
+                              setEditLeadership(updated);
+                            }}
+                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -953,6 +1334,23 @@ export default function HistorySection({
             </div>
           </form>
         </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-10">
+      {/* Admin Edit Homepage Content Button */}
+      {isAdmin && (
+        <div className="flex justify-end -mb-8">
+          <button
+            onClick={() => setIsEditingTexts(true)}
+            className="px-4 py-2.5 bg-teal-800 hover:bg-teal-700 text-white text-xs font-extrabold uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 border border-teal-700 z-20"
+          >
+            <Edit className="w-4 h-4 text-teal-300" />
+            <span>Edit Homepage Content</span>
+          </button>
+        </div>
       )}
 
       {/* Hero Section */}
@@ -1108,7 +1506,7 @@ export default function HistorySection({
           {lang === 'en' ? siteTexts.impactHeaderEn : siteTexts.impactHeaderNe}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {impactStats.map((stat, idx) => {
+          {activeImpactStats.map((stat, idx) => {
             const icons = [Users, Leaf, BookOpen];
             const Icon = icons[idx % icons.length];
             return (
@@ -1121,10 +1519,10 @@ export default function HistorySection({
                 </div>
                 <div>
                   <h4 className="font-extrabold text-teal-700 dark:text-emerald-400 uppercase text-xs tracking-wider mb-2">
-                    {stat.label[lang]}
+                    {stat.label?.[lang] || ''}
                   </h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                    {stat.desc[lang]}
+                    {stat.desc?.[lang] || ''}
                   </p>
                 </div>
               </div>
@@ -1134,7 +1532,7 @@ export default function HistorySection({
       </section>
 
       {/* Notices Section */}
-      <section className="space-y-8 py-8">
+      <section className="space-y-6 py-2">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Bell className="w-8 h-8 text-teal-600" />
@@ -1304,7 +1702,7 @@ export default function HistorySection({
       </section>
 
       {/* Blog Section */}
-      <section className="space-y-8 py-8">
+      <section className="space-y-6 py-2">
         <h3 className="text-2xl sm:text-3xl font-black text-teal-950 text-center uppercase tracking-tight flex items-center justify-center gap-2">
           <BookOpen className="w-8 h-8 text-teal-600" />
           {lang === 'en' ? 'Latest Blog Posts' : 'पछिल्लो ब्लग पोस्टहरू'}
@@ -1368,7 +1766,7 @@ export default function HistorySection({
       </section>
 
       {/* Glimpses to Our Journey Albums Section */}
-      <section className="space-y-8 py-8 border-t border-teal-100">
+      <section className="space-y-6 py-4 border-t border-teal-100">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left space-y-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-800 text-xs font-bold uppercase tracking-wider border border-teal-200">
@@ -1508,33 +1906,323 @@ export default function HistorySection({
         </div>
       </section>
 
+      {/* Our Network: District Chapters & Sister Institutions */}
+      <section className="space-y-6 py-6 border-t border-teal-100 dark:border-slate-800">
+        <div className="text-center space-y-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider border border-emerald-200 dark:border-emerald-800/30">
+            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+            {lang === 'en' ? 'Our Network' : 'हाम्रो संजाल'}
+          </span>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <h3 className="text-2xl sm:text-3xl font-black text-teal-950 dark:text-teal-50 uppercase tracking-tight">
+              {lang === 'en' ? 'Chapters & Sister Organizations' : 'शाखाहरू र भगिनी संस्थाहरू'}
+            </h3>
+            {isAdmin && (
+              <button
+                onClick={() => setIsNetworkModalOpen(true)}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Chapter / Sister Org</span>
+              </button>
+            )}
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm max-w-2xl mx-auto font-medium leading-relaxed">
+            {lang === 'en' 
+              ? 'Expanding our footprints and coordinating social welfare initiatives across Nepal through active district chapters and associated wings.'
+              : 'सक्रिय जिल्ला शाखाहरू र आबद्ध संस्थाहरू मार्फत नेपालभर हाम्रो उपस्थिति विस्तार गर्दै र सामाजिक कल्याणकारी पहलहरू समन्वय गर्दै।'}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto px-4">
+          {/* Left Column: District Chapters */}
+          <div className="bg-gradient-to-br from-white to-teal-50/20 dark:from-slate-900 dark:to-slate-900/40 rounded-2xl p-6 shadow-sm border border-teal-100/60 dark:border-slate-800/80 space-y-4">
+            <div className="flex items-center gap-2.5 pb-3 border-b border-teal-100/40 dark:border-slate-800">
+              <Map className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              <h4 className="text-lg font-extrabold text-teal-950 dark:text-teal-50">
+                {lang === 'en' ? 'District Chapters' : 'जिल्ला शाखाहरू'}
+              </h4>
+            </div>
+
+            <div className="space-y-4">
+              {networks.filter(n => n.type === 'chapter').length === 0 ? (
+                <p className="text-xs text-gray-400 italic">No chapters added yet.</p>
+              ) : (
+                networks.filter(n => n.type === 'chapter').map((net) => (
+                  <div 
+                    key={net.id}
+                    onClick={() => onSelectNetwork && onSelectNetwork(net.id)}
+                    className="flex gap-3 items-start p-3 rounded-xl hover:bg-teal-50/45 dark:hover:bg-slate-800/30 transition-colors cursor-pointer group relative border border-transparent hover:border-teal-100/40"
+                  >
+                    {isAdmin && onDeleteNetwork && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm('Are you sure you want to delete this branch and its data?')) {
+                            onDeleteNetwork(net.id);
+                          }
+                        }}
+                        className="absolute top-2 right-2 p-1 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 rounded-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        title="Delete Branch"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+
+                    <div className="p-2 rounded-lg bg-teal-50 dark:bg-slate-800 text-teal-700 dark:text-teal-300 shrink-0 mt-0.5">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div className="space-y-1 pr-6">
+                      <h5 className="font-extrabold text-sm text-teal-950 dark:text-teal-50 group-hover:text-teal-700 dark:group-hover:text-teal-400 transition-colors flex items-center gap-1.5">
+                        {net.name[lang]}
+                        <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </h5>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
+                        {net.description[lang]}
+                      </p>
+                      <span className="inline-block text-[10px] font-bold text-teal-600 dark:text-teal-400">
+                        📍 {net.location[lang]}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: Sister Institutions */}
+          <div className="bg-gradient-to-br from-white to-emerald-50/20 dark:from-slate-900 dark:to-slate-900/40 rounded-2xl p-6 shadow-sm border border-emerald-100/60 dark:border-slate-800/80 space-y-4">
+            <div className="flex items-center gap-2.5 pb-3 border-b border-emerald-100/40 dark:border-slate-800">
+              <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              <h4 className="text-lg font-extrabold text-teal-950 dark:text-teal-50">
+                {lang === 'en' ? 'Sister Organizations' : 'भगिनी संस्थाहरू'}
+              </h4>
+            </div>
+
+            <div className="space-y-4">
+              {networks.filter(n => n.type === 'sister').length === 0 ? (
+                <p className="text-xs text-gray-400 italic">No sister organizations added yet.</p>
+              ) : (
+                networks.filter(n => n.type === 'sister').map((net) => (
+                  <div 
+                    key={net.id}
+                    onClick={() => onSelectNetwork && onSelectNetwork(net.id)}
+                    className="flex gap-3 items-start p-3 rounded-xl hover:bg-emerald-50/45 dark:hover:bg-slate-800/30 transition-colors cursor-pointer group relative border border-transparent hover:border-emerald-100/40"
+                  >
+                    {isAdmin && onDeleteNetwork && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm('Are you sure you want to delete this branch and its data?')) {
+                            onDeleteNetwork(net.id);
+                          }
+                        }}
+                        className="absolute top-2 right-2 p-1 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 rounded-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        title="Delete Sister Org"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+
+                    <div className="p-2 rounded-lg bg-emerald-50 dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 shrink-0 mt-0.5">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div className="space-y-1 pr-6">
+                      <h5 className="font-extrabold text-sm text-teal-950 dark:text-teal-50 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                        {net.name[lang]}
+                        <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </h5>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
+                        {net.description[lang]}
+                      </p>
+                      <span className="inline-block text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                        📍 {net.location[lang]}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ADMIN MODAL TO ADD NETWORK BRANCH */}
+        {isNetworkModalOpen && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-teal-100 dark:border-slate-800 max-w-md w-full text-xs font-semibold space-y-4">
+              <div className="flex justify-between items-center pb-2 border-b border-teal-50 dark:border-slate-800">
+                <h3 className="font-black text-lg text-teal-950 dark:text-teal-50 uppercase tracking-tight">
+                  Add Network Branch (Chapter / Sister Institution)
+                </h3>
+                <button 
+                  onClick={() => setIsNetworkModalOpen(false)}
+                  className="p-1 hover:bg-teal-50 rounded-full text-gray-400"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!netNameEn || !netDescEn) return;
+                  const newBranch: NetworkBranch = {
+                    id: netNameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `branch-${Date.now()}`,
+                    type: netType,
+                    name: { en: netNameEn, ne: netNameNe || netNameEn },
+                    description: { en: netDescEn, ne: netDescNe || netDescEn },
+                    location: { en: netLocEn || 'Nepal', ne: netLocNe || 'नेपाल' }
+                  };
+                  if (onAddNetwork) onAddNetwork(newBranch);
+                  setIsNetworkModalOpen(false);
+                  // Reset fields
+                  setNetNameEn('');
+                  setNetNameNe('');
+                  setNetType('chapter');
+                  setNetDescEn('');
+                  setNetDescNe('');
+                  setNetLocEn('');
+                  setNetLocNe('');
+                }}
+                className="space-y-4"
+              >
+                <div className="space-y-1">
+                  <label className="text-gray-500 uppercase tracking-wider block">Branch Type</label>
+                  <select
+                    value={netType}
+                    onChange={(e) => setNetType(e.target.value as any)}
+                    className="w-full px-3 py-2 rounded-xl border border-teal-100 dark:border-slate-800 bg-teal-50/20 focus:outline-none focus:border-teal-500 dark:bg-slate-950 text-teal-950 dark:text-white"
+                  >
+                    <option value="chapter">District Chapter</option>
+                    <option value="sister">Sister Organization</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-gray-500 uppercase tracking-wider block">Name (English)</label>
+                    <input
+                      type="text"
+                      value={netNameEn}
+                      onChange={(e) => setNetNameEn(e.target.value)}
+                      placeholder="e.g. Nepalgunj Chapter"
+                      required
+                      className="w-full px-3 py-2 rounded-xl border border-teal-100 dark:border-slate-800 bg-teal-50/20 focus:outline-none focus:border-teal-500 dark:bg-slate-950 text-teal-950 dark:text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-gray-500 uppercase tracking-wider block">Name (Nepali)</label>
+                    <input
+                      type="text"
+                      value={netNameNe}
+                      onChange={(e) => setNetNameNe(e.target.value)}
+                      placeholder="नेपालगन्ज शाखा"
+                      className="w-full px-3 py-2 rounded-xl border border-teal-100 dark:border-slate-800 bg-teal-50/20 focus:outline-none focus:border-teal-500 dark:bg-slate-950 text-teal-950 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-gray-500 uppercase tracking-wider block">Description (English)</label>
+                  <textarea
+                    value={netDescEn}
+                    onChange={(e) => setNetDescEn(e.target.value)}
+                    placeholder="Brief description about its goals and presence..."
+                    rows={2}
+                    required
+                    className="w-full px-3 py-2 rounded-xl border border-teal-100 dark:border-slate-800 bg-teal-50/20 focus:outline-none focus:border-teal-500 dark:bg-slate-950 text-teal-950 dark:text-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-gray-500 uppercase tracking-wider block">Description (Nepali)</label>
+                  <textarea
+                    value={netDescNe}
+                    onChange={(e) => setNetDescNe(e.target.value)}
+                    placeholder="यस शाखाको लक्ष्य र उपस्थितिको विवरण..."
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-xl border border-teal-100 dark:border-slate-800 bg-teal-50/20 focus:outline-none focus:border-teal-500 dark:bg-slate-950 text-teal-950 dark:text-white"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-gray-500 uppercase tracking-wider block">Location (English)</label>
+                    <input
+                      type="text"
+                      value={netLocEn}
+                      onChange={(e) => setNetLocEn(e.target.value)}
+                      placeholder="e.g. Banke District"
+                      className="w-full px-3 py-2 rounded-xl border border-teal-100 dark:border-slate-800 bg-teal-50/20 focus:outline-none focus:border-teal-500 dark:bg-slate-950 text-teal-950 dark:text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-gray-500 uppercase tracking-wider block">Location (Nepali)</label>
+                    <input
+                      type="text"
+                      value={netLocNe}
+                      onChange={(e) => setNetLocNe(e.target.value)}
+                      placeholder="बाँके जिल्ला"
+                      className="w-full px-3 py-2 rounded-xl border border-teal-100 dark:border-slate-800 bg-teal-50/20 focus:outline-none focus:border-teal-500 dark:bg-slate-950 text-teal-950 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-teal-700 hover:bg-teal-800 text-white font-extrabold uppercase tracking-widest rounded-xl text-center shadow-md transition-all pt-2.5"
+                >
+                  Create Branch Page
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+      </section>
+
       {/* Leadership & Key Figures */}
-      <section className="space-y-8 py-8">
-        <h3 className="text-2xl sm:text-3xl font-black text-teal-950 text-center uppercase tracking-tight">
-          {lang === 'en' ? 'Our Leadership' : 'हाम्रो नेतृत्व'}
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          {['1', 'vc1'].map((id) => {
-            const member = boardMembers.find(m => m.id === id);
+      <section className="space-y-6 py-4 border-t border-teal-50 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <h3 className="text-2xl sm:text-3xl font-black text-teal-950 dark:text-teal-50 text-center uppercase tracking-tight">
+            {lang === 'en' ? 'Our Leadership' : 'हाम्रो नेतृत्व'}
+          </h3>
+          {isAdmin && (
+            <button
+              onClick={() => {
+                setIsEditingTexts(true);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="px-3 py-1.5 bg-teal-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 text-teal-800 dark:text-teal-200 text-[11px] font-bold rounded-lg hover:bg-teal-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 shadow-sm"
+              title="Edit Leadership List"
+            >
+              <Edit className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Edit Leadership</span>
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-w-5xl mx-auto">
+          {activeLeadership.map((member, idx) => {
             if (!member) return null;
             return (
-              <div key={member.id} className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-teal-100 dark:border-slate-800 flex flex-col items-center text-center gap-4 hover:shadow-md transition-all group">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-emerald-100 dark:border-emerald-900/50 group-hover:border-emerald-400 transition-colors">
-                  <img src={member.avatarUrl} alt={member.name[lang]} className="w-full h-full object-cover" />
+              <div key={member.id || idx} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-teal-100 dark:border-slate-800 flex flex-col items-center text-center gap-2 hover:shadow-md transition-all group relative">
+                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-emerald-100 dark:border-emerald-900/50 group-hover:border-emerald-400 transition-colors shrink-0 shadow-inner">
+                  <img src={member.avatarUrl} alt={member.name?.[lang] || ''} className="w-full h-full object-cover" />
                 </div>
-                <div>
-                  <h4 className="font-extrabold text-teal-950 dark:text-teal-50 text-lg">{member.name[lang]}</h4>
-                  <p className="text-emerald-600 dark:text-emerald-400 font-bold text-sm uppercase tracking-wider mb-2">{member.role[lang]}</p>
+                <div className="space-y-0.5 min-w-0 w-full">
+                  <h4 className="font-extrabold text-teal-950 dark:text-teal-50 text-[13px] leading-tight break-words text-center">{member.name?.[lang] || ''}</h4>
+                  <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider break-words text-center">{member.role?.[lang] || ''}</p>
                 </div>
                 <button
                   onClick={() => {
                     onSelectLeader(member.id);
                     onNavigate('leader-bio');
-                    onTrackAction(`Viewed profile of ${member.name.en}`);
+                    onTrackAction(`Viewed profile of ${member.name?.en || ''}`);
                   }}
-                  className="mt-auto text-sm font-bold text-teal-700 dark:text-teal-200 bg-teal-50 dark:bg-slate-800 hover:bg-teal-100 dark:hover:bg-slate-700 px-6 py-2 rounded-full transition-colors flex items-center gap-1"
+                  className="mt-auto text-[10px] font-black uppercase text-teal-700 dark:text-teal-200 bg-teal-50/80 dark:bg-slate-800 hover:bg-teal-100 dark:hover:bg-slate-700 px-3 py-1.5 rounded-xl transition-colors flex items-center justify-center gap-0.5 w-full whitespace-nowrap"
                 >
-                  {lang === 'en' ? 'View Profile' : 'प्रोफाइल हेर्नुहोस्'} <ArrowRight className="w-4 h-4" />
+                  <span>{lang === 'en' ? 'Profile' : 'प्रोफाइल'}</span>
+                  <ArrowRight className="w-3 h-3" />
                 </button>
               </div>
             );

@@ -5,7 +5,7 @@ import {
   Check, FolderPlus
 } from 'lucide-react';
 import { Album, AlbumMediaItem, Language } from '../types';
-import { parseMediaUrl, extractGoogleDriveFolderId, getGoogleDriveFolderViewUrl } from '../utils/mediaUrl';
+import { parseMediaUrl, extractGoogleDriveFolderId, getGoogleDriveFolderViewUrl, getBestAlbumCover } from '../utils/mediaUrl';
 
 interface AlbumDetailProps {
   album: Album;
@@ -210,7 +210,7 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction }: Alb
               key={currentItem.id}
               controls
               autoPlay={false}
-              poster={currentItem.thumbnailUrl || album.coverUrl}
+              poster={currentItem.thumbnailUrl || getBestAlbumCover(album)}
               className="max-w-full max-h-[600px] rounded-xl object-contain shadow-2xl"
             >
               <source src={parsed.formattedUrl} type="video/mp4" />

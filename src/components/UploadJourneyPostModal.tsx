@@ -5,7 +5,7 @@ import {
   ShieldCheck, Lock, Key, LogOut, Database, CheckCircle2, Layers, DownloadCloud, Globe
 } from 'lucide-react';
 import { Album, AlbumMediaItem, Language } from '../types';
-import { formatDriveImageUrl, parseMultipleMediaLinks, extractGoogleDriveFolderId } from '../utils/mediaUrl';
+import { formatDriveImageUrl, parseMultipleMediaLinks, extractGoogleDriveFolderId, detectMediaType } from '../utils/mediaUrl';
 
 interface UploadJourneyPostModalProps {
   isOpen: boolean;
@@ -54,16 +54,16 @@ export default function UploadJourneyPostModal({
   const [bulkLinksText, setBulkLinksText] = useState('');
   const [showBulkPaste, setShowBulkPaste] = useState(false);
 
-  // YouTube Videos attached media state
+  // Attached media items (photos or videos) state
   const [mediaItems, setMediaItems] = useState<Array<{
     id: string;
     titleEn: string;
     titleNe: string;
-    type: 'video';
+    type: 'photo' | 'video';
     url: string;
   }>>([
     {
-      id: 'video-1',
+      id: 'media-1',
       titleEn: 'YouTube Event Video',
       titleNe: 'युट्युब कार्यक्रम भिडियो',
       type: 'video',
@@ -73,22 +73,46 @@ export default function UploadJourneyPostModal({
 
   if (!isOpen) return null;
 
-  const handleVerifyPasscode = (e: React.FormEvent) => {
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const handleVerifyPasscode = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanPasscode = inputPasscode.trim().toLowerCase();
-    const validPasscodes = ['admin2026', 'chaurasiya2026', 'chaurasiya'];
-    if (validPasscodes.includes(cleanPasscode)) {
-      setIsAdminAuthenticated(true);
-      try {
-        sessionStorage.setItem('chaurasiya_admin_authenticated', 'true');
-        localStorage.setItem('chaurasiya_is_admin', 'true');
-      } catch (e) {
-        console.error('Error saving admin auth', e);
+    const cleanPasscode = inputPasscode.trim();
+    if (!cleanPasscode) return;
+
+    setIsVerifying(true);
+    setPasscodeError(false);
+
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: cleanPasscode }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setIsAdminAuthenticated(true);
+        try {
+          sessionStorage.setItem('chaurasiya_admin_authenticated', 'true');
+          localStorage.setItem('chaurasiya_is_admin', 'true');
+          localStorage.setItem('chaurasiya_admin_password', cleanPasscode);
+        } catch (err) {
+          console.error('Error saving admin auth', err);
+        }
+        setPasscodeError(false);
+        setInputPasscode('');
+      } else {
+        setPasscodeError(true);
       }
-      setPasscodeError(false);
-      setInputPasscode('');
-    } else {
+    } catch (err) {
+      console.error('Verify error:', err);
       setPasscodeError(true);
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -110,9 +134,9 @@ export default function UploadJourneyPostModal({
 
     const newRows = parsed.map((p, idx) => ({
       id: `bulk-${Date.now()}-${idx}`,
-      titleEn: `YouTube Video #${mediaItems.length + idx + 1}`,
-      titleNe: `युट्युब भिडियो #${mediaItems.length + idx + 1}`,
-      type: 'video' as const,
+      titleEn: p.type === 'photo' ? `Event Photo #${mediaItems.length + idx + 1}` : `YouTube Video #${mediaItems.length + idx + 1}`,
+      titleNe: p.type === 'photo' ? `कार्यक्रम फोटो #${mediaItems.length + idx + 1}` : `युट्युब भिडियो #${mediaItems.length + idx + 1}`,
+      type: p.type,
       url: p.url,
     }));
 
@@ -125,10 +149,10 @@ export default function UploadJourneyPostModal({
     setMediaItems([
       ...mediaItems,
       {
-        id: `video-${Date.now()}`,
-        titleEn: `YouTube Video #${mediaItems.length + 1}`,
-        titleNe: `युट्युब भिडियो #${mediaItems.length + 1}`,
-        type: 'video',
+        id: `media-${Date.now()}`,
+        titleEn: `Media Item #${mediaItems.length + 1}`,
+        titleNe: `मिडिया सामग्री #${mediaItems.length + 1}`,
+        type: 'photo',
         url: '',
       }
     ]);
@@ -166,20 +190,29 @@ export default function UploadJourneyPostModal({
       });
     }
 
-    // Append individual YouTube video items
+    // Append individual photo or video items
     mediaItems.forEach((m, idx) => {
       if (m.url.trim()) {
         formattedMediaItems.push({
           id: `media-${newAlbumId}-${idx}`,
-          title: { en: m.titleEn || `Video ${idx + 1}`, ne: m.titleNe || `भिडियो ${idx + 1}` },
+          title: { en: m.titleEn || (m.type === 'photo' ? `Photo ${idx + 1}` : `Video ${idx + 1}`), ne: m.titleNe || (m.type === 'photo' ? `फोटो ${idx + 1}` : `भिडियो ${idx + 1}`) },
           description: { en: descEn, ne: descNe },
-          type: 'video',
+          type: m.type,
           url: m.url.trim(),
           date: dateStr,
           location: { en: locationEn, ne: locationNe }
         });
       }
     });
+
+    if (formattedMediaItems.length === 0) {
+      alert(
+        lang === 'en' 
+          ? '❌ Error: Please specify at least one Google Drive folder link OR at least one individual Photo/Video URL to create this gallery post.' 
+          : '❌ त्रुटि: कृपया यो ग्यालरी पोस्ट सिर्जना गर्न कम्तिमा एउटा गुगल ड्राइभ फोल्डर लिङ्क वा कम्तिमा एउटा फोटो/भिडियो लिङ्क थप्नुहोस्।'
+      );
+      return;
+    }
 
     // Automatic cover banner image from Google Drive folder or clean stock image
     const formattedCover = 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200';
@@ -278,32 +311,43 @@ export default function UploadJourneyPostModal({
                 <input
                   type="password"
                   required
+                  disabled={isVerifying}
                   value={inputPasscode}
                   onChange={(e) => {
                     setInputPasscode(e.target.value);
                     setPasscodeError(false);
                   }}
-                  placeholder={lang === 'en' ? 'Passcode (Default: 2026)' : 'पासकोड (पूर्वनिर्धारित: 2026)'}
-                  className="w-full px-4 py-2.5 bg-white border border-teal-200 rounded-xl text-sm font-medium text-teal-950 focus:outline-none focus:border-teal-600 shadow-sm"
+                  placeholder={lang === 'en' ? 'Enter passcode' : 'पासकोड प्रविष्ट गर्नुहोस्'}
+                  className="w-full px-4 py-2.5 bg-white border border-teal-200 rounded-xl text-sm font-medium text-teal-950 focus:outline-none focus:border-teal-600 shadow-sm disabled:opacity-60"
                 />
                 {passcodeError && (
                   <p className="text-xs font-bold text-red-600 mt-1">
-                    {lang === 'en' ? '❌ Invalid Passcode. Please try default passcode: 2026' : '❌ अमान्य पासकोड। कृपया पूर्वनिर्धारित पासकोड प्रयास गर्नुहोस्: 2026'}
+                    {lang === 'en' ? '❌ Invalid Passcode. Access Denied.' : '❌ अमान्य पासकोड। पहुँच अस्वीकृत।'}
                   </p>
                 )}
               </div>
 
               <div className="flex items-center justify-between text-[11px] text-teal-700 font-bold bg-teal-100/60 p-2.5 rounded-xl border border-teal-200/60">
-                <span>🔑 {lang === 'en' ? 'Default Admin PIN:' : 'पूर्वनिर्धारित एडमिन पिन:'} <strong>2026</strong></span>
-                <span className="text-teal-900">({lang === 'en' ? 'or 8888' : 'वा 8888'})</span>
+                <span>🔑 {lang === 'en' ? 'Environment Authentication Active' : 'वातावरण प्रमाणीकरण सक्रिय छ'}</span>
+                <span className="text-teal-900">({lang === 'en' ? 'Secure Verification' : 'सुरक्षित प्रमाणीकरण'})</span>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 bg-gradient-to-r from-teal-700 to-emerald-600 hover:from-teal-800 hover:to-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                disabled={isVerifying}
+                className="w-full py-3 bg-gradient-to-r from-teal-700 to-emerald-600 hover:from-teal-800 hover:to-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-75"
               >
-                <ShieldCheck className="w-4 h-4" />
-                <span>{lang === 'en' ? 'Unlock Admin Media Portal' : 'एडमिन मिडिया पोर्टल खोल्नुहोस्'}</span>
+                {isVerifying ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>{lang === 'en' ? 'Unlocking...' : 'खोल्दै...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>{lang === 'en' ? 'Unlock Admin Media Portal' : 'एडमिन मिडिया पोर्टल खोल्नुहोस्'}</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
@@ -453,12 +497,12 @@ export default function UploadJourneyPostModal({
                 </div>
               </div>
 
-              {/* YouTube Video Section */}
+              {/* Individual Photos and Videos Section */}
               <div className="bg-teal-50/40 p-4 sm:p-6 rounded-2xl border border-teal-100 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <h3 className="text-sm font-black text-teal-950 uppercase tracking-wider flex items-center gap-2">
-                    <Film className="w-4 h-4 text-teal-600" />
-                    {lang === 'en' ? '3. Attached YouTube Videos' : '३. संलग्न युट्युब भिडियोहरू'}
+                    <ImageIcon className="w-4 h-4 text-teal-600" />
+                    {lang === 'en' ? '3. Individual Photos & Videos' : '३. संलग्न फोटो तथा भिडियोहरू'}
                   </h3>
 
                   <div className="flex items-center gap-2">
@@ -468,7 +512,7 @@ export default function UploadJourneyPostModal({
                       className="px-3 py-1.5 bg-teal-100 hover:bg-teal-200 text-teal-950 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
                     >
                       <Layers className="w-3.5 h-3.5 text-teal-700" />
-                      <span>{lang === 'en' ? 'Bulk Paste YouTube Links' : 'धेरै युट्युब लिङ्कहरू राख्नुहोस्'}</span>
+                      <span>{lang === 'en' ? 'Bulk Paste Links' : 'एकैपटक धेरै लिङ्कहरू राख्नुहोस्'}</span>
                     </button>
 
                     <button
@@ -477,7 +521,7 @@ export default function UploadJourneyPostModal({
                       className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-gray-950 rounded-xl text-xs font-extrabold flex items-center gap-1 shadow-sm transition-all"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>{lang === 'en' ? 'Add YouTube Video' : 'युट्युब भिडियो थप्नुहोस्'}</span>
+                      <span>{lang === 'en' ? 'Add Photo / Video Row' : 'फोटो वा भिडियो थप्नुहोस्'}</span>
                     </button>
                   </div>
                 </div>
@@ -486,12 +530,12 @@ export default function UploadJourneyPostModal({
                 <div className="bg-emerald-50/80 p-3.5 rounded-xl border border-emerald-200/80 text-xs text-emerald-950 space-y-1">
                   <div className="font-extrabold flex items-center gap-1.5 text-emerald-900">
                     <Globe className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>{lang === 'en' ? 'YouTube Integration:' : 'युट्युब एकीकरण:'}</span>
+                    <span>{lang === 'en' ? 'Supported Formats:' : 'समर्थित ढाँचाहरू:'}</span>
                   </div>
                   <p className="text-[11px] text-emerald-800 leading-relaxed">
                     {lang === 'en' 
-                      ? 'Add YouTube video URLs or Shorts links. The website embeds YouTube directly in the video player without taking up any website storage.' 
-                      : 'युट्युब भिडियो लिङ्कहरू राख्नुहोस्। वेबसाइटले भिडियो प्लेयरमा युट्युब सिधा समावेश गर्दछ।'}
+                      ? 'Add Google Drive share links or direct CDN URLs for photos, and YouTube videos or Shorts links for videos. Paste the link and the app will automatically recognize its type!' 
+                      : 'तस्बिरहरूका लागि गुगल ड्राइभ वा सिधा छवि लिङ्कहरू, र भिडियोहरूका लागि युट्युब वा सर्ट्स भिडियोहरू थप्नुहोस्। लिङ्क राख्दा एपले यसको प्रकार स्वतः चिन्नेछ!'}
                   </p>
                 </div>
 
@@ -501,7 +545,7 @@ export default function UploadJourneyPostModal({
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-teal-200 flex items-center gap-1.5">
                         <DownloadCloud className="w-4 h-4 text-emerald-400" />
-                        <span>{lang === 'en' ? 'Paste YouTube URLs (One per line or comma-separated)' : 'युट्युब लिङ्कहरू पेस्ट गर्नुहोस् (प्रति लाइन एक वा अल्पविरामद्वारा छुट्याइएको)'}</span>
+                        <span>{lang === 'en' ? 'Paste Media Links (One per line or comma-separated)' : 'मिडिया लिङ्कहरू पेस्ट गर्नुहोस् (प्रति लाइन एक वा अल्पविरामद्वारा छुट्याइएको)'}</span>
                       </label>
                       <button
                         type="button"
@@ -516,13 +560,13 @@ export default function UploadJourneyPostModal({
                       rows={4}
                       value={bulkLinksText}
                       onChange={(e) => setBulkLinksText(e.target.value)}
-                      placeholder={`https://www.youtube.com/watch?v=dQw4w9WgXcQ\nhttps://youtu.be/dQw4w9WgXcQ`}
+                      placeholder={`https://drive.google.com/file/d/1A2B3C4D5E/view\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ`}
                       className="w-full p-3 bg-teal-950 border border-teal-700 rounded-xl text-xs font-mono text-teal-100 focus:outline-none focus:border-emerald-400"
                     />
 
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] text-teal-300">
-                        💡 {lang === 'en' ? 'Supports standard YouTube watch URLs and YouTube Shorts links.' : 'मानक युट्युब भिडियो लिङ्कहरू र सर्ट्स लिङ्कहरू समर्थन गर्दछ।'}
+                        💡 {lang === 'en' ? 'Supports Google Drive photo/file links, direct image URLs, and YouTube watch links.' : 'गुगल ड्राइभ फोटो लिङ्क, सिधा छवि युआरएल र युट्युब भिडियो लिङ्कहरू समर्थन गर्दछ।'}
                       </span>
                       <button
                         type="button"
@@ -540,9 +584,38 @@ export default function UploadJourneyPostModal({
                   {mediaItems.map((item, idx) => (
                     <div key={item.id} className="bg-white p-3.5 rounded-xl border border-teal-100 space-y-3">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-extrabold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
-                          <Film className="w-3.5 h-3.5 text-teal-600" /> Video #{idx + 1}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-extrabold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
+                            {item.type === 'video' ? (
+                              <Film className="w-3.5 h-3.5 text-amber-500" />
+                            ) : (
+                              <ImageIcon className="w-3.5 h-3.5 text-emerald-500" />
+                            )}
+                            Slide #{idx + 1}
+                          </span>
+                          
+                          <select
+                            value={item.type}
+                            onChange={(e) => {
+                              const newItems = [...mediaItems];
+                              const newType = e.target.value as 'photo' | 'video';
+                              newItems[idx].type = newType;
+                              // Update default title if it hasn't been custom modified
+                              if (newType === 'photo' && (item.titleEn === '' || item.titleEn.startsWith('YouTube Video'))) {
+                                newItems[idx].titleEn = `Event Photo #${idx + 1}`;
+                                newItems[idx].titleNe = `कार्यक्रम फोटो #${idx + 1}`;
+                              } else if (newType === 'video' && (item.titleEn === '' || item.titleEn.startsWith('Event Photo'))) {
+                                newItems[idx].titleEn = `YouTube Video #${idx + 1}`;
+                                newItems[idx].titleNe = `युट्युब भिडियो #${idx + 1}`;
+                              }
+                              setMediaItems(newItems);
+                            }}
+                            className="text-[11px] font-bold text-teal-800 bg-teal-50 border border-teal-200 rounded-lg px-2 py-0.5 outline-none cursor-pointer focus:border-teal-500"
+                          >
+                            <option value="photo">📷 Photo (Drive / Direct URL)</option>
+                            <option value="video">🎥 Video (YouTube Link)</option>
+                          </select>
+                        </div>
 
                         <button
                           type="button"
@@ -563,7 +636,7 @@ export default function UploadJourneyPostModal({
                             newItems[idx].titleEn = e.target.value;
                             setMediaItems(newItems);
                           }}
-                          placeholder="Video Title / Caption"
+                          placeholder={item.type === 'photo' ? "Photo Title / Caption" : "Video Title / Caption"}
                           className="px-3 py-2 bg-teal-50/50 border border-teal-100 rounded-lg text-xs font-medium text-teal-950"
                         />
 
@@ -572,10 +645,27 @@ export default function UploadJourneyPostModal({
                           value={item.url}
                           onChange={(e) => {
                             const newItems = [...mediaItems];
-                            newItems[idx].url = e.target.value;
+                            const val = e.target.value;
+                            newItems[idx].url = val;
+                            if (val.trim()) {
+                              const detectedType = detectMediaType(val);
+                              newItems[idx].type = detectedType;
+                              
+                              // Update default title if empty or matches previous defaults
+                              const cleanTitleEn = item.titleEn.trim();
+                              if (cleanTitleEn === '' || cleanTitleEn.startsWith('Media Item') || cleanTitleEn.startsWith('Event Photo') || cleanTitleEn.startsWith('YouTube Video')) {
+                                if (detectedType === 'photo') {
+                                  newItems[idx].titleEn = `Event Photo #${idx + 1}`;
+                                  newItems[idx].titleNe = `कार्यक्रम फोटो #${idx + 1}`;
+                                } else {
+                                  newItems[idx].titleEn = `YouTube Video #${idx + 1}`;
+                                  newItems[idx].titleNe = `युट्युब भिडियो #${idx + 1}`;
+                                }
+                              }
+                            }
                             setMediaItems(newItems);
                           }}
-                          placeholder="Paste YouTube Video URL (e.g. https://www.youtube.com/watch?v=...)"
+                          placeholder={item.type === 'photo' ? "Paste Photo Link (Google Drive / Direct URL)" : "Paste YouTube Video URL (e.g. https://www.youtube.com/watch?v=...)"}
                           className="w-full px-3 py-2 bg-teal-50/50 border border-teal-100 rounded-lg text-xs font-medium text-teal-950 focus:outline-none focus:border-teal-600"
                         />
                       </div>

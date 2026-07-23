@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram } from 'lucide-react';
-import { Language, AnalyticsMetric, Member, Album, Notice, Document, CommunityEvent } from './types';
+import { Language, AnalyticsMetric, Member, Album, Notice, Document, CommunityEvent, NetworkBranch } from './types';
 import { notices as initialNotices, boardMembers as initialMembers, upcomingEvents as initialEvents, documents as initialDocuments } from './data/communityData';
 import { journeyAlbums as initialJourneyAlbums } from './data/albumsData';
 import logoImg from './assets/images/chaurasiya_logo_1784519579895.jpg';
@@ -10,6 +10,7 @@ import HistorySection from './components/HistorySection';
 import AlbumGallery from './components/AlbumGallery';
 import AlbumDetail from './components/AlbumDetail';
 import BlogPostDetail, { SinglePostData } from './components/BlogPostDetail';
+import NetworkBranchDetail from './components/NetworkBranchDetail';
 import NoticeGallery from './components/NoticeGallery';
 import DirectorySection from './components/DirectorySection';
 import EventsSection from './components/EventsSection';
@@ -26,6 +27,7 @@ import AddNoticeModal from './components/AddNoticeModal';
 import PrivacySection from './components/PrivacySection';
 import TermsSection from './components/TermsSection';
 import { SiteTexts } from './types';
+import { apiFetch, apiSave, apiDelete, saveFileToGithub, getGithubSettings } from './utils/githubDb';
 
 const defaultSiteTexts: SiteTexts = {
   heroTitleEn: 'Chaurasiya Samaj Nepal',
@@ -103,6 +105,10 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState<string>('history');
   const [selectedLeaderId, setSelectedLeaderId] = useState<string | null>(null);
   const [selectedBlogPost, setSelectedBlogPost] = useState<SinglePostData | null>(null);
+  
+  // Dynamic Network/Chapters State
+  const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null);
+  const [networks, setNetworks] = useState<NetworkBranch[]>([]);
 
   // Dynamic Site Texts State
   const [siteTexts, setSiteTexts] = useState<SiteTexts>(defaultSiteTexts);
@@ -155,14 +161,7 @@ export default function App() {
   const [isAddNoticeModalOpen, setIsAddNoticeModalOpen] = useState(false);
 
   // Retrieve auth headers for admin actions
-  const getAuthHeaders = (): Record<string, string> => {
-    const password = localStorage.getItem('chaurasiya_admin_password') || 'admin2026';
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${password}`,
-      'x-admin-password': password
-    };
-  };
+    const getAuthHeaders = () => { return {}; };
 
   // Dynamic Community Notices State (Initial + Server Online + LocalStorage)
   const [notices, setNotices] = useState<Notice[]>(() => {
@@ -183,16 +182,12 @@ export default function App() {
 
   // Fetch online server notices on mount so ALL visitors see new notices automatically!
   useEffect(() => {
-    fetch('/api/notices')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.notices) && data.notices.length > 0) {
+    apiFetch<Notice[]>('/api/notices', 'community_notices.json', [])
+      .then((serverNotices) => {
+        if (Array.isArray(serverNotices) && serverNotices.length > 0) {
           setNotices((prev) => {
-            const serverNotices: Notice[] = data.notices;
             const mergedMap = new Map<string, Notice>();
-            // Add server online custom notices first
             serverNotices.forEach(n => mergedMap.set(n.id, n));
-            // Add initial static notices if not present
             initialNotices.forEach(n => {
               if (!mergedMap.has(n.id)) {
                 mergedMap.set(n.id, n);
@@ -203,7 +198,7 @@ export default function App() {
         }
       })
       .catch((err) => {
-        console.warn('Backend server /api/notices not reachable:', err);
+        console.warn('Backend server notices fetch failed or serverless DB not reachable:', err);
       });
   }, []);
 
@@ -219,32 +214,33 @@ export default function App() {
       return updated;
     });
 
-    // 2. Persist online to Express backend server so EVERY visitor online sees this notice!
+    // 2. Persist using unified API abstraction
     try {
-      const response = await fetch('/api/notices', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(newNotice),
-      });
-      const data = await response.json();
-      if (data.success && Array.isArray(data.notices)) {
-        setNotices((prev) => {
-          const mergedMap = new Map<string, Notice>();
-          data.notices.forEach((n: Notice) => mergedMap.set(n.id, n));
-          initialNotices.forEach(n => {
-            if (!mergedMap.has(n.id)) {
-              mergedMap.set(n.id, n);
-            }
-          });
-          return Array.from(mergedMap.values());
+      const cleanList = notices.filter(n => n.id !== newNotice.id);
+      const fullList = [newNotice, ...cleanList];
+      const updatedList = await apiSave<Notice>(
+        '/api/notices',
+        'community_notices.json',
+        fullList,
+        newNotice,
+        `Publish community notice: ${typeof newNotice.title === 'object' ? newNotice.title.en : newNotice.title}`,
+        getAuthHeaders()
+      );
+      setNotices((prev) => {
+        const mergedMap = new Map<string, Notice>();
+        updatedList.forEach((n) => mergedMap.set(n.id, n));
+        initialNotices.forEach(n => {
+          if (!mergedMap.has(n.id)) mergedMap.set(n.id, n);
         });
-      }
+        return Array.from(mergedMap.values());
+      });
     } catch (err) {
-      console.error('Failed to save notice to online server:', err);
+      console.error('Failed to save notice:', err);
     }
   };
 
   const handleDeleteNotice = async (id: string) => {
+    const listAfterDeletion = notices.filter((n) => n.id !== id);
     setNotices((prev) => {
       const updated = prev.filter((n) => n.id !== id);
       try {
@@ -256,12 +252,23 @@ export default function App() {
     });
 
     try {
-      await fetch(`/api/notices/${id}`, { 
-        method: 'DELETE',
-        headers: getAuthHeaders()
+      const updatedList = await apiDelete<Notice>(
+        `/api/notices/${id}`,
+        'community_notices.json',
+        listAfterDeletion,
+        `Delete community notice ID: ${id}`,
+        getAuthHeaders()
+      );
+      setNotices((prev) => {
+        const mergedMap = new Map<string, Notice>();
+        updatedList.forEach((n) => mergedMap.set(n.id, n));
+        initialNotices.forEach(n => {
+          if (!mergedMap.has(n.id)) mergedMap.set(n.id, n);
+        });
+        return Array.from(mergedMap.values());
       });
     } catch (err) {
-      console.error('Failed to delete notice on server:', err);
+      console.error('Failed to delete notice:', err);
     }
   };
 
@@ -284,12 +291,10 @@ export default function App() {
 
   // Fetch online server albums on mount so ALL users see new posts instantly
   useEffect(() => {
-    fetch('/api/albums')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.albums) && data.albums.length > 0) {
+    apiFetch<Album[]>('/api/albums', 'journey_albums.json', [])
+      .then((serverAlbums) => {
+        if (Array.isArray(serverAlbums) && serverAlbums.length > 0) {
           setAlbums((prev) => {
-            const serverAlbums: Album[] = data.albums;
             const mergedMap = new Map<string, Album>();
             // Add default initial albums
             initialJourneyAlbums.forEach(a => mergedMap.set(a.id, a));
@@ -300,7 +305,7 @@ export default function App() {
         }
       })
       .catch((err) => {
-        console.warn('Backend server /api/albums not reachable, using offline state:', err);
+        console.warn('Backend server albums fetch failed or serverless DB not reachable:', err);
       });
   }, []);
 
@@ -325,24 +330,26 @@ export default function App() {
       return updated;
     });
 
-    // 2. Persist online to Express backend server so EVERY visitor online sees this post!
+    // 2. Persist using unified API abstraction
     try {
-      const response = await fetch('/api/albums', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(newAlbum),
+      const cleanList = albums.filter(a => a.id !== newAlbum.id);
+      const fullList = [newAlbum, ...cleanList];
+      const updatedList = await apiSave<Album>(
+        '/api/albums',
+        'journey_albums.json',
+        fullList,
+        newAlbum,
+        `Post journey album: ${typeof newAlbum.title === 'object' ? newAlbum.title.en : newAlbum.title}`,
+        getAuthHeaders()
+      );
+      setAlbums((prev) => {
+        const mergedMap = new Map<string, Album>();
+        initialJourneyAlbums.forEach(a => mergedMap.set(a.id, a));
+        updatedList.forEach((a) => mergedMap.set(a.id, a));
+        return Array.from(mergedMap.values());
       });
-      const data = await response.json();
-      if (data.success && Array.isArray(data.albums)) {
-        setAlbums((prev) => {
-          const mergedMap = new Map<string, Album>();
-          initialJourneyAlbums.forEach(a => mergedMap.set(a.id, a));
-          data.albums.forEach((a: Album) => mergedMap.set(a.id, a));
-          return Array.from(mergedMap.values());
-        });
-      }
     } catch (err) {
-      console.error('Failed to save album to online server:', err);
+      console.error('Failed to save album:', err);
     }
 
     // 3. Automatically navigate to the dedicated page for this newly created album post!
@@ -352,6 +359,7 @@ export default function App() {
   };
 
   const handleDeleteAlbum = async (albumId: string) => {
+    const listAfterDeletion = albums.filter((a) => a.id !== albumId);
     setAlbums((prev) => {
       const updated = prev.filter((a) => a.id !== albumId);
       try {
@@ -363,43 +371,40 @@ export default function App() {
     });
 
     try {
-      await fetch(`/api/albums/${albumId}`, { 
-        method: 'DELETE',
-        headers: getAuthHeaders()
+      const updatedList = await apiDelete<Album>(
+        `/api/albums/${albumId}`,
+        'journey_albums.json',
+        listAfterDeletion,
+        `Delete journey album ID: ${albumId}`,
+        getAuthHeaders()
+      );
+      setAlbums((prev) => {
+        const mergedMap = new Map<string, Album>();
+        initialJourneyAlbums.forEach(a => mergedMap.set(a.id, a));
+        updatedList.forEach((a) => mergedMap.set(a.id, a));
+        return Array.from(mergedMap.values());
       });
     } catch (err) {
-      console.error('Failed to delete album on server:', err);
+      console.error('Failed to delete album:', err);
     }
   };
 
   // --- EVENTS API & Handlers ---
   useEffect(() => {
-    fetch('/api/events')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.events)) {
-          if (data.events.length === 0) {
-            // First time seeding the backend
-            initialEvents.forEach(async (evt) => {
-              try {
-                await fetch('/api/events', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer admin2026',
-                    'x-admin-password': 'admin2026'
-                  },
-                  body: JSON.stringify(evt),
-                });
-              } catch (e) {}
-            });
+    apiFetch<CommunityEvent[]>('/api/events', 'community_events.json', [])
+      .then((serverEvents) => {
+        if (Array.isArray(serverEvents)) {
+          if (serverEvents.length === 0) {
             setEvents(initialEvents);
           } else {
-            setEvents(data.events);
+            setEvents(serverEvents);
           }
         }
       })
-      .catch((err) => console.warn('Offline events endpoint:', err));
+      .catch((err) => {
+        console.warn('Offline events endpoint, falling back:', err);
+        setEvents(initialEvents);
+      });
   }, []);
 
   const handleAddEvent = async (newEvent: CommunityEvent) => {
@@ -412,17 +417,24 @@ export default function App() {
     });
 
     try {
-      await fetch('/api/events', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(newEvent),
-      });
+      const cleanList = events.filter(e => e.id !== newEvent.id);
+      const fullList = [newEvent, ...cleanList];
+      const updatedList = await apiSave<CommunityEvent>(
+        '/api/events',
+        'community_events.json',
+        fullList,
+        newEvent,
+        `Add community event: ${typeof newEvent.title === 'object' ? newEvent.title.en : newEvent.title}`,
+        getAuthHeaders()
+      );
+      setEvents(updatedList);
     } catch (err) {
-      console.error('Failed to save event on server:', err);
+      console.error('Failed to save event:', err);
     }
   };
 
   const handleDeleteEvent = async (id: string) => {
+    const listAfterDeletion = events.filter((e) => e.id !== id);
     setEvents((prev) => {
       const updated = prev.filter((e) => e.id !== id);
       try {
@@ -432,46 +444,39 @@ export default function App() {
     });
 
     try {
-      await fetch(`/api/events/${id}`, { 
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
+      const updatedList = await apiDelete<CommunityEvent>(
+        `/api/events/${id}`,
+        'community_events.json',
+        listAfterDeletion,
+        `Delete community event ID: ${id}`,
+        getAuthHeaders()
+      );
+      setEvents(updatedList);
     } catch (err) {
-      console.error('Failed to delete event on server:', err);
+      console.error('Failed to delete event:', err);
     }
   };
 
   // --- MEMBERS API & Handlers ---
   useEffect(() => {
-    fetch('/api/members')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.members)) {
-          if (data.members.length === 0) {
-            // First time seeding the backend
-            initialMembers.forEach(async (m) => {
-              try {
-                await fetch('/api/members', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer admin2026',
-                    'x-admin-password': 'admin2026'
-                  },
-                  body: JSON.stringify(m),
-                });
-              } catch (e) {}
-            });
+    apiFetch<Member[]>('/api/members', 'community_members.json', [])
+      .then((serverMembers) => {
+        if (Array.isArray(serverMembers)) {
+          if (serverMembers.length === 0) {
             setMembers(initialMembers);
           } else {
-            setMembers(data.members);
+            setMembers(serverMembers);
           }
         }
       })
-      .catch((err) => console.warn('Offline members endpoint:', err));
+      .catch((err) => {
+        console.warn('Offline members endpoint, falling back:', err);
+        setMembers(initialMembers);
+      });
   }, []);
 
   const handleDeleteMember = async (id: string) => {
+    const listAfterDeletion = members.filter((m) => m.id !== id);
     setMembers((prev) => {
       const updated = prev.filter((m) => m.id !== id);
       try {
@@ -481,43 +486,35 @@ export default function App() {
     });
 
     try {
-      await fetch(`/api/members/${id}`, { 
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
+      const updatedList = await apiDelete<Member>(
+        `/api/members/${id}`,
+        'community_members.json',
+        listAfterDeletion,
+        `Delete community directory member: ${id}`,
+        getAuthHeaders()
+      );
+      setMembers(updatedList);
     } catch (err) {
-      console.error('Failed to delete member on server:', err);
+      console.error('Failed to delete member:', err);
     }
   };
 
   // --- DOCUMENTS API & Handlers ---
   useEffect(() => {
-    fetch('/api/documents')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.documents)) {
-          if (data.documents.length === 0) {
-            // First time seeding the backend
-            initialDocuments.forEach(async (d) => {
-              try {
-                await fetch('/api/documents', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer admin2026',
-                    'x-admin-password': 'admin2026'
-                  },
-                  body: JSON.stringify(d),
-                });
-              } catch (e) {}
-            });
+    apiFetch<Document[]>('/api/documents', 'community_documents.json', [])
+      .then((serverDocs) => {
+        if (Array.isArray(serverDocs)) {
+          if (serverDocs.length === 0) {
             setDocumentsList(initialDocuments);
           } else {
-            setDocumentsList(data.documents);
+            setDocumentsList(serverDocs);
           }
         }
       })
-      .catch((err) => console.warn('Offline documents endpoint:', err));
+      .catch((err) => {
+        console.warn('Offline documents endpoint, falling back:', err);
+        setDocumentsList(initialDocuments);
+      });
   }, []);
 
   const handleAddDocument = async (newDoc: Document) => {
@@ -530,17 +527,24 @@ export default function App() {
     });
 
     try {
-      await fetch('/api/documents', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(newDoc),
-      });
+      const cleanList = documentsList.filter(d => d.id !== newDoc.id);
+      const fullList = [newDoc, ...cleanList];
+      const updatedList = await apiSave<Document>(
+        '/api/documents',
+        'community_documents.json',
+        fullList,
+        newDoc,
+        `Add community document: ${typeof newDoc.title === 'object' ? newDoc.title.en : newDoc.title}`,
+        getAuthHeaders()
+      );
+      setDocumentsList(updatedList);
     } catch (err) {
-      console.error('Failed to save document on server:', err);
+      console.error('Failed to save document:', err);
     }
   };
 
   const handleDeleteDocument = async (id: string) => {
+    const listAfterDeletion = documentsList.filter((d) => d.id !== id);
     setDocumentsList((prev) => {
       const updated = prev.filter((d) => d.id !== id);
       try {
@@ -550,22 +554,25 @@ export default function App() {
     });
 
     try {
-      await fetch(`/api/documents/${id}`, { 
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
+      const updatedList = await apiDelete<Document>(
+        `/api/documents/${id}`,
+        'community_documents.json',
+        listAfterDeletion,
+        `Delete community document ID: ${id}`,
+        getAuthHeaders()
+      );
+      setDocumentsList(updatedList);
     } catch (err) {
-      console.error('Failed to delete document on server:', err);
+      console.error('Failed to delete document:', err);
     }
   };
 
   // --- SITE TEXTS API & Handlers ---
   useEffect(() => {
-    fetch('/api/site-texts')
-      .then((res) => res.json())
+    apiFetch<SiteTexts>('/api/site-texts', 'site_texts.json', defaultSiteTexts)
       .then((data) => {
-        if (data.success && data.siteTexts) {
-          setSiteTexts(data.siteTexts);
+        if (data) {
+          setSiteTexts(data);
         }
       })
       .catch((err) => console.warn('Offline siteTexts fallback:', err));
@@ -575,13 +582,68 @@ export default function App() {
     const nextTexts = { ...siteTexts, ...updatedTexts };
     setSiteTexts(nextTexts);
     try {
-      await fetch('/api/site-texts', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(nextTexts),
-      });
+      const { enabled } = getGithubSettings();
+      if (enabled) {
+        await saveFileToGithub('site_texts.json', nextTexts, 'Update site global texts');
+      }
     } catch (err) {
-      console.error('Failed to update site texts on server:', err);
+      console.error('Failed to update site texts:', err);
+    }
+  };
+
+  // --- NETWORKS/CHAPTERS API & Handlers ---
+  useEffect(() => {
+    apiFetch<NetworkBranch[]>('/api/networks', 'community_networks.json', [])
+      .then((serverNetworks) => {
+        if (Array.isArray(serverNetworks) && serverNetworks.length > 0) {
+          setNetworks(serverNetworks);
+        }
+      })
+      .catch((err) => console.warn('Offline networks endpoint:', err));
+  }, []);
+
+  const handleAddNetwork = async (newNetwork: NetworkBranch) => {
+    setNetworks((prev) => {
+      const filtered = prev.filter((n) => n.id !== newNetwork.id);
+      return [...filtered, newNetwork];
+    });
+
+    try {
+      const cleanList = networks.filter(n => n.id !== newNetwork.id);
+      const fullList = [...cleanList, newNetwork];
+      const updatedList = await apiSave<NetworkBranch>(
+        '/api/networks',
+        'community_networks.json',
+        fullList,
+        newNetwork,
+        `Add network branch: ${newNetwork.name.en}`,
+        getAuthHeaders()
+      );
+      setNetworks(updatedList);
+    } catch (err) {
+      console.error('Failed to save network:', err);
+    }
+  };
+
+  const handleDeleteNetwork = async (id: string) => {
+    const listAfterDeletion = networks.filter((n) => n.id !== id);
+    setNetworks((prev) => prev.filter((n) => n.id !== id));
+    if (selectedNetworkId === id) {
+      setSelectedNetworkId(null);
+      setCurrentTab('history');
+    }
+
+    try {
+      const updatedList = await apiDelete<NetworkBranch>(
+        `/api/networks/${id}`,
+        'community_networks.json',
+        listAfterDeletion,
+        `Delete network branch ID: ${id}`,
+        getAuthHeaders()
+      );
+      setNetworks(updatedList);
+    } catch (err) {
+      console.error('Failed to delete network:', err);
     }
   };
 
@@ -829,20 +891,27 @@ export default function App() {
     }
 
     try {
-      const response = await fetch('/api/members', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(memberWithId),
-      });
-      const data = await response.json();
-      if (data.success && Array.isArray(data.members)) {
-        setMembers(data.members);
-        try {
-          localStorage.setItem('chaurasiya_members', JSON.stringify(data.members));
-        } catch (e) {}
+      const displayMember = { ...memberWithId };
+      if (!displayMember.avatarUrl && displayMember.photoBase64) {
+        displayMember.avatarUrl = displayMember.photoBase64;
       }
+      const cleanList = members.filter(m => m.id !== memberWithId.id);
+      const fullList = [...cleanList, displayMember];
+
+      const updatedList = await apiSave<Member>(
+        '/api/members',
+        'community_members.json',
+        fullList,
+        memberWithId,
+        `Nominate community member: ${memberWithId.name.en}`,
+        getAuthHeaders()
+      );
+      setMembers(updatedList);
+      try {
+        localStorage.setItem('chaurasiya_members', JSON.stringify(updatedList));
+      } catch (e) {}
     } catch (e) {
-      console.error('Failed to save member to server:', e);
+      console.error('Failed to save member nomination:', e);
     }
   };
 
@@ -915,7 +984,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-teal-200 selection:text-teal-950 transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-teal-200 selection:text-teal-950 transition-colors duration-200 overflow-x-hidden">
       {/* Brand Top bar */}
       <div className="bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-teal-50 text-[11px] sm:text-xs py-2.5 px-4 sm:px-6 lg:px-8 shadow-sm">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
@@ -961,17 +1030,52 @@ export default function App() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onSelectAlbum={handleSelectAlbum}
-            albums={albums}
+            albums={albums.filter(a => !a.chapterId)}
             onOpenUploadModal={() => setIsUploadModalOpen(true)}
             isAdmin={isAdmin}
             onOpenAdminModal={() => setIsAdminModalOpen(true)}
             onDeleteAlbum={handleDeleteAlbum}
             onOpenAddNoticeModal={() => setIsAddNoticeModalOpen(true)}
             onDeleteNotice={handleDeleteNotice}
-            noticesList={notices}
+            noticesList={notices.filter(n => !n.chapterId)}
             siteTexts={siteTexts}
             onUpdateSiteTexts={handleUpdateSiteTexts}
+            networks={networks}
+            onSelectNetwork={(id) => {
+              setSelectedNetworkId(id);
+              setCurrentTab('chapter-detail');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onAddNetwork={handleAddNetwork}
+            onDeleteNetwork={handleDeleteNetwork}
           />
+        )}
+
+        {currentTab === 'chapter-detail' && (
+          (() => {
+            const currentBranch = networks.find((n) => n.id === selectedNetworkId);
+            if (!currentBranch) return null;
+            return (
+              <NetworkBranchDetail
+                branch={currentBranch}
+                lang={lang}
+                isAdmin={isAdmin}
+                onBack={() => handleNavigate('history')}
+                members={members}
+                onAddMember={handleAddMemberNomination}
+                onDeleteMember={handleDeleteMember}
+                events={events}
+                onAddEvent={handleAddEvent}
+                onDeleteEvent={handleDeleteEvent}
+                notices={notices}
+                onAddNotice={handleAddNotice}
+                onDeleteNotice={handleDeleteNotice}
+                albums={albums}
+                onAddAlbum={handleAddAlbum}
+                onDeleteAlbum={handleDeleteAlbum}
+              />
+            );
+          })()
         )}
 
         {currentTab === 'privacy' && (
@@ -1012,7 +1116,7 @@ export default function App() {
             lang={lang}
             onTrackAction={handleTrackAction}
             onBackToHome={() => handleNavigate('history')}
-            albums={albums}
+            albums={albums.filter(a => !a.chapterId)}
             onSelectAlbum={handleSelectAlbum}
             onOpenUploadModal={() => setIsUploadModalOpen(true)}
             isAdmin={isAdmin}
@@ -1054,7 +1158,7 @@ export default function App() {
             isAdmin={isAdmin}
             onOpenAddNoticeModal={() => setIsAddNoticeModalOpen(true)}
             onOpenAdminModal={() => setIsAdminModalOpen(true)}
-            noticesList={notices}
+            noticesList={notices.filter(n => !n.chapterId)}
             onDeleteNotice={handleDeleteNotice}
           />
         )}
@@ -1065,7 +1169,7 @@ export default function App() {
             onAddMember={handleAddMemberNomination}
             onTrackAction={handleTrackAction}
             isAdmin={isAdmin}
-            membersList={members}
+            membersList={members.filter(m => !m.chapterId)}
             onDeleteMember={handleDeleteMember}
           />
         )}
@@ -1076,7 +1180,7 @@ export default function App() {
             onRegisterVolunteer={() => handleTrackAction('Submit Volunteer signup')}
             onTrackAction={handleTrackAction}
             isAdmin={isAdmin}
-            eventsList={events}
+            eventsList={events.filter(e => !e.chapterId)}
             onAddEvent={handleAddEvent}
             onDeleteEvent={handleDeleteEvent}
           />
@@ -1225,16 +1329,31 @@ export default function App() {
         {/* Footer Credit Line */}
         <div className="max-w-7xl mx-auto pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500 font-medium">
           <span>{t.rights[lang]} | Reg: 12345/071</span>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-6">
             <button onClick={() => handleNavigate('privacy')} className="hover:text-emerald-400 transition-colors">{lang === 'en' ? 'Privacy Policy' : 'गोपनीयता नीति'}</button>
             <button onClick={() => handleNavigate('terms')} className="hover:text-emerald-400 transition-colors">{lang === 'en' ? 'Terms of Service' : 'सेवाका सर्तहरू'}</button>
-            <button
-              onClick={() => handleNavigate('abhishek-bio')}
-              className="hover:text-emerald-400 transition-colors border-l border-gray-700 pl-6 flex items-center gap-2"
-            >
-              👨‍💻 {t.designedBy[lang]}
-            </button>
           </div>
+        </div>
+
+        {/* Small, sweet & responsive Architect section at the very bottom */}
+        <div className="max-w-7xl mx-auto mt-6 pt-4 border-t border-gray-800/40 flex justify-center">
+          <button
+            onClick={() => handleNavigate('abhishek-bio')}
+            className="inline-flex items-center gap-2.5 pl-1.5 pr-3 py-1 bg-emerald-950/30 hover:bg-emerald-900/50 text-emerald-300 hover:text-emerald-200 border border-emerald-800/20 hover:border-emerald-700/40 rounded-full transition-all text-xs font-bold shadow-sm group"
+          >
+            <div className="w-7 h-7 rounded-full overflow-hidden border border-emerald-500/40 shrink-0">
+              <img
+                src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200"
+                alt="Abhishek Kumar Chaurasiya"
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            <span className="whitespace-normal text-left">
+              {lang === 'en' ? 'Designed & Maintained by' : 'डिजाइन र मर्मत सम्भार:'}{' '}
+              <span className="font-extrabold text-white group-hover:underline">Abhishek Kumar Chaurasiya</span>
+            </span>
+          </button>
         </div>
       </footer>
 

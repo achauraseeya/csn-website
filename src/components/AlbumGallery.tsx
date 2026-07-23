@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Album, Language } from '../types';
 import { journeyAlbums as defaultJourneyAlbums } from '../data/albumsData';
+import { getBestAlbumCover } from '../utils/mediaUrl';
 import AlbumDetail from './AlbumDetail';
 
 interface AlbumGalleryProps {
@@ -205,7 +206,7 @@ export default function AlbumGallery({
                 {/* Cover Image Header */}
                 <div className={`relative overflow-hidden bg-teal-950 ${viewMode === 'list' ? 'sm:w-72 aspect-video shrink-0' : 'aspect-[16/10]'}`}>
                   <img
-                    src={album.coverUrl}
+                    src={getBestAlbumCover(album)}
                     alt={album.title[lang]}
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"

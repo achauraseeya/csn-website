@@ -17,6 +17,7 @@ export interface Member {
   avatarUrl?: string;
   photoBase64?: string;
   photoName?: string;
+  chapterId?: string; // Links member to a specific chapter/sister org
 }
 
 export interface Notice {
@@ -27,6 +28,7 @@ export interface Notice {
   category: 'work' | 'notice' | 'press';
   driveFileUrl?: string;
   fileUrl?: string;
+  chapterId?: string; // Links notice to a specific chapter/sister org
 }
 
 export interface CommunityEvent {
@@ -37,6 +39,7 @@ export interface CommunityEvent {
   time: string;
   location: LocalizedString;
   status: 'upcoming' | 'completed';
+  chapterId?: string; // Links event to a specific chapter/sister org
 }
 
 export interface GalleryItem {
@@ -117,6 +120,7 @@ export interface Album {
   driveFolderUrl?: string;
   driveFolderId?: string;
   mediaItems: AlbumMediaItem[];
+  chapterId?: string; // Links album to a specific chapter/sister org
 }
 
 export interface SiteTexts {
@@ -159,6 +163,19 @@ export interface SiteTexts {
   socialTw: string;
   socialIg: string;
   heroImagesJson: string;
+  impactStatsJson?: string;
+  leadershipIdsJson?: string;
 }
+
+export interface NetworkBranch {
+  id: string;
+  type: 'chapter' | 'sister';
+  name: LocalizedString;
+  description: LocalizedString;
+  location: LocalizedString;
+  established?: string;
+  avatarUrl?: string;
+}
+
 
 
