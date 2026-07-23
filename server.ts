@@ -9,6 +9,27 @@ async function startServer() {
 
   app.use(express.json({ limit: "10mb" }));
 
+  // Middleware to authenticate admin for modifying/destructive API calls
+  app.use("/api/*", (req, res, next) => {
+    if (req.method === "GET" || req.originalUrl === "/api/health") {
+      return next();
+    }
+    
+    const authHeader = (req.headers["authorization"] || "").toString();
+    const adminPasswordHeader = (req.headers["x-admin-password"] || "").toString();
+    
+    const token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : "";
+    const password = (token || adminPasswordHeader || "").trim();
+    
+    const validPasswords = ["admin2026", "chaurasiya2026", "chaurasiya"];
+    if (validPasswords.includes(password)) {
+      return next();
+    }
+    
+    console.warn(`Unauthorized ${req.method} request blocked on ${req.originalUrl}`);
+    return res.status(401).json({ success: false, error: "Unauthorized: Admin login is required" });
+  });
+
   // Directory for online data storage
   const DATA_DIR = path.join(process.cwd(), "data");
   const ALBUMS_FILE = path.join(DATA_DIR, "journey_albums.json");
@@ -16,6 +37,7 @@ async function startServer() {
   const EVENTS_FILE = path.join(DATA_DIR, "community_events.json");
   const MEMBERS_FILE = path.join(DATA_DIR, "community_members.json");
   const DOCUMENTS_FILE = path.join(DATA_DIR, "community_documents.json");
+  const SITE_TEXTS_FILE = path.join(DATA_DIR, "site_texts.json");
 
   // Ensure data directory exists
   if (!fs.existsSync(DATA_DIR)) {
@@ -256,6 +278,56 @@ async function startServer() {
     const updated = current.filter((d: any) => d.id !== id);
     saveFileItems(DOCUMENTS_FILE, updated);
     res.json({ success: true, documents: updated });
+  });
+
+  // API Routes: Site Texts (Homepage hero/texts, Privacy & Terms)
+  const DEFAULT_SITE_TEXTS = {
+    heroTitleEn: "Heritage & Legacy of Chaurasiya Samaj Nepal",
+    heroTitleNe: "चौरसिया समाज नेपालको सम्पदा र विरासत",
+    heroSubEn: "A dedicated social platform preserving betel leaf culture & serving humanity across Nepal.",
+    heroSubNe: "नेपालभर पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक मञ्च।",
+    introEn: "Chaurasiya Samaj Nepal (चौरसिया समाज नेपाल) is a dedicated non-governmental organization (NGO) established to uplift, unite, and serve the Chaurasiya community across Nepal. Rich in cultural values and historic agricultural excellence, our community has played a pivotal role in Nepalese social-economic history.",
+    introNe: "चौरसिया समाज नेपाल नेपालभर रहेका चौरसिया समुदायको उत्थान, एकता र सेवाका लागि स्थापित एक समर्पित गैर-सरकारी संस्था (NGO) हो। सांस्कृतिक मूल्य र ऐतिहासिक कृषि उत्कृष्टताले समृद्ध, हाम्रो समुदायले नेपालको सामाजिक-आर्थिक इतिहासमा महत्त्वपूर्ण भूमिका खेलेको छ।",
+    paanStoryTitleEn: "The Sacred Bond with the Betel Leaf (Paan)",
+    paanStoryTitleNe: "पानको पातसँगको पवित्र सम्बन्ध",
+    paanStoryEn: "The Chaurasiya community is historically and culturally intertwined with the cultivation of the \"Paan\" (betel leaf) – a symbol of hospitality, respect, and traditional medicine in Nepal. The paan leaf represents freshness, growth, and community bonding, which is why our identity is dressed in vibrant and lush shades of teal and emerald.",
+    paanStoryNe: "चौरसिया समुदाय ऐतिहासिक र सांस्कृतिक रूपमा \"पान\" (betel leaf) को खेतीसँग जोडिएको छ - जुन नेपालमा आतिथ्य, सम्मान र परम्परागत औषधिको प्रतीक हो। पानको पातले ताजापन, वृद्धि र सामुदायिक सम्बन्धलाई प्रतिनिधित्व गर्दछ, त्यसैले हाम्रो पहिचान हरियो र टिल रङको जीवन्त रंगहरूमा सजिएको छ।",
+    missionTitleEn: "Our Vision & Mission",
+    missionTitleNe: "हाम्रो दृष्टिकोण र लक्ष्य",
+    missionEn: "To foster unity, education, economic empowerment, and preservation of cultural heritage among Chaurasiya members while actively contributing to the welfare of Nepalese society through charitable programs, healthcare camps, and youth-led initiatives.",
+    missionNe: "चौरसिया सदस्यहरू बीच एकता, शिक्षा, आर्थिक सशक्तिकरण र सांस्कृतिक सम्पदाको संरक्षण प्रवर्द्धन गर्ने र परोपकारी कार्यक्रमहरू, स्वास्थ्य शिविरहरू र युवाहरूको नेतृत्वमा हुने पहलहरू मार्फत नेपाली समाजको कल्याणमा सक्रिय रूपमा योगदान पुर्‍याउने।",
+    privacyEn: "### Privacy Policy\n\nChaurasiya Samaj Nepal is committed to protecting your personal privacy. We collect names, emails, and contact details solely for managing our member directory and keeping our members updated with official notices.\n\nYour data is securely stored and never shared with unauthorized third parties. By registering or nominating a member, you agree to our data handling practices.\n\n*Review led by Chief General Secretary and CTO Abhishek Kumar Chaurasiya.*\n\nFeel free to contact us for any query regarding this policy.",
+    privacyNe: "### गोपनीयता नीति\n\nचौरसिया समाज नेपाल तपाईंको व्यक्तिगत गोपनीयताको रक्षा गर्न प्रतिबद्ध छ। हामी सदस्य निर्देशिका व्यवस्थापन गर्न र हाम्रा सदस्यहरूलाई आधिकारिक सूचनाहरू प्रदान गर्नका लागि मात्र नाम, इमेल र सम्पर्क विवरणहरू सङ्कलन गर्छौं।\n\nतपाईंको डाटा सुरक्षित रूपमा भण्डारण गरिएको छ र अनधिकृत तेस्रो पक्षहरूसँग कहिल्यै साझा गरिँदैन।",
+    termsEn: "### Terms of Service\n\nWelcome to Chaurasiya Samaj Nepal's official portal. By accessing this website, you agree to comply with our community rules and guidelines.\n\nUsers must not submit false information or impersonate others when nominating community profiles or filling out registration forms.\n\nWe reserve the right to verify, approve, edit, or reject any listing or notice submitted to our portal.",
+    termsNe: "### सेवाका सर्तहरू\n\nचौरसिया समाज नेपालको आधिकारिक पोर्टलमा स्वागत छ। यस वेबसाइटमा पहुँच गरेर, तपाईं हाम्रा सामुदायिक नियमहरू र दिशानिर्देशहरू पालना गर्न सहमत हुनुहुन्छ।\n\nप्रयोगकर्ताहरूले नक्कली जानकारी पेश गर्नु हुँदैन।"
+  };
+
+  app.get("/api/site-texts", (req, res) => {
+    if (fs.existsSync(SITE_TEXTS_FILE)) {
+      try {
+        const raw = fs.readFileSync(SITE_TEXTS_FILE, "utf-8");
+        const parsed = JSON.parse(raw);
+        return res.json({ success: true, siteTexts: { ...DEFAULT_SITE_TEXTS, ...parsed } });
+      } catch (e) {
+        console.error("Error reading site texts file:", e);
+      }
+    }
+    res.json({ success: true, siteTexts: DEFAULT_SITE_TEXTS });
+  });
+
+  app.post("/api/site-texts", (req, res) => {
+    const newTexts = req.body;
+    if (!newTexts) {
+      return res.status(400).json({ success: false, error: "Empty payload" });
+    }
+    try {
+      fs.writeFileSync(SITE_TEXTS_FILE, JSON.stringify(newTexts, null, 2), "utf-8");
+      console.log("Updated online site texts successfully!");
+      res.json({ success: true, siteTexts: newTexts });
+    } catch (e) {
+      console.error("Error saving site texts file:", e);
+      res.status(500).json({ success: false, error: "Failed to write data" });
+    }
   });
 
   // Health check API

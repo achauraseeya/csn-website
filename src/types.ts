@@ -119,4 +119,25 @@ export interface Album {
   mediaItems: AlbumMediaItem[];
 }
 
+export interface SiteTexts {
+  heroTitleEn: string;
+  heroTitleNe: string;
+  heroSubEn: string;
+  heroSubNe: string;
+  introEn: string;
+  introNe: string;
+  paanStoryTitleEn: string;
+  paanStoryTitleNe: string;
+  paanStoryEn: string;
+  paanStoryNe: string;
+  missionTitleEn: string;
+  missionTitleNe: string;
+  missionEn: string;
+  missionNe: string;
+  privacyEn: string;
+  privacyNe: string;
+  termsEn: string;
+  termsNe: string;
+}
+
 

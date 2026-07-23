@@ -23,6 +23,30 @@ import ContactSection from './components/ContactSection';
 import UploadJourneyPostModal from './components/UploadJourneyPostModal';
 import AdminLoginModal from './components/AdminLoginModal';
 import AddNoticeModal from './components/AddNoticeModal';
+import PrivacySection from './components/PrivacySection';
+import TermsSection from './components/TermsSection';
+import { SiteTexts } from './types';
+
+const defaultSiteTexts: SiteTexts = {
+  heroTitleEn: 'Chaurasiya Samaj Nepal',
+  heroTitleNe: 'चौरसिया समाज नेपाल',
+  heroSubEn: 'A dedicated social platform preserving betel leaf culture & serving humanity across Nepal.',
+  heroSubNe: 'नेपालभर पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक मञ्च।',
+  introEn: 'Chaurasiya Samaj Nepal is a non-profit, non-governmental community organization registered under the Social Welfare Council of Nepal. Our mission is to integrate, unify, and elevate the Chaurasiya community across Madhesh Province and greater Nepal, fostering socio-economic progress, promoting traditional agricultural practices (such as betel leaf/Paan cultivation), and providing educational scholarships, medical support, and emergency relief services.',
+  introNe: 'चौरसिया समाज नेपाल एक गैर-नाफामूलक, गैर-सरकारी सामाजिक संस्था हो जुन नेपालको समाज कल्याण परिषदमा दर्ता छ। हाम्रो मुख्य उद्देश्य मधेस प्रदेश र समग्र नेपालभर छरिएर रहेका चौरसिया समुदायलाई एकीकृत गर्दै, उनीहरूको सामाजिक-आर्थिक उन्नति र परम्परागत कृषि प्रणाली (विशेषगरी पान खेती) को जगेर्ना गर्नुका साथै विपन्न विद्यार्थीहरूलाई छात्रवृत्ति, स्वास्थ्य सहायता तथा आपतकालीन राहत सेवाहरू पुर्‍याउनु हो।',
+  paanStoryTitleEn: 'The Betel Leaf Cultivation Legacy',
+  paanStoryTitleNe: 'पान खेतीको ऐतिहासिक विरासत',
+  paanStoryEn: 'Betel Leaf (Paan) cultivation is not just an agricultural occupation for our community; it is a sacred historical legacy. Mentioned in ancient scriptures, the cultivation of the betel vine is an intricate art form passed down through generations. Known as "Jay Paan Dev", our traditional farmers maintain unique shaded structures (Borejha) that protect the delicate leaves, carrying forward a rich cultural heritage that blends nature with spirituality.',
+  paanStoryNe: 'पान खेती चौरसिया समुदायका लागि केवल एक परम्परागत कृषि व्यवसाय मात्र नभएर हाम्रो पौराणिक सांस्कृतिक धरोहर पनि हो। धार्मिक ग्रन्थहरूमा समेत चर्चा गरिएको यो खेती अत्यन्तै संवेदनशील र कलात्मक छ। "जय पान देव" को मूल मन्त्रका साथ हाम्रा कृषकहरूले वर्षौंदेखि विशेष किसिमको छायादार संरचना (बरेजा) बनाएर यसको संरक्षण गर्दै आएका छन्, जसले हाम्रो प्राकृतिक र धार्मिक पहिचानलाई जीवन्त राखेको छ।',
+  missionTitleEn: 'Our Vision & Impact Mission',
+  missionTitleNe: 'हाम्रो दृष्टिकोण र लक्ष्य',
+  missionEn: 'To build a self-reliant, literate, and healthy community where traditional knowledge of betel leaf cultivation is scientifically modernized, and every member has access to equal education, healthcare, and livelihood opportunities.',
+  missionNe: 'एक आत्मनिर्भर, शिक्षित र स्वस्थ चौरसिया समाजको निर्माण गर्ने, जहाँ परम्परागत पान खेतीलाई आधुनिक वैज्ञानिक प्रविधिसँग जोडिनेछ र समुदायका प्रत्येक सदस्यले समान शिक्षा, स्वास्थ्य र जीविकोपार्जनका अवसरहरू प्राप्त गर्नेछन्।',
+  privacyEn: 'Your privacy is extremely important to us. This Privacy Policy details how Chaurasiya Samaj Nepal collects, uses, and safeguards the personal information of our directory members and donors. We strictly protect your contact information and never sell or distribute data to third parties without explicit consent.',
+  privacyNe: 'तपाईंको गोपनीयता हाम्रो लागि अत्यन्तै महत्त्वपूर्ण छ। यो गोपनीयता नीतिले चौरसिया समाज नेपालले हाम्रा सदस्यहरू र दाताहरूको व्यक्तिगत विवरणहरू कसरी संकलन, प्रयोग र संरक्षण गर्छ भन्ने व्याख्या गर्दछ। हामी तपाईंको सम्पर्क विवरणहरूलाई सुरक्षित राख्छौँ र बिना अनुमति तेस्रो पक्षलाई प्रदान गर्दैनौँ।',
+  termsEn: 'By accessing Chaurasiya Samaj Nepal website, you agree to be bound by these Terms of Service. All content, logo, directories, and notices on this platform are owned by Chaurasiya Samaj Nepal. Any nomination or directory submission must contain valid, truthful information.',
+  termsNe: 'चौरसिया समाज नेपालको वेबसाइट प्रयोग गरेर, तपाईं यी सेवाका सर्तहरू पालना गर्न सहमत हुनुहुन्छ। यस प्लेटफर्ममा रहेका सबै सामग्री, लोगो, निर्देशिका र सूचनाहरूको स्वामित्व चौरसिया समाज नेपालमा निहित छ।'
+};
 
 export default function App() {
   // Default language turned to 'en' (English) as requested
@@ -30,6 +54,9 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState<string>('history');
   const [selectedLeaderId, setSelectedLeaderId] = useState<string | null>(null);
   const [selectedBlogPost, setSelectedBlogPost] = useState<SinglePostData | null>(null);
+
+  // Dynamic Site Texts State
+  const [siteTexts, setSiteTexts] = useState<SiteTexts>(defaultSiteTexts);
   
   // Dynamic Member Directory list
   const [members, setMembers] = useState<Member[]>(() => {
@@ -77,6 +104,16 @@ export default function App() {
   });
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isAddNoticeModalOpen, setIsAddNoticeModalOpen] = useState(false);
+
+  // Retrieve auth headers for admin actions
+  const getAuthHeaders = (): Record<string, string> => {
+    const password = localStorage.getItem('chaurasiya_admin_password') || 'admin2026';
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${password}`,
+      'x-admin-password': password
+    };
+  };
 
   // Dynamic Community Notices State (Initial + Server Online + LocalStorage)
   const [notices, setNotices] = useState<Notice[]>(() => {
@@ -137,7 +174,7 @@ export default function App() {
     try {
       const response = await fetch('/api/notices', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(newNotice),
       });
       const data = await response.json();
@@ -170,7 +207,10 @@ export default function App() {
     });
 
     try {
-      await fetch(`/api/notices/${id}`, { method: 'DELETE' });
+      await fetch(`/api/notices/${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
     } catch (err) {
       console.error('Failed to delete notice on server:', err);
     }
@@ -240,7 +280,7 @@ export default function App() {
     try {
       const response = await fetch('/api/albums', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(newAlbum),
       });
       const data = await response.json();
@@ -274,7 +314,10 @@ export default function App() {
     });
 
     try {
-      await fetch(`/api/albums/${albumId}`, { method: 'DELETE' });
+      await fetch(`/api/albums/${albumId}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
     } catch (err) {
       console.error('Failed to delete album on server:', err);
     }
@@ -292,7 +335,11 @@ export default function App() {
               try {
                 await fetch('/api/events', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer admin2026',
+                    'x-admin-password': 'admin2026'
+                  },
                   body: JSON.stringify(evt),
                 });
               } catch (e) {}
@@ -318,7 +365,7 @@ export default function App() {
     try {
       await fetch('/api/events', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(newEvent),
       });
     } catch (err) {
@@ -336,7 +383,10 @@ export default function App() {
     });
 
     try {
-      await fetch(`/api/events/${id}`, { method: 'DELETE' });
+      await fetch(`/api/events/${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
     } catch (err) {
       console.error('Failed to delete event on server:', err);
     }
@@ -354,7 +404,11 @@ export default function App() {
               try {
                 await fetch('/api/members', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer admin2026',
+                    'x-admin-password': 'admin2026'
+                  },
                   body: JSON.stringify(m),
                 });
               } catch (e) {}
@@ -378,7 +432,10 @@ export default function App() {
     });
 
     try {
-      await fetch(`/api/members/${id}`, { method: 'DELETE' });
+      await fetch(`/api/members/${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
     } catch (err) {
       console.error('Failed to delete member on server:', err);
     }
@@ -396,7 +453,11 @@ export default function App() {
               try {
                 await fetch('/api/documents', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer admin2026',
+                    'x-admin-password': 'admin2026'
+                  },
                   body: JSON.stringify(d),
                 });
               } catch (e) {}
@@ -422,7 +483,7 @@ export default function App() {
     try {
       await fetch('/api/documents', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(newDoc),
       });
     } catch (err) {
@@ -440,9 +501,38 @@ export default function App() {
     });
 
     try {
-      await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+      await fetch(`/api/documents/${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
     } catch (err) {
       console.error('Failed to delete document on server:', err);
+    }
+  };
+
+  // --- SITE TEXTS API & Handlers ---
+  useEffect(() => {
+    fetch('/api/site-texts')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.siteTexts) {
+          setSiteTexts(data.siteTexts);
+        }
+      })
+      .catch((err) => console.warn('Offline siteTexts fallback:', err));
+  }, []);
+
+  const handleUpdateSiteTexts = async (updatedTexts: Partial<SiteTexts>) => {
+    const nextTexts = { ...siteTexts, ...updatedTexts };
+    setSiteTexts(nextTexts);
+    try {
+      await fetch('/api/site-texts', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(nextTexts),
+      });
+    } catch (err) {
+      console.error('Failed to update site texts on server:', err);
     }
   };
 
@@ -631,29 +721,77 @@ export default function App() {
     });
   }, []);
 
-  const handleAddMemberNomination = async (newMember: Omit<Member, 'id'>) => {
-    const memberWithId: Member = {
+  // Theme (Dark Mode) State & effect
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+      return 'light';
+    } catch (e) {
+      return 'light';
+    }
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    try {
+      localStorage.setItem('chaurasiya_theme', theme);
+    } catch (e) {}
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+    handleTrackAction(`Toggle theme to ${theme === 'light' ? 'dark' : 'light'}`);
+  };
+
+  const handleAddMemberNomination = async (newMember: Member) => {
+    const hasId = !!newMember.id && !newMember.id.startsWith('temp_new_');
+    const memberWithId: Member = hasId ? newMember : {
       ...newMember,
       id: `m-nom-${Date.now()}`,
     };
+    
+    // Fallback: update local state instantly using either base64 or temporary avatarUrl
     setMembers((prev) => {
-      const updated = [...prev, memberWithId];
+      const exists = prev.some((m) => m.id === memberWithId.id);
+      const displayMember = { ...memberWithId };
+      if (!displayMember.avatarUrl && displayMember.photoBase64) {
+        displayMember.avatarUrl = displayMember.photoBase64;
+      }
+      const updated = exists
+        ? prev.map((m) => (m.id === memberWithId.id ? displayMember : m))
+        : [...prev, displayMember];
       try {
         localStorage.setItem('chaurasiya_members', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
-    setMetrics((prev) => ({
-      ...prev,
-      membersRegistered: prev.membersRegistered + 1,
-    }));
+
+    if (!hasId) {
+      setMetrics((prev) => ({
+        ...prev,
+        membersRegistered: prev.membersRegistered + 1,
+      }));
+    }
 
     try {
-      await fetch('/api/members', {
+      const response = await fetch('/api/members', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(memberWithId),
       });
+      const data = await response.json();
+      if (data.success && Array.isArray(data.members)) {
+        setMembers(data.members);
+        try {
+          localStorage.setItem('chaurasiya_members', JSON.stringify(data.members));
+        } catch (e) {}
+      }
     } catch (e) {
       console.error('Failed to save member to server:', e);
     }
@@ -728,7 +866,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-gray-900 flex flex-col font-sans selection:bg-teal-200 selection:text-teal-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-teal-200 selection:text-teal-950 transition-colors duration-200">
       {/* Brand Top bar */}
       <div className="bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-teal-50 text-[11px] sm:text-xs py-2.5 px-4 sm:px-6 lg:px-8 shadow-sm">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
@@ -755,6 +893,8 @@ export default function App() {
         onTrackAction={handleTrackAction}
         isAdmin={isAdmin}
         onOpenAdminModal={() => setIsAdminModalOpen(true)}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
 
       {/* Main body viewport container */}
@@ -779,6 +919,28 @@ export default function App() {
             onOpenAddNoticeModal={() => setIsAddNoticeModalOpen(true)}
             onDeleteNotice={handleDeleteNotice}
             noticesList={notices}
+            siteTexts={siteTexts}
+            onUpdateSiteTexts={handleUpdateSiteTexts}
+          />
+        )}
+
+        {currentTab === 'privacy' && (
+          <PrivacySection
+            lang={lang}
+            isAdmin={isAdmin}
+            siteTexts={siteTexts}
+            onUpdateSiteTexts={handleUpdateSiteTexts}
+            onTrackAction={handleTrackAction}
+          />
+        )}
+
+        {currentTab === 'terms' && (
+          <TermsSection
+            lang={lang}
+            isAdmin={isAdmin}
+            siteTexts={siteTexts}
+            onUpdateSiteTexts={handleUpdateSiteTexts}
+            onTrackAction={handleTrackAction}
           />
         )}
 
@@ -1001,8 +1163,8 @@ export default function App() {
         <div className="max-w-7xl mx-auto pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500 font-medium">
           <span>{t.rights[lang]} | Reg: 12345/071</span>
           <div className="flex items-center gap-6">
-            <button onClick={() => handleNavigate('transparency')} className="hover:text-emerald-400 transition-colors">Privacy Policy</button>
-            <button onClick={() => handleNavigate('transparency')} className="hover:text-emerald-400 transition-colors">Terms of Service</button>
+            <button onClick={() => handleNavigate('privacy')} className="hover:text-emerald-400 transition-colors">{lang === 'en' ? 'Privacy Policy' : 'गोपनीयता नीति'}</button>
+            <button onClick={() => handleNavigate('terms')} className="hover:text-emerald-400 transition-colors">{lang === 'en' ? 'Terms of Service' : 'सेवाका सर्तहरू'}</button>
             <button
               onClick={() => handleNavigate('abhishek-bio')}
               className="hover:text-emerald-400 transition-colors border-l border-gray-700 pl-6 flex items-center gap-2"

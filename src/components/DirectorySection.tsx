@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Search, UserCheck, Shield, BookOpen, MapPin, Phone, Mail, CheckCircle2, UserPlus, Trash2, Plus, Sparkles } from 'lucide-react';
+import { Search, UserCheck, Shield, BookOpen, MapPin, Phone, Mail, CheckCircle2, UserPlus, Trash2, Plus, Sparkles, Edit, Save, X } from 'lucide-react';
 import { Language, Member } from '../types';
 import { boardMembers as initialBoardMembers } from '../data/communityData';
 
 interface DirectorySectionProps {
   lang: Language;
-  onAddMember: (member: Omit<Member, 'id'>) => void;
+  onAddMember: (member: Member) => Promise<void>;
   onTrackAction: (actionName: string) => void;
   isAdmin?: boolean;
   membersList?: Member[];
@@ -42,6 +42,23 @@ export default function DirectorySection({
   const [photoName, setPhotoName] = useState<string>('');
   const [uploadProgress, setUploadProgress] = useState<boolean>(false);
 
+  // Editing state
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [editNameEn, setEditNameEn] = useState('');
+  const [editNameNe, setEditNameNe] = useState('');
+  const [editRoleEn, setEditRoleEn] = useState('');
+  const [editRoleNe, setEditRoleNe] = useState('');
+  const [editCat, setEditCat] = useState<'chief' | 'secretary' | 'board' | 'general'>('general');
+  const [editPhone, setEditPhone] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editAddrEn, setEditAddrEn] = useState('');
+  const [editAddrNe, setEditAddrNe] = useState('');
+  const [editBioEn, setEditBioEn] = useState('');
+  const [editBioNe, setEditBioNe] = useState('');
+  const [editPhotoBase64, setEditPhotoBase64] = useState<string>('');
+  const [editPhotoName, setEditPhotoName] = useState<string>('');
+  const [editUploadProgress, setEditUploadProgress] = useState<boolean>(false);
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -62,6 +79,68 @@ export default function DirectorySection({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleEditPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 1 * 1024 * 1024) {
+        alert(lang === 'en' ? 'File is too large! Maximum size allowed is 1MB.' : 'फाइल धेरै ठूलो छ! अधिकतम स्वीकृत आकार १MB हो।');
+        return;
+      }
+      setEditPhotoName(file.name);
+      setEditUploadProgress(true);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditPhotoBase64(reader.result as string);
+        setEditUploadProgress(false);
+      };
+      reader.onerror = () => {
+        setEditUploadProgress(false);
+        alert(lang === 'en' ? 'Failed to read photo file.' : 'फोटो फाइल पढ्न असफल भयो।');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleStartEdit = (member: Member) => {
+    setEditingMember(member);
+    setEditNameEn(member.name.en);
+    setEditNameNe(member.name.ne);
+    setEditRoleEn(member.role.en);
+    setEditRoleNe(member.role.ne);
+    setEditCat(member.category);
+    setEditPhone(member.phone || '');
+    setEditEmail(member.email || '');
+    setEditAddrEn(member.address.en);
+    setEditAddrNe(member.address.ne);
+    setEditBioEn(member.bio ? member.bio.en : '');
+    setEditBioNe(member.bio ? member.bio.ne : '');
+    setEditPhotoBase64('');
+    setEditPhotoName('');
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMember || !editNameEn || !editNameNe || !editRoleEn || !editRoleNe) return;
+
+    const updatedMember: Member = {
+      ...editingMember,
+      name: { en: editNameEn, ne: editNameNe },
+      role: { en: editRoleEn, ne: editRoleNe },
+      category: editCat,
+      phone: editPhone,
+      email: editEmail,
+      address: { en: editAddrEn || 'Nepal', ne: editAddrNe || 'नेपाल' },
+      bio: { en: editBioEn || 'Community Member', ne: editBioNe || 'सामुदायिक सदस्य' },
+      avatarUrl: editPhotoBase64 ? '' : editingMember.avatarUrl,
+      photoBase64: editPhotoBase64 || undefined,
+      photoName: editPhotoName || undefined,
+    };
+
+    await onAddMember(updatedMember);
+    setEditingMember(null);
+    onTrackAction(`Edit member profile: ${editNameEn}`);
   };
 
   const t = {
@@ -100,11 +179,12 @@ export default function DirectorySection({
     return matchesSearch && matchesCat;
   });
 
-  const handleNominateSubmit = (e: React.FormEvent) => {
+  const handleNominateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nomineeNameEn || !nomineeNameNe || !nomineeRoleEn || !nomineeRoleNe) return;
 
-    const newNominee: Omit<Member, 'id'> = {
+    const newNominee: Member = {
+      id: `m-nom-${Date.now()}`,
       name: { en: nomineeNameEn, ne: nomineeNameNe },
       role: { en: nomineeRoleEn, ne: nomineeRoleNe },
       category: nomineeCat,
@@ -117,7 +197,7 @@ export default function DirectorySection({
       photoName: photoName || undefined,
     };
 
-    onAddMember(newNominee);
+    await onAddMember(newNominee);
     setFormSuccess(true);
     onTrackAction(`Nominate member: ${nomineeNameEn}`);
 
@@ -153,28 +233,259 @@ export default function DirectorySection({
             {t.subTitle[lang]}
           </p>
         </div>
-        <button
-          onClick={() => {
-            setShowNominateForm(!showNominateForm);
-            onTrackAction('Toggle Nominate Member Form');
-          }}
-          className="w-full md:w-auto px-5 py-3.5 bg-teal-700 hover:bg-teal-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
-        >
-          <UserPlus className="w-4 h-4 text-teal-300" />
-          {isAdmin ? (lang === 'en' ? 'Add Member' : 'सदस्य थप्नुहोस्') : t.nominateBtn[lang]}
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => {
+              setShowNominateForm(!showNominateForm);
+              onTrackAction('Toggle Nominate Member Form');
+            }}
+            className="w-full md:w-auto px-5 py-3.5 bg-teal-700 hover:bg-teal-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
+          >
+            <UserPlus className="w-4 h-4 text-teal-300" />
+            {lang === 'en' ? 'Add Member' : 'सदस्य थप्नुहोस्'}
+          </button>
+        )}
       </section>
 
+      {/* Edit Member Profile Form (Only for Admin) */}
+      {isAdmin && editingMember && (
+        <section className="bg-teal-50 border-2 border-emerald-500 p-6 sm:p-8 rounded-2xl shadow-lg space-y-6 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="border-b border-emerald-500 pb-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold text-teal-950 flex items-center gap-2">
+                <Edit className="w-5 h-5 text-emerald-600 animate-pulse" />
+                {lang === 'en' ? 'Edit Member Profile' : 'सदस्य प्रोफाइल सम्पादन गर्नुहोस्'}
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                {lang === 'en' ? `Editing details for ${editingMember.name.en}` : `${editingMember.name.ne} का विवरणहरू सम्पादन गर्दै`}
+              </p>
+            </div>
+            <button
+              onClick={() => setEditingMember(null)}
+              className="p-1.5 bg-gray-200/50 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <form onSubmit={handleEditSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-700">Full Name (English) *</label>
+              <input
+                type="text"
+                required
+                value={editNameEn}
+                onChange={(e) => setEditNameEn(e.target.value)}
+                className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-700">पूरा नाम (नेपाली) *</label>
+              <input
+                type="text"
+                required
+                value={editNameNe}
+                onChange={(e) => setEditNameNe(e.target.value)}
+                className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-700">Designated Role (English) *</label>
+              <input
+                type="text"
+                required
+                value={editRoleEn}
+                onChange={(e) => setEditRoleEn(e.target.value)}
+                className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-700">भूमिका / पद (नेपाली) *</label>
+              <input
+                type="text"
+                required
+                value={editRoleNe}
+                onChange={(e) => setEditRoleNe(e.target.value)}
+                className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-700">Category Committee *</label>
+              <select
+                value={editCat}
+                onChange={(e) => setEditCat(e.target.value as any)}
+                className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+              >
+                <option value="chief">Chief Leaders (मुख्य नेतृत्व)</option>
+                <option value="secretary">Secretariat (सचिवालय)</option>
+                <option value="board">Board Advisors (सल्लाहकार बोर्ड)</option>
+                <option value="general">General Member (साधारण सदस्य)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-700">Phone Number (WhatsApp)</label>
+              <input
+                type="text"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-700">Email Address</label>
+              <input
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-700">Address (English)</label>
+              <input
+                type="text"
+                value={editAddrEn}
+                onChange={(e) => setEditAddrEn(e.target.value)}
+                className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-700">ठेगाना (नेपाली)</label>
+              <input
+                type="text"
+                value={editAddrNe}
+                onChange={(e) => setEditAddrNe(e.target.value)}
+                className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+              />
+            </div>
+
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-xs font-bold text-gray-700">Biography (English)</label>
+              <textarea
+                value={editBioEn}
+                onChange={(e) => setEditBioEn(e.target.value)}
+                rows={2}
+                className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+              />
+            </div>
+
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-xs font-bold text-gray-700">जीवनी (नेपाली)</label>
+              <textarea
+                value={editBioNe}
+                onChange={(e) => setEditBioNe(e.target.value)}
+                rows={2}
+                className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+              />
+            </div>
+
+            {/* Photo Upload Field for Editing */}
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-xs font-bold text-teal-950 block mb-1">
+                {lang === 'en' ? "Update Profile Photo" : "प्रोफाइल फोटो अपडेट गर्नुहोस्"}
+              </label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-teal-300 border-dashed rounded-xl bg-white hover:bg-teal-50/20 transition-all">
+                <div className="space-y-1 text-center">
+                  {editPhotoBase64 ? (
+                    <div className="flex flex-col items-center space-y-2">
+                      <img
+                        src={editPhotoBase64}
+                        alt="Preview"
+                        className="w-20 h-20 rounded-full object-cover border-2 border-teal-600 shadow-md"
+                        referrerPolicy="no-referrer"
+                      />
+                      <span className="text-xs text-teal-800 font-semibold">{editPhotoName}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditPhotoBase64('');
+                          setEditPhotoName('');
+                        }}
+                        className="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-[10px] font-bold uppercase transition-colors"
+                      >
+                        Remove New Photo
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {editingMember.avatarUrl && (
+                        <div className="flex flex-col items-center space-y-2 mb-2">
+                          <img
+                            src={editingMember.avatarUrl}
+                            alt="Current"
+                            className="w-16 h-16 rounded-full object-cover border border-teal-100 shadow-inner"
+                            referrerPolicy="no-referrer"
+                          />
+                          <span className="text-[10px] text-gray-400 font-semibold">Current Profile Photo</span>
+                        </div>
+                      )}
+                      <div className="flex text-sm text-gray-600 justify-center">
+                        <label
+                          htmlFor="edit-photo-upload"
+                          className="relative cursor-pointer bg-white rounded-md font-bold text-teal-700 hover:text-teal-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500"
+                        >
+                          <span>{lang === 'en' ? 'Upload a new photo' : 'नयाँ फोटो अपलोड गर्नुहोस्'}</span>
+                          <input
+                            id="edit-photo-upload"
+                            name="edit-photo-upload"
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={handleEditPhotoChange}
+                          />
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-400">PNG, JPG, GIF up to 1MB</p>
+                    </>
+                  )}
+                  {editUploadProgress && (
+                    <div className="text-xs text-teal-600 font-medium animate-pulse mt-2">
+                      Processing file...
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="md:col-span-2 pt-2 flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={editUploadProgress}
+                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center gap-1.5"
+              >
+                <Save className="w-4 h-4" />
+                <span>Save Changes</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingMember(null)}
+                className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-xs uppercase tracking-wider rounded-lg transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+
       {/* Nominate Member Profile Form Modal/Accordion */}
-      {showNominateForm && (
+      {isAdmin && showNominateForm && (
         <section className="bg-teal-50/50 border border-teal-200 p-6 sm:p-8 rounded-2xl shadow-inner space-y-6 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="border-b border-teal-200 pb-4">
             <h3 className="text-xl font-bold text-teal-950 flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-teal-700" />
-              {isAdmin ? (lang === 'en' ? 'Add New Member Profile' : 'नयाँ सदस्य थप्नुहोस्') : t.formTitle[lang]}
+              {lang === 'en' ? 'Add New Member Profile' : 'नयाँ सदस्य थप्नुहोस्'}
             </h3>
             <p className="text-xs text-gray-500 mt-1">
-              {isAdmin ? (lang === 'en' ? 'Fill out the form below to publish this member directly to the directory.' : 'डाइरेक्टरीमा प्रकाशित गर्न तलको फारम भर्नुहोस्।') : t.formSub[lang]}
+              {lang === 'en' ? 'Fill out the form below to publish this member directly to the directory.' : 'डाइरेक्टरीमा प्रकाशित गर्न तलको फारम भर्नुहोस्।'}
             </p>
           </div>
 
@@ -498,18 +809,28 @@ export default function DirectorySection({
               {/* Contact Button Action */}
               <div className="pt-4 mt-4 border-t border-teal-50 flex items-center justify-between">
                 {isAdmin && onDeleteMember ? (
-                  <button
-                    onClick={() => {
-                      if (confirm(`Are you sure you want to remove "${member.name[lang]}" from the directory?`)) {
-                        onDeleteMember(member.id);
-                      }
-                    }}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-bold rounded-lg transition-colors"
-                    title="Delete Member"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Delete
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleStartEdit(member)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 text-[11px] font-bold rounded-lg transition-colors"
+                      title="Edit Member"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Are you sure you want to remove "${member.name[lang]}" from the directory?`)) {
+                          onDeleteMember(member.id);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-bold rounded-lg transition-colors"
+                      title="Delete Member"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete
+                    </button>
+                  </div>
                 ) : <div />}
 
                 <a

@@ -5,6 +5,8 @@
   --font-sans: "Kalimati", "Mukta", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
+@variant dark (.dark &);
+
 body {
   font-family: var(--font-sans);
 }

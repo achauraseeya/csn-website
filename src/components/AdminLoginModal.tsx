@@ -29,6 +29,7 @@ export default function AdminLoginModal({
       setIsAdmin(true);
       try {
         localStorage.setItem('chaurasiya_is_admin', 'true');
+        localStorage.setItem('chaurasiya_admin_password', cleanPassword);
         sessionStorage.setItem('chaurasiya_admin_authenticated', 'true');
       } catch (err) {
         console.error('Failed to save admin state:', err);
@@ -49,6 +50,7 @@ export default function AdminLoginModal({
     setIsAdmin(false);
     try {
       localStorage.removeItem('chaurasiya_is_admin');
+      localStorage.removeItem('chaurasiya_admin_password');
     } catch (err) {
       console.error('Failed to clear admin state:', err);
     }

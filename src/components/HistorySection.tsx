@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin, ShieldCheck, Lock, Trash2, Plus, ExternalLink } from 'lucide-react';
-import { Album, Language, Notice } from '../types';
+import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin, ShieldCheck, Lock, Trash2, Plus, ExternalLink, Edit, Save } from 'lucide-react';
+import { Album, Language, Notice, SiteTexts } from '../types';
 import { communityHistory, impactStats, galleryItems, boardMembers, notices as defaultNotices, blogPosts } from '../data/communityData';
 import { journeyAlbums as defaultJourneyAlbums } from '../data/albumsData';
 import AlbumDetail from './AlbumDetail';
@@ -21,6 +21,8 @@ interface HistorySectionProps {
   onOpenAddNoticeModal?: () => void;
   onDeleteNotice?: (id: string) => void;
   noticesList?: Notice[];
+  siteTexts: SiteTexts;
+  onUpdateSiteTexts: (texts: Partial<SiteTexts>) => Promise<void>;
 }
 
 interface BloggerPost {
@@ -49,6 +51,8 @@ export default function HistorySection({
   onOpenAddNoticeModal,
   onDeleteNotice,
   noticesList = defaultNotices,
+  siteTexts,
+  onUpdateSiteTexts,
 }: HistorySectionProps) {
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
@@ -56,6 +60,70 @@ export default function HistorySection({
   const [viewPdfNoticeId, setViewPdfNoticeId] = useState<string | null>(null);
   const [livePosts, setLivePosts] = useState<any[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
+
+  // Editable site texts state
+  const [isEditingTexts, setIsEditingTexts] = useState(false);
+  const [editHeroTitleEn, setEditHeroTitleEn] = useState(siteTexts.heroTitleEn);
+  const [editHeroTitleNe, setEditHeroTitleNe] = useState(siteTexts.heroTitleNe);
+  const [editHeroSubEn, setEditHeroSubEn] = useState(siteTexts.heroSubEn);
+  const [editHeroSubNe, setEditHeroSubNe] = useState(siteTexts.heroSubNe);
+  const [editIntroEn, setEditIntroEn] = useState(siteTexts.introEn);
+  const [editIntroNe, setEditIntroNe] = useState(siteTexts.introNe);
+  const [editPaanStoryTitleEn, setEditPaanStoryTitleEn] = useState(siteTexts.paanStoryTitleEn);
+  const [editPaanStoryTitleNe, setEditPaanStoryTitleNe] = useState(siteTexts.paanStoryTitleNe);
+  const [editPaanStoryEn, setEditPaanStoryEn] = useState(siteTexts.paanStoryEn);
+  const [editPaanStoryNe, setEditPaanStoryNe] = useState(siteTexts.paanStoryNe);
+  const [editMissionTitleEn, setEditMissionTitleEn] = useState(siteTexts.missionTitleEn);
+  const [editMissionTitleNe, setEditMissionTitleNe] = useState(siteTexts.missionTitleNe);
+  const [editMissionEn, setEditMissionEn] = useState(siteTexts.missionEn);
+  const [editMissionNe, setEditMissionNe] = useState(siteTexts.missionNe);
+  const [isSavingTexts, setIsSavingTexts] = useState(false);
+
+  useEffect(() => {
+    setEditHeroTitleEn(siteTexts.heroTitleEn);
+    setEditHeroTitleNe(siteTexts.heroTitleNe);
+    setEditHeroSubEn(siteTexts.heroSubEn);
+    setEditHeroSubNe(siteTexts.heroSubNe);
+    setEditIntroEn(siteTexts.introEn);
+    setEditIntroNe(siteTexts.introNe);
+    setEditPaanStoryTitleEn(siteTexts.paanStoryTitleEn);
+    setEditPaanStoryTitleNe(siteTexts.paanStoryTitleNe);
+    setEditPaanStoryEn(siteTexts.paanStoryEn);
+    setEditPaanStoryNe(siteTexts.paanStoryNe);
+    setEditMissionTitleEn(siteTexts.missionTitleEn);
+    setEditMissionTitleNe(siteTexts.missionTitleNe);
+    setEditMissionEn(siteTexts.missionEn);
+    setEditMissionNe(siteTexts.missionNe);
+  }, [siteTexts]);
+
+  const handleSaveTexts = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingTexts(true);
+    try {
+      await onUpdateSiteTexts({
+        heroTitleEn: editHeroTitleEn,
+        heroTitleNe: editHeroTitleNe,
+        heroSubEn: editHeroSubEn,
+        heroSubNe: editHeroSubNe,
+        introEn: editIntroEn,
+        introNe: editIntroNe,
+        paanStoryTitleEn: editPaanStoryTitleEn,
+        paanStoryTitleNe: editPaanStoryTitleNe,
+        paanStoryEn: editPaanStoryEn,
+        paanStoryNe: editPaanStoryNe,
+        missionTitleEn: editMissionTitleEn,
+        missionTitleNe: editMissionTitleNe,
+        missionEn: editMissionEn,
+        missionNe: editMissionNe,
+      });
+      setIsEditingTexts(false);
+      onTrackAction('Save Homepage Site Texts via Admin');
+    } catch (err) {
+      alert('Failed to save texts.');
+    } finally {
+      setIsSavingTexts(false);
+    }
+  };
 
   useEffect(() => {
     const fetchBloggerPosts = async () => {
@@ -134,19 +202,224 @@ export default function HistorySection({
   }, []);
 
   const t = {
-    heroSub: {
-      en: 'A dedicated social platform preserving betel leaf culture & serving humanity across Nepal.',
-      ne: 'नेपालभर पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक मञ्च।',
-    },
     ctaButton: { en: 'Join Our Community', ne: 'हाम्रो समुदायमा सामेल हुनुहोस्' },
     bloggerBannerButton: { en: 'Blogger XML Layout', ne: 'ब्लगर XML लेआउट' },
-    missionHeader: { en: 'Vision & Impact', ne: 'दृष्टिकोण र प्रभाव' },
-    impactHeader: { en: 'Our Ongoing Impact', ne: 'हाम्रो निरन्तर प्रभाव' },
     photoGallery: { en: 'Glimpses of Our Journey', ne: 'हाम्रो यात्राको झलक' },
+    impactHeader: { en: 'Empowering & Transforming Lives', ne: 'सशक्तिकरण र जीवन परिवर्तन' },
   };
 
   return (
     <div className="space-y-16">
+      {/* Admin Edit Homepage Content Button */}
+      {isAdmin && !isEditingTexts && (
+        <div className="flex justify-end -mb-8">
+          <button
+            onClick={() => setIsEditingTexts(true)}
+            className="px-4 py-2.5 bg-teal-800 hover:bg-teal-700 text-white text-xs font-extrabold uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 border border-teal-700 z-20"
+          >
+            <Edit className="w-4 h-4 text-teal-300" />
+            <span>Edit Homepage Content</span>
+          </button>
+        </div>
+      )}
+
+      {/* Admin Edit Homepage Content Panel */}
+      {isAdmin && isEditingTexts && (
+        <section className="bg-teal-50 border-2 border-emerald-500 p-6 sm:p-8 rounded-3xl shadow-lg space-y-6 animate-in fade-in duration-200">
+          <div className="border-b border-emerald-500 pb-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold text-teal-950 flex items-center gap-2">
+                <Edit className="w-5 h-5 text-emerald-600 animate-pulse" />
+                <span>Edit Homepage Text Content</span>
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">Changes are saved online instantly to the server database.</p>
+            </div>
+            <button
+              onClick={() => setIsEditingTexts(false)}
+              className="p-1.5 bg-gray-200/50 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSaveTexts} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Hero Title */}
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Hero Section Title (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={editHeroTitleEn}
+                  onChange={(e) => setEditHeroTitleEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Hero Section Title (Nepali)</label>
+                <input
+                  type="text"
+                  required
+                  value={editHeroTitleNe}
+                  onChange={(e) => setEditHeroTitleNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Hero Sub */}
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Hero Subtitle (English)</label>
+                <textarea
+                  required
+                  rows={2}
+                  value={editHeroSubEn}
+                  onChange={(e) => setEditHeroSubEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Hero Subtitle (Nepali)</label>
+                <textarea
+                  required
+                  rows={2}
+                  value={editHeroSubNe}
+                  onChange={(e) => setEditHeroSubNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Intro Text */}
+              <div className="space-y-1 md:col-span-2 border-t border-teal-200 pt-4">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Introduction Text (English)</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={editIntroEn}
+                  onChange={(e) => setEditIntroEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Introduction Text (Nepali)</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={editIntroNe}
+                  onChange={(e) => setEditIntroNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Paan Story Title */}
+              <div className="space-y-1 border-t border-teal-200 pt-4">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Paan Story Title (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={editPaanStoryTitleEn}
+                  onChange={(e) => setEditPaanStoryTitleEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1 border-t border-teal-200 pt-4">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Paan Story Title (Nepali)</label>
+                <input
+                  type="text"
+                  required
+                  value={editPaanStoryTitleNe}
+                  onChange={(e) => setEditPaanStoryTitleNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Paan Story Body */}
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Paan Story Body (English)</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={editPaanStoryEn}
+                  onChange={(e) => setEditPaanStoryEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Paan Story Body (Nepali)</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={editPaanStoryNe}
+                  onChange={(e) => setEditPaanStoryNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Mission Title */}
+              <div className="space-y-1 border-t border-teal-200 pt-4">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Mission Title (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={editMissionTitleEn}
+                  onChange={(e) => setEditMissionTitleEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1 border-t border-teal-200 pt-4">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Mission Title (Nepali)</label>
+                <input
+                  type="text"
+                  required
+                  value={editMissionTitleNe}
+                  onChange={(e) => setEditMissionTitleNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Mission Body */}
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Mission Body (English)</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={editMissionEn}
+                  onChange={(e) => setEditMissionEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Mission Body (Nepali)</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={editMissionNe}
+                  onChange={(e) => setEditMissionNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-4 border-t border-teal-200">
+              <button
+                type="submit"
+                disabled={isSavingTexts}
+                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-extrabold text-xs uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center gap-1.5"
+              >
+                <Save className="w-4 h-4" />
+                <span>{isSavingTexts ? 'Saving...' : 'Save Homepage Content'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEditingTexts(false)}
+                className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-xs uppercase tracking-wider rounded-lg transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+
       {/* Hero Section */}
       <section className="relative overflow-hidden text-white rounded-3xl py-16 px-6 sm:px-12 lg:px-20 shadow-2xl border-b-8 border-emerald-500">
         {/* Background Slider */}
@@ -174,10 +447,10 @@ export default function HistorySection({
             Jay Paan Dev • जय पान देव
           </span>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-none text-teal-50 drop-shadow-xl">
-            {communityHistory.title[lang]}
+            {lang === 'en' ? siteTexts.heroTitleEn : siteTexts.heroTitleNe}
           </h1>
           <p className="text-lg sm:text-xl text-teal-50 max-w-2xl font-light leading-relaxed drop-shadow-lg">
-            {t.heroSub[lang]}
+            {lang === 'en' ? siteTexts.heroSubEn : siteTexts.heroSubNe}
           </p>
           <div className="flex flex-wrap gap-4 pt-4">
             <button
@@ -203,8 +476,8 @@ export default function HistorySection({
       </section>
 
       {/* Image Carousel */}
-      <section className="bg-white rounded-3xl p-6 sm:p-10 shadow-md border border-teal-100">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-teal-950 mb-8 flex items-center gap-3">
+      <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 shadow-md border border-teal-100 dark:border-slate-800 transition-colors">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-teal-950 dark:text-teal-50 mb-8 flex items-center gap-3">
           <PlayCircle className="w-7 h-7 text-emerald-500" />
           {t.photoGallery[lang]}
         </h2>
@@ -248,27 +521,27 @@ export default function HistorySection({
       {/* Intro & History Content */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white p-8 rounded-3xl shadow-sm border border-teal-50 relative overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-teal-50 dark:border-slate-800/60 relative overflow-hidden transition-colors">
             <div className="absolute top-0 right-0 p-4 opacity-5">
-              <BookOpen className="w-32 h-32 text-teal-900" />
+              <BookOpen className="w-32 h-32 text-teal-900 dark:text-teal-100" />
             </div>
-            <h3 className="text-xl font-extrabold text-teal-950 mb-4 border-b-2 border-emerald-500 inline-block pb-1">
-              {communityHistory.title[lang]}
+            <h3 className="text-xl font-extrabold text-teal-950 dark:text-teal-150 mb-4 border-b-2 border-emerald-500 inline-block pb-1">
+              {lang === 'en' ? siteTexts.heroTitleEn : siteTexts.heroTitleNe}
             </h3>
-            <p className="text-gray-700 leading-relaxed font-medium text-[15px]">
-              {communityHistory.introduction[lang]}
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium text-[15px]">
+              {lang === 'en' ? siteTexts.introEn : siteTexts.introNe}
             </p>
           </div>
           
-          <div className="bg-teal-50 p-8 rounded-3xl shadow-sm border border-teal-100 relative">
+          <div className="bg-teal-50 dark:bg-slate-900/50 p-8 rounded-3xl shadow-sm border border-teal-100 dark:border-slate-800/80 relative transition-colors">
             <div className="absolute -top-4 -left-4 bg-emerald-500 p-3 rounded-full text-white shadow-lg">
               <Leaf className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-extrabold text-teal-900 mb-4 ml-6">
-              {communityHistory.thePaanStoryTitle[lang]}
+            <h3 className="text-xl font-extrabold text-teal-900 dark:text-emerald-400 mb-4 ml-6">
+              {lang === 'en' ? siteTexts.paanStoryTitleEn : siteTexts.paanStoryTitleNe}
             </h3>
-            <p className="text-teal-800 leading-relaxed font-medium text-[15px]">
-              {communityHistory.thePaanStory[lang]}
+            <p className="text-teal-800 dark:text-teal-200 leading-relaxed font-medium text-[15px]">
+              {lang === 'en' ? siteTexts.paanStoryEn : siteTexts.paanStoryNe}
             </p>
           </div>
         </div>
@@ -280,10 +553,10 @@ export default function HistorySection({
              <div className="relative z-10">
                 <h3 className="text-2xl font-black text-emerald-300 mb-4 flex items-center gap-2">
                   <Map className="w-6 h-6" />
-                  {t.missionHeader[lang]}
+                  {lang === 'en' ? siteTexts.missionTitleEn : siteTexts.missionTitleNe}
                 </h3>
                 <p className="text-teal-50 text-[15px] leading-relaxed font-medium">
-                  {communityHistory.mission[lang]}
+                  {lang === 'en' ? siteTexts.missionEn : siteTexts.missionNe}
                 </p>
              </div>
           </div>
@@ -300,18 +573,18 @@ export default function HistorySection({
             const icons = [Users, Leaf, BookOpen];
             const Icon = icons[idx % icons.length];
             return (
-              <div key={stat.id} className="bg-white rounded-2xl p-6 shadow-sm border border-teal-100 hover:shadow-md transition-shadow text-center flex flex-col items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-teal-50 flex items-center justify-center text-emerald-600">
+              <div key={stat.id} className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-teal-100 dark:border-slate-800 hover:shadow-md transition-all text-center flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-teal-50 dark:bg-teal-950/50 flex items-center justify-center text-emerald-600">
                   <Icon className="w-8 h-8" />
                 </div>
-                <div className="text-4xl font-black text-teal-950 tracking-tight">
+                <div className="text-4xl font-black text-teal-950 dark:text-teal-50 tracking-tight">
                   {stat.value}
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-teal-700 uppercase text-xs tracking-wider mb-2">
+                  <h4 className="font-extrabold text-teal-700 dark:text-emerald-400 uppercase text-xs tracking-wider mb-2">
                     {stat.label[lang]}
                   </h4>
-                  <p className="text-sm text-gray-500 font-medium">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
                     {stat.desc[lang]}
                   </p>
                 </div>
@@ -345,9 +618,9 @@ export default function HistorySection({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {noticesList.slice(0, 4).map((notice) => (
-            <div key={notice.id} className="bg-white rounded-2xl shadow-sm border border-teal-100 overflow-hidden hover:shadow-md transition-shadow">
+            <div key={notice.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-teal-100 dark:border-slate-800 overflow-hidden hover:shadow-md transition-all">
               <div 
-                className="p-6 cursor-pointer hover:bg-teal-50/50 transition-colors"
+                className="p-6 cursor-pointer hover:bg-teal-50/50 dark:hover:bg-slate-800/50 transition-colors"
                 onClick={() => {
                   setExpandedNoticeId(prev => prev === notice.id ? null : notice.id);
                   setViewPdfNoticeId(null);
@@ -355,16 +628,16 @@ export default function HistorySection({
                 }}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2 text-sm text-teal-600 font-bold">
+                  <div className="flex items-center gap-2 text-sm text-teal-600 dark:text-teal-400 font-bold">
                     <Calendar className="w-4 h-4" />
                     {notice.date}
                   </div>
                   <ChevronRight className={`w-5 h-5 text-teal-400 transition-transform ${expandedNoticeId === notice.id ? 'rotate-90' : ''}`} />
                 </div>
-                <h4 className="text-xl font-bold text-teal-950 mb-2">
+                <h4 className="text-xl font-bold text-teal-950 dark:text-teal-50 mb-2">
                   {notice.title[lang] || notice.title.en}
                 </h4>
-                <p className="text-gray-600 leading-relaxed text-sm">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">
                   {notice.content[lang] || notice.content.en}
                 </p>
               </div>
@@ -706,13 +979,13 @@ export default function HistorySection({
             const member = boardMembers.find(m => m.id === id);
             if (!member) return null;
             return (
-              <div key={member.id} className="bg-white rounded-3xl p-6 shadow-sm border border-teal-100 flex flex-col items-center text-center gap-4 hover:shadow-md transition-shadow group">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-emerald-100 group-hover:border-emerald-400 transition-colors">
+              <div key={member.id} className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-teal-100 dark:border-slate-800 flex flex-col items-center text-center gap-4 hover:shadow-md transition-all group">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-emerald-100 dark:border-emerald-900/50 group-hover:border-emerald-400 transition-colors">
                   <img src={member.avatarUrl} alt={member.name[lang]} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-teal-950 text-lg">{member.name[lang]}</h4>
-                  <p className="text-emerald-600 font-bold text-sm uppercase tracking-wider mb-2">{member.role[lang]}</p>
+                  <h4 className="font-extrabold text-teal-950 dark:text-teal-50 text-lg">{member.name[lang]}</h4>
+                  <p className="text-emerald-600 dark:text-emerald-400 font-bold text-sm uppercase tracking-wider mb-2">{member.role[lang]}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -720,7 +993,7 @@ export default function HistorySection({
                     onNavigate('leader-bio');
                     onTrackAction(`Viewed profile of ${member.name.en}`);
                   }}
-                  className="mt-auto text-sm font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 px-6 py-2 rounded-full transition-colors flex items-center gap-1"
+                  className="mt-auto text-sm font-bold text-teal-700 dark:text-teal-200 bg-teal-50 dark:bg-slate-800 hover:bg-teal-100 dark:hover:bg-slate-700 px-6 py-2 rounded-full transition-colors flex items-center gap-1"
                 >
                   {lang === 'en' ? 'View Profile' : 'प्रोफाइल हेर्नुहोस्'} <ArrowRight className="w-4 h-4" />
                 </button>
