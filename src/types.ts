@@ -138,6 +138,27 @@ export interface SiteTexts {
   privacyNe: string;
   termsEn: string;
   termsNe: string;
+  sliderBadgeEn: string;
+  sliderBadgeNe: string;
+  logoTextEn: string;
+  logoTextNe: string;
+  logoSubEn: string;
+  logoSubNe: string;
+  logoUrl: string;
+  taglineEn: string;
+  taglineNe: string;
+  impactHeaderEn: string;
+  impactHeaderNe: string;
+  footerAboutEn: string;
+  footerAboutNe: string;
+  footerAddressEn: string;
+  footerAddressNe: string;
+  footerPhone: string;
+  footerEmail: string;
+  socialFb: string;
+  socialTw: string;
+  socialIg: string;
+  heroImagesJson: string;
 }
 
 

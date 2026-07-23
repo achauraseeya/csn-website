@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Menu, X, Globe, ShieldCheck, Lock, Sun, Moon } from 'lucide-react';
-import { Language } from '../types';
+import { Language, SiteTexts } from '../types';
 import logoImg from '../assets/images/chaurasiya_logo_1784519579895.jpg';
 
 interface NavigationProps {
@@ -13,6 +13,7 @@ interface NavigationProps {
   onOpenAdminModal: () => void;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
+  siteTexts: SiteTexts;
 }
 
 export default function Navigation({
@@ -25,6 +26,7 @@ export default function Navigation({
   onOpenAdminModal,
   theme,
   toggleTheme,
+  siteTexts,
 }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -51,6 +53,10 @@ export default function Navigation({
     onTrackAction(`Toggle language to ${nextLang.toUpperCase()}`);
   };
 
+  const logoUrl = siteTexts.logoUrl || logoImg;
+  const logoText = lang === 'en' ? siteTexts.logoTextEn : siteTexts.logoTextNe;
+  const logoSub = lang === 'en' ? siteTexts.logoSubEn : siteTexts.logoSubNe;
+
   return (
     <nav className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-teal-100 dark:border-slate-800 shadow-sm transition-colors duration-200" id="nav-bar">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -62,14 +68,14 @@ export default function Navigation({
               onClick={() => handleTabChange('history')}
             >
               <div className="w-12 h-12 rounded-full overflow-hidden bg-white dark:bg-slate-800 flex items-center justify-center border border-teal-100 dark:border-slate-800 shadow-sm transition-all group-hover:scale-105">
-                <img src={logoImg} alt="Chaurasiya Samaj Logo" className="w-full h-full object-cover" />
+                <img src={logoUrl} alt="Chaurasiya Samaj Logo" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h1 className="text-lg font-extrabold tracking-tight text-teal-900 dark:text-teal-100 leading-tight">
-                  Chaurasiya Samaj
+                  {logoText}
                 </h1>
                 <p className="text-[11px] font-bold text-teal-600 dark:text-emerald-400 tracking-wider">
-                  Nepal • चौरसिया समाज नेपाल
+                  {logoSub}
                 </p>
               </div>
             </div>

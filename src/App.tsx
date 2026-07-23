@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail } from 'lucide-react';
+import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram } from 'lucide-react';
 import { Language, AnalyticsMetric, Member, Album, Notice, Document, CommunityEvent } from './types';
 import { notices as initialNotices, boardMembers as initialMembers, upcomingEvents as initialEvents, documents as initialDocuments } from './data/communityData';
 import { journeyAlbums as initialJourneyAlbums } from './data/albumsData';
@@ -45,7 +45,56 @@ const defaultSiteTexts: SiteTexts = {
   privacyEn: 'Your privacy is extremely important to us. This Privacy Policy details how Chaurasiya Samaj Nepal collects, uses, and safeguards the personal information of our directory members and donors. We strictly protect your contact information and never sell or distribute data to third parties without explicit consent.',
   privacyNe: 'तपाईंको गोपनीयता हाम्रो लागि अत्यन्तै महत्त्वपूर्ण छ। यो गोपनीयता नीतिले चौरसिया समाज नेपालले हाम्रा सदस्यहरू र दाताहरूको व्यक्तिगत विवरणहरू कसरी संकलन, प्रयोग र संरक्षण गर्छ भन्ने व्याख्या गर्दछ। हामी तपाईंको सम्पर्क विवरणहरूलाई सुरक्षित राख्छौँ र बिना अनुमति तेस्रो पक्षलाई प्रदान गर्दैनौँ।',
   termsEn: 'By accessing Chaurasiya Samaj Nepal website, you agree to be bound by these Terms of Service. All content, logo, directories, and notices on this platform are owned by Chaurasiya Samaj Nepal. Any nomination or directory submission must contain valid, truthful information.',
-  termsNe: 'चौरसिया समाज नेपालको वेबसाइट प्रयोग गरेर, तपाईं यी सेवाका सर्तहरू पालना गर्न सहमत हुनुहुन्छ। यस प्लेटफर्ममा रहेका सबै सामग्री, लोगो, निर्देशिका र सूचनाहरूको स्वामित्व चौरसिया समाज नेपालमा निहित छ।'
+  termsNe: 'चौरसिया समाज नेपालको वेबसाइट प्रयोग गरेर, तपाईं यी सेवाका सर्तहरू पालना गर्न सहमत हुनुहुन्छ। यस प्लेटफर्ममा रहेका सबै सामग्री, लोगो, निर्देशिका र सूचनाहरूको स्वामित्व चौरसिया समाज नेपालमा निहित छ।',
+  sliderBadgeEn: 'Jay Paan Dev',
+  sliderBadgeNe: 'जय पान देव',
+  logoTextEn: 'Chaurasiya Samaj',
+  logoTextNe: 'चौरसिया समाज',
+  logoSubEn: 'Nepal',
+  logoSubNe: 'चौरसिया समाज नेपाल',
+  logoUrl: '',
+  taglineEn: 'A dedicated social platform preserving betel leaf culture & serving humanity',
+  taglineNe: 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था',
+  impactHeaderEn: 'Empowering & Transforming Lives',
+  impactHeaderNe: 'सशक्तिकरण र जीवन परिवर्तन',
+  footerAboutEn: 'We are dedicated to unifying community coordinators, supporting traditional cultivation, and providing essential healthcare and youth education programs.',
+  footerAboutNe: 'हामी सामुदायिक संयोजकहरूलाई एकीकृत गर्न, परम्परागत खेतीलाई सहयोग गर्न र आवश्यक स्वास्थ्य सेवा र युवा शिक्षा कार्यक्रमहरू प्रदान गर्न समर्पित छौं।',
+  footerAddressEn: 'Ghantaghar Path, Birgunj, Parsa, Madhesh Province, Nepal',
+  footerAddressNe: 'घण्टाघर पथ, वीरगन्ज, पर्सा, मधेश प्रदेश, नेपाल',
+  footerPhone: '+977-9812345678',
+  footerEmail: 'achauraseeya@gmail.com',
+  socialFb: 'https://facebook.com',
+  socialTw: 'https://twitter.com',
+  socialIg: 'https://instagram.com',
+  heroImagesJson: JSON.stringify([
+    {
+      id: "g1",
+      title: { en: "Fresh Paan Garden (Betel Vineyard)", ne: "ताजा पान खेती (पानको बरेजा)" },
+      imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=600",
+      description: {
+        en: "A beautiful lush green traditional paan cultivation structure (Bareja) managed by local community members.",
+        ne: "स्थानीय समुदायका सदस्यहरूद्वारा व्यवस्थित एक सुन्दर हरियो परम्परागत पान खेती संरचना (बरेजा)।"
+      }
+    },
+    {
+      id: "g2",
+      title: { en: "Community Health Camp Parsa", ne: "सामुदायिक स्वास्थ्य शिविर पर्सा" },
+      imageUrl: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&q=80&w=600",
+      description: {
+        en: "Free health screenings, eye tests, and medicine distribution for underprivileged elders.",
+        ne: "अल्पसुविधा प्राप्त वृद्धवृद्धाहरूका लागि निःशुल्क स्वास्थ्य परीक्षण, आँखा जाँच र औषधि वितरण।"
+      }
+    },
+    {
+      id: "g3",
+      title: { en: "Youth Interaction & IT Training", ne: "युवा अन्तरक्रिया र सूचना प्रविधि तालिम" },
+      imageUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=600",
+      description: {
+        en: "Workshop on modern IT skills while staying connected to roots.",
+        ne: "जरासँग जोडिएर आधुनिक सूचना प्रविधि सीपहरूमा कार्यशाला।"
+      }
+    }
+  ])
 };
 
 export default function App() {
@@ -872,14 +921,14 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
           <span className="font-bold flex items-center gap-2 tracking-wide uppercase">
             <div className="w-5 h-5 rounded-full bg-white overflow-hidden flex items-center justify-center p-0.5 shadow-sm">
-              <img src={logoImg} alt="Logo" className="w-full h-full object-cover rounded-full" />
+              <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-cover rounded-full" />
             </div>
-            {t.tagline[lang]}
+            {lang === 'en' ? siteTexts.taglineEn : siteTexts.taglineNe}
           </span>
           <div className="flex items-center gap-4 text-emerald-200 font-medium">
             <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5" /> SWC Registered</span>
             <span className="hidden sm:inline opacity-50">|</span>
-            <span className="hidden sm:inline hover:text-white transition-colors cursor-pointer">✉️ achauraseeya@gmail.com</span>
+            <span className="hidden sm:inline hover:text-white transition-colors cursor-pointer">✉️ {siteTexts.footerEmail}</span>
           </div>
         </div>
       </div>
@@ -895,6 +944,7 @@ export default function App() {
         onOpenAdminModal={() => setIsAdminModalOpen(true)}
         theme={theme}
         toggleTheme={toggleTheme}
+        siteTexts={siteTexts}
       />
 
       {/* Main body viewport container */}
@@ -1096,18 +1146,31 @@ export default function App() {
           <div className="md:col-span-4 space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-white overflow-hidden flex items-center justify-center">
-                <img src={logoImg} alt="Logo" className="w-full h-full object-cover" />
+                <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-cover" />
               </div>
-              <span className="font-black text-2xl tracking-tight text-white">Chaurasiya Samaj</span>
+              <span className="font-black text-2xl tracking-tight text-white">
+                {lang === 'en' ? siteTexts.logoTextEn : siteTexts.logoTextNe}
+              </span>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed font-medium pr-4">
-              {t.tagline[lang]} We are dedicated to unifying community coordinators, supporting traditional cultivation, and providing essential healthcare and youth education programs.
+              {(lang === 'en' ? siteTexts.taglineEn : siteTexts.taglineNe) + " " + (lang === 'en' ? siteTexts.footerAboutEn : siteTexts.footerAboutNe)}
             </p>
             <div className="flex gap-4 pt-2">
-               {/* Social Icons Placeholder */}
-               <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors cursor-pointer text-gray-400 hover:text-white">fb</div>
-               <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors cursor-pointer text-gray-400 hover:text-white">tw</div>
-               <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors cursor-pointer text-gray-400 hover:text-white">ig</div>
+               {siteTexts.socialFb && (
+                 <a href={siteTexts.socialFb} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors text-gray-400 hover:text-white" title="Facebook">
+                   <Facebook className="w-4 h-4" />
+                 </a>
+               )}
+               {siteTexts.socialTw && (
+                 <a href={siteTexts.socialTw} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors text-gray-400 hover:text-white" title="Twitter">
+                   <Twitter className="w-4 h-4" />
+                 </a>
+               )}
+               {siteTexts.socialIg && (
+                 <a href={siteTexts.socialIg} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors text-gray-400 hover:text-white" title="Instagram">
+                   <Instagram className="w-4 h-4" />
+                 </a>
+               )}
             </div>
           </div>
 
@@ -1126,15 +1189,15 @@ export default function App() {
             <div className="text-sm text-gray-400 space-y-3 font-medium">
               <p className="flex items-start gap-2">
                 <span className="text-emerald-500 mt-1">📍</span> 
-                Ghantaghar Path, Birgunj, Parsa, Madhesh Province, Nepal
+                {lang === 'en' ? siteTexts.footerAddressEn : siteTexts.footerAddressNe}
               </p>
               <p className="flex items-center gap-2">
                 <span className="text-emerald-500">📞</span> 
-                +977-9812345678
+                {siteTexts.footerPhone}
               </p>
               <p className="flex items-center gap-2">
                 <span className="text-emerald-500">✉️</span> 
-                achauraseeya@gmail.com
+                {siteTexts.footerEmail}
               </p>
             </div>
           </div>

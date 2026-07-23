@@ -299,8 +299,84 @@ async function startServer() {
     privacyEn: "### Privacy Policy\n\nChaurasiya Samaj Nepal is committed to protecting your personal privacy. We collect names, emails, and contact details solely for managing our member directory and keeping our members updated with official notices.\n\nYour data is securely stored and never shared with unauthorized third parties. By registering or nominating a member, you agree to our data handling practices.\n\n*Review led by Chief General Secretary and CTO Abhishek Kumar Chaurasiya.*\n\nFeel free to contact us for any query regarding this policy.",
     privacyNe: "### गोपनीयता नीति\n\nचौरसिया समाज नेपाल तपाईंको व्यक्तिगत गोपनीयताको रक्षा गर्न प्रतिबद्ध छ। हामी सदस्य निर्देशिका व्यवस्थापन गर्न र हाम्रा सदस्यहरूलाई आधिकारिक सूचनाहरू प्रदान गर्नका लागि मात्र नाम, इमेल र सम्पर्क विवरणहरू सङ्कलन गर्छौं।\n\nतपाईंको डाटा सुरक्षित रूपमा भण्डारण गरिएको छ र अनधिकृत तेस्रो पक्षहरूसँग कहिल्यै साझा गरिँदैन।",
     termsEn: "### Terms of Service\n\nWelcome to Chaurasiya Samaj Nepal's official portal. By accessing this website, you agree to comply with our community rules and guidelines.\n\nUsers must not submit false information or impersonate others when nominating community profiles or filling out registration forms.\n\nWe reserve the right to verify, approve, edit, or reject any listing or notice submitted to our portal.",
-    termsNe: "### सेवाका सर्तहरू\n\nचौरसिया समाज नेपालको आधिकारिक पोर्टलमा स्वागत छ। यस वेबसाइटमा पहुँच गरेर, तपाईं हाम्रा सामुदायिक नियमहरू र दिशानिर्देशहरू पालना गर्न सहमत हुनुहुन्छ।\n\nप्रयोगकर्ताहरूले नक्कली जानकारी पेश गर्नु हुँदैन।"
+    termsNe: "### सेवाका सर्तहरू\n\nचौरसिया समाज नेपालको आधिकारिक पोर्टलमा स्वागत छ। यस वेबसाइटमा पहुँच गरेर, तपाईं हाम्रा सामुदायिक नियमहरू र दिशानिर्देशहरू पालना करना सहमत हुनुहुन्छ।\n\nप्रयोगकर्ताहरूले नक्कली जानकारी पेश गर्नु हुँदैन।",
+    sliderBadgeEn: "Jay Paan Dev",
+    sliderBadgeNe: "जय पान देव",
+    logoTextEn: "Chaurasiya Samaj",
+    logoTextNe: "चौरसिया समाज",
+    logoSubEn: "Nepal",
+    logoSubNe: "चौरसिया समाज नेपाल",
+    logoUrl: "",
+    taglineEn: "A dedicated social platform preserving betel leaf culture & serving humanity",
+    taglineNe: "पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था",
+    impactHeaderEn: "Empowering & Transforming Lives",
+    impactHeaderNe: "सशक्तिकरण र जीवन परिवर्तन",
+    footerAboutEn: "We are dedicated to unifying community coordinators, supporting traditional cultivation, and providing essential healthcare and youth education programs.",
+    footerAboutNe: "हामी सामुदायिक संयोजकहरूलाई एकीकृत गर्न, परम्परागत खेतीलाई सहयोग गर्न र आवश्यक स्वास्थ्य सेवा र युवा शिक्षा कार्यक्रमहरू प्रदान गर्न समर्पित छौं।",
+    footerAddressEn: "Ghantaghar Path, Birgunj, Parsa, Madhesh Province, Nepal",
+    footerAddressNe: "घण्टाघर पथ, वीरगन्ज, पर्सा, मधेश प्रदेश, नेपाल",
+    footerPhone: "+977-9812345678",
+    footerEmail: "achauraseeya@gmail.com",
+    socialFb: "https://facebook.com",
+    socialTw: "https://twitter.com",
+    socialIg: "https://instagram.com",
+    heroImagesJson: JSON.stringify([
+      {
+        id: "g1",
+        title: { en: "Fresh Paan Garden (Betel Vineyard)", ne: "ताजा पान खेती (पानको बरेजा)" },
+        imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=600",
+        description: {
+          en: "A beautiful lush green traditional paan cultivation structure (Bareja) managed by local community members.",
+          ne: "स्थानीय समुदायका सदस्यहरूद्वारा व्यवस्थित एक सुन्दर हरियो परम्परागत पान खेती संरचना (बरेजा)।"
+        }
+      },
+      {
+        id: "g2",
+        title: { en: "Community Health Camp Parsa", ne: "सामुदायिक स्वास्थ्य शिविर पर्सा" },
+        imageUrl: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&q=80&w=600",
+        description: {
+          en: "Free health screenings, eye tests, and medicine distribution for underprivileged elders.",
+          ne: "अल्पसुविधा प्राप्त वृद्धवृद्धाहरूका लागि निःशुल्क स्वास्थ्य परीक्षण, आँखा जाँच र औषधि वितरण।"
+        }
+      },
+      {
+        id: "g3",
+        title: { en: "Youth Interaction & IT Training", ne: "युवा अन्तरक्रिया र सूचना प्रविधि तालिम" },
+        imageUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=600",
+        description: {
+          en: "Workshop on modern IT skills while staying connected to roots.",
+          ne: "जरासँग जोडिएर आधुनिक सूचना प्रविधि सीपहरूमा कार्यशाला।"
+        }
+      }
+    ])
   };
+
+  // API Route: POST upload any file/image in base64 format (restricted to admin via middleware)
+  app.post("/api/upload", (req, res) => {
+    const { fileBase64, fileName } = req.body;
+    if (!fileBase64 || !fileName) {
+      return res.status(400).json({ success: false, error: "Missing fileBase64 or fileName" });
+    }
+    try {
+      let base64Data = fileBase64;
+      if (base64Data.includes(";base64,")) {
+        base64Data = base64Data.split(";base64,").pop() || "";
+      }
+      
+      const ext = path.extname(fileName) || ".jpg";
+      const cleanName = `upload_${Date.now()}_${Math.floor(Math.random() * 1000)}${ext}`;
+      const filePath = path.join(UPLOADS_DIR, cleanName);
+      
+      fs.writeFileSync(filePath, Buffer.from(base64Data, "base64"));
+      const url = `/uploads/${cleanName}`;
+      
+      console.log(`Saved uploaded file to repository: ${url}`);
+      res.json({ success: true, url });
+    } catch (e: any) {
+      console.error("Error in upload endpoint:", e);
+      res.status(500).json({ success: false, error: e.message || "Failed to upload file" });
+    }
+  });
 
   app.get("/api/site-texts", (req, res) => {
     if (fs.existsSync(SITE_TEXTS_FILE)) {

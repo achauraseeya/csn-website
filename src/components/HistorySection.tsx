@@ -77,7 +77,83 @@ export default function HistorySection({
   const [editMissionTitleNe, setEditMissionTitleNe] = useState(siteTexts.missionTitleNe);
   const [editMissionEn, setEditMissionEn] = useState(siteTexts.missionEn);
   const [editMissionNe, setEditMissionNe] = useState(siteTexts.missionNe);
+
+  // New customizable fields state
+  const [editSliderBadgeEn, setEditSliderBadgeEn] = useState(siteTexts.sliderBadgeEn || 'Jay Paan Dev');
+  const [editSliderBadgeNe, setEditSliderBadgeNe] = useState(siteTexts.sliderBadgeNe || 'जय पान देव');
+  const [editLogoTextEn, setEditLogoTextEn] = useState(siteTexts.logoTextEn || 'Chaurasiya Samaj');
+  const [editLogoTextNe, setEditLogoTextNe] = useState(siteTexts.logoTextNe || 'चौरसिया समाज');
+  const [editLogoSubEn, setEditLogoSubEn] = useState(siteTexts.logoSubEn || 'Nepal');
+  const [editLogoSubNe, setEditLogoSubNe] = useState(siteTexts.logoSubNe || 'चौरसिया समाज नेपाल');
+  const [editLogoUrl, setEditLogoUrl] = useState(siteTexts.logoUrl || '');
+  const [editTaglineEn, setEditTaglineEn] = useState(siteTexts.taglineEn || 'A dedicated social platform preserving betel leaf culture & serving humanity');
+  const [editTaglineNe, setEditTaglineNe] = useState(siteTexts.taglineNe || 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था');
+  const [editImpactHeaderEn, setEditImpactHeaderEn] = useState(siteTexts.impactHeaderEn || 'Empowering & Transforming Lives');
+  const [editImpactHeaderNe, setEditImpactHeaderNe] = useState(siteTexts.impactHeaderNe || 'सशक्तिकरण र जीवन परिवर्तन');
+  const [editFooterAboutEn, setEditFooterAboutEn] = useState(siteTexts.footerAboutEn || 'We are dedicated to unifying community coordinators, supporting traditional cultivation, and providing essential healthcare and youth education programs.');
+  const [editFooterAboutNe, setEditFooterAboutNe] = useState(siteTexts.footerAboutNe || 'हामी सामुदायिक संयोजकहरूलाई एकीकृत गर्न, परम्परागत खेतीलाई सहयोग गर्न र आवश्यक स्वास्थ्य सेवा र युवा शिक्षा कार्यक्रमहरू प्रदान गर्न समर्पित छौं।');
+  const [editFooterAddressEn, setEditFooterAddressEn] = useState(siteTexts.footerAddressEn || 'Ghantaghar Path, Birgunj, Parsa, Madhesh Province, Nepal');
+  const [editFooterAddressNe, setEditFooterAddressNe] = useState(siteTexts.footerAddressNe || 'घण्टाघर पथ, वीरगन्ज, पर्सा, मधेश प्रदेश, नेपाल');
+  const [editFooterPhone, setEditFooterPhone] = useState(siteTexts.footerPhone || '+977-9812345678');
+  const [editFooterEmail, setEditFooterEmail] = useState(siteTexts.footerEmail || 'achauraseeya@gmail.com');
+  const [editSocialFb, setEditSocialFb] = useState(siteTexts.socialFb || 'https://facebook.com');
+  const [editSocialTw, setEditSocialTw] = useState(siteTexts.socialTw || 'https://twitter.com');
+  const [editSocialIg, setEditSocialIg] = useState(siteTexts.socialIg || 'https://instagram.com');
+
+  const [editHeroImages, setEditHeroImages] = useState<any[]>(() => {
+    try {
+      if (siteTexts.heroImagesJson) {
+        const parsed = JSON.parse(siteTexts.heroImagesJson);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [...galleryItems];
+  });
+
+  // State for adding a new hero slider image
+  const [newSlideImage, setNewSlideImage] = useState('');
+  const [newSlideTitleEn, setNewSlideTitleEn] = useState('');
+  const [newSlideTitleNe, setNewSlideTitleNe] = useState('');
+  const [newSlideDescEn, setNewSlideDescEn] = useState('');
+  const [newSlideDescNe, setNewSlideDescNe] = useState('');
+  const [uploadingSlide, setUploadingSlide] = useState(false);
+
   const [isSavingTexts, setIsSavingTexts] = useState(false);
+
+  // File upload helper
+  const handleFileUpload = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        try {
+          const password = localStorage.getItem('chaurasiya_admin_password') || 'admin2026';
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${password}`,
+              'x-admin-password': password
+            },
+            body: JSON.stringify({
+              fileBase64: base64,
+              fileName: file.name
+            })
+          });
+          const data = await res.json();
+          if (data.success && data.url) {
+            resolve(data.url);
+          } else {
+            reject(new Error(data.error || 'Failed to upload'));
+          }
+        } catch (e: any) {
+          reject(e);
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
 
   useEffect(() => {
     setEditHeroTitleEn(siteTexts.heroTitleEn);
@@ -94,6 +170,38 @@ export default function HistorySection({
     setEditMissionTitleNe(siteTexts.missionTitleNe);
     setEditMissionEn(siteTexts.missionEn);
     setEditMissionNe(siteTexts.missionNe);
+
+    setEditSliderBadgeEn(siteTexts.sliderBadgeEn || 'Jay Paan Dev');
+    setEditSliderBadgeNe(siteTexts.sliderBadgeNe || 'जय पान देव');
+    setEditLogoTextEn(siteTexts.logoTextEn || 'Chaurasiya Samaj');
+    setEditLogoTextNe(siteTexts.logoTextNe || 'चौरसिया समाज');
+    setEditLogoSubEn(siteTexts.logoSubEn || 'Nepal');
+    setEditLogoSubNe(siteTexts.logoSubNe || 'चौरसिया समाज नेपाल');
+    setEditLogoUrl(siteTexts.logoUrl || '');
+    setEditTaglineEn(siteTexts.taglineEn || 'A dedicated social platform preserving betel leaf culture & serving humanity');
+    setEditTaglineNe(siteTexts.taglineNe || 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था');
+    setEditImpactHeaderEn(siteTexts.impactHeaderEn || 'Empowering & Transforming Lives');
+    setEditImpactHeaderNe(siteTexts.impactHeaderNe || 'सशक्तिकरण र जीवन परिवर्तन');
+    setEditFooterAboutEn(siteTexts.footerAboutEn || 'We are dedicated to unifying community coordinators, supporting traditional cultivation, and providing essential healthcare and youth education programs.');
+    setEditFooterAboutNe(siteTexts.footerAboutNe || 'हामी सामुदायिक संयोजकहरूलाई एकीकृत गर्न, परम्परागत खेतीलाई सहयोग गर्न र आवश्यक स्वास्थ्य सेवा र युवा शिक्षा कार्यक्रमहरू प्रदान गर्न समर्पित छौं।');
+    setEditFooterAddressEn(siteTexts.footerAddressEn || 'Ghantaghar Path, Birgunj, Parsa, Madhesh Province, Nepal');
+    setEditFooterAddressNe(siteTexts.footerAddressNe || 'घण्टाघर पथ, वीरगन्ज, पर्सा, मधेश प्रदेश, नेपाल');
+    setEditFooterPhone(siteTexts.footerPhone || '+977-9812345678');
+    setEditFooterEmail(siteTexts.footerEmail || 'achauraseeya@gmail.com');
+    setEditSocialFb(siteTexts.socialFb || 'https://facebook.com');
+    setEditSocialTw(siteTexts.socialTw || 'https://twitter.com');
+    setEditSocialIg(siteTexts.socialIg || 'https://instagram.com');
+
+    try {
+      if (siteTexts.heroImagesJson) {
+        const parsed = JSON.parse(siteTexts.heroImagesJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setEditHeroImages(parsed);
+          return;
+        }
+      }
+    } catch (e) {}
+    setEditHeroImages([...galleryItems]);
   }, [siteTexts]);
 
   const handleSaveTexts = async (e: React.FormEvent) => {
@@ -115,6 +223,27 @@ export default function HistorySection({
         missionTitleNe: editMissionTitleNe,
         missionEn: editMissionEn,
         missionNe: editMissionNe,
+        sliderBadgeEn: editSliderBadgeEn,
+        sliderBadgeNe: editSliderBadgeNe,
+        logoTextEn: editLogoTextEn,
+        logoTextNe: editLogoTextNe,
+        logoSubEn: editLogoSubEn,
+        logoSubNe: editLogoSubNe,
+        logoUrl: editLogoUrl,
+        taglineEn: editTaglineEn,
+        taglineNe: editTaglineNe,
+        impactHeaderEn: editImpactHeaderEn,
+        impactHeaderNe: editImpactHeaderNe,
+        footerAboutEn: editFooterAboutEn,
+        footerAboutNe: editFooterAboutNe,
+        footerAddressEn: editFooterAddressEn,
+        footerAddressNe: editFooterAddressNe,
+        footerPhone: editFooterPhone,
+        footerEmail: editFooterEmail,
+        socialFb: editSocialFb,
+        socialTw: editSocialTw,
+        socialIg: editSocialIg,
+        heroImagesJson: JSON.stringify(editHeroImages)
       });
       setIsEditingTexts(false);
       onTrackAction('Save Homepage Site Texts via Admin');
@@ -186,12 +315,26 @@ export default function HistorySection({
     fetchBloggerPosts();
   }, []);
 
+  const getActiveHeroImages = (): any[] => {
+    try {
+      if (siteTexts.heroImagesJson) {
+        const parsed = JSON.parse(siteTexts.heroImagesJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return galleryItems;
+  };
+
+  const activeHeroImages = getActiveHeroImages();
+
   const nextImage = () => {
-    setCurrentImageIdx((prev) => (prev + 1) % galleryItems.length);
+    setCurrentImageIdx((prev) => (prev + 1) % activeHeroImages.length);
   };
 
   const prevImage = () => {
-    setCurrentImageIdx((prev) => (prev - 1 + galleryItems.length) % galleryItems.length);
+    setCurrentImageIdx((prev) => (prev - 1 + activeHeroImages.length) % activeHeroImages.length);
   };
 
   useEffect(() => {
@@ -199,7 +342,7 @@ export default function HistorySection({
       nextImage();
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [activeHeroImages.length]);
 
   const t = {
     ctaButton: { en: 'Join Our Community', ne: 'हाम्रो समुदायमा सामेल हुनुहोस्' },
@@ -397,6 +540,398 @@ export default function HistorySection({
                   className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
                 />
               </div>
+
+              {/* Slider Badge Text */}
+              <div className="space-y-1 border-t border-teal-200 pt-4">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Slider Badge Text (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={editSliderBadgeEn}
+                  onChange={(e) => setEditSliderBadgeEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1 border-t border-teal-200 pt-4">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Slider Badge Text (Nepali)</label>
+                <input
+                  type="text"
+                  required
+                  value={editSliderBadgeNe}
+                  onChange={(e) => setEditSliderBadgeNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Logo Settings */}
+              <div className="space-y-1 border-t border-teal-200 pt-4 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Logo Image File (Upload to Repository)</label>
+                <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-teal-100">
+                  {editLogoUrl ? (
+                    <img src={editLogoUrl} className="w-12 h-12 rounded-full object-cover border border-teal-200 shadow-sm" alt="Logo preview" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 text-xs font-bold border border-teal-200">Default</div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const url = await handleFileUpload(file);
+                          setEditLogoUrl(url);
+                        } catch (err: any) {
+                          alert('Upload failed: ' + err.message);
+                        }
+                      }
+                    }}
+                    className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                  />
+                  {editLogoUrl && (
+                    <button type="button" onClick={() => setEditLogoUrl('')} className="text-xs text-red-500 hover:underline">Reset to Default</button>
+                  )}
+                </div>
+              </div>
+
+              {/* Logo Texts aside Logo */}
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Logo Text Aside (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={editLogoTextEn}
+                  onChange={(e) => setEditLogoTextEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Logo Text Aside (Nepali)</label>
+                <input
+                  type="text"
+                  required
+                  value={editLogoTextNe}
+                  onChange={(e) => setEditLogoTextNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Logo Subtexts */}
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Logo Subtext (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={editLogoSubEn}
+                  onChange={(e) => setEditLogoSubEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Logo Subtext (Nepali)</label>
+                <input
+                  type="text"
+                  required
+                  value={editLogoSubNe}
+                  onChange={(e) => setEditLogoSubNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Tagline Top text */}
+              <div className="space-y-1 md:col-span-2 border-t border-teal-200 pt-4">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Header Top Tagline (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={editTaglineEn}
+                  onChange={(e) => setEditTaglineEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Header Top Tagline (Nepali)</label>
+                <input
+                  type="text"
+                  required
+                  value={editTaglineNe}
+                  onChange={(e) => setEditTaglineNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Impact Header */}
+              <div className="space-y-1 md:col-span-2 border-t border-teal-200 pt-4">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Impact/Empowerment Header (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={editImpactHeaderEn}
+                  onChange={(e) => setEditImpactHeaderEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Impact/Empowerment Header (Nepali)</label>
+                <input
+                  type="text"
+                  required
+                  value={editImpactHeaderNe}
+                  onChange={(e) => setEditImpactHeaderNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Footer Settings */}
+              <div className="space-y-1 border-t border-teal-200 pt-4 md:col-span-2">
+                <h4 className="text-sm font-black text-teal-950 uppercase tracking-wider mb-2">Footer Settings</h4>
+              </div>
+
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Footer About/Description (English)</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={editFooterAboutEn}
+                  onChange={(e) => setEditFooterAboutEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Footer About/Description (Nepali)</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={editFooterAboutNe}
+                  onChange={(e) => setEditFooterAboutNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Headquarters Address (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={editFooterAddressEn}
+                  onChange={(e) => setEditFooterAddressEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Headquarters Address (Nepali)</label>
+                <input
+                  type="text"
+                  required
+                  value={editFooterAddressNe}
+                  onChange={(e) => setEditFooterAddressNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Phone Number</label>
+                <input
+                  type="text"
+                  required
+                  value={editFooterPhone}
+                  onChange={(e) => setEditFooterPhone(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={editFooterEmail}
+                  onChange={(e) => setEditFooterEmail(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Social Media Links */}
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Facebook URL</label>
+                <input
+                  type="url"
+                  placeholder="https://facebook.com/..."
+                  value={editSocialFb}
+                  onChange={(e) => setEditSocialFb(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Twitter (X) URL</label>
+                <input
+                  type="url"
+                  placeholder="https://twitter.com/..."
+                  value={editSocialTw}
+                  onChange={(e) => setEditSocialTw(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Instagram URL</label>
+                <input
+                  type="url"
+                  placeholder="https://instagram.com/..."
+                  value={editSocialIg}
+                  onChange={(e) => setEditSocialIg(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Hero Slider Images Manager */}
+              <div className="space-y-4 md:col-span-2 border-t border-teal-200 pt-6">
+                <h4 className="text-sm font-black text-teal-950 uppercase tracking-wider">Hero Slider Images Manager</h4>
+                <p className="text-xs text-gray-500">Add, change, or delete images in the hero slider slideshow. Added images are uploaded and saved on the repository.</p>
+                
+                {/* List of current slides */}
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                  {editHeroImages.map((image, sIdx) => (
+                    <div key={image.id || sIdx} className="p-4 bg-white border border-teal-100 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <img src={image.imageUrl} className="w-16 h-10 object-cover rounded-lg border border-teal-200 shadow-sm" alt="" />
+                        <div>
+                          <div className="text-xs font-extrabold text-teal-950">{image.title?.en || 'Slide ' + (sIdx + 1)}</div>
+                          <div className="text-[10px] text-gray-400 font-medium">{image.imageUrl}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 self-end sm:self-auto">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = editHeroImages.filter((_, i) => i !== sIdx);
+                            setEditHeroImages(updated);
+                          }}
+                          className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
+                          title="Delete Slide"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Form to add a new slide */}
+                <div className="p-4 bg-teal-100/30 border border-teal-200/50 rounded-2xl space-y-4">
+                  <div className="text-xs font-extrabold text-teal-950 uppercase tracking-wider">Add New Image Slide</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-teal-950 uppercase tracking-wider block">Slide Image (Upload File)</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setUploadingSlide(true);
+                            try {
+                              const url = await handleFileUpload(file);
+                              setNewSlideImage(url);
+                            } catch (err: any) {
+                              alert('Upload failed: ' + err.message);
+                            } finally {
+                              setUploadingSlide(false);
+                            }
+                          }
+                        }}
+                        className="text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                      />
+                      {newSlideImage && (
+                        <div className="text-[10px] text-emerald-600 mt-1 font-medium">Selected: {newSlideImage}</div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-teal-950 uppercase tracking-wider block">Slide Image URL (Or paste directly)</label>
+                      <input
+                        type="text"
+                        placeholder="https://..."
+                        value={newSlideImage}
+                        onChange={(e) => setNewSlideImage(e.target.value)}
+                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-teal-950 uppercase tracking-wider block">Slide Title (English)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Traditional Cultivation"
+                        value={newSlideTitleEn}
+                        onChange={(e) => setNewSlideTitleEn(e.target.value)}
+                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-teal-950 uppercase tracking-wider block">Slide Title (Nepali)</label>
+                      <input
+                        type="text"
+                        placeholder="जस्तै: परम्परागत खेती"
+                        value={newSlideTitleNe}
+                        onChange={(e) => setNewSlideTitleNe(e.target.value)}
+                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1 sm:col-span-2">
+                      <label className="text-[10px] font-black text-teal-950 uppercase tracking-wider block">Description (English)</label>
+                      <input
+                        type="text"
+                        placeholder="Short description of this slide..."
+                        value={newSlideDescEn}
+                        onChange={(e) => setNewSlideDescEn(e.target.value)}
+                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1 sm:col-span-2">
+                      <label className="text-[10px] font-black text-teal-950 uppercase tracking-wider block">Description (Nepali)</label>
+                      <input
+                        type="text"
+                        placeholder="यस स्लाइडको संक्षिप्त विवरण..."
+                        value={newSlideDescNe}
+                        onChange={(e) => setNewSlideDescNe(e.target.value)}
+                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={uploadingSlide || !newSlideImage}
+                    onClick={() => {
+                      const newSlide = {
+                        id: 'custom_slide_' + Date.now(),
+                        imageUrl: newSlideImage,
+                        title: {
+                          en: newSlideTitleEn || 'Custom Slide',
+                          ne: newSlideTitleNe || 'अनुकूलित स्लाइड'
+                        },
+                        description: {
+                          en: newSlideDescEn || '',
+                          ne: newSlideDescNe || ''
+                        }
+                      };
+                      setEditHeroImages([...editHeroImages, newSlide]);
+                      setNewSlideImage('');
+                      setNewSlideTitleEn('');
+                      setNewSlideTitleNe('');
+                      setNewSlideDescEn('');
+                      setNewSlideDescNe('');
+                    }}
+                    className="px-4 py-2 bg-teal-850 hover:bg-teal-800 text-white disabled:opacity-50 text-xs font-bold uppercase rounded-lg transition-colors flex items-center gap-1 border border-teal-700"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add to Slider List</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center gap-3 pt-4 border-t border-teal-200">
@@ -423,9 +958,9 @@ export default function HistorySection({
       {/* Hero Section */}
       <section className="relative overflow-hidden text-white rounded-3xl py-16 px-6 sm:px-12 lg:px-20 shadow-2xl border-b-8 border-emerald-500">
         {/* Background Slider */}
-        {galleryItems.map((item, idx) => (
+        {activeHeroImages.map((item, idx) => (
           <div
-            key={item.id}
+            key={item.id || idx}
             className={`absolute inset-0 transition-opacity duration-1000 ${idx === currentImageIdx ? 'opacity-100' : 'opacity-0'}`}
           >
             <img 
@@ -444,7 +979,7 @@ export default function HistorySection({
         <div className="relative z-10 max-w-4xl space-y-6">
           <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-400/30 text-teal-300 text-xs font-bold uppercase tracking-wider">
             <Leaf className="w-3.5 h-3.5 animate-bounce text-teal-400" />
-            Jay Paan Dev • जय पान देव
+            {lang === 'en' ? (siteTexts.sliderBadgeEn || 'Jay Paan Dev') : (siteTexts.sliderBadgeNe || 'जय पान देव')}
           </span>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-none text-teal-50 drop-shadow-xl">
             {lang === 'en' ? siteTexts.heroTitleEn : siteTexts.heroTitleNe}
@@ -482,15 +1017,19 @@ export default function HistorySection({
           {t.photoGallery[lang]}
         </h2>
         <div className="relative w-full aspect-video sm:aspect-[21/9] rounded-2xl overflow-hidden bg-gray-100 group shadow-inner">
-          <img 
-            src={galleryItems[currentImageIdx].imageUrl}
-            alt={galleryItems[currentImageIdx].title[lang]}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-10 text-white">
-            <h3 className="text-xl sm:text-3xl font-bold mb-2 shadow-sm">{galleryItems[currentImageIdx].title[lang]}</h3>
-            <p className="text-teal-50 text-sm sm:text-base max-w-2xl font-medium">{galleryItems[currentImageIdx].description[lang]}</p>
-          </div>
+          {activeHeroImages[currentImageIdx] && (
+            <>
+              <img 
+                src={activeHeroImages[currentImageIdx].imageUrl}
+                alt={activeHeroImages[currentImageIdx].title?.[lang] || ''}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-10 text-white">
+                <h3 className="text-xl sm:text-3xl font-bold mb-2 shadow-sm">{activeHeroImages[currentImageIdx].title?.[lang] || ''}</h3>
+                <p className="text-teal-50 text-sm sm:text-base max-w-2xl font-medium">{activeHeroImages[currentImageIdx].description?.[lang] || ''}</p>
+              </div>
+            </>
+          )}
           
           <button 
             onClick={prevImage}
@@ -565,8 +1104,8 @@ export default function HistorySection({
 
       {/* Impact Stats */}
       <section className="space-y-8">
-        <h3 className="text-2xl sm:text-3xl font-black text-teal-950 text-center uppercase tracking-tight">
-          {t.impactHeader[lang]}
+        <h3 className="text-2xl sm:text-3xl font-black text-teal-950 dark:text-teal-50 text-center uppercase tracking-tight">
+          {lang === 'en' ? siteTexts.impactHeaderEn : siteTexts.impactHeaderNe}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {impactStats.map((stat, idx) => {
