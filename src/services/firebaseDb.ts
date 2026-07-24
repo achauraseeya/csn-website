@@ -23,6 +23,22 @@ const VOLUNTEERS_COL = 'volunteer_applications';
 const MEMBERSHIPS_COL = 'membership_applications';
 const SUBSCRIBERS_COL = 'newsletter_subscribers';
 
+// Clean object to strip undefined values which cause Firestore setDoc/updateDoc to fail
+function sanitizeForFirestore<T extends Record<string, any>>(obj: T): Record<string, any> {
+  const cleaned: Record<string, any> = {};
+  Object.keys(obj).forEach((key) => {
+    const val = obj[key];
+    if (val !== undefined) {
+      if (val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Date)) {
+        cleaned[key] = sanitizeForFirestore(val);
+      } else {
+        cleaned[key] = val;
+      }
+    }
+  });
+  return cleaned;
+}
+
 // --- MATRIMONIAL PROFILES ---
 export function subscribeMatrimonialProfiles(callback: (profiles: MatrimonialProfile[]) => void) {
   try {
@@ -44,7 +60,9 @@ export function subscribeMatrimonialProfiles(callback: (profiles: MatrimonialPro
 
 export async function saveMatrimonialProfileToCloud(profile: MatrimonialProfile) {
   try {
-    await setDoc(doc(db, MATRIMONY_COL, profile.id), profile);
+    const cleanData = sanitizeForFirestore(profile);
+    await setDoc(doc(db, MATRIMONY_COL, profile.id), cleanData);
+    console.log('Saved matrimonial profile to Firestore:', profile.id);
   } catch (e) {
     console.error('Failed to save matrimonial profile to cloud:', e);
   }
@@ -86,7 +104,9 @@ export function subscribeVolunteerApps(callback: (apps: VolunteerApplication[]) 
 
 export async function saveVolunteerAppToCloud(appData: VolunteerApplication) {
   try {
-    await setDoc(doc(db, VOLUNTEERS_COL, appData.id), appData);
+    const cleanData = sanitizeForFirestore(appData);
+    await setDoc(doc(db, VOLUNTEERS_COL, appData.id), cleanData);
+    console.log('Saved volunteer app to Firestore:', appData.id);
   } catch (e) {
     console.error('Failed to save volunteer application to cloud:', e);
   }
@@ -128,7 +148,9 @@ export function subscribeMembershipApps(callback: (apps: MembershipApplication[]
 
 export async function saveMembershipAppToCloud(appData: MembershipApplication) {
   try {
-    await setDoc(doc(db, MEMBERSHIPS_COL, appData.id), appData);
+    const cleanData = sanitizeForFirestore(appData);
+    await setDoc(doc(db, MEMBERSHIPS_COL, appData.id), cleanData);
+    console.log('Saved membership app to Firestore:', appData.id);
   } catch (e) {
     console.error('Failed to save membership application to cloud:', e);
   }
@@ -170,7 +192,9 @@ export function subscribeSubscribers(callback: (subscribers: NewsletterSubscribe
 
 export async function saveSubscriberToCloud(sub: NewsletterSubscriber) {
   try {
-    await setDoc(doc(db, SUBSCRIBERS_COL, sub.id), sub);
+    const cleanData = sanitizeForFirestore(sub);
+    await setDoc(doc(db, SUBSCRIBERS_COL, sub.id), cleanData);
+    console.log('Saved subscriber to Firestore:', sub.id);
   } catch (e) {
     console.error('Failed to save subscriber to cloud:', e);
   }
