@@ -395,14 +395,13 @@ export default function App() {
       });
       knownMatrimonyRef.current = new Set(cloudProfiles.map(p => p.id));
 
-      setMatrimonialProfiles((prev) => {
-        const mergedMap = new Map<string, MatrimonialProfile>();
-        prev.forEach(p => mergedMap.set(p.id, p));
-        cloudProfiles.forEach(p => mergedMap.set(p.id, p));
-        const result = Array.from(mergedMap.values());
-        try { localStorage.setItem('chaurasiya_matrimony', JSON.stringify(result)); } catch (e) {}
-        return result;
+      setMatrimonialProfiles(cloudProfiles.length > 0 ? cloudProfiles : prev => {
+        const local = localStorage.getItem('chaurasiya_matrimony');
+        return local ? JSON.parse(local) : prev;
       });
+      if (cloudProfiles.length > 0) {
+        try { localStorage.setItem('chaurasiya_matrimony', JSON.stringify(cloudProfiles)); } catch (e) {}
+      }
     });
 
     const unsubscribeVolunteers = subscribeVolunteerApps((cloudVolunteers) => {
@@ -413,14 +412,13 @@ export default function App() {
       });
       knownVolunteersRef.current = new Set(cloudVolunteers.map(v => v.id));
 
-      setVolunteerApps((prev) => {
-        const mergedMap = new Map<string, VolunteerApplication>();
-        prev.forEach(v => mergedMap.set(v.id, v));
-        cloudVolunteers.forEach(v => mergedMap.set(v.id, v));
-        const result = Array.from(mergedMap.values());
-        try { localStorage.setItem('chaurasiya_volunteers', JSON.stringify(result)); } catch (e) {}
-        return result;
+      setVolunteerApps(cloudVolunteers.length > 0 ? cloudVolunteers : prev => {
+        const local = localStorage.getItem('chaurasiya_volunteers');
+        return local ? JSON.parse(local) : prev;
       });
+      if (cloudVolunteers.length > 0) {
+        try { localStorage.setItem('chaurasiya_volunteers', JSON.stringify(cloudVolunteers)); } catch (e) {}
+      }
     });
 
     const unsubscribeMemberships = subscribeMembershipApps((cloudMemberships) => {
@@ -431,14 +429,13 @@ export default function App() {
       });
       knownMembershipsRef.current = new Set(cloudMemberships.map(m => m.id));
 
-      setMembershipApps((prev) => {
-        const mergedMap = new Map<string, MembershipApplication>();
-        prev.forEach(m => mergedMap.set(m.id, m));
-        cloudMemberships.forEach(m => mergedMap.set(m.id, m));
-        const result = Array.from(mergedMap.values());
-        try { localStorage.setItem('chaurasiya_membership_apps', JSON.stringify(result)); } catch (e) {}
-        return result;
+      setMembershipApps(cloudMemberships.length > 0 ? cloudMemberships : prev => {
+        const local = localStorage.getItem('chaurasiya_membership_apps');
+        return local ? JSON.parse(local) : prev;
       });
+      if (cloudMemberships.length > 0) {
+        try { localStorage.setItem('chaurasiya_membership_apps', JSON.stringify(cloudMemberships)); } catch (e) {}
+      }
     });
 
     const unsubscribeSubscribers = subscribeSubscribers((cloudSubscribers) => {
@@ -449,14 +446,13 @@ export default function App() {
       });
       knownSubscribersRef.current = new Set(cloudSubscribers.map(s => s.id));
 
-      setSubscribers((prev) => {
-        const mergedMap = new Map<string, NewsletterSubscriber>();
-        prev.forEach(s => mergedMap.set(s.id, s));
-        cloudSubscribers.forEach(s => mergedMap.set(s.id, s));
-        const result = Array.from(mergedMap.values());
-        try { localStorage.setItem('chaurasiya_subscribers', JSON.stringify(result)); } catch (e) {}
-        return result;
+      setSubscribers(cloudSubscribers.length > 0 ? cloudSubscribers : prev => {
+        const local = localStorage.getItem('chaurasiya_subscribers');
+        return local ? JSON.parse(local) : prev;
       });
+      if (cloudSubscribers.length > 0) {
+        try { localStorage.setItem('chaurasiya_subscribers', JSON.stringify(cloudSubscribers)); } catch (e) {}
+      }
     });
 
     return () => {
@@ -494,86 +490,34 @@ export default function App() {
   const handleAddMatrimonialProfile = (newProfile: MatrimonialProfile) => {
     saveMatrimonialProfileToCloud(newProfile);
     broadcastLiveEvent('NEW_MATRIMONY', newProfile);
-    setMatrimonialProfiles(prev => {
-      const updated = [newProfile, ...prev];
-      try {
-        localStorage.setItem('chaurasiya_matrimony', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
-    setLiveToast(`🔔 New Matrimonial Request: ${newProfile.fullName} (${newProfile.lookingFor === 'groom' ? 'Groom' : 'Bride'})`);
   };
 
   const handleUpdateMatrimonialStatus = (id: string, status: 'approved' | 'rejected') => {
     updateMatrimonialStatusInCloud(id, status);
-    setMatrimonialProfiles(prev => {
-      const updated = prev.map(p => p.id === id ? { ...p, status } : p);
-      try {
-        localStorage.setItem('chaurasiya_matrimony', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
   };
 
   const handleDeleteMatrimonialProfile = (id: string) => {
     deleteMatrimonialProfileFromCloud(id);
-    setMatrimonialProfiles(prev => {
-      const updated = prev.filter(p => p.id !== id);
-      try {
-        localStorage.setItem('chaurasiya_matrimony', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
   };
 
   // Volunteer handlers
   const handleAddVolunteerApp = (newVol: VolunteerApplication) => {
     saveVolunteerAppToCloud(newVol);
     broadcastLiveEvent('NEW_VOLUNTEER', newVol);
-    setVolunteerApps(prev => {
-      const updated = [newVol, ...prev];
-      try {
-        localStorage.setItem('chaurasiya_volunteers', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
-    setLiveToast(`🔔 New Volunteer Application: ${newVol.fullName} (${newVol.address})`);
   };
 
   const handleUpdateVolunteerStatus = (id: string, status: 'approved' | 'contacted') => {
     updateVolunteerStatusInCloud(id, status);
-    setVolunteerApps(prev => {
-      const updated = prev.map(v => v.id === id ? { ...v, status } : v);
-      try {
-        localStorage.setItem('chaurasiya_volunteers', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
   };
 
   const handleDeleteVolunteerApp = (id: string) => {
     deleteVolunteerAppFromCloud(id);
-    setVolunteerApps(prev => {
-      const updated = prev.filter(v => v.id !== id);
-      try {
-        localStorage.setItem('chaurasiya_volunteers', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
   };
 
   // Membership handlers
   const handleAddMembershipApp = (newMemb: MembershipApplication) => {
     saveMembershipAppToCloud(newMemb);
     broadcastLiveEvent('NEW_MEMBERSHIP', newMemb);
-    setMembershipApps(prev => {
-      const updated = [newMemb, ...prev];
-      try {
-        localStorage.setItem('chaurasiya_membership_apps', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
-    setLiveToast(`🔔 New Membership Application / Renewal: ${newMemb.fullName} (${newMemb.membershipType})`);
   };
 
   const handleApproveMembershipApp = (id: string, assignedMemberId: string) => {
@@ -616,13 +560,6 @@ export default function App() {
 
   const handleRejectMembershipApp = (id: string) => {
     deleteMembershipAppFromCloud(id);
-    setMembershipApps(prev => {
-      const updated = prev.filter(m => m.id !== id);
-      try {
-        localStorage.setItem('chaurasiya_membership_apps', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
   };
 
   // Newsletter & Contact Subscribers handlers
@@ -637,15 +574,6 @@ export default function App() {
     };
     saveSubscriberToCloud(newSub);
     broadcastLiveEvent('NEW_SUBSCRIBER', newSub);
-    setSubscribers(prev => {
-      const filtered = prev.filter(s => s.email.toLowerCase() !== trimmed.toLowerCase());
-      const updated = [newSub, ...filtered];
-      try {
-        localStorage.setItem('chaurasiya_subscribers', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
-    setLiveToast(`🔔 New Subscriber Registered: ${trimmed}`);
   };
 
   const handleNewsletterSubscribeSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -667,13 +595,6 @@ export default function App() {
 
   const handleDeleteSubscriber = (id: string) => {
     deleteSubscriberFromCloud(id);
-    setSubscribers(prev => {
-      const updated = prev.filter(s => s.id !== id);
-      try {
-        localStorage.setItem('chaurasiya_subscribers', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
   };
 
   const handleUpdateMember = (updatedMember: Member) => {
