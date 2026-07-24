@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Heart, UserCheck, ShieldCheck, Search, Plus, Filter, Phone, Mail, MapPin, Briefcase, GraduationCap, X, CheckCircle2, Lock, Sparkles, Download, Eye, ExternalLink } from 'lucide-react';
+import { Heart, UserCheck, ShieldCheck, Search, Plus, Filter, Phone, Mail, MapPin, Briefcase, GraduationCap, X, CheckCircle2, Lock, Sparkles, Download, Eye, ExternalLink, Trash2, Edit, Check } from 'lucide-react';
 import { Language, MatrimonialProfile } from '../types';
 import { formatNumber } from '../utils/mediaUrl';
+import { AdminFormFieldEditor } from './AdminFormFieldEditor';
+import { getCustomFormFields, CustomFormField } from '../utils/customFormFields';
 
 interface MatrimonialSectionProps {
   lang: Language;
   profiles: MatrimonialProfile[];
   onAddProfile: (profile: MatrimonialProfile) => void;
+  onDeleteProfile?: (id: string) => void;
+  onUpdateProfileStatus?: (id: string, status: 'approved' | 'rejected' | 'pending') => void;
   isAdmin?: boolean;
   onOpenAdminDashboard?: () => void;
   onTrackAction: (actionName: string) => void;
@@ -16,6 +20,8 @@ export default function MatrimonialSection({
   lang,
   profiles,
   onAddProfile,
+  onDeleteProfile,
+  onUpdateProfileStatus,
   isAdmin = false,
   onOpenAdminDashboard,
   onTrackAction,
@@ -26,6 +32,10 @@ export default function MatrimonialSection({
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<MatrimonialProfile | null>(null);
   const [interestSentId, setInterestSentId] = useState<string | null>(null);
+
+  // Dynamic custom form fields
+  const [customFields, setCustomFields] = useState<CustomFormField[]>(() => getCustomFormFields('matrimonial'));
+  const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
 
   // Registration Form State
   const [formGender, setFormGender] = useState<'groom' | 'bride'>('groom');
@@ -47,7 +57,12 @@ export default function MatrimonialSection({
   const [guardianPhone, setGuardianPhone] = useState('');
   const [guardianEmail, setGuardianEmail] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
+  const [adminStatusDirect, setAdminStatusDirect] = useState<'approved' | 'pending'>('approved');
   const [formSubmitted, setFormSubmitted] = useState(false);
+
+  const refreshCustomFields = () => {
+    setCustomFields(getCustomFormFields('matrimonial'));
+  };
 
   // Filter logic
   const approvedOrAdminProfiles = profiles.filter(p => isAdmin || p.status === 'approved');
@@ -98,7 +113,7 @@ export default function MatrimonialSection({
       photoUrl: photoUrl.trim() || (formGender === 'groom' 
         ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400' 
         : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'),
-      status: 'pending',
+      status: isAdmin ? adminStatusDirect : 'pending',
       createdAt: new Date().toISOString().split('T')[0],
     };
 
@@ -123,6 +138,14 @@ export default function MatrimonialSection({
     formData.append('Guardian Name', guardianName);
     formData.append('Guardian Phone', guardianPhone);
     formData.append('Guardian Email', guardianEmail || 'Not provided');
+
+    // Attach dynamic custom field responses
+    customFields.forEach(cf => {
+      const val = customAnswers[cf.id];
+      if (val) {
+        formData.append(cf.label.en, val);
+      }
+    });
 
     try {
       await fetch('https://formsubmit.co/ajax/csnepalwebsite@gmail.com', {
@@ -354,6 +377,38 @@ export default function MatrimonialSection({
                   {interestSentId === profile.id ? (lang === 'en' ? 'Sent!' : 'पठाइयो!') : (lang === 'en' ? 'Express Interest' : 'इच्छा व्यक्त गर्नुहोस्')}
                 </button>
               </div>
+
+              {/* Admin Candidate Management Bar */}
+              {isAdmin && (
+                <div className="px-4 py-2 bg-slate-900 text-white border-t border-slate-800 flex items-center justify-between text-[11px] font-bold">
+                  <span className="text-[10px] text-teal-400 uppercase font-mono">Admin Control</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onUpdateProfileStatus?.(profile.id, profile.status === 'approved' ? 'pending' : 'approved')}
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-extrabold flex items-center gap-1 cursor-pointer ${
+                        profile.status === 'approved' ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-amber-600 text-white hover:bg-amber-500'
+                      }`}
+                      title="Toggle candidate status"
+                    >
+                      <Check className="w-3 h-3" />
+                      {profile.status === 'approved' ? 'Verified' : 'Approve Profile'}
+                    </button>
+                    {onDeleteProfile && (
+                      <button
+                        onClick={() => {
+                          if (confirm(lang === 'en' ? 'Delete this candidate profile?' : 'यो उम्मेदवार प्रोफाइल हटाउनुहोस्?')) {
+                            onDeleteProfile(profile.id);
+                          }
+                        }}
+                        className="p-1.5 bg-rose-600/30 hover:bg-rose-600 text-rose-300 hover:text-white rounded-md transition-colors cursor-pointer"
+                        title="Delete Profile"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -464,6 +519,16 @@ export default function MatrimonialSection({
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Admin Form Customizer */}
+            {isAdmin && (
+              <AdminFormFieldEditor
+                formId="matrimonial"
+                lang={lang}
+                isAdmin={isAdmin}
+                onFieldsUpdated={refreshCustomFields}
+              />
+            )}
 
             {formSubmitted ? (
               <div className="p-8 text-center space-y-4">
@@ -635,6 +700,51 @@ export default function MatrimonialSection({
                       className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
                     />
                   </div>
+
+                  {/* Dynamic Custom Fields added by Admin */}
+                  {customFields.length > 0 && (
+                    <div className="sm:col-span-2 space-y-3 pt-2 border-t border-teal-100 dark:border-slate-800">
+                      <h5 className="font-extrabold text-teal-900 dark:text-teal-100 text-xs uppercase tracking-wide">
+                        {lang === 'en' ? 'Additional Admin Questions' : 'थप प्रशासक प्रश्नहरू'}:
+                      </h5>
+                      {customFields.map(cf => (
+                        <div key={cf.id}>
+                          <label className="block text-gray-700 dark:text-gray-300 mb-1">
+                            {cf.label[lang] || cf.label.en} {cf.required && '*'}
+                          </label>
+                          {cf.fieldType === 'textarea' ? (
+                            <textarea
+                              required={cf.required}
+                              rows={2}
+                              value={customAnswers[cf.id] || ''}
+                              onChange={e => setCustomAnswers({ ...customAnswers, [cf.id]: e.target.value })}
+                              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                            />
+                          ) : cf.fieldType === 'select' ? (
+                            <select
+                              required={cf.required}
+                              value={customAnswers[cf.id] || ''}
+                              onChange={e => setCustomAnswers({ ...customAnswers, [cf.id]: e.target.value })}
+                              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white font-bold"
+                            >
+                              <option value="">Select option...</option>
+                              {cf.options?.map(opt => (
+                                <option key={opt} value={opt}>{opt}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type={cf.fieldType === 'number' ? 'number' : 'text'}
+                              required={cf.required}
+                              value={customAnswers[cf.id] || ''}
+                              onChange={e => setCustomAnswers({ ...customAnswers, [cf.id]: e.target.value })}
+                              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t dark:border-slate-800">

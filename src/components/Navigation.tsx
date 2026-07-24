@@ -40,7 +40,6 @@ export default function Navigation({
     { id: 'matrimonial', label: { en: 'Matrimonial', ne: 'वैवाहिक जोडी' } },
     { id: 'events', label: { en: 'Events & Calendar', ne: 'कार्यक्रम र पात्रो' } },
     { id: 'membership-donation', label: { en: 'Join & Support', ne: 'सहभागिता र सहयोग' } },
-    { id: 'blogger-exporter', label: { en: 'Blogger Exporter', ne: 'ब्लगर एक्सपोर्टर' } },
     { id: 'analytics', label: { en: 'Analytics', ne: 'एनालिटिक्स' } },
   ];
 

@@ -1400,15 +1400,6 @@ export default function HistorySection({
             >
               {t.ctaButton[lang]} <ArrowRight className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => {
-                onNavigate('blogger-exporter');
-                onTrackAction('Click Get Blogger XML in Hero');
-              }}
-              className="px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold transition-all text-sm uppercase"
-            >
-              {t.bloggerBannerButton[lang]}
-            </button>
           </div>
         </div>
       </section>

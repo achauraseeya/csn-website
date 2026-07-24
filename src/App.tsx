@@ -1683,9 +1683,10 @@ export default function App() {
             lang={lang}
             profiles={matrimonialProfiles}
             onAddProfile={handleAddMatrimonialProfile}
+            onDeleteProfile={handleDeleteMatrimonialProfile}
+            onUpdateProfileStatus={handleUpdateMatrimonialStatus}
             onTrackAction={handleTrackAction}
             isAdmin={isAdmin}
-            onOpenAdminDashboard={() => setIsAdminDashboardOpen(true)}
           />
         )}
 
@@ -1736,6 +1737,7 @@ export default function App() {
             }}
             onAddDonation={handleAddDonation}
             onTrackAction={handleTrackAction}
+            isAdmin={isAdmin}
           />
         )}
 
@@ -1784,43 +1786,43 @@ export default function App() {
       </main>
 
       {/* Enhanced NGO Footer */}
-      <footer className="bg-gray-900 text-white border-t-8 border-emerald-500 py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 items-start mb-12">
+      <footer className="bg-gray-900 text-white border-t-8 border-emerald-500 py-10 sm:py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 items-start mb-8">
           
-          <div className="md:col-span-4 space-y-6">
+          <div className="md:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-white overflow-hidden flex items-center justify-center">
+              <div className="w-11 h-11 rounded-full bg-white overflow-hidden flex items-center justify-center shrink-0">
                 <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-cover" />
               </div>
-              <span className="font-black text-2xl tracking-tight text-white">
+              <span className="font-black text-xl sm:text-2xl tracking-tight text-white">
                 {lang === 'en' ? siteTexts.logoTextEn : siteTexts.logoTextNe}
               </span>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed font-medium pr-4">
               {(lang === 'en' ? siteTexts.taglineEn : siteTexts.taglineNe) + " " + (lang === 'en' ? siteTexts.footerAboutEn : siteTexts.footerAboutNe)}
             </p>
-            <div className="flex gap-4 pt-2">
+            <div className="flex gap-3 pt-1">
                {siteTexts.socialFb && (
-                 <a href={siteTexts.socialFb} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors text-gray-400 hover:text-white" title="Facebook">
+                 <a href={siteTexts.socialFb} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors text-gray-400 hover:text-white" title="Facebook">
                    <Facebook className="w-4 h-4" />
                  </a>
                )}
                {siteTexts.socialTw && (
-                 <a href={siteTexts.socialTw} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors text-gray-400 hover:text-white" title="Twitter">
+                 <a href={siteTexts.socialTw} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors text-gray-400 hover:text-white" title="Twitter">
                    <Twitter className="w-4 h-4" />
                  </a>
                )}
                {siteTexts.socialIg && (
-                 <a href={siteTexts.socialIg} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors text-gray-400 hover:text-white" title="Instagram">
+                 <a href={siteTexts.socialIg} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors text-gray-400 hover:text-white" title="Instagram">
                    <Instagram className="w-4 h-4" />
                  </a>
                )}
             </div>
           </div>
 
-          <div className="md:col-span-2 space-y-4">
-            <h4 className="font-bold text-white mb-4">Quick Links</h4>
-            <div className="flex flex-col gap-3 text-sm text-gray-400 font-medium">
+          <div className="md:col-span-3 space-y-3">
+            <h4 className="font-bold text-white mb-2">Quick Links</h4>
+            <div className="flex flex-col gap-2.5 text-sm text-gray-400 font-medium">
               <button onClick={() => handleNavigate('history')} className="hover:text-emerald-400 text-left transition-colors">About Us</button>
               <button onClick={() => handleNavigate('events')} className="hover:text-emerald-400 text-left transition-colors">Projects & Programs</button>
               <button onClick={() => handleNavigate('directory')} className="hover:text-emerald-400 text-left transition-colors">Committee Members</button>
@@ -1828,11 +1830,11 @@ export default function App() {
             </div>
           </div>
 
-          <div className="md:col-span-3 space-y-4">
-            <h4 className="font-bold text-white mb-4">Headquarters</h4>
-            <div className="text-sm text-gray-400 space-y-3 font-medium">
+          <div className="md:col-span-4 space-y-3">
+            <h4 className="font-bold text-white mb-2">Headquarters</h4>
+            <div className="text-sm text-gray-400 space-y-2.5 font-medium">
               <p className="flex items-start gap-2">
-                <span className="text-emerald-500 mt-1">📍</span> 
+                <span className="text-emerald-500 mt-0.5">📍</span> 
                 {lang === 'en' ? siteTexts.footerAddressEn : siteTexts.footerAddressNe}
               </p>
               <p className="flex items-center gap-2">
@@ -1845,38 +1847,19 @@ export default function App() {
               </p>
             </div>
           </div>
-
-          <div className="md:col-span-3 space-y-4">
-            <h4 className="font-bold text-white mb-4">Newsletter</h4>
-            <p className="text-sm text-gray-400 font-medium mb-4">Subscribe to our newsletter for the latest updates on projects and events.</p>
-            <form onSubmit={handleNewsletterSubscribeSubmit} className="flex flex-col gap-2">
-              <div className="relative">
-                <Mail className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input 
-                  type="email" 
-                  required
-                  placeholder="Email address..." 
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-              <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-2.5 rounded-lg text-sm transition-colors cursor-pointer">
-                Subscribe
-              </button>
-            </form>
-          </div>
         </div>
 
         {/* Footer Credit Line */}
-        <div className="max-w-7xl mx-auto pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500 font-medium">
+        <div className="max-w-7xl mx-auto pt-6 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-3 text-xs sm:text-sm text-gray-500 font-medium">
           <span>{formatNumber(t.rights[lang], lang)} | {formatNumber(lang === 'en' ? 'Reg: 12345/071' : 'दर्ता नं: १२३४५/०त्१', lang)}</span>
-          <div className="flex flex-wrap items-center justify-center gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
             <button onClick={() => handleNavigate('privacy')} className="hover:text-emerald-400 transition-colors">{lang === 'en' ? 'Privacy Policy' : 'गोपनीयता नीति'}</button>
             <button onClick={() => handleNavigate('terms')} className="hover:text-emerald-400 transition-colors">{lang === 'en' ? 'Terms of Service' : 'सेवाका सर्तहरू'}</button>
           </div>
         </div>
 
         {/* Small, sweet & responsive Architect section at the very bottom */}
-        <div className="max-w-7xl mx-auto mt-6 pt-4 border-t border-gray-800/40 flex justify-center">
+        <div className="max-w-7xl mx-auto mt-4 pt-3 border-t border-gray-800/40 flex justify-center">
           <button
             onClick={() => handleNavigate('abhishek-bio')}
             className="inline-flex items-center gap-2.5 pl-1.5 pr-3 py-1 bg-emerald-950/30 hover:bg-emerald-900/50 text-emerald-300 hover:text-emerald-200 border border-emerald-800/20 hover:border-emerald-700/40 rounded-full transition-all text-xs font-bold shadow-sm group cursor-pointer"
@@ -1896,34 +1879,6 @@ export default function App() {
           </button>
         </div>
       </footer>
-
-      {/* Admin Floating Console Button */}
-      {isAdmin && (
-        <button
-          onClick={() => setIsAdminDashboardOpen(true)}
-          className="fixed bottom-6 left-6 z-50 px-4 py-3 bg-teal-950 text-emerald-300 border border-emerald-500/40 rounded-2xl shadow-2xl flex items-center gap-2 hover:bg-teal-900 transition-all font-extrabold text-xs cursor-pointer"
-        >
-          <Shield className="w-4 h-4 text-emerald-400" />
-          {lang === 'en' ? 'Central Admin Console' : 'केन्द्रीय प्रशासन'}
-        </button>
-      )}
-
-      {/* Floating Real-time Cloud Database Notification Toast */}
-      {liveToast && (
-        <div className="fixed bottom-24 right-6 z-50 max-w-sm bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border-2 border-emerald-400 flex items-start gap-3 animate-in slide-in-from-bottom-5 duration-300">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 text-lg font-bold shrink-0">
-            🔔
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-center mb-0.5">
-              <span className="text-[10px] font-black uppercase text-emerald-400 tracking-wider">Live Cloud Sync (Firebase)</span>
-              <button onClick={() => setLiveToast(null)} className="text-gray-400 hover:text-white font-bold text-xs p-1 cursor-pointer">✕</button>
-            </div>
-            <p className="text-xs font-extrabold text-white leading-snug">{liveToast}</p>
-            <p className="text-[10px] text-gray-400 mt-1 font-medium">Click Central Admin to view and process request.</p>
-          </div>
-        </div>
-      )}
 
       {/* Floating WhatsApp Button */}
       <a 
@@ -1953,25 +1908,6 @@ export default function App() {
         lang={lang}
         isAdmin={isAdmin}
         setIsAdmin={setIsAdmin}
-      />
-
-      {/* Admin Central Operations Dashboard Modal */}
-      <AdminCentralDashboardModal
-        isOpen={isAdminDashboardOpen}
-        onClose={() => setIsAdminDashboardOpen(false)}
-        lang={lang}
-        matrimonialProfiles={matrimonialProfiles}
-        onUpdateMatrimonialStatus={handleUpdateMatrimonialStatus}
-        onDeleteMatrimonialProfile={handleDeleteMatrimonialProfile}
-        volunteerApps={volunteerApps}
-        onUpdateVolunteerStatus={handleUpdateVolunteerStatus}
-        onDeleteVolunteerApp={handleDeleteVolunteerApp}
-        membershipApps={membershipApps}
-        onApproveMembershipApp={handleApproveMembershipApp}
-        onRejectMembershipApp={handleRejectMembershipApp}
-        subscribers={subscribers}
-        onDeleteSubscriber={handleDeleteSubscriber}
-        members={members}
       />
 
       {/* Add Community Notice Modal */}

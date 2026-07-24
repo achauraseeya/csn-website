@@ -1,20 +1,31 @@
 import React, { useState } from 'react';
 import { Landmark, Heart, Award, Users, Mail, Phone, MapPin, Briefcase, FileText, CheckCircle2, Loader2, Send } from 'lucide-react';
 import { Language } from '../types';
+import { AdminFormFieldEditor } from './AdminFormFieldEditor';
+import { getCustomFormFields, CustomFormField } from '../utils/customFormFields';
 
 interface MembershipDonationProps {
   lang: Language;
   onAddMember?: () => void;
   onAddDonation?: (amount: number) => void;
+  isAdmin?: boolean;
   onTrackAction: (actionName: string) => void;
 }
 
 export default function MembershipDonation({
   lang,
+  isAdmin = false,
   onTrackAction,
 }: MembershipDonationProps) {
   // Portal Tab State
   const [activeSubTab, setActiveSubTab] = useState<'membership' | 'volunteer' | 'donation'>('membership');
+
+  // Custom Form Fields State
+  const [membCustomFields, setMembCustomFields] = useState<CustomFormField[]>(() => getCustomFormFields('membership'));
+  const [membCustomAnswers, setMembCustomAnswers] = useState<Record<string, string>>({});
+
+  const [volCustomFields, setVolCustomFields] = useState<CustomFormField[]>(() => getCustomFormFields('volunteer'));
+  const [volCustomAnswers, setVolCustomAnswers] = useState<Record<string, string>>({});
 
   // Membership Form state
   const [membAppType, setMembAppType] = useState<'new' | 'renewal'>('new');
@@ -71,6 +82,13 @@ export default function MembershipDonation({
     formData.append('Payment Method', membPaymentMethod);
     formData.append('Payment Reference / Txn ID', membPaymentRef || 'Pending');
 
+    membCustomFields.forEach(cf => {
+      const val = membCustomAnswers[cf.id];
+      if (val) {
+        formData.append(cf.label.en, val);
+      }
+    });
+
     try {
       await fetch('https://formsubmit.co/ajax/csnepalwebsite@gmail.com', {
         method: 'POST',
@@ -111,6 +129,13 @@ export default function MembershipDonation({
     formData.append('Areas of Interest', volInterests.join(', '));
     formData.append('Time Availability', volAvailability);
     formData.append('Motivation / Notes', volNotes || 'None');
+
+    volCustomFields.forEach(cf => {
+      const val = volCustomAnswers[cf.id];
+      if (val) {
+        formData.append(cf.label.en, val);
+      }
+    });
 
     try {
       await fetch('https://formsubmit.co/ajax/csnepalwebsite@gmail.com', {
@@ -191,6 +216,16 @@ export default function MembershipDonation({
                 : 'तल आफ्नो आधिकारिक विवरणहरू भर्नुहोस्। तपाईंको आवेदन केन्द्रीय प्रमाणीकरण र रेकर्ड जारी गर्नका लागि सीधा csnepalwebsite@gmail.com मा पठाइनेछ।'}
             </p>
           </div>
+
+          {/* Admin Form Customizer */}
+          {isAdmin && (
+            <AdminFormFieldEditor
+              formId="membership"
+              lang={lang}
+              isAdmin={isAdmin}
+              onFieldsUpdated={() => setMembCustomFields(getCustomFormFields('membership'))}
+            />
+          )}
 
           {membSuccess ? (
             <div className="p-8 bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-500/40 text-emerald-800 dark:text-emerald-300 rounded-3xl flex items-start gap-4 animate-in zoom-in-95 duration-200">
@@ -380,6 +415,53 @@ export default function MembershipDonation({
                 </div>
               </div>
 
+              {/* Dynamic Custom Fields for Membership */}
+              {membCustomFields.length > 0 && (
+                <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                  <h5 className="font-extrabold text-teal-900 dark:text-teal-100 text-xs uppercase tracking-wide">
+                    {lang === 'en' ? 'Additional Custom Questions' : 'थप प्रश्नहरू'}:
+                  </h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {membCustomFields.map(cf => (
+                      <div key={cf.id} className={cf.fieldType === 'textarea' ? 'sm:col-span-2' : ''}>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          {cf.label[lang] || cf.label.en} {cf.required && '*'}
+                        </label>
+                        {cf.fieldType === 'textarea' ? (
+                          <textarea
+                            required={cf.required}
+                            rows={2}
+                            value={membCustomAnswers[cf.id] || ''}
+                            onChange={e => setMembCustomAnswers({ ...membCustomAnswers, [cf.id]: e.target.value })}
+                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                          />
+                        ) : cf.fieldType === 'select' ? (
+                          <select
+                            required={cf.required}
+                            value={membCustomAnswers[cf.id] || ''}
+                            onChange={e => setMembCustomAnswers({ ...membCustomAnswers, [cf.id]: e.target.value })}
+                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white font-bold"
+                          >
+                            <option value="">Select option...</option>
+                            {cf.options?.map(opt => (
+                              <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type={cf.fieldType === 'number' ? 'number' : 'text'}
+                            required={cf.required}
+                            value={membCustomAnswers[cf.id] || ''}
+                            onChange={e => setMembCustomAnswers({ ...membCustomAnswers, [cf.id]: e.target.value })}
+                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={membSubmitting}
@@ -418,6 +500,16 @@ export default function MembershipDonation({
                 : 'हामी क्षेत्रीय स्वास्थ्य जाँच, पान कृषकहरूको लागि कृषि सचेतना शिविर, र सामुदायिक सरसफाई अभियानहरू आयोजना गर्दछौं। आवेदनहरू csnepalwebsite@gmail.com मा पठाइन्छ।'}
             </p>
           </div>
+
+          {/* Admin Form Customizer */}
+          {isAdmin && (
+            <AdminFormFieldEditor
+              formId="volunteer"
+              lang={lang}
+              isAdmin={isAdmin}
+              onFieldsUpdated={() => setVolCustomFields(getCustomFormFields('volunteer'))}
+            />
+          )}
 
           {volSuccess ? (
             <div className="p-8 bg-teal-50 dark:bg-teal-950/40 border-2 border-teal-500/40 text-teal-800 dark:text-teal-300 rounded-3xl flex items-start gap-4 animate-in zoom-in-95 duration-200">
@@ -537,6 +629,53 @@ export default function MembershipDonation({
                   />
                 </div>
               </div>
+
+              {/* Dynamic Custom Fields for Volunteer */}
+              {volCustomFields.length > 0 && (
+                <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                  <h5 className="font-extrabold text-teal-900 dark:text-teal-100 text-xs uppercase tracking-wide">
+                    {lang === 'en' ? 'Additional Custom Questions' : 'थप प्रश्नहरू'}:
+                  </h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {volCustomFields.map(cf => (
+                      <div key={cf.id} className={cf.fieldType === 'textarea' ? 'sm:col-span-2' : ''}>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          {cf.label[lang] || cf.label.en} {cf.required && '*'}
+                        </label>
+                        {cf.fieldType === 'textarea' ? (
+                          <textarea
+                            required={cf.required}
+                            rows={2}
+                            value={volCustomAnswers[cf.id] || ''}
+                            onChange={e => setVolCustomAnswers({ ...volCustomAnswers, [cf.id]: e.target.value })}
+                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                          />
+                        ) : cf.fieldType === 'select' ? (
+                          <select
+                            required={cf.required}
+                            value={volCustomAnswers[cf.id] || ''}
+                            onChange={e => setVolCustomAnswers({ ...volCustomAnswers, [cf.id]: e.target.value })}
+                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white font-bold"
+                          >
+                            <option value="">Select option...</option>
+                            {cf.options?.map(opt => (
+                              <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type={cf.fieldType === 'number' ? 'number' : 'text'}
+                            required={cf.required}
+                            value={volCustomAnswers[cf.id] || ''}
+                            onChange={e => setVolCustomAnswers({ ...volCustomAnswers, [cf.id]: e.target.value })}
+                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"
