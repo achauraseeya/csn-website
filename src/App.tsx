@@ -49,6 +49,7 @@ import {
   saveSubscriberToCloud,
   deleteSubscriberFromCloud
 } from './services/firebaseDb';
+import { broadcastLiveEvent, listenLiveEvents } from './services/broadcastSync';
 
 const defaultSiteTexts: SiteTexts = {
   heroTitleEn: 'Chaurasiya Samaj Nepal',
@@ -342,10 +343,51 @@ export default function App() {
     }
   }, [liveToast]);
 
-  // Real-time Cloud Database Listeners (Firebase Firestore) so submissions from ANY device sync across all clients and Admin console
+  // Real-time Cloud Database & Broadcast Synchronization Listeners
   useEffect(() => {
+    // 1. Listen to BroadcastChannel events for instant local cross-tab / cross-window updates
+    const unsubscribeBroadcast = listenLiveEvents((event) => {
+      if (event.type === 'NEW_MEMBERSHIP') {
+        const item = event.payload as MembershipApplication;
+        setMembershipApps(prev => {
+          if (prev.some(m => m.id === item.id)) return prev;
+          const updated = [item, ...prev];
+          try { localStorage.setItem('chaurasiya_membership_apps', JSON.stringify(updated)); } catch (e) {}
+          return updated;
+        });
+        setLiveToast(`🔔 New Membership Application / Renewal: ${item.fullName} (${item.membershipType})`);
+      } else if (event.type === 'NEW_VOLUNTEER') {
+        const item = event.payload as VolunteerApplication;
+        setVolunteerApps(prev => {
+          if (prev.some(v => v.id === item.id)) return prev;
+          const updated = [item, ...prev];
+          try { localStorage.setItem('chaurasiya_volunteers', JSON.stringify(updated)); } catch (e) {}
+          return updated;
+        });
+        setLiveToast(`🔔 New Volunteer Application: ${item.fullName} (${item.address})`);
+      } else if (event.type === 'NEW_MATRIMONY') {
+        const item = event.payload as MatrimonialProfile;
+        setMatrimonialProfiles(prev => {
+          if (prev.some(p => p.id === item.id)) return prev;
+          const updated = [item, ...prev];
+          try { localStorage.setItem('chaurasiya_matrimony', JSON.stringify(updated)); } catch (e) {}
+          return updated;
+        });
+        setLiveToast(`🔔 New Matrimonial Request: ${item.fullName} (${item.lookingFor === 'groom' ? 'Groom' : 'Bride'})`);
+      } else if (event.type === 'NEW_SUBSCRIBER') {
+        const item = event.payload as NewsletterSubscriber;
+        setSubscribers(prev => {
+          if (prev.some(s => s.id === item.id)) return prev;
+          const updated = [item, ...prev];
+          try { localStorage.setItem('chaurasiya_subscribers', JSON.stringify(updated)); } catch (e) {}
+          return updated;
+        });
+        setLiveToast(`🔔 New Newsletter Subscriber: ${item.email}`);
+      }
+    });
+
+    // 2. Firebase Firestore Real-time Listeners across devices
     const unsubscribeMatrimony = subscribeMatrimonialProfiles((cloudProfiles) => {
-      // Check for new items from other devices
       cloudProfiles.forEach((p) => {
         if (knownMatrimonyRef.current.size > 0 && !knownMatrimonyRef.current.has(p.id)) {
           setLiveToast(`🔔 New Matrimonial Request: ${p.fullName} (${p.lookingFor === 'groom' ? 'Groom' : 'Bride'})`);
@@ -355,10 +397,8 @@ export default function App() {
 
       setMatrimonialProfiles((prev) => {
         const mergedMap = new Map<string, MatrimonialProfile>();
+        prev.forEach(p => mergedMap.set(p.id, p));
         cloudProfiles.forEach(p => mergedMap.set(p.id, p));
-        if (cloudProfiles.length === 0) {
-          prev.forEach(p => mergedMap.set(p.id, p));
-        }
         const result = Array.from(mergedMap.values());
         try { localStorage.setItem('chaurasiya_matrimony', JSON.stringify(result)); } catch (e) {}
         return result;
@@ -375,10 +415,8 @@ export default function App() {
 
       setVolunteerApps((prev) => {
         const mergedMap = new Map<string, VolunteerApplication>();
+        prev.forEach(v => mergedMap.set(v.id, v));
         cloudVolunteers.forEach(v => mergedMap.set(v.id, v));
-        if (cloudVolunteers.length === 0) {
-          prev.forEach(v => mergedMap.set(v.id, v));
-        }
         const result = Array.from(mergedMap.values());
         try { localStorage.setItem('chaurasiya_volunteers', JSON.stringify(result)); } catch (e) {}
         return result;
@@ -395,10 +433,8 @@ export default function App() {
 
       setMembershipApps((prev) => {
         const mergedMap = new Map<string, MembershipApplication>();
+        prev.forEach(m => mergedMap.set(m.id, m));
         cloudMemberships.forEach(m => mergedMap.set(m.id, m));
-        if (cloudMemberships.length === 0) {
-          prev.forEach(m => mergedMap.set(m.id, m));
-        }
         const result = Array.from(mergedMap.values());
         try { localStorage.setItem('chaurasiya_membership_apps', JSON.stringify(result)); } catch (e) {}
         return result;
@@ -415,10 +451,8 @@ export default function App() {
 
       setSubscribers((prev) => {
         const mergedMap = new Map<string, NewsletterSubscriber>();
+        prev.forEach(s => mergedMap.set(s.id, s));
         cloudSubscribers.forEach(s => mergedMap.set(s.id, s));
-        if (cloudSubscribers.length === 0) {
-          prev.forEach(s => mergedMap.set(s.id, s));
-        }
         const result = Array.from(mergedMap.values());
         try { localStorage.setItem('chaurasiya_subscribers', JSON.stringify(result)); } catch (e) {}
         return result;
@@ -426,6 +460,7 @@ export default function App() {
     });
 
     return () => {
+      unsubscribeBroadcast();
       unsubscribeMatrimony();
       unsubscribeVolunteers();
       unsubscribeMemberships();
@@ -458,6 +493,7 @@ export default function App() {
   // Matrimonial handlers
   const handleAddMatrimonialProfile = (newProfile: MatrimonialProfile) => {
     saveMatrimonialProfileToCloud(newProfile);
+    broadcastLiveEvent('NEW_MATRIMONY', newProfile);
     setMatrimonialProfiles(prev => {
       const updated = [newProfile, ...prev];
       try {
@@ -492,6 +528,7 @@ export default function App() {
   // Volunteer handlers
   const handleAddVolunteerApp = (newVol: VolunteerApplication) => {
     saveVolunteerAppToCloud(newVol);
+    broadcastLiveEvent('NEW_VOLUNTEER', newVol);
     setVolunteerApps(prev => {
       const updated = [newVol, ...prev];
       try {
@@ -526,6 +563,7 @@ export default function App() {
   // Membership handlers
   const handleAddMembershipApp = (newMemb: MembershipApplication) => {
     saveMembershipAppToCloud(newMemb);
+    broadcastLiveEvent('NEW_MEMBERSHIP', newMemb);
     setMembershipApps(prev => {
       const updated = [newMemb, ...prev];
       try {
@@ -598,6 +636,7 @@ export default function App() {
         source: 'Website Footer'
       };
       saveSubscriberToCloud(newSub);
+      broadcastLiveEvent('NEW_SUBSCRIBER', newSub);
       setSubscribers(prev => {
         if (prev.some(s => s.email.toLowerCase() === emailVal.toLowerCase())) return prev;
         const updated = [newSub, ...prev];
