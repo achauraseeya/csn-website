@@ -14,6 +14,7 @@ interface NavigationProps {
   theme: 'light' | 'dark';
   toggleTheme: () => void;
   siteTexts: SiteTexts;
+  pendingNotificationsCount?: number;
 }
 
 export default function Navigation({
@@ -27,6 +28,7 @@ export default function Navigation({
   theme,
   toggleTheme,
   siteTexts,
+  pendingNotificationsCount = 0,
 }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -123,15 +125,20 @@ export default function Navigation({
             {/* Admin Login Button */}
             <button
               onClick={onOpenAdminModal}
-              className={`ml-2 flex items-center gap-1.5 px-3 py-2 text-xs font-extrabold rounded-lg border transition-all uppercase shadow-sm cursor-pointer ${
+              className={`ml-2 relative flex items-center gap-1.5 px-3 py-2 text-xs font-extrabold rounded-lg border transition-all uppercase shadow-sm cursor-pointer ${
                 isAdmin
                   ? 'bg-emerald-600 dark:bg-emerald-700 text-white border-emerald-500 hover:bg-emerald-700 dark:hover:bg-emerald-800'
                   : 'bg-teal-900 dark:bg-slate-950 text-teal-100 border-teal-800 dark:border-slate-900 hover:bg-teal-950 dark:hover:bg-black'
               }`}
-              title={isAdmin ? 'Admin Active' : 'Admin Login'}
+              title={isAdmin ? 'Central Admin Operations' : 'Admin Login'}
             >
               {isAdmin ? <ShieldCheck className="w-4 h-4 text-emerald-300" /> : <Lock className="w-3.5 h-3.5 text-teal-300" />}
-              <span>{isAdmin ? (lang === 'en' ? 'Admin Active' : 'प्रशासक सक्रिय') : (lang === 'en' ? 'Admin Login' : 'प्रशासक लगइन')}</span>
+              <span>{isAdmin ? (lang === 'en' ? 'Central Admin' : 'केन्द्रीय प्रशासन') : (lang === 'en' ? 'Admin Login' : 'प्रशासक लगइन')}</span>
+              {pendingNotificationsCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-[10px] font-black text-white shadow-md animate-pulse border-2 border-white dark:border-slate-900">
+                  {pendingNotificationsCount > 9 ? '9+' : pendingNotificationsCount}
+                </span>
+              )}
             </button>
           </div>
 

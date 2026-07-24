@@ -32,9 +32,7 @@ export function subscribeMatrimonialProfiles(callback: (profiles: MatrimonialPro
       snapshot.forEach((docSnap) => {
         items.push({ id: docSnap.id, ...docSnap.data() } as MatrimonialProfile);
       });
-      if (items.length > 0) {
-        callback(items);
-      }
+      callback(items);
     }, (err) => {
       console.warn('Firestore matrimony snapshot warning:', err);
     });
@@ -77,9 +75,7 @@ export function subscribeVolunteerApps(callback: (apps: VolunteerApplication[]) 
       snapshot.forEach((docSnap) => {
         items.push({ id: docSnap.id, ...docSnap.data() } as VolunteerApplication);
       });
-      if (items.length > 0) {
-        callback(items);
-      }
+      callback(items);
     }, (err) => {
       console.warn('Firestore volunteer snapshot warning:', err);
     });
@@ -121,9 +117,7 @@ export function subscribeMembershipApps(callback: (apps: MembershipApplication[]
       snapshot.forEach((docSnap) => {
         items.push({ id: docSnap.id, ...docSnap.data() } as MembershipApplication);
       });
-      if (items.length > 0) {
-        callback(items);
-      }
+      callback(items);
     }, (err) => {
       console.warn('Firestore membership snapshot warning:', err);
     });
@@ -165,9 +159,7 @@ export function subscribeSubscribers(callback: (subscribers: NewsletterSubscribe
       snapshot.forEach((docSnap) => {
         items.push({ id: docSnap.id, ...docSnap.data() } as NewsletterSubscriber);
       });
-      if (items.length > 0) {
-        callback(items);
-      }
+      callback(items);
     }, (err) => {
       console.warn('Firestore subscribers snapshot warning:', err);
     });

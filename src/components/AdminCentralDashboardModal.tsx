@@ -134,11 +134,17 @@ export default function AdminCentralDashboardModal({
               <ShieldCheck className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
-              <h2 className="text-xl font-black tracking-tight">
-                {lang === 'en' ? 'Central Admin Operations & Database Console' : 'केन्द्रीय प्रशासन र डेटाबेस कन्सोल'}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-black tracking-tight">
+                  {lang === 'en' ? 'Central Admin Operations & Database Console' : 'केन्द्रीय प्रशासन र डेटाबेस कन्सोल'}
+                </h2>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  Firebase Firestore Live
+                </span>
+              </div>
               <p className="text-xs text-emerald-200">
-                {lang === 'en' ? 'Managing csnepalwebsite@gmail.com Applications & Records' : 'csnepalwebsite@gmail.com का आवेदन र अभिलेखहरू'}
+                {lang === 'en' ? 'Managing csnepalwebsite@gmail.com Real-time Submissions & Records Across All Devices' : 'सबै यन्त्रहरूमा csnepalwebsite@gmail.com का वास्तविक समयका आवेदन र अभिलेखहरू'}
               </p>
             </div>
           </div>

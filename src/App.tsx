@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram } from 'lucide-react';
 import { Language, AnalyticsMetric, Member, Album, AlbumMediaItem, Notice, Document, CommunityEvent, NetworkBranch, MatrimonialProfile, VolunteerApplication, MembershipApplication, NewsletterSubscriber } from './types';
 import { initialNetworks } from './data/networkData';
@@ -327,13 +327,38 @@ export default function App() {
     return initialNotices;
   });
 
+  // Live Toast state & tracking refs
+  const [liveToast, setLiveToast] = useState<string | null>(null);
+  const knownMatrimonyRef = useRef<Set<string>>(new Set());
+  const knownVolunteersRef = useRef<Set<string>>(new Set());
+  const knownMembershipsRef = useRef<Set<string>>(new Set());
+  const knownSubscribersRef = useRef<Set<string>>(new Set());
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (liveToast) {
+      const timer = setTimeout(() => setLiveToast(null), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [liveToast]);
+
   // Real-time Cloud Database Listeners (Firebase Firestore) so submissions from ANY device sync across all clients and Admin console
   useEffect(() => {
     const unsubscribeMatrimony = subscribeMatrimonialProfiles((cloudProfiles) => {
+      // Check for new items from other devices
+      cloudProfiles.forEach((p) => {
+        if (knownMatrimonyRef.current.size > 0 && !knownMatrimonyRef.current.has(p.id)) {
+          setLiveToast(`🔔 New Matrimonial Request: ${p.fullName} (${p.lookingFor === 'groom' ? 'Groom' : 'Bride'})`);
+        }
+      });
+      knownMatrimonyRef.current = new Set(cloudProfiles.map(p => p.id));
+
       setMatrimonialProfiles((prev) => {
         const mergedMap = new Map<string, MatrimonialProfile>();
         cloudProfiles.forEach(p => mergedMap.set(p.id, p));
-        prev.forEach(p => { if (!mergedMap.has(p.id)) mergedMap.set(p.id, p); });
+        if (cloudProfiles.length === 0) {
+          prev.forEach(p => mergedMap.set(p.id, p));
+        }
         const result = Array.from(mergedMap.values());
         try { localStorage.setItem('chaurasiya_matrimony', JSON.stringify(result)); } catch (e) {}
         return result;
@@ -341,10 +366,19 @@ export default function App() {
     });
 
     const unsubscribeVolunteers = subscribeVolunteerApps((cloudVolunteers) => {
+      cloudVolunteers.forEach((v) => {
+        if (knownVolunteersRef.current.size > 0 && !knownVolunteersRef.current.has(v.id)) {
+          setLiveToast(`🔔 New Volunteer Application: ${v.fullName} (${v.address})`);
+        }
+      });
+      knownVolunteersRef.current = new Set(cloudVolunteers.map(v => v.id));
+
       setVolunteerApps((prev) => {
         const mergedMap = new Map<string, VolunteerApplication>();
         cloudVolunteers.forEach(v => mergedMap.set(v.id, v));
-        prev.forEach(v => { if (!mergedMap.has(v.id)) mergedMap.set(v.id, v); });
+        if (cloudVolunteers.length === 0) {
+          prev.forEach(v => mergedMap.set(v.id, v));
+        }
         const result = Array.from(mergedMap.values());
         try { localStorage.setItem('chaurasiya_volunteers', JSON.stringify(result)); } catch (e) {}
         return result;
@@ -352,10 +386,19 @@ export default function App() {
     });
 
     const unsubscribeMemberships = subscribeMembershipApps((cloudMemberships) => {
+      cloudMemberships.forEach((m) => {
+        if (knownMembershipsRef.current.size > 0 && !knownMembershipsRef.current.has(m.id)) {
+          setLiveToast(`🔔 New Membership Application / Renewal: ${m.fullName} (${m.membershipType})`);
+        }
+      });
+      knownMembershipsRef.current = new Set(cloudMemberships.map(m => m.id));
+
       setMembershipApps((prev) => {
         const mergedMap = new Map<string, MembershipApplication>();
         cloudMemberships.forEach(m => mergedMap.set(m.id, m));
-        prev.forEach(m => { if (!mergedMap.has(m.id)) mergedMap.set(m.id, m); });
+        if (cloudMemberships.length === 0) {
+          prev.forEach(m => mergedMap.set(m.id, m));
+        }
         const result = Array.from(mergedMap.values());
         try { localStorage.setItem('chaurasiya_membership_apps', JSON.stringify(result)); } catch (e) {}
         return result;
@@ -363,10 +406,19 @@ export default function App() {
     });
 
     const unsubscribeSubscribers = subscribeSubscribers((cloudSubscribers) => {
+      cloudSubscribers.forEach((s) => {
+        if (knownSubscribersRef.current.size > 0 && !knownSubscribersRef.current.has(s.id)) {
+          setLiveToast(`🔔 New Newsletter Subscriber: ${s.email}`);
+        }
+      });
+      knownSubscribersRef.current = new Set(cloudSubscribers.map(s => s.id));
+
       setSubscribers((prev) => {
         const mergedMap = new Map<string, NewsletterSubscriber>();
         cloudSubscribers.forEach(s => mergedMap.set(s.id, s));
-        prev.forEach(s => { if (!mergedMap.has(s.id)) mergedMap.set(s.id, s); });
+        if (cloudSubscribers.length === 0) {
+          prev.forEach(s => mergedMap.set(s.id, s));
+        }
         const result = Array.from(mergedMap.values());
         try { localStorage.setItem('chaurasiya_subscribers', JSON.stringify(result)); } catch (e) {}
         return result;
@@ -1481,6 +1533,7 @@ export default function App() {
           theme={theme}
           toggleTheme={toggleTheme}
           siteTexts={siteTexts}
+          pendingNotificationsCount={matrimonialProfiles.filter(p => p.status === 'pending').length + volunteerApps.filter(v => v.status === 'pending').length + membershipApps.filter(m => m.status === 'pending').length}
         />
       </header>
 
@@ -1846,6 +1899,23 @@ export default function App() {
           <Shield className="w-4 h-4 text-emerald-400" />
           {lang === 'en' ? 'Central Admin Console' : 'केन्द्रीय प्रशासन'}
         </button>
+      )}
+
+      {/* Floating Real-time Cloud Database Notification Toast */}
+      {liveToast && (
+        <div className="fixed bottom-24 right-6 z-50 max-w-sm bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border-2 border-emerald-400 flex items-start gap-3 animate-in slide-in-from-bottom-5 duration-300">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 text-lg font-bold shrink-0">
+            🔔
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-center mb-0.5">
+              <span className="text-[10px] font-black uppercase text-emerald-400 tracking-wider">Live Cloud Sync (Firebase)</span>
+              <button onClick={() => setLiveToast(null)} className="text-gray-400 hover:text-white font-bold text-xs p-1 cursor-pointer">✕</button>
+            </div>
+            <p className="text-xs font-extrabold text-white leading-snug">{liveToast}</p>
+            <p className="text-[10px] text-gray-400 mt-1 font-medium">Click Central Admin to view and process request.</p>
+          </div>
+        </div>
       )}
 
       {/* Floating WhatsApp Button */}
