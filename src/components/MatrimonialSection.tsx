@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, UserCheck, ShieldCheck, Search, Plus, Filter, Phone, Mail, MapPin, Briefcase, GraduationCap, X, CheckCircle2, Lock, Sparkles, Download, Eye } from 'lucide-react';
+import { Heart, UserCheck, ShieldCheck, Search, Plus, Filter, Phone, Mail, MapPin, Briefcase, GraduationCap, X, CheckCircle2, Lock, Sparkles, Download, Eye, ExternalLink } from 'lucide-react';
 import { Language, MatrimonialProfile } from '../types';
 import { formatNumber } from '../utils/mediaUrl';
 
@@ -68,7 +68,7 @@ export default function MatrimonialSection({
     return true;
   });
 
-  const handleSubmitProfile = (e: React.FormEvent) => {
+  const handleSubmitProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !guardianPhone || !qualification || !occupation) {
       alert(lang === 'en' ? 'Please fill in all required fields.' : 'कृपया सबै आवश्यक विवरणहरू भरूहोस्।');
@@ -101,6 +101,37 @@ export default function MatrimonialSection({
       status: 'pending',
       createdAt: new Date().toISOString().split('T')[0],
     };
+
+    // Send Form Data via Email to csnepalwebsite@gmail.com
+    const formData = new FormData();
+    formData.append('_subject', `New Matrimonial Candidate (${formGender.toUpperCase()}) - ${fullName}`);
+    formData.append('_template', 'table');
+    formData.append('_captcha', 'false');
+    formData.append('Looking For', formGender === 'groom' ? 'Groom (वर)' : 'Bride (वधू)');
+    formData.append('Candidate Full Name', fullName);
+    formData.append('Age', String(age));
+    formData.append('Height', height);
+    formData.append('Gotra / Subcaste', gotraSubcaste);
+    formData.append('Qualification', qualification);
+    formData.append('Occupation', occupation);
+    formData.append('Monthly Income', monthlyIncome || 'Not specified');
+    formData.append('Current District / City', currentCityDistrict);
+    formData.append('Native Place', nativePlace || 'Not specified');
+    formData.append('Father Name & Occupation', `${fatherName} (${fatherOccupation})`);
+    formData.append('Family Type', familyType);
+    formData.append('Partner Expectations', partnerExpectations || 'Standard Chaurasiya Samaj Match');
+    formData.append('Guardian Name', guardianName);
+    formData.append('Guardian Phone', guardianPhone);
+    formData.append('Guardian Email', guardianEmail || 'Not provided');
+
+    try {
+      await fetch('https://formsubmit.co/ajax/csnepalwebsite@gmail.com', {
+        method: 'POST',
+        body: formData,
+      });
+    } catch {
+      // Continue even if network glitch
+    }
 
     onAddProfile(newProfile);
     onTrackAction(`Submitted Matrimonial Profile: ${fullName}`);
@@ -231,7 +262,7 @@ export default function MatrimonialSection({
           </p>
           <button
             onClick={() => setIsRegisterModalOpen(true)}
-            className="px-6 py-2.5 bg-rose-600 text-white font-bold rounded-xl text-xs"
+            className="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs cursor-pointer shadow-md transition-all"
           >
             {lang === 'en' ? 'Register New Profile' : 'नयाँ प्रोफाइल दर्ता गर्नुहोस्'}
           </button>

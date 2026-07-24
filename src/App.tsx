@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram } from 'lucide-react';
+import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram, ExternalLink } from 'lucide-react';
 import { Language, AnalyticsMetric, Member, Album, AlbumMediaItem, Notice, Document, CommunityEvent, NetworkBranch, MatrimonialProfile, VolunteerApplication, MembershipApplication, NewsletterSubscriber } from './types';
 import { initialNetworks } from './data/networkData';
 import { notices as initialNotices, boardMembers as initialMembers, upcomingEvents as initialEvents, documents as initialDocuments } from './data/communityData';
@@ -587,7 +587,21 @@ export default function App() {
       subscribedAt: new Date().toISOString().split('T')[0],
       source: source
     };
+
+    // Dispatch email to csnepalwebsite@gmail.com
+    const formData = new FormData();
+    formData.append('_subject', `New Newsletter Subscriber (${source}) - ${trimmed}`);
+    formData.append('_template', 'table');
+    formData.append('_captcha', 'false');
+    formData.append('Subscriber Email', trimmed);
+    formData.append('Source', source);
+    formData.append('Subscribed Date', newSub.subscribedAt);
+
     try {
+      await fetch('https://formsubmit.co/ajax/csnepalwebsite@gmail.com', {
+        method: 'POST',
+        body: formData,
+      });
       await saveSubscriberToCloud(newSub);
       broadcastLiveEvent('NEW_SUBSCRIBER', newSub);
     } catch (e) {
@@ -1714,8 +1728,6 @@ export default function App() {
         {currentTab === 'membership-donation' && (
           <MembershipDonation
             lang={lang}
-            onAddMembershipApp={handleAddMembershipApp}
-            onAddVolunteerApp={handleAddVolunteerApp}
             onAddMember={() => {
               setMetrics((prev) => ({
                 ...prev,

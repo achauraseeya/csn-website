@@ -339,7 +339,6 @@ export default function NoticeGallery({
           <p className="text-sm text-teal-200/90 leading-relaxed">
             {t.newsletterSub[lang]}
           </p>
-
           {isSubscribed ? (
             <div className="p-4 bg-teal-900/90 border border-emerald-500/50 rounded-xl flex items-start gap-3 text-emerald-300 animate-in fade-in duration-300">
               <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400 mt-0.5" />
@@ -364,13 +363,12 @@ export default function NoticeGallery({
               </div>
               <button
                 type="submit"
-                className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {t.btnSub[lang]} <ChevronRight className="w-4 h-4" />
               </button>
             </form>
           )}
-
           <div className="pt-4 border-t border-teal-800 text-[11px] text-teal-400 flex flex-col gap-1.5 font-medium">
             <span>🛡️ Compliant with international data practices.</span>
             <span>✉️ Unsubscribe with 1-click in any email footer.</span>

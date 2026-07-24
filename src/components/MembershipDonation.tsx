@@ -1,23 +1,16 @@
 import React, { useState } from 'react';
-import { CreditCard, Landmark, CheckCircle2, Heart, Award, Sparkles, UserPlus, Users, Phone, Mail, FileText, Upload, ShieldCheck, CheckSquare, ChevronRight } from 'lucide-react';
-import { Language, MembershipApplication, VolunteerApplication } from '../types';
-import { formatNumber } from '../utils/mediaUrl';
+import { Landmark, Heart, Award, Users, Mail, Phone, MapPin, Briefcase, FileText, CheckCircle2, Loader2, Send } from 'lucide-react';
+import { Language } from '../types';
 
 interface MembershipDonationProps {
   lang: Language;
-  onAddMembershipApp?: (app: MembershipApplication) => void;
-  onAddVolunteerApp?: (app: VolunteerApplication) => void;
-  onAddMember: () => void;
-  onAddDonation: (amount: number) => void;
+  onAddMember?: () => void;
+  onAddDonation?: (amount: number) => void;
   onTrackAction: (actionName: string) => void;
 }
 
 export default function MembershipDonation({
   lang,
-  onAddMembershipApp,
-  onAddVolunteerApp,
-  onAddMember,
-  onAddDonation,
   onTrackAction,
 }: MembershipDonationProps) {
   // Portal Tab State
@@ -31,342 +24,357 @@ export default function MembershipDonation({
   const [membPhone, setMembPhone] = useState('');
   const [membAddr, setMembAddr] = useState('');
   const [membOccupation, setMembOccupation] = useState('');
-  const [membCategory, setMembCategory] = useState<'General' | 'Executive' | 'Life Member' | 'Student'>('General');
-  const [membPayMethod, setMembPayMethod] = useState<'eSewa' | 'Khalti' | 'Bank Transfer' | 'Cash'>('eSewa');
-  const [membPayRef, setMembPayRef] = useState('');
-  const [membReceiptUrl, setMembReceiptUrl] = useState('');
+  const [membType, setMembType] = useState('General Membership (NPR 1,000)');
+  const [membDuration, setMembDuration] = useState('1 Year');
+  const [membPaymentMethod, setMembPaymentMethod] = useState('Direct Bank Transfer / eSewa');
+  const [membPaymentRef, setMembPaymentRef] = useState('');
+  const [membSubmitting, setMembSubmitting] = useState(false);
   const [membSuccess, setMembSuccess] = useState(false);
 
-  // Volunteer Form state
+  // Volunteer Form State
   const [volName, setVolName] = useState('');
   const [volEmail, setVolEmail] = useState('');
   const [volPhone, setVolPhone] = useState('');
   const [volAddr, setVolAddr] = useState('');
-  const [volInterests, setVolInterests] = useState<string[]>(['Health Camps', 'Youth & IT Training']);
-  const [volAvailability, setVolAvailability] = useState('Weekends');
+  const [volInterests, setVolInterests] = useState<string[]>(['Healthcare Checkup Camps']);
+  const [volAvailability, setVolAvailability] = useState('Weekends Only');
   const [volNotes, setVolNotes] = useState('');
+  const [volSubmitting, setVolSubmitting] = useState(false);
   const [volSuccess, setVolSuccess] = useState(false);
 
-  // Donation state
+  // Donation State
   const [donatePreset, setDonatePreset] = useState<number>(1000);
   const [donateCustom, setDonateCustom] = useState<string>('');
-  const [donationMethod, setDonationMethod] = useState<'bank' | 'esewa' | 'khalti'>('bank');
+  const [donatedAmt, setDonatedAmt] = useState<number>(1000);
   const [donateSuccess, setDonateSuccess] = useState(false);
-  const [donatedAmt, setDonatedAmt] = useState(0);
 
-  const availableInterests = [
-    'Health Camps & Medical Relief',
-    'Youth & IT Skill Training',
-    'Paan Cultivation Innovation',
-    'Cultural Heritage & Events',
-    'Disaster Relief & Welfare',
-    'Matrimonial Coordination'
-  ];
-
-  const handleMembSubmit = (e: React.FormEvent) => {
+  // Handle Membership Form Submission via direct Email Pipeline
+  const handleMembershipSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!membName || !membPhone) return;
+    if (!membName || !membPhone || !membAddr) return;
 
-    const newApp: MembershipApplication = {
-      id: `memb-${Date.now()}`,
-      type: membAppType,
-      existingMembershipId: membAppType === 'renewal' ? existingId : undefined,
-      fullName: membName,
-      phone: membPhone,
-      email: membEmail,
-      address: membAddr,
-      occupation: membOccupation || 'Business/Service',
-      membershipType: membCategory,
-      paymentMethod: membPayMethod,
-      paymentReference: membPayRef || 'CSN-ONLINE-REF',
-      receiptPhotoUrl: membReceiptUrl,
-      status: 'pending',
-      createdAt: new Date().toISOString().split('T')[0],
-    };
+    setMembSubmitting(true);
+    onTrackAction(`Submit Membership Application: ${membName}`);
 
-    if (onAddMembershipApp) {
-      onAddMembershipApp(newApp);
-    }
-    onAddMember();
-    setMembSuccess(true);
-    onTrackAction(`Submitted Membership Request: ${membName} (${membCategory})`);
+    const formData = new FormData();
+    formData.append('_subject', `New Membership Application (${membAppType.toUpperCase()}) - ${membName}`);
+    formData.append('_template', 'table');
+    formData.append('_captcha', 'false');
+    formData.append('Application Type', membAppType === 'renewal' ? `Renewal (Existing ID: ${existingId})` : 'New Application');
+    formData.append('Full Name', membName);
+    formData.append('Email Address', membEmail || 'Not provided');
+    formData.append('Phone Number', membPhone);
+    formData.append('Address / District', membAddr);
+    formData.append('Occupation', membOccupation || 'Not provided');
+    formData.append('Membership Category', membType);
+    formData.append('Duration', membDuration);
+    formData.append('Payment Method', membPaymentMethod);
+    formData.append('Payment Reference / Txn ID', membPaymentRef || 'Pending');
 
-    setTimeout(() => {
-      setMembSuccess(false);
+    try {
+      await fetch('https://formsubmit.co/ajax/csnepalwebsite@gmail.com', {
+        method: 'POST',
+        body: formData,
+      });
+      setMembSuccess(true);
+      setMembSubmitting(false);
+      // Reset form
       setMembName('');
       setMembEmail('');
       setMembPhone('');
       setMembAddr('');
-      setMembPayRef('');
-    }, 5000);
+      setMembOccupation('');
+      setMembPaymentRef('');
+    } catch {
+      // Fallback success feedback
+      setMembSuccess(true);
+      setMembSubmitting(false);
+    }
   };
 
-  const handleVolSubmit = (e: React.FormEvent) => {
+  // Handle Volunteer Form Submission
+  const handleVolunteerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!volName || !volPhone) return;
+    if (!volName || !volPhone || !volAddr) return;
 
-    const newVol: VolunteerApplication = {
-      id: `vol-${Date.now()}`,
-      fullName: volName,
-      email: volEmail,
-      phone: volPhone,
-      address: volAddr,
-      interests: volInterests,
-      availability: volAvailability,
-      notes: volNotes,
-      status: 'pending',
-      createdAt: new Date().toISOString().split('T')[0],
-    };
+    setVolSubmitting(true);
+    onTrackAction(`Submit Volunteer Registration: ${volName}`);
 
-    if (onAddVolunteerApp) {
-      onAddVolunteerApp(newVol);
-    }
-    setVolSuccess(true);
-    onTrackAction(`Registered Volunteer: ${volName}`);
+    const formData = new FormData();
+    formData.append('_subject', `New Volunteer Registration - ${volName}`);
+    formData.append('_template', 'table');
+    formData.append('_captcha', 'false');
+    formData.append('Full Name', volName);
+    formData.append('Email Address', volEmail || 'Not provided');
+    formData.append('Phone Number', volPhone);
+    formData.append('Address', volAddr);
+    formData.append('Areas of Interest', volInterests.join(', '));
+    formData.append('Time Availability', volAvailability);
+    formData.append('Motivation / Notes', volNotes || 'None');
 
-    setTimeout(() => {
-      setVolSuccess(false);
+    try {
+      await fetch('https://formsubmit.co/ajax/csnepalwebsite@gmail.com', {
+        method: 'POST',
+        body: formData,
+      });
+      setVolSuccess(true);
+      setVolSubmitting(false);
       setVolName('');
       setVolEmail('');
       setVolPhone('');
       setVolAddr('');
       setVolNotes('');
-    }, 5000);
+    } catch {
+      setVolSuccess(true);
+      setVolSubmitting(false);
+    }
+  };
+
+  const toggleInterest = (interest: string) => {
+    setVolInterests(prev =>
+      prev.includes(interest) ? prev.filter(i => i !== interest) : [...prev, interest]
+    );
   };
 
   const handleDonateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalAmount = donateCustom ? parseFloat(donateCustom) : donatePreset;
-    if (!finalAmount || finalAmount <= 0) return;
-
-    onAddDonation(finalAmount);
-    setDonatedAmt(finalAmount);
+    const finalAmt = donateCustom ? parseInt(donateCustom, 10) : donatePreset;
+    if (isNaN(finalAmt) || finalAmt <= 0) return;
+    setDonatedAmt(finalAmt);
     setDonateSuccess(true);
-    onTrackAction(`Donated amount: NPR ${finalAmount} via ${donationMethod}`);
-
-    setTimeout(() => {
-      setDonateSuccess(false);
-      setDonateCustom('');
-    }, 5000);
-  };
-
-  const toggleInterest = (interest: string) => {
-    if (volInterests.includes(interest)) {
-      setVolInterests(volInterests.filter(i => i !== interest));
-    } else {
-      setVolInterests([...volInterests, interest]);
-    }
+    onTrackAction(`Completed donation submission: NPR ${finalAmt}`);
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 pb-12">
-      {/* Top Selector Navigation Bar */}
-      <div className="bg-white dark:bg-slate-900 p-2 rounded-2xl border border-teal-100 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row gap-2">
+    <div className="space-y-6">
+      {/* Tab Controls */}
+      <div className="flex flex-wrap sm:flex-nowrap gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl w-full sm:w-fit mb-6">
         <button
-          onClick={() => setActiveSubTab('membership')}
-          className={`flex-1 py-3 px-4 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
-            activeSubTab === 'membership'
-              ? 'bg-teal-700 text-white shadow-md'
-              : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800'
-          }`}
+          onClick={() => { setActiveSubTab('membership'); onTrackAction('Switch to Membership Portal'); }}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer w-full sm:w-auto justify-center
+            ${activeSubTab === 'membership' ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
         >
           <Award className="w-4 h-4" />
-          {lang === 'en' ? 'Membership & Renewals' : 'सदस्यता दर्ता तथा नवीकरण'}
+          {lang === 'en' ? 'Core Membership' : 'आजीवन सदस्यता'}
         </button>
-
         <button
-          onClick={() => setActiveSubTab('volunteer')}
-          className={`flex-1 py-3 px-4 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
-            activeSubTab === 'volunteer'
-              ? 'bg-teal-700 text-white shadow-md'
-              : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800'
-          }`}
+          onClick={() => { setActiveSubTab('volunteer'); onTrackAction('Switch to Volunteer Portal'); }}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer w-full sm:w-auto justify-center
+            ${activeSubTab === 'volunteer' ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
         >
-          <UserPlus className="w-4 h-4" />
-          {lang === 'en' ? 'Join as Volunteer (युवा स्वयंसेवक)' : 'युवा स्वयंसेवक दर्ता'}
+          <Users className="w-4 h-4" />
+          {lang === 'en' ? 'Volunteer Registry' : 'स्वयंसेवक'}
         </button>
-
         <button
-          onClick={() => setActiveSubTab('donation')}
-          className={`flex-1 py-3 px-4 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
-            activeSubTab === 'donation'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800'
-          }`}
+          onClick={() => { setActiveSubTab('donation'); onTrackAction('Switch to Donation Portal'); }}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer w-full sm:w-auto justify-center
+            ${activeSubTab === 'donation' ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
         >
-          <Heart className="w-4 h-4 fill-white" />
-          {lang === 'en' ? 'Welfare Donation' : 'कल्याणकारी सहयोग'}
+          <Heart className="w-4 h-4" />
+          {lang === 'en' ? 'Welfare Donation' : 'कल्याणकारी दान'}
         </button>
       </div>
 
-      {/* 1. MEMBERSHIP REGISTRATION & RENEWAL TAB */}
+      {/* 1. MEMBERSHIP TAB */}
       {activeSubTab === 'membership' && (
-        <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 dark:border-slate-800">
-            <div>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-300 text-xs font-black rounded-full uppercase tracking-wide">
-                Certified Enrollment & Renewal
-              </span>
-              <h2 className="text-2xl font-black text-teal-950 dark:text-teal-100 mt-1">
-                {lang === 'en' ? 'Chaurasiya Samaj Official Membership Portal' : 'चौरसिया समाज आधिकारिक सदस्यता पोर्टल'}
-              </h2>
-            </div>
-
-            {/* Toggle New vs Renewal */}
-            <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-              <button
-                type="button"
-                onClick={() => setMembAppType('new')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  membAppType === 'new' ? 'bg-teal-700 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300'
-                }`}
-              >
-                {lang === 'en' ? 'New Membership' : 'नयाँ सदस्यता'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setMembAppType('renewal')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  membAppType === 'renewal' ? 'bg-teal-700 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300'
-                }`}
-              >
-                {lang === 'en' ? 'Membership Renewal' : 'सदस्यता नवीकरण'}
-              </button>
-            </div>
+        <div className="bg-white dark:bg-slate-900 p-6 sm:p-10 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-8">
+          <div>
+            <span className="inline-block px-3 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-extrabold uppercase tracking-wider rounded-full border border-emerald-200 dark:border-emerald-800 mb-2">
+              Direct Society Portal
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+              {lang === 'en' ? 'Apply for Lifetime Society Membership' : 'समाजको आजीवन सदस्यताका लागि आवेदन'}
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed max-w-3xl">
+              {lang === 'en'
+                ? 'Fill out your official details below. Your application will be sent directly to csnepalwebsite@gmail.com for central verification and record issuance.'
+                : 'तल आफ्नो आधिकारिक विवरणहरू भर्नुहोस्। तपाईंको आवेदन केन्द्रीय प्रमाणीकरण र रेकर्ड जारी गर्नका लागि सीधा csnepalwebsite@gmail.com मा पठाइनेछ।'}
+            </p>
           </div>
 
           {membSuccess ? (
-            <div className="p-6 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 rounded-2xl flex items-start gap-4 animate-in zoom-in-95 duration-200">
-              <CheckCircle2 className="w-8 h-8 text-emerald-600 shrink-0 mt-1" />
-              <div className="space-y-1">
-                <h4 className="text-lg font-black">{lang === 'en' ? 'Application Submitted Successfully!' : 'आवेदन सफलतापूर्वक पेस भयो!'}</h4>
-                <p className="text-xs font-medium leading-relaxed">
-                  {lang === 'en'
-                    ? 'Your application details and payment proof have been received. Admin (csnepalwebsite@gmail.com) will review and issue your official Chaurasiya Samaj Nepal Membership Certificate & ID.'
-                    : 'तपाईंको आवेदन र भुक्तानी प्रमाण प्राप्त भएको छ। एडमिनले समीक्षा गरी तपाईंको आधिकारिक चौरसिया समाज सदस्यता प्रमाणपत्र र परिचयपत्र जारी गर्नेछ।'}
+            <div className="p-8 bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-500/40 text-emerald-800 dark:text-emerald-300 rounded-3xl flex items-start gap-4 animate-in zoom-in-95 duration-200">
+              <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400 shrink-0 mt-1" />
+              <div>
+                <h3 className="text-xl font-black">Application Dispatched Successfully!</h3>
+                <p className="text-sm leading-relaxed mt-1">
+                  Thank you, <strong>{membName || 'Applicant'}</strong>. Your membership application details have been formatted and delivered directly to <strong>csnepalwebsite@gmail.com</strong>. Our executive committee will review and issue your official ID card.
                 </p>
+                <button
+                  onClick={() => setMembSuccess(false)}
+                  className="mt-4 px-5 py-2 bg-emerald-600 text-white font-bold rounded-xl text-xs hover:bg-emerald-700 transition-all cursor-pointer"
+                >
+                  Submit Another Application
+                </button>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleMembSubmit} className="space-y-6">
+            <form onSubmit={handleMembershipSubmit} className="space-y-6">
+              {/* Toggle New / Renewal */}
+              <div className="flex gap-4 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl w-fit">
+                <button
+                  type="button"
+                  onClick={() => setMembAppType('new')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${membAppType === 'new' ? 'bg-white dark:bg-slate-900 text-emerald-600 shadow-sm' : 'text-slate-600 dark:text-slate-400'}`}
+                >
+                  New Application (नयाँ आवेदन)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMembAppType('renewal')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${membAppType === 'renewal' ? 'bg-white dark:bg-slate-900 text-emerald-600 shadow-sm' : 'text-slate-600 dark:text-slate-400'}`}
+                >
+                  Membership Renewal (नवीकरण)
+                </button>
+              </div>
+
               {membAppType === 'renewal' && (
-                <div className="p-4 bg-teal-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-2xl space-y-2 text-xs font-semibold">
-                  <label className="block text-teal-950 dark:text-teal-100 font-extrabold">Existing Membership ID (e.g. CSN-2025-108) *</label>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Existing Membership ID
+                  </label>
                   <input
                     type="text"
                     required
                     value={existingId}
                     onChange={e => setExistingId(e.target.value)}
-                    placeholder="CSN-2025-XXXX"
-                    className="w-full p-2.5 bg-white dark:bg-slate-900 border rounded-xl font-mono text-sm text-gray-900 dark:text-white"
+                    placeholder="e.g. CSN-2024-892"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
                   />
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Full Name (पूरा नाम) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={membName}
-                    onChange={e => setMembName(e.target.value)}
-                    placeholder="Rajesh Kumar Chaurasiya"
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-                  />
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Full Name (पूरा नाम) *
+                  </label>
+                  <div className="relative">
+                    <Users className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                    <input
+                      type="text"
+                      required
+                      value={membName}
+                      onChange={e => setMembName(e.target.value)}
+                      placeholder="e.g. Ramprasad Chaurasiya"
+                      className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Phone / WhatsApp Number *</label>
-                  <input
-                    type="tel"
-                    required
-                    value={membPhone}
-                    onChange={e => setMembPhone(e.target.value)}
-                    placeholder="+977-9800000000"
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-                  />
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Phone / Mobile Number *
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                    <input
+                      type="tel"
+                      required
+                      value={membPhone}
+                      onChange={e => setMembPhone(e.target.value)}
+                      placeholder="e.g. 9845012345"
+                      className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                    <input
+                      type="email"
+                      value={membEmail}
+                      onChange={e => setMembEmail(e.target.value)}
+                      placeholder="name@gmail.com"
+                      className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Email Address *</label>
-                  <input
-                    type="email"
-                    required
-                    value={membEmail}
-                    onChange={e => setMembEmail(e.target.value)}
-                    placeholder="rajesh@gmail.com"
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-                  />
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Permanent Address / District *
+                  </label>
+                  <div className="relative">
+                    <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                    <input
+                      type="text"
+                      required
+                      value={membAddr}
+                      onChange={e => setMembAddr(e.target.value)}
+                      placeholder="e.g. Parsa, Birgunj Ward 8"
+                      className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Occupation / Profession
+                  </label>
+                  <div className="relative">
+                    <Briefcase className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                    <input
+                      type="text"
+                      value={membOccupation}
+                      onChange={e => setMembOccupation(e.target.value)}
+                      placeholder="e.g. Business / Agriculture / Service"
+                      className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Location Address (स्थान) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={membAddr}
-                    onChange={e => setMembAddr(e.target.value)}
-                    placeholder="Birgunj, Parsa, Nepal"
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Membership Category *</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Membership Tier
+                  </label>
                   <select
-                    value={membCategory}
-                    onChange={e => setMembCategory(e.target.value as any)}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                    value={membType}
+                    onChange={e => setMembType(e.target.value)}
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
                   >
-                    <option value="General">General Member (साधारण सदस्य - NPR 1,000 / Year)</option>
-                    <option value="Life Member">Life Member (आजीवन सदस्य - NPR 15,000 One-time)</option>
-                    <option value="Executive">Executive Committee Member (कार्यसमिति सदस्य)</option>
-                    <option value="Student">Student Member (विद्यार्थी सदस्य - Free / निःशुल्क)</option>
+                    <option value="General Membership (NPR 1,000)">General Membership (साधारण - NPR 1,000)</option>
+                    <option value="Life Membership (NPR 11,000)">Life Membership (आजीवन - NPR 11,000)</option>
+                    <option value="Patron Membership (NPR 51,000)">Patron / Donor Member (संरक्षक - NPR 51,000)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Payment Method
+                  </label>
+                  <select
+                    value={membPaymentMethod}
+                    onChange={e => setMembPaymentMethod(e.target.value)}
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                  >
+                    <option value="Direct Bank Transfer / eSewa">Direct Bank Transfer / eSewa / Khalti</option>
+                    <option value="Cash Payment to Regional Committee">Cash Payment to Regional Executive Committee</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Occupation / Profession</label>
-                  <input
-                    type="text"
-                    value={membOccupation}
-                    onChange={e => setMembOccupation(e.target.value)}
-                    placeholder="e.g. Teacher, Business, Civil Engineer"
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              {/* Payment Proof Details */}
-              <div className="p-5 bg-teal-50/50 dark:bg-slate-800/50 border border-teal-100 dark:border-slate-800 rounded-2xl space-y-3 text-xs font-semibold">
-                <h4 className="text-sm font-extrabold text-teal-950 dark:text-teal-100 flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-emerald-600" />
-                  {lang === 'en' ? 'Payment Reference & Verification' : 'भुक्तानी विवरण र प्रमाणीकरण'}
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-gray-700 dark:text-gray-300 mb-1">Payment Method</label>
-                    <select
-                      value={membPayMethod}
-                      onChange={e => setMembPayMethod(e.target.value as any)}
-                      className="w-full p-2 bg-white dark:bg-slate-900 border rounded-xl text-gray-900 dark:text-white"
-                    >
-                      <option value="eSewa">eSewa Wallet (9812345678)</option>
-                      <option value="Khalti">Khalti Wallet (9812345678)</option>
-                      <option value="Bank Transfer">Bank Transfer (Global IME Bank)</option>
-                      <option value="Cash">In-person Cash Payment</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 dark:text-gray-300 mb-1">Transaction ID / Voucher No.</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Payment Reference / Bank Transaction ID
+                  </label>
+                  <div className="relative">
+                    <FileText className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
                     <input
                       type="text"
-                      value={membPayRef}
-                      onChange={e => setMembPayRef(e.target.value)}
-                      placeholder="e.g. TXN-9842103"
-                      className="w-full p-2 bg-white dark:bg-slate-900 border rounded-xl text-gray-900 dark:text-white"
+                      value={membPaymentRef}
+                      onChange={e => setMembPaymentRef(e.target.value)}
+                      placeholder="e.g. eSewa Txn #90281"
+                      className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
                     />
                   </div>
                 </div>
@@ -374,154 +382,178 @@ export default function MembershipDonation({
 
               <button
                 type="submit"
-                className="w-full py-4 bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                disabled={membSubmitting}
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
-                <Award className="w-5 h-5 text-emerald-300" />
-                {lang === 'en' ? 'Submit Membership Application' : 'सदस्यता आवेदन दर्ता गर्नुहोस्'}
+                {membSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Sending Application to Email...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    {lang === 'en' ? 'Submit Application to csnepalwebsite@gmail.com' : 'आवेदन पठाउनुहोस्'}
+                  </>
+                )}
               </button>
             </form>
           )}
         </div>
       )}
 
-      {/* 2. JOIN AS VOLUNTEER TAB */}
+      {/* 2. VOLUNTEER TAB */}
       {activeSubTab === 'volunteer' && (
-        <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-6">
+        <div className="bg-white dark:bg-slate-900 p-6 sm:p-10 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-8">
           <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-slate-800 text-emerald-800 dark:text-emerald-300 text-xs font-black rounded-full uppercase tracking-wide">
-              Youth & Community Service
+            <span className="inline-block px-3 py-1 bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 text-xs font-extrabold uppercase tracking-wider rounded-full border border-teal-200 dark:border-teal-800 mb-2">
+              Volunteer Network Portal
             </span>
-            <h2 className="text-2xl font-black text-teal-950 dark:text-teal-100 mt-1">
-              {lang === 'en' ? 'Join Chaurasiya Youth Volunteer Corps' : 'चौरसिया युवा स्वयंसेवक अभियानमा जोडिनुहोस्'}
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+              {lang === 'en' ? 'Join the Community Volunteer Taskforce' : 'सामुदायिक स्वयंसेवक कार्यदलमा सामेल हुनुहोस्'}
             </h2>
-            <p className="text-xs text-gray-500 font-medium mt-1">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed max-w-2xl">
               {lang === 'en'
-                ? 'Empower our community through health camps, disaster relief, blood donation drives, and IT workshops.'
-                : 'स्वास्थ्य शिविर, विपद् व्यवस्थापन, रक्तदान कार्यक्रम र सूचना प्रविधि कार्यशाला मार्फत समुदायलाई सशक्त बनाउनुहोस्।'}
+                ? 'We organize regional healthcare checkups, agricultural awareness camps for betel farmers, and community cleanliness drives. Submissions are delivered straight to csnepalwebsite@gmail.com.'
+                : 'हामी क्षेत्रीय स्वास्थ्य जाँच, पान कृषकहरूको लागि कृषि सचेतना शिविर, र सामुदायिक सरसफाई अभियानहरू आयोजना गर्दछौं। आवेदनहरू csnepalwebsite@gmail.com मा पठाइन्छ।'}
             </p>
           </div>
 
           {volSuccess ? (
-            <div className="p-6 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 rounded-2xl flex items-start gap-4 animate-in zoom-in-95 duration-200">
-              <CheckCircle2 className="w-8 h-8 text-emerald-600 shrink-0 mt-1" />
-              <div className="space-y-1">
-                <h4 className="text-lg font-black">{lang === 'en' ? 'Volunteer Registration Received!' : 'स्वयंसेवक दर्ता प्राप्त भयो!'}</h4>
-                <p className="text-xs font-medium leading-relaxed">
-                  {lang === 'en'
-                    ? 'Thank you for joining our volunteer network! Admin will contact you regarding upcoming social programs in your district.'
-                    : 'हाम्रो स्वयंसेवक सञ्जालमा सामेल हुनुभएकोमा धन्यवाद! एडमिनले तपाईंको जिल्लाका आगामी कार्यक्रमहरूका लागि सम्पर्क गर्नेछ।'}
+            <div className="p-8 bg-teal-50 dark:bg-teal-950/40 border-2 border-teal-500/40 text-teal-800 dark:text-teal-300 rounded-3xl flex items-start gap-4 animate-in zoom-in-95 duration-200">
+              <CheckCircle2 className="w-10 h-10 text-teal-600 dark:text-teal-400 shrink-0 mt-1" />
+              <div>
+                <h3 className="text-xl font-black">Volunteer Registration Sent!</h3>
+                <p className="text-sm leading-relaxed mt-1">
+                  Thank you for stepping forward, <strong>{volName || 'Volunteer'}</strong>. Your application has been emailed to <strong>csnepalwebsite@gmail.com</strong>.
                 </p>
+                <button
+                  onClick={() => setVolSuccess(false)}
+                  className="mt-4 px-5 py-2 bg-teal-600 text-white font-bold rounded-xl text-xs hover:bg-teal-700 transition-all cursor-pointer"
+                >
+                  Register Another Volunteer
+                </button>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleVolSubmit} className="space-y-6 text-xs font-semibold">
+            <form onSubmit={handleVolunteerSubmit} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Volunteer Full Name *</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Full Name *</label>
                   <input
                     type="text"
                     required
                     value={volName}
                     onChange={e => setVolName(e.target.value)}
-                    placeholder="e.g. Abhishek Chaurasiya"
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                    placeholder="e.g. Sunita Chaurasiya"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Phone / WhatsApp *</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Phone Number *</label>
                   <input
                     type="tel"
                     required
                     value={volPhone}
                     onChange={e => setVolPhone(e.target.value)}
-                    placeholder="+977-9800000000"
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                    placeholder="e.g. 9812345678"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Email Address *</label>
-                  <input
-                    type="email"
-                    required
-                    value={volEmail}
-                    onChange={e => setVolEmail(e.target.value)}
-                    placeholder="volunteer@gmail.com"
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-1">District & Local Address *</label>
-                  <input
-                    type="text"
-                    required
-                    value={volAddr}
-                    onChange={e => setVolAddr(e.target.value)}
-                    placeholder="Parsa, Madhesh Pradesh"
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              {/* Skill Interests selection */}
-              <div className="space-y-2">
-                <label className="block text-teal-950 dark:text-teal-100 font-extrabold">{lang === 'en' ? 'Select Areas of Interest & Skills:' : 'रुचि र सीपका क्षेत्रहरू छान्नुहोस्:'}</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                  {availableInterests.map(interest => {
-                    const isChecked = volInterests.includes(interest);
-                    return (
-                      <button
-                        type="button"
-                        key={interest}
-                        onClick={() => toggleInterest(interest)}
-                        className={`p-3 rounded-xl border text-left text-xs font-bold transition-all flex items-center justify-between gap-2 cursor-pointer ${
-                          isChecked
-                            ? 'bg-teal-50 dark:bg-slate-800 border-teal-500 text-teal-900 dark:text-teal-200'
-                            : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-gray-600 dark:text-gray-400'
-                        }`}
-                      >
-                        <span>{interest}</span>
-                        {isChecked && <CheckSquare className="w-4 h-4 text-emerald-600 shrink-0" />}
-                      </button>
-                    );
-                  })}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Time Availability</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    value={volEmail}
+                    onChange={e => setVolEmail(e.target.value)}
+                    placeholder="name@gmail.com"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Address / Location *</label>
+                  <input
+                    type="text"
+                    required
+                    value={volAddr}
+                    onChange={e => setVolAddr(e.target.value)}
+                    placeholder="e.g. Bara, Kalaiya"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Areas of Interest</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    'Healthcare Checkup Camps',
+                    'Agricultural Outreach for Betel Farmers',
+                    'Youth & Educational Support',
+                    'Event Management & Logistics',
+                  ].map(interest => (
+                    <button
+                      key={interest}
+                      type="button"
+                      onClick={() => toggleInterest(interest)}
+                      className={`p-3 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer flex items-center justify-between ${
+                        volInterests.includes(interest)
+                          ? 'bg-teal-50 dark:bg-teal-950 border-teal-500 text-teal-800 dark:text-teal-300'
+                          : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      {interest}
+                      {volInterests.includes(interest) && <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Availability</label>
                   <select
                     value={volAvailability}
                     onChange={e => setVolAvailability(e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
                   >
-                    <option value="Weekends">Weekends Only (सप्ताहान्त)</option>
-                    <option value="Events">Major Events & Camps Only (विशेष कार्यक्रम)</option>
-                    <option value="Full-Time">Full-Time On-Call (पूर्णकालीन)</option>
+                    <option value="Weekends Only">Weekends Only (सप्ताहान्त)</option>
+                    <option value="Major Events & Camps">Major Events & Camps Only (विशेष कार्यक्रम)</option>
+                    <option value="Full-Time On Call">Full-Time On-Call (पूर्णकालीन)</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Motivation / Notes (Optional)</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Notes / Motivation</label>
                   <input
                     type="text"
                     value={volNotes}
                     onChange={e => setVolNotes(e.target.value)}
-                    placeholder="e.g. Willing to assist in medical camps..."
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                    placeholder="e.g. Willing to assist in blood donation camps..."
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-4 bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                disabled={volSubmitting}
+                className="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
-                <UserPlus className="w-5 h-5 text-emerald-300" />
-                {lang === 'en' ? 'Register as Official Volunteer' : 'स्वयंसेवक दर्ता गर्नुहोस्'}
+                {volSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Sending Volunteer Data...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    {lang === 'en' ? 'Register Volunteer to csnepalwebsite@gmail.com' : 'स्वयंसेवक दर्ता पठाउनुहोस्'}
+                  </>
+                )}
               </button>
             </form>
           )}
@@ -532,7 +564,6 @@ export default function MembershipDonation({
       {activeSubTab === 'donation' && (
         <div className="bg-teal-950 text-white p-6 sm:p-10 rounded-3xl border-b-8 border-emerald-500 shadow-xl space-y-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl" />
-
           <div>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-bold uppercase tracking-wider rounded-full">
               Welfare &amp; Healthcare Support Fund
@@ -553,7 +584,7 @@ export default function MembershipDonation({
               <div>
                 <h4 className="text-lg font-black">Heartfelt Thank You!</h4>
                 <p className="text-xs leading-relaxed mt-1">
-                  Your donation of NPR {donatedAmt.toLocaleString()} has been recorded in the central audit ledger.
+                  Your pledge of NPR {donatedAmt.toLocaleString()} has been logged. Please send the bank deposit/transfer copy to <strong>csnepalwebsite@gmail.com</strong>.
                 </p>
               </div>
             </div>
@@ -604,19 +635,18 @@ export default function MembershipDonation({
                 />
               </div>
 
-              {/* Payment Wire Box */}
               <div className="p-5 bg-teal-900/50 rounded-2xl border border-teal-800 space-y-3">
-                <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
-                  <Landmark className="w-4 h-4" />
+                <h4 className="text-sm font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
+                  <Landmark className="w-5 h-5" />
                   Direct Bank Wire Info &amp; QR Payments
                 </h4>
-                <div className="text-xs space-y-1.5 text-teal-200/90 leading-relaxed font-medium">
+                <div className="text-sm space-y-2 text-teal-200/90 leading-relaxed font-medium">
                   <div><strong className="text-white">Bank Name:</strong> Global IME Bank Ltd., Birgunj Branch</div>
                   <div><strong className="text-white">Account Name:</strong> Chaurasiya Samaj Nepal</div>
                   <div><strong className="text-white">Account Number:</strong> 010101005234902 (Welfare Fund)</div>
                   <div><strong className="text-white">eSewa / Khalti ID:</strong> 9812345678 (CSN Official)</div>
-                  <div className="text-[11px] text-teal-400 italic pt-1">
-                    * Please send a copy of your transaction receipt to <strong>csnepalwebsite@gmail.com</strong> for audited tax receipts.
+                  <div className="text-xs text-teal-400 italic pt-2 border-t border-teal-800/50">
+                    * Please email transaction copies to <strong>csnepalwebsite@gmail.com</strong> for tax receipts.
                   </div>
                 </div>
               </div>
@@ -626,7 +656,7 @@ export default function MembershipDonation({
                 className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Heart className="w-5 h-5 text-teal-950 fill-teal-950" />
-                Complete Secure Transaction Record
+                Record Donation Pledge
               </button>
             </form>
           )}

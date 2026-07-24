@@ -140,7 +140,7 @@ export default function AdminCentralDashboardModal({
                 </h2>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                  Firebase Firestore Live
+                  Native Web Forms & Direct Email Pipeline (csnepalwebsite@gmail.com)
                 </span>
               </div>
               <p className="text-xs text-emerald-200">
