@@ -65,6 +65,7 @@ export async function saveMatrimonialProfileToCloud(profile: MatrimonialProfile)
     console.log('Saved matrimonial profile to Firestore:', profile.id);
   } catch (e) {
     console.error('Failed to save matrimonial profile to cloud:', e);
+    throw e;
   }
 }
 
@@ -109,6 +110,7 @@ export async function saveVolunteerAppToCloud(appData: VolunteerApplication) {
     console.log('Saved volunteer app to Firestore:', appData.id);
   } catch (e) {
     console.error('Failed to save volunteer application to cloud:', e);
+    throw e;
   }
 }
 
@@ -153,6 +155,7 @@ export async function saveMembershipAppToCloud(appData: MembershipApplication) {
     console.log('Saved membership app to Firestore:', appData.id);
   } catch (e) {
     console.error('Failed to save membership application to cloud:', e);
+    throw e;
   }
 }
 
@@ -197,6 +200,7 @@ export async function saveSubscriberToCloud(sub: NewsletterSubscriber) {
     console.log('Saved subscriber to Firestore:', sub.id);
   } catch (e) {
     console.error('Failed to save subscriber to cloud:', e);
+    throw e;
   }
 }
 

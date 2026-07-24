@@ -487,9 +487,14 @@ export default function App() {
   }, []);
 
   // Matrimonial handlers
-  const handleAddMatrimonialProfile = (newProfile: MatrimonialProfile) => {
-    saveMatrimonialProfileToCloud(newProfile);
-    broadcastLiveEvent('NEW_MATRIMONY', newProfile);
+  const handleAddMatrimonialProfile = async (newProfile: MatrimonialProfile) => {
+    try {
+      await saveMatrimonialProfileToCloud(newProfile);
+      broadcastLiveEvent('NEW_MATRIMONY', newProfile);
+    } catch (e) {
+      console.error("Failed to save profile:", e);
+      alert("Failed to save data. Please ensure database is initialized.");
+    }
   };
 
   const handleUpdateMatrimonialStatus = (id: string, status: 'approved' | 'rejected') => {
@@ -501,9 +506,14 @@ export default function App() {
   };
 
   // Volunteer handlers
-  const handleAddVolunteerApp = (newVol: VolunteerApplication) => {
-    saveVolunteerAppToCloud(newVol);
-    broadcastLiveEvent('NEW_VOLUNTEER', newVol);
+  const handleAddVolunteerApp = async (newVol: VolunteerApplication) => {
+    try {
+      await saveVolunteerAppToCloud(newVol);
+      broadcastLiveEvent('NEW_VOLUNTEER', newVol);
+    } catch (e) {
+      console.error("Failed to save volunteer:", e);
+      alert("Failed to save data. Please ensure database is initialized.");
+    }
   };
 
   const handleUpdateVolunteerStatus = (id: string, status: 'approved' | 'contacted') => {
@@ -515,9 +525,14 @@ export default function App() {
   };
 
   // Membership handlers
-  const handleAddMembershipApp = (newMemb: MembershipApplication) => {
-    saveMembershipAppToCloud(newMemb);
-    broadcastLiveEvent('NEW_MEMBERSHIP', newMemb);
+  const handleAddMembershipApp = async (newMemb: MembershipApplication) => {
+    try {
+      await saveMembershipAppToCloud(newMemb);
+      broadcastLiveEvent('NEW_MEMBERSHIP', newMemb);
+    } catch (e) {
+      console.error("Failed to save membership:", e);
+      alert("Failed to save data. Please ensure database is initialized.");
+    }
   };
 
   const handleApproveMembershipApp = (id: string, assignedMemberId: string) => {
@@ -563,7 +578,7 @@ export default function App() {
   };
 
   // Newsletter & Contact Subscribers handlers
-  const handleDirectNewsletterSubscribe = (emailVal: string, source: string = 'Notice & Bulletins Portal') => {
+  const handleDirectNewsletterSubscribe = async (emailVal: string, source: string = 'Notice & Bulletins Portal') => {
     const trimmed = emailVal.trim();
     if (!trimmed) return;
     const newSub: NewsletterSubscriber = {
@@ -572,8 +587,12 @@ export default function App() {
       subscribedAt: new Date().toISOString().split('T')[0],
       source: source
     };
-    saveSubscriberToCloud(newSub);
-    broadcastLiveEvent('NEW_SUBSCRIBER', newSub);
+    try {
+      await saveSubscriberToCloud(newSub);
+      broadcastLiveEvent('NEW_SUBSCRIBER', newSub);
+    } catch (e) {
+      console.error("Failed to save subscriber:", e);
+    }
   };
 
   const handleNewsletterSubscribeSubmit = (e: React.FormEvent<HTMLFormElement>) => {
