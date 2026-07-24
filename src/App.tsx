@@ -501,6 +501,7 @@ export default function App() {
       } catch (e) {}
       return updated;
     });
+    setLiveToast(`🔔 New Matrimonial Request: ${newProfile.fullName} (${newProfile.lookingFor === 'groom' ? 'Groom' : 'Bride'})`);
   };
 
   const handleUpdateMatrimonialStatus = (id: string, status: 'approved' | 'rejected') => {
@@ -536,6 +537,7 @@ export default function App() {
       } catch (e) {}
       return updated;
     });
+    setLiveToast(`🔔 New Volunteer Application: ${newVol.fullName} (${newVol.address})`);
   };
 
   const handleUpdateVolunteerStatus = (id: string, status: 'approved' | 'contacted') => {
@@ -571,6 +573,7 @@ export default function App() {
       } catch (e) {}
       return updated;
     });
+    setLiveToast(`🔔 New Membership Application / Renewal: ${newMemb.fullName} (${newMemb.membershipType})`);
   };
 
   const handleApproveMembershipApp = (id: string, assignedMemberId: string) => {
@@ -622,32 +625,44 @@ export default function App() {
     });
   };
 
-  // Newsletter Subscribers handler
+  // Newsletter & Contact Subscribers handlers
+  const handleDirectNewsletterSubscribe = (emailVal: string, source: string = 'Notice & Bulletins Portal') => {
+    const trimmed = emailVal.trim();
+    if (!trimmed) return;
+    const newSub: NewsletterSubscriber = {
+      id: `sub-${Date.now()}`,
+      email: trimmed,
+      subscribedAt: new Date().toISOString().split('T')[0],
+      source: source
+    };
+    saveSubscriberToCloud(newSub);
+    broadcastLiveEvent('NEW_SUBSCRIBER', newSub);
+    setSubscribers(prev => {
+      const filtered = prev.filter(s => s.email.toLowerCase() !== trimmed.toLowerCase());
+      const updated = [newSub, ...filtered];
+      try {
+        localStorage.setItem('chaurasiya_subscribers', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    setLiveToast(`🔔 New Subscriber Registered: ${trimmed}`);
+  };
+
   const handleNewsletterSubscribeSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const input = form.querySelector('input[type="email"]') as HTMLInputElement;
     if (input && input.value) {
       const emailVal = input.value.trim();
-      const newSub: NewsletterSubscriber = {
-        id: `sub-${Date.now()}`,
-        email: emailVal,
-        subscribedAt: new Date().toISOString().split('T')[0],
-        source: 'Website Footer'
-      };
-      saveSubscriberToCloud(newSub);
-      broadcastLiveEvent('NEW_SUBSCRIBER', newSub);
-      setSubscribers(prev => {
-        if (prev.some(s => s.email.toLowerCase() === emailVal.toLowerCase())) return prev;
-        const updated = [newSub, ...prev];
-        try {
-          localStorage.setItem('chaurasiya_subscribers', JSON.stringify(updated));
-        } catch (e) {}
-        return updated;
-      });
+      handleDirectNewsletterSubscribe(emailVal, 'Website Footer');
       alert(lang === 'en' ? `Subscribed ${emailVal} successfully!` : `${emailVal} सफलतापूर्वक सदस्यता लिइयो!`);
       input.value = '';
     }
+  };
+
+  const handleContactSendMessage = (data: { name: string; email: string; subject: string; message: string }) => {
+    handleDirectNewsletterSubscribe(data.email, `Contact Message (${data.name})`);
+    setLiveToast(`🔔 New Contact Form Message: ${data.name} (${data.email})`);
   };
 
   const handleDeleteSubscriber = (id: string) => {
@@ -1723,7 +1738,7 @@ export default function App() {
         {currentTab === 'notices-gallery' && (
           <NoticeGallery
             lang={lang}
-            onSubscribe={() => {}}
+            onSubscribe={handleDirectNewsletterSubscribe}
             onTrackAction={handleTrackAction}
             isAdmin={isAdmin}
             onOpenAddNoticeModal={() => setIsAddNoticeModalOpen(true)}
@@ -1811,6 +1826,7 @@ export default function App() {
           <ContactSection
             lang={lang}
             onTrackAction={handleTrackAction}
+            onSendMessage={handleContactSendMessage}
           />
         )}
       </main>

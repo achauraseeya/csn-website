@@ -5,9 +5,10 @@ import { Language } from '../types';
 interface ContactSectionProps {
   lang: Language;
   onTrackAction: (actionName: string) => void;
+  onSendMessage?: (data: { name: string; email: string; subject: string; message: string }) => void;
 }
 
-export default function ContactSection({ lang, onTrackAction }: ContactSectionProps) {
+export default function ContactSection({ lang, onTrackAction, onSendMessage }: ContactSectionProps) {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
 
@@ -31,6 +32,9 @@ export default function ContactSection({ lang, onTrackAction }: ContactSectionPr
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onTrackAction('Submit Contact Form');
+    if (onSendMessage) {
+      onSendMessage(formData);
+    }
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 5000);
     setFormData({ name: '', email: '', subject: '', message: '' });
