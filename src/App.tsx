@@ -1826,6 +1826,7 @@ export default function App() {
               <button onClick={() => handleNavigate('history')} className="hover:text-emerald-400 text-left transition-colors">About Us</button>
               <button onClick={() => handleNavigate('events')} className="hover:text-emerald-400 text-left transition-colors">Projects & Programs</button>
               <button onClick={() => handleNavigate('directory')} className="hover:text-emerald-400 text-left transition-colors">Committee Members</button>
+              <button onClick={() => handleNavigate('blogger-exporter')} className="hover:text-emerald-400 text-left transition-colors">{lang === 'en' ? 'Blogger XML Theme' : 'ब्लगर XML थिम'}</button>
               <button onClick={() => handleNavigate('transparency')} className="hover:text-emerald-400 text-left transition-colors">Transparency</button>
             </div>
           </div>
