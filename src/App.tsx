@@ -32,6 +32,23 @@ import TermsSection from './components/TermsSection';
 import { SiteTexts } from './types';
 import { apiFetch, apiSave, apiDelete, saveFileToGithub, getGithubSettings, uploadImageToGithub } from './utils/githubDb';
 import { formatNumber } from './utils/mediaUrl';
+import {
+  subscribeMatrimonialProfiles,
+  saveMatrimonialProfileToCloud,
+  updateMatrimonialStatusInCloud,
+  deleteMatrimonialProfileFromCloud,
+  subscribeVolunteerApps,
+  saveVolunteerAppToCloud,
+  updateVolunteerStatusInCloud,
+  deleteVolunteerAppFromCloud,
+  subscribeMembershipApps,
+  saveMembershipAppToCloud,
+  updateMembershipStatusInCloud,
+  deleteMembershipAppFromCloud,
+  subscribeSubscribers,
+  saveSubscriberToCloud,
+  deleteSubscriberFromCloud
+} from './services/firebaseDb';
 
 const defaultSiteTexts: SiteTexts = {
   heroTitleEn: 'Chaurasiya Samaj Nepal',
@@ -310,6 +327,60 @@ export default function App() {
     return initialNotices;
   });
 
+  // Real-time Cloud Database Listeners (Firebase Firestore) so submissions from ANY device sync across all clients and Admin console
+  useEffect(() => {
+    const unsubscribeMatrimony = subscribeMatrimonialProfiles((cloudProfiles) => {
+      setMatrimonialProfiles((prev) => {
+        const mergedMap = new Map<string, MatrimonialProfile>();
+        cloudProfiles.forEach(p => mergedMap.set(p.id, p));
+        prev.forEach(p => { if (!mergedMap.has(p.id)) mergedMap.set(p.id, p); });
+        const result = Array.from(mergedMap.values());
+        try { localStorage.setItem('chaurasiya_matrimony', JSON.stringify(result)); } catch (e) {}
+        return result;
+      });
+    });
+
+    const unsubscribeVolunteers = subscribeVolunteerApps((cloudVolunteers) => {
+      setVolunteerApps((prev) => {
+        const mergedMap = new Map<string, VolunteerApplication>();
+        cloudVolunteers.forEach(v => mergedMap.set(v.id, v));
+        prev.forEach(v => { if (!mergedMap.has(v.id)) mergedMap.set(v.id, v); });
+        const result = Array.from(mergedMap.values());
+        try { localStorage.setItem('chaurasiya_volunteers', JSON.stringify(result)); } catch (e) {}
+        return result;
+      });
+    });
+
+    const unsubscribeMemberships = subscribeMembershipApps((cloudMemberships) => {
+      setMembershipApps((prev) => {
+        const mergedMap = new Map<string, MembershipApplication>();
+        cloudMemberships.forEach(m => mergedMap.set(m.id, m));
+        prev.forEach(m => { if (!mergedMap.has(m.id)) mergedMap.set(m.id, m); });
+        const result = Array.from(mergedMap.values());
+        try { localStorage.setItem('chaurasiya_membership_apps', JSON.stringify(result)); } catch (e) {}
+        return result;
+      });
+    });
+
+    const unsubscribeSubscribers = subscribeSubscribers((cloudSubscribers) => {
+      setSubscribers((prev) => {
+        const mergedMap = new Map<string, NewsletterSubscriber>();
+        cloudSubscribers.forEach(s => mergedMap.set(s.id, s));
+        prev.forEach(s => { if (!mergedMap.has(s.id)) mergedMap.set(s.id, s); });
+        const result = Array.from(mergedMap.values());
+        try { localStorage.setItem('chaurasiya_subscribers', JSON.stringify(result)); } catch (e) {}
+        return result;
+      });
+    });
+
+    return () => {
+      unsubscribeMatrimony();
+      unsubscribeVolunteers();
+      unsubscribeMemberships();
+      unsubscribeSubscribers();
+    };
+  }, []);
+
   // Fetch online server notices on mount so ALL visitors see new notices automatically!
   useEffect(() => {
     apiFetch<Notice[]>('/api/notices', 'community_notices.json', [])
@@ -334,6 +405,7 @@ export default function App() {
 
   // Matrimonial handlers
   const handleAddMatrimonialProfile = (newProfile: MatrimonialProfile) => {
+    saveMatrimonialProfileToCloud(newProfile);
     setMatrimonialProfiles(prev => {
       const updated = [newProfile, ...prev];
       try {
@@ -344,6 +416,7 @@ export default function App() {
   };
 
   const handleUpdateMatrimonialStatus = (id: string, status: 'approved' | 'rejected') => {
+    updateMatrimonialStatusInCloud(id, status);
     setMatrimonialProfiles(prev => {
       const updated = prev.map(p => p.id === id ? { ...p, status } : p);
       try {
@@ -354,6 +427,7 @@ export default function App() {
   };
 
   const handleDeleteMatrimonialProfile = (id: string) => {
+    deleteMatrimonialProfileFromCloud(id);
     setMatrimonialProfiles(prev => {
       const updated = prev.filter(p => p.id !== id);
       try {
@@ -365,6 +439,7 @@ export default function App() {
 
   // Volunteer handlers
   const handleAddVolunteerApp = (newVol: VolunteerApplication) => {
+    saveVolunteerAppToCloud(newVol);
     setVolunteerApps(prev => {
       const updated = [newVol, ...prev];
       try {
@@ -375,6 +450,7 @@ export default function App() {
   };
 
   const handleUpdateVolunteerStatus = (id: string, status: 'approved' | 'contacted') => {
+    updateVolunteerStatusInCloud(id, status);
     setVolunteerApps(prev => {
       const updated = prev.map(v => v.id === id ? { ...v, status } : v);
       try {
@@ -385,6 +461,7 @@ export default function App() {
   };
 
   const handleDeleteVolunteerApp = (id: string) => {
+    deleteVolunteerAppFromCloud(id);
     setVolunteerApps(prev => {
       const updated = prev.filter(v => v.id !== id);
       try {
@@ -396,6 +473,7 @@ export default function App() {
 
   // Membership handlers
   const handleAddMembershipApp = (newMemb: MembershipApplication) => {
+    saveMembershipAppToCloud(newMemb);
     setMembershipApps(prev => {
       const updated = [newMemb, ...prev];
       try {
@@ -406,6 +484,7 @@ export default function App() {
   };
 
   const handleApproveMembershipApp = (id: string, assignedMemberId: string) => {
+    updateMembershipStatusInCloud(id, 'approved');
     const targetApp = membershipApps.find(m => m.id === id);
     if (targetApp) {
       const newMemberObj: Member = {
@@ -443,6 +522,7 @@ export default function App() {
   };
 
   const handleRejectMembershipApp = (id: string) => {
+    deleteMembershipAppFromCloud(id);
     setMembershipApps(prev => {
       const updated = prev.filter(m => m.id !== id);
       try {
@@ -465,6 +545,7 @@ export default function App() {
         subscribedAt: new Date().toISOString().split('T')[0],
         source: 'Website Footer'
       };
+      saveSubscriberToCloud(newSub);
       setSubscribers(prev => {
         if (prev.some(s => s.email.toLowerCase() === emailVal.toLowerCase())) return prev;
         const updated = [newSub, ...prev];
@@ -479,6 +560,7 @@ export default function App() {
   };
 
   const handleDeleteSubscriber = (id: string) => {
+    deleteSubscriberFromCloud(id);
     setSubscribers(prev => {
       const updated = prev.filter(s => s.id !== id);
       try {
@@ -1367,7 +1449,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-teal-200 selection:text-teal-950 transition-colors duration-200 overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-teal-200 selection:text-teal-950 transition-colors duration-200 overflow-x-clip">
       {/* Fixed Sticky Header Wrapper containing logo and navigation menu */}
       <header className="sticky top-0 z-50 shadow-md bg-white dark:bg-slate-900 transition-all">
         {/* Brand Top bar */}
