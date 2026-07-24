@@ -14,6 +14,13 @@ export interface Member {
   email?: string;
   address: LocalizedString;
   bio?: LocalizedString;
+  education?: LocalizedString;
+  vision?: LocalizedString;
+  achievements?: LocalizedString[];
+  termPeriod?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  linkedinUrl?: string;
   avatarUrl?: string;
   photoBase64?: string;
   photoName?: string;
@@ -180,6 +187,70 @@ export interface NetworkBranch {
   contactPhone?: string;
   heroImagesJson?: string;
   impactStatsJson?: string;
+}
+
+export interface MatrimonialProfile {
+  id: string;
+  lookingFor: 'groom' | 'bride'; // वर or वधू
+  fullName: string;
+  age: number;
+  dob?: string;
+  height?: string;
+  gotraSubcaste?: string;
+  qualification: string;
+  occupation: string;
+  monthlyIncome?: string;
+  currentCityDistrict: string;
+  nativePlace?: string;
+  fatherName?: string;
+  fatherOccupation?: string;
+  familyType?: string; // Nuclear, Joint, etc.
+  partnerExpectations?: string;
+  guardianName: string;
+  guardianPhone: string;
+  guardianEmail?: string;
+  photoUrl?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+}
+
+export interface VolunteerApplication {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  interests: string[];
+  availability: string;
+  notes?: string;
+  status: 'pending' | 'contacted' | 'approved';
+  createdAt: string;
+}
+
+export interface MembershipApplication {
+  id: string;
+  type: 'new' | 'renewal';
+  existingMembershipId?: string;
+  fullName: string;
+  phone: string;
+  email: string;
+  address: string;
+  occupation: string;
+  membershipType: 'General' | 'Executive' | 'Life Member' | 'Student';
+  durationYears?: string;
+  paymentMethod: 'eSewa' | 'Khalti' | 'Bank Transfer' | 'Cash';
+  paymentReference?: string;
+  receiptPhotoUrl?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  assignedMemberId?: string;
+  createdAt: string;
+}
+
+export interface NewsletterSubscriber {
+  id: string;
+  email: string;
+  subscribedAt: string;
+  source?: string;
 }
 
 

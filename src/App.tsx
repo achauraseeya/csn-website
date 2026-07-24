@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram } from 'lucide-react';
-import { Language, AnalyticsMetric, Member, Album, AlbumMediaItem, Notice, Document, CommunityEvent, NetworkBranch } from './types';
+import { Language, AnalyticsMetric, Member, Album, AlbumMediaItem, Notice, Document, CommunityEvent, NetworkBranch, MatrimonialProfile, VolunteerApplication, MembershipApplication, NewsletterSubscriber } from './types';
 import { initialNetworks } from './data/networkData';
 import { notices as initialNotices, boardMembers as initialMembers, upcomingEvents as initialEvents, documents as initialDocuments } from './data/communityData';
 import { journeyAlbums as initialJourneyAlbums } from './data/albumsData';
@@ -18,6 +18,8 @@ import EventsSection from './components/EventsSection';
 import MembershipDonation from './components/MembershipDonation';
 import AbhishekBio from './components/AbhishekBio';
 import LeaderBio from './components/LeaderBio';
+import MatrimonialSection from './components/MatrimonialSection';
+import AdminCentralDashboardModal from './components/AdminCentralDashboardModal';
 import BloggerXmlExporter from './components/BloggerXmlExporter';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import TransparencySection from './components/TransparencySection';
@@ -160,7 +162,133 @@ export default function App() {
     }
   });
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   const [isAddNoticeModalOpen, setIsAddNoticeModalOpen] = useState(false);
+
+  // Initial Matrimonial Data
+  const initialMatrimonialProfiles: MatrimonialProfile[] = [
+    {
+      id: 'matrimony-1',
+      lookingFor: 'groom',
+      fullName: 'Anand Kumar Chaurasiya',
+      age: 28,
+      dob: '1998-05-14',
+      height: "5'10\"",
+      gotraSubcaste: 'Kashyap',
+      qualification: 'B.Tech Computer Science (TU)',
+      occupation: 'Senior Software Engineer, Kathmandu',
+      monthlyIncome: 'NPR 1,20,000 / month',
+      currentCityDistrict: 'Kathmandu / Birgunj',
+      nativePlace: 'Parsa, Madhesh Pradesh',
+      fatherName: 'Ram Avatar Chaurasiya',
+      fatherOccupation: 'Business & Agriculture',
+      familyType: 'Nuclear',
+      partnerExpectations: 'Looking for educated, family-oriented bride from Chaurasiya Samaj.',
+      guardianName: 'Ram Avatar Chaurasiya',
+      guardianPhone: '+977-9855012345',
+      photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
+      status: 'approved',
+      createdAt: '2026-01-15'
+    },
+    {
+      id: 'matrimony-2',
+      lookingFor: 'bride',
+      fullName: 'Pooja Chaurasiya',
+      age: 25,
+      dob: '2001-08-20',
+      height: "5'4\"",
+      gotraSubcaste: 'Kashyap',
+      qualification: 'M.Sc Biochemistry (TU)',
+      occupation: 'Quality Assurance Officer, Pharma',
+      monthlyIncome: 'NPR 65,000 / month',
+      currentCityDistrict: 'Birgunj, Parsa',
+      nativePlace: 'Parsa, Nepal',
+      fatherName: 'Shambhu Prasad Chaurasiya',
+      fatherOccupation: 'Senior Government Officer (Retd.)',
+      familyType: 'Joint Family',
+      partnerExpectations: 'Looking for well-educated professional groom with good family values.',
+      guardianName: 'Shambhu Prasad Chaurasiya',
+      guardianPhone: '+977-9845098765',
+      photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+      status: 'approved',
+      createdAt: '2026-02-10'
+    }
+  ];
+
+  const [matrimonialProfiles, setMatrimonialProfiles] = useState<MatrimonialProfile[]>(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_matrimony');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return initialMatrimonialProfiles;
+  });
+
+  const [volunteerApps, setVolunteerApps] = useState<VolunteerApplication[]>(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_volunteers');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {}
+    return [
+      {
+        id: 'vol-1',
+        fullName: 'Rohan Chaurasiya',
+        email: 'rohan.c@gmail.com',
+        phone: '+977-9811223344',
+        address: 'Pokhariya, Parsa',
+        interests: ['Health Camps & Medical Relief', 'Youth & IT Skill Training'],
+        availability: 'Weekends',
+        notes: 'Excited to coordinate health checkup drives in rural Parsa villages.',
+        status: 'pending',
+        createdAt: '2026-03-01'
+      }
+    ];
+  });
+
+  const [membershipApps, setMembershipApps] = useState<MembershipApplication[]>(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_membership_apps');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {}
+    return [
+      {
+        id: 'memb-1',
+        type: 'new',
+        fullName: 'Sunil Kumar Chaurasiya',
+        phone: '+977-9855123456',
+        email: 'sunil.chaurasiya@gmail.com',
+        address: 'Kalaiya, Bara',
+        occupation: 'Civil Engineer',
+        membershipType: 'Life Member',
+        paymentMethod: 'Bank Transfer',
+        paymentReference: 'GIBL-8921356',
+        status: 'pending',
+        createdAt: '2026-03-10'
+      }
+    ];
+  });
+
+  const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_subscribers');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {}
+    return [
+      { id: 'sub-1', email: 'csnepalwebsite@gmail.com', subscribedAt: '2026-01-01', source: 'Website Footer' },
+      { id: 'sub-2', email: 'achauraseeya@gmail.com', subscribedAt: '2026-01-02', source: 'Website Footer' }
+    ];
+  });
 
   // Retrieve auth headers for admin actions
     const getAuthHeaders = () => { return {}; };
@@ -203,6 +331,172 @@ export default function App() {
         console.warn('Backend server notices fetch failed or serverless DB not reachable:', err);
       });
   }, []);
+
+  // Matrimonial handlers
+  const handleAddMatrimonialProfile = (newProfile: MatrimonialProfile) => {
+    setMatrimonialProfiles(prev => {
+      const updated = [newProfile, ...prev];
+      try {
+        localStorage.setItem('chaurasiya_matrimony', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleUpdateMatrimonialStatus = (id: string, status: 'approved' | 'rejected') => {
+    setMatrimonialProfiles(prev => {
+      const updated = prev.map(p => p.id === id ? { ...p, status } : p);
+      try {
+        localStorage.setItem('chaurasiya_matrimony', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleDeleteMatrimonialProfile = (id: string) => {
+    setMatrimonialProfiles(prev => {
+      const updated = prev.filter(p => p.id !== id);
+      try {
+        localStorage.setItem('chaurasiya_matrimony', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  // Volunteer handlers
+  const handleAddVolunteerApp = (newVol: VolunteerApplication) => {
+    setVolunteerApps(prev => {
+      const updated = [newVol, ...prev];
+      try {
+        localStorage.setItem('chaurasiya_volunteers', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleUpdateVolunteerStatus = (id: string, status: 'approved' | 'contacted') => {
+    setVolunteerApps(prev => {
+      const updated = prev.map(v => v.id === id ? { ...v, status } : v);
+      try {
+        localStorage.setItem('chaurasiya_volunteers', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleDeleteVolunteerApp = (id: string) => {
+    setVolunteerApps(prev => {
+      const updated = prev.filter(v => v.id !== id);
+      try {
+        localStorage.setItem('chaurasiya_volunteers', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  // Membership handlers
+  const handleAddMembershipApp = (newMemb: MembershipApplication) => {
+    setMembershipApps(prev => {
+      const updated = [newMemb, ...prev];
+      try {
+        localStorage.setItem('chaurasiya_membership_apps', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleApproveMembershipApp = (id: string, assignedMemberId: string) => {
+    const targetApp = membershipApps.find(m => m.id === id);
+    if (targetApp) {
+      const newMemberObj: Member = {
+        id: `mem-${Date.now()}`,
+        name: { en: targetApp.fullName, ne: targetApp.fullName },
+        role: {
+          en: `${targetApp.membershipType} (${assignedMemberId})`,
+          ne: `${targetApp.membershipType} (${assignedMemberId})`
+        },
+        category: 'general',
+        address: { en: targetApp.address, ne: targetApp.address },
+        phone: targetApp.phone,
+        email: targetApp.email,
+        bio: {
+          en: `${targetApp.fullName} is an officially enrolled ${targetApp.membershipType} of Chaurasiya Samaj Nepal (Membership ID: ${assignedMemberId}).`,
+          ne: `${targetApp.fullName} चौरसिया समाज नेपालका आधिकारिक दर्ता भएका ${targetApp.membershipType} हुनुहुन्छ (सदस्यता ID: ${assignedMemberId})।`
+        },
+      };
+      setMembers(prev => {
+        const updated = [newMemberObj, ...prev];
+        try {
+          localStorage.setItem('chaurasiya_members', JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      });
+    }
+
+    setMembershipApps(prev => {
+      const updated = prev.map(m => m.id === id ? { ...m, status: 'approved' as const } : m);
+      try {
+        localStorage.setItem('chaurasiya_membership_apps', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleRejectMembershipApp = (id: string) => {
+    setMembershipApps(prev => {
+      const updated = prev.filter(m => m.id !== id);
+      try {
+        localStorage.setItem('chaurasiya_membership_apps', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  // Newsletter Subscribers handler
+  const handleNewsletterSubscribeSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const input = form.querySelector('input[type="email"]') as HTMLInputElement;
+    if (input && input.value) {
+      const emailVal = input.value.trim();
+      const newSub: NewsletterSubscriber = {
+        id: `sub-${Date.now()}`,
+        email: emailVal,
+        subscribedAt: new Date().toISOString().split('T')[0],
+        source: 'Website Footer'
+      };
+      setSubscribers(prev => {
+        if (prev.some(s => s.email.toLowerCase() === emailVal.toLowerCase())) return prev;
+        const updated = [newSub, ...prev];
+        try {
+          localStorage.setItem('chaurasiya_subscribers', JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      });
+      alert(lang === 'en' ? `Subscribed ${emailVal} successfully!` : `${emailVal} सफलतापूर्वक सदस्यता लिइयो!`);
+      input.value = '';
+    }
+  };
+
+  const handleDeleteSubscriber = (id: string) => {
+    setSubscribers(prev => {
+      const updated = prev.filter(s => s.id !== id);
+      try {
+        localStorage.setItem('chaurasiya_subscribers', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleUpdateMember = (updatedMember: Member) => {
+    setMembers(prev => {
+      const updated = prev.map(m => m.id === updatedMember.id ? updatedMember : m);
+      try {
+        localStorage.setItem('chaurasiya_members', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
 
   const handleAddNotice = async (newNotice: Notice) => {
     // 1. Immediately update local state & localStorage
@@ -1074,36 +1368,39 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-teal-200 selection:text-teal-950 transition-colors duration-200 overflow-x-hidden">
-      {/* Brand Top bar */}
-      <div className="bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-teal-50 text-[11px] sm:text-xs py-2.5 px-4 sm:px-6 lg:px-8 shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
-          <span className="font-bold flex items-center gap-2 tracking-wide uppercase">
-            <div className="w-5 h-5 rounded-full bg-white overflow-hidden flex items-center justify-center p-0.5 shadow-sm">
-              <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-cover rounded-full" />
+      {/* Fixed Sticky Header Wrapper containing logo and navigation menu */}
+      <header className="sticky top-0 z-50 shadow-md bg-white dark:bg-slate-900 transition-all">
+        {/* Brand Top bar */}
+        <div className="bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-teal-50 text-[11px] sm:text-xs py-2 px-4 sm:px-6 lg:px-8 border-b border-teal-800/40">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+            <span className="font-bold flex items-center gap-2 tracking-wide uppercase">
+              <div className="w-5 h-5 rounded-full bg-white overflow-hidden flex items-center justify-center p-0.5 shadow-sm">
+                <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-cover rounded-full" />
+              </div>
+              {lang === 'en' ? siteTexts.taglineEn : siteTexts.taglineNe}
+            </span>
+            <div className="flex items-center gap-4 text-emerald-200 font-medium">
+              <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5" /> SWC Registered</span>
+              <span className="hidden sm:inline opacity-50">|</span>
+              <span className="hidden sm:inline hover:text-white transition-colors cursor-pointer">✉️ {siteTexts.footerEmail}</span>
             </div>
-            {lang === 'en' ? siteTexts.taglineEn : siteTexts.taglineNe}
-          </span>
-          <div className="flex items-center gap-4 text-emerald-200 font-medium">
-            <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5" /> SWC Registered</span>
-            <span className="hidden sm:inline opacity-50">|</span>
-            <span className="hidden sm:inline hover:text-white transition-colors cursor-pointer">✉️ {siteTexts.footerEmail}</span>
           </div>
         </div>
-      </div>
 
-      {/* Navigation header */}
-      <Navigation
-        currentTab={currentTab}
-        setCurrentTab={handleNavigate}
-        lang={lang}
-        setLang={setLang}
-        onTrackAction={handleTrackAction}
-        isAdmin={isAdmin}
-        onOpenAdminModal={() => setIsAdminModalOpen(true)}
-        theme={theme}
-        toggleTheme={toggleTheme}
-        siteTexts={siteTexts}
-      />
+        {/* Navigation header */}
+        <Navigation
+          currentTab={currentTab}
+          setCurrentTab={handleNavigate}
+          lang={lang}
+          setLang={setLang}
+          onTrackAction={handleTrackAction}
+          isAdmin={isAdmin}
+          onOpenAdminModal={() => setIsAdminModalOpen(true)}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          siteTexts={siteTexts}
+        />
+      </header>
 
       {/* Main body viewport container */}
       <main className="flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -1232,6 +1529,20 @@ export default function App() {
             lang={lang}
             leaderId={selectedLeaderId}
             onTrackAction={handleTrackAction}
+            members={members}
+            onUpdateMember={handleUpdateMember}
+            isAdmin={isAdmin}
+          />
+        )}
+
+        {currentTab === 'matrimonial' && (
+          <MatrimonialSection
+            lang={lang}
+            profiles={matrimonialProfiles}
+            onAddProfile={handleAddMatrimonialProfile}
+            onTrackAction={handleTrackAction}
+            isAdmin={isAdmin}
+            onOpenAdminDashboard={() => setIsAdminDashboardOpen(true)}
           />
         )}
 
@@ -1274,6 +1585,8 @@ export default function App() {
         {currentTab === 'membership-donation' && (
           <MembershipDonation
             lang={lang}
+            onAddMembershipApp={handleAddMembershipApp}
+            onAddVolunteerApp={handleAddVolunteerApp}
             onAddMember={() => {
               setMetrics((prev) => ({
                 ...prev,
@@ -1394,7 +1707,7 @@ export default function App() {
           <div className="md:col-span-3 space-y-4">
             <h4 className="font-bold text-white mb-4">Newsletter</h4>
             <p className="text-sm text-gray-400 font-medium mb-4">Subscribe to our newsletter for the latest updates on projects and events.</p>
-            <form onSubmit={handleNewsletterSubscribe} className="flex flex-col gap-2">
+            <form onSubmit={handleNewsletterSubscribeSubmit} className="flex flex-col gap-2">
               <div className="relative">
                 <Mail className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input 
@@ -1404,7 +1717,7 @@ export default function App() {
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-emerald-500"
                 />
               </div>
-              <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-2.5 rounded-lg text-sm transition-colors">
+              <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-2.5 rounded-lg text-sm transition-colors cursor-pointer">
                 Subscribe
               </button>
             </form>
@@ -1413,7 +1726,7 @@ export default function App() {
 
         {/* Footer Credit Line */}
         <div className="max-w-7xl mx-auto pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500 font-medium">
-          <span>{formatNumber(t.rights[lang], lang)} | {formatNumber(lang === 'en' ? 'Reg: 12345/071' : 'दर्ता नं: १२३४५/०७१', lang)}</span>
+          <span>{formatNumber(t.rights[lang], lang)} | {formatNumber(lang === 'en' ? 'Reg: 12345/071' : 'दर्ता नं: १२३४५/०त्१', lang)}</span>
           <div className="flex flex-wrap items-center justify-center gap-6">
             <button onClick={() => handleNavigate('privacy')} className="hover:text-emerald-400 transition-colors">{lang === 'en' ? 'Privacy Policy' : 'गोपनीयता नीति'}</button>
             <button onClick={() => handleNavigate('terms')} className="hover:text-emerald-400 transition-colors">{lang === 'en' ? 'Terms of Service' : 'सेवाका सर्तहरू'}</button>
@@ -1424,7 +1737,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto mt-6 pt-4 border-t border-gray-800/40 flex justify-center">
           <button
             onClick={() => handleNavigate('abhishek-bio')}
-            className="inline-flex items-center gap-2.5 pl-1.5 pr-3 py-1 bg-emerald-950/30 hover:bg-emerald-900/50 text-emerald-300 hover:text-emerald-200 border border-emerald-800/20 hover:border-emerald-700/40 rounded-full transition-all text-xs font-bold shadow-sm group"
+            className="inline-flex items-center gap-2.5 pl-1.5 pr-3 py-1 bg-emerald-950/30 hover:bg-emerald-900/50 text-emerald-300 hover:text-emerald-200 border border-emerald-800/20 hover:border-emerald-700/40 rounded-full transition-all text-xs font-bold shadow-sm group cursor-pointer"
           >
             <div className="w-7 h-7 rounded-full overflow-hidden border border-emerald-500/40 shrink-0">
               <img
@@ -1441,6 +1754,17 @@ export default function App() {
           </button>
         </div>
       </footer>
+
+      {/* Admin Floating Console Button */}
+      {isAdmin && (
+        <button
+          onClick={() => setIsAdminDashboardOpen(true)}
+          className="fixed bottom-6 left-6 z-50 px-4 py-3 bg-teal-950 text-emerald-300 border border-emerald-500/40 rounded-2xl shadow-2xl flex items-center gap-2 hover:bg-teal-900 transition-all font-extrabold text-xs cursor-pointer"
+        >
+          <Shield className="w-4 h-4 text-emerald-400" />
+          {lang === 'en' ? 'Central Admin Console' : 'केन्द्रीय प्रशासन'}
+        </button>
+      )}
 
       {/* Floating WhatsApp Button */}
       <a 
@@ -1470,6 +1794,25 @@ export default function App() {
         lang={lang}
         isAdmin={isAdmin}
         setIsAdmin={setIsAdmin}
+      />
+
+      {/* Admin Central Operations Dashboard Modal */}
+      <AdminCentralDashboardModal
+        isOpen={isAdminDashboardOpen}
+        onClose={() => setIsAdminDashboardOpen(false)}
+        lang={lang}
+        matrimonialProfiles={matrimonialProfiles}
+        onUpdateMatrimonialStatus={handleUpdateMatrimonialStatus}
+        onDeleteMatrimonialProfile={handleDeleteMatrimonialProfile}
+        volunteerApps={volunteerApps}
+        onUpdateVolunteerStatus={handleUpdateVolunteerStatus}
+        onDeleteVolunteerApp={handleDeleteVolunteerApp}
+        membershipApps={membershipApps}
+        onApproveMembershipApp={handleApproveMembershipApp}
+        onRejectMembershipApp={handleRejectMembershipApp}
+        subscribers={subscribers}
+        onDeleteSubscriber={handleDeleteSubscriber}
+        members={members}
       />
 
       {/* Add Community Notice Modal */}

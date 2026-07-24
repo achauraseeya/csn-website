@@ -35,6 +35,7 @@ export default function Navigation({
     { id: 'albums-gallery', label: { en: 'Journey Albums', ne: 'यात्रा एल्बमहरू' } },
     { id: 'notices-gallery', label: { en: 'Notices & Gallery', ne: 'सूचना र ग्यालरी' } },
     { id: 'directory', label: { en: 'Members Directory', ne: 'सदस्य निर्देशिका' } },
+    { id: 'matrimonial', label: { en: 'Matrimonial', ne: 'वैवाहिक जोडी' } },
     { id: 'events', label: { en: 'Events & Calendar', ne: 'कार्यक्रम र पात्रो' } },
     { id: 'membership-donation', label: { en: 'Join & Support', ne: 'सहभागिता र सहयोग' } },
     { id: 'blogger-exporter', label: { en: 'Blogger Exporter', ne: 'ब्लगर एक्सपोर्टर' } },
