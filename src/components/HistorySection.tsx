@@ -259,7 +259,7 @@ export default function HistorySection({
     } catch (e) {
       setEditLeadership(boardMembers.filter(m => m.id === '1' || m.id === 'vc1'));
     }
-  }, [siteTexts]);
+  }, [siteTexts, isEditingTexts]);
 
   const handleSaveTexts = async (e: React.FormEvent) => {
     e.preventDefault();
