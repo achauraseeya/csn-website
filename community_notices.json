@@ -1,0 +1,54 @@
+[
+  {
+    "id": "notice-1785068787572",
+    "title": {
+      "en": "dgdfgd",
+      "ne": "dgsg"
+    },
+    "content": {
+      "en": "dgdsg",
+      "ne": "dsgdsg"
+    },
+    "category": "notice",
+    "date": "2026-07-26"
+  },
+  {
+    "id": "n1",
+    "title": {
+      "en": "Annual General Assembly 2026 Announcement",
+      "ne": "वार्षिक साधारण सभा २०८३ को घोषणा"
+    },
+    "content": {
+      "en": "Chaurasiya Samaj Nepal is pleased to invite all community members, advisors, and executive members to the Annual General Assembly to be held in Kathmandu. We will discuss our expansion plans, agricultural initiatives for paan growers, and student scholarship quotas.",
+      "ne": "चौरसिया समाज नेपाल काठमाडौंमा आयोजना हुने वार्षिक साधारण सभामा सम्पूर्ण समुदायका सदस्य, सल्लाहकार र कार्यकारी सदस्यहरूलाई निमन्त्रणा गर्दछ। हामी हाम्रो विस्तार योजना, पान उत्पादकहरूका लागि कृषि पहलहरू र विद्यार्थी छात्रवृत्ति कोटाबारे छलफल गर्नेछौं।"
+    },
+    "date": "2026-08-10",
+    "category": "notice"
+  },
+  {
+    "id": "n2",
+    "title": {
+      "en": "Free Paan Farmers Modernization Workshop",
+      "ne": "नि:शुल्क पान कृषक आधुनिकीकरण कार्यशाला"
+    },
+    "content": {
+      "en": "To sustain the historic cultivation of betel leaves, we are organizing a training seminar on modern soil testing, drip irrigation, and organic pest control in Birgunj. Export quality enhancements will be key focus.",
+      "ne": "पानको पातको ऐतिहासिक खेतीलाई जोगाइराख्न हामी वीरगन्जमा आधुनिक माटो परीक्षण, थोपा सिँचाइ र अर्गानिक कीटनाशक नियन्त्रणसम्बन्धी तालिम गोष्ठी आयोजना गर्दैछौं। गुणस्तर वृद्धि मुख्य फोकस हुनेछ।"
+    },
+    "date": "2026-07-25",
+    "category": "work"
+  },
+  {
+    "id": "n3",
+    "title": {
+      "en": "Scholarship Distribution to Chaurasiya Students",
+      "ne": "चौरसिया विद्यार्थीहरूलाई छात्रवृत्ति वितरण"
+    },
+    "content": {
+      "en": "Applications are officially open for the Chaurasiya Education Welfare Scholarship, aiming to support meritorious students from low-income families pursuing medicine, engineering, and computer sciences.",
+      "ne": "चिकित्सा, इन्जिनियरिङ् र कम्प्युटर विज्ञान पढिरहेका न्यून आय भएका परिवारका जेहेन्दार विद्यार्थीहरूलाई सहयोग गर्ने उद्देश्यले चौरसिया शिक्षा कल्याण छात्रवृत्तिका लागि आवेदन खुला गरिएको छ।"
+    },
+    "date": "2026-07-05",
+    "category": "press"
+  }
+]
