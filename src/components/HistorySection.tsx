@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin, ShieldCheck, Lock, Trash2, Plus, ExternalLink, Edit, Save } from 'lucide-react';
 import { Album, Language, Notice, SiteTexts, NetworkBranch, Member } from '../types';
 import { uploadImageToGithub } from '../utils/githubDb';
+import { compressImageToBase64 } from '../utils/imageUtils';
 import { communityHistory, impactStats, galleryItems, boardMembers, notices as defaultNotices, blogPosts } from '../data/communityData';
 import { journeyAlbums as defaultJourneyAlbums } from '../data/albumsData';
 import AlbumDetail from './AlbumDetail';
@@ -165,20 +166,15 @@ export default function HistorySection({
 
   // File upload helper
   const handleFileUpload = async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result as string;
-        try {
-          const fileName = `${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi, '_')}`;
-          const url = await uploadImageToGithub(fileName, base64, `Upload image ${file.name}`);
-          resolve(url);
-        } catch (e: any) {
-          reject(e);
-        }
-      };
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsDataURL(file);
+    return new Promise(async (resolve, reject) => {
+      try {
+        const base64 = await compressImageToBase64(file, 500);
+        const fileName = `${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi, '_')}`;
+        const url = await uploadImageToGithub(fileName, base64, `Upload image ${file.name}`);
+        resolve(url);
+      } catch (e: any) {
+        reject(e);
+      }
     });
   };
 

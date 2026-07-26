@@ -3,6 +3,7 @@ import { Mail, Phone, Github, Award, BookOpen, Cpu, ShieldCheck, Heart, Edit, Sa
 import { Language } from '../types';
 import { designerProfile as defaultDesignerProfile } from '../data/communityData';
 import { uploadImageToGithub, apiFetch, saveFileToGithub } from '../utils/githubDb';
+import { compressImageToBase64 } from '../utils/imageUtils';
 
 interface AbhishekBioProps {
   lang: Language;
@@ -214,24 +215,20 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
     if (!file) return;
     try {
       setIsUploading(true);
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result as string;
-        try {
-          // Upload photo to GitHub Repo (assets/uploads/abhishek_photo.jpg)
-          const githubUrl = await uploadImageToGithub(
-            `abhishek_profile_${Date.now()}.jpg`,
-            base64,
-            'Update Abhishek Chaurasiya profile photo'
-          );
-          setEditAvatarUrl(githubUrl);
-        } catch (err) {
-          setEditAvatarUrl(base64);
-        } finally {
-          setIsUploading(false);
-        }
-      };
-      reader.readAsDataURL(file);
+      const base64 = await compressImageToBase64(file, 500);
+      try {
+        // Upload photo to GitHub Repo
+        const githubUrl = await uploadImageToGithub(
+          `abhishek_profile_${Date.now()}.jpg`,
+          base64,
+          'Update Abhishek Chaurasiya profile photo'
+        );
+        setEditAvatarUrl(githubUrl);
+      } catch (err) {
+        setEditAvatarUrl(base64);
+      } finally {
+        setIsUploading(false);
+      }
     } catch (err) {
       setIsUploading(false);
     }

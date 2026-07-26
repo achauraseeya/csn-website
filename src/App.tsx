@@ -643,14 +643,33 @@ export default function App() {
     deleteSubscriberFromCloud(id);
   };
 
-  const handleUpdateMember = (updatedMember: Member) => {
+  const handleUpdateMember = async (updatedMember: Member) => {
+    // 1. Immediately update local state
     setMembers(prev => {
-      const updated = prev.map(m => m.id === updatedMember.id ? updatedMember : m);
+      const exists = prev.some(m => m.id === updatedMember.id);
+      const updated = exists ? prev.map(m => m.id === updatedMember.id ? updatedMember : m) : [...prev, updatedMember];
       try {
         localStorage.setItem('chaurasiya_members', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
+
+    // 2. Push to GitHub
+    try {
+      // Need members array from state. We use members from scope.
+      const cleanList = members.filter(m => m.id !== updatedMember.id);
+      const fullList = [...cleanList, updatedMember];
+      await apiSave<Member>(
+        '/api/members',
+        'community_members.json',
+        fullList,
+        updatedMember,
+        `Update member profile: ${updatedMember.name.en}`,
+        getAuthHeaders()
+      );
+    } catch (e) {
+      console.error('Failed to save updated member:', e);
+    }
   };
 
   const handleAddNotice = async (newNotice: Notice) => {

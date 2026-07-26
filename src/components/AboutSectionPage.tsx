@@ -155,6 +155,8 @@ interface AboutSectionPageProps {
   onTrackAction: (actionName: string) => void;
 }
 
+import { compressImageToBase64 } from '../utils/imageUtils';
+
 export default function AboutSectionPage({
   currentTab,
   onNavigate,
@@ -258,24 +260,20 @@ export default function AboutSectionPage({
     if (!file) return;
     try {
       setIsUploading(true);
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result as string;
-        try {
-          const githubUrl = await uploadImageToGithub(
-            `about_${activeSubsectionId}_${Date.now()}.jpg`,
-            base64,
-            `Update image for ${activeSubsectionId}`
-          );
-          setEditImageUrl(githubUrl);
-        } catch (err) {
-          // Fallback to raw base64 or object URL if GitHub is disabled
-          setEditImageUrl(base64);
-        } finally {
-          setIsUploading(false);
-        }
-      };
-      reader.readAsDataURL(file);
+      const base64 = await compressImageToBase64(file, 500);
+      try {
+        const githubUrl = await uploadImageToGithub(
+          `about_${activeSubsectionId}_${Date.now()}.jpg`,
+          base64,
+          `Update image for ${activeSubsectionId}`
+        );
+        setEditImageUrl(githubUrl);
+      } catch (err) {
+        // Fallback to raw base64 or object URL if GitHub is disabled
+        setEditImageUrl(base64);
+      } finally {
+        setIsUploading(false);
+      }
     } catch (err) {
       setIsUploading(false);
     }

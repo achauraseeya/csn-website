@@ -16,6 +16,8 @@ interface DirectorySectionProps {
   onDeleteMember?: (id: string) => void;
 }
 
+import { compressImageToBase64 } from '../utils/imageUtils';
+
 export default function DirectorySection({
   lang,
   onAddMember,
@@ -85,47 +87,43 @@ export default function DirectorySection({
     return () => window.removeEventListener('popstate', handlePopState);
   }, [editingMember, showNominateForm]);
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1 * 1024 * 1024) {
-        alert(lang === 'en' ? 'File is too large! Maximum size allowed is 1MB.' : 'फाइल धेरै ठूलो छ! अधिकतम स्वीकृत आकार १MB हो।');
+      if (file.size > 2 * 1024 * 1024) {
+        alert(lang === 'en' ? 'File is too large! Maximum size allowed is 2MB.' : 'फाइल धेरै ठूलो छ! अधिकतम स्वीकृत आकार २MB हो।');
         return;
       }
       setPhotoName(file.name);
       setUploadProgress(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoBase64(reader.result as string);
-        setUploadProgress(false);
-      };
-      reader.onerror = () => {
-        setUploadProgress(false);
+      try {
+        const base64 = await compressImageToBase64(file, 500);
+        setPhotoBase64(base64);
+      } catch (err) {
         alert(lang === 'en' ? 'Failed to read photo file.' : 'फोटो फाइल पढ्न असफल भयो।');
-      };
-      reader.readAsDataURL(file);
+      } finally {
+        setUploadProgress(false);
+      }
     }
   };
 
-  const handleEditPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1 * 1024 * 1024) {
-        alert(lang === 'en' ? 'File is too large! Maximum size allowed is 1MB.' : 'फाइल धेरै ठूलो छ! अधिकतम स्वीकृत आकार १MB हो।');
+      if (file.size > 2 * 1024 * 1024) {
+        alert(lang === 'en' ? 'File is too large! Maximum size allowed is 2MB.' : 'फाइल धेरै ठूलो छ! अधिकतम स्वीकृत आकार २MB हो।');
         return;
       }
       setEditPhotoName(file.name);
       setEditUploadProgress(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditPhotoBase64(reader.result as string);
-        setEditUploadProgress(false);
-      };
-      reader.onerror = () => {
-        setEditUploadProgress(false);
+      try {
+        const base64 = await compressImageToBase64(file, 500);
+        setEditPhotoBase64(base64);
+      } catch (err) {
         alert(lang === 'en' ? 'Failed to read photo file.' : 'फोटो फाइल पढ्न असफल भयो।');
-      };
-      reader.readAsDataURL(file);
+      } finally {
+        setEditUploadProgress(false);
+      }
     }
   };
 

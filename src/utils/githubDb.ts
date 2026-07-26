@@ -163,30 +163,30 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
 
   // 2. Try fetching directly from GitHub repository (Source of Truth)
   if (settings.enabled && settings.username && settings.repo) {
-    // A) If Admin with PAT, try GitHub API contents endpoint with Auth header
-    if (pat) {
-      try {
-        const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${fileName}?ref=${settings.branch}&t=${Date.now()}`;
-        const res = await fetch(url, {
-          headers: {
-            'Authorization': `token ${pat}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Cache-Control': 'no-cache'
-          }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.content) {
-            const contentStr = base64ToUtf8(data.content);
-            return JSON.parse(contentStr) as T;
-          }
-        }
-      } catch (e) {
-        // Fallback to raw usercontent
+    // A) First try GitHub API contents endpoint (Source of Truth, bypasses raw CDN cache)
+    try {
+      const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${fileName}?ref=${settings.branch}&t=${Date.now()}`;
+      const headers: Record<string, string> = {
+        'Accept': 'application/vnd.github.v3+json',
+        'Cache-Control': 'no-cache'
+      };
+      if (pat) {
+        headers['Authorization'] = `token ${pat}`;
       }
+      
+      const res = await fetch(url, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.content) {
+          const contentStr = base64ToUtf8(data.content);
+          return JSON.parse(contentStr) as T;
+        }
+      }
+    } catch (e) {
+      // Fallback to raw usercontent
     }
 
-    // B) For public users (or if authenticated API fetch failed), fetch raw file directly from GitHub repository!
+    // B) For public users (or if API rate limited), fetch raw file directly from GitHub repository
     try {
       const rawUrl = `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${fileName}?t=${Date.now()}`;
       const rawRes = await fetch(rawUrl, { cache: 'no-store' });

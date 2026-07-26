@@ -86,6 +86,8 @@ interface OurHeritagePageProps {
   onTrackAction: (actionName: string) => void;
 }
 
+import { compressImageToBase64 } from '../utils/imageUtils';
+
 export default function OurHeritagePage({ lang, isAdmin, onTrackAction }: OurHeritagePageProps) {
   const [heritageData, setHeritageData] = useState<HeritageData>(() => {
     try {
@@ -170,23 +172,19 @@ export default function OurHeritagePage({ lang, isAdmin, onTrackAction }: OurHer
     if (!file) return;
     try {
       setIsUploading(true);
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result as string;
-        try {
-          const githubUrl = await uploadImageToGithub(
-            `heritage_photo_${Date.now()}.jpg`,
-            base64,
-            'Update Our Heritage cover image'
-          );
-          setEditImageUrl(githubUrl);
-        } catch (err) {
-          setEditImageUrl(base64);
-        } finally {
-          setIsUploading(false);
-        }
-      };
-      reader.readAsDataURL(file);
+      const base64 = await compressImageToBase64(file, 500);
+      try {
+        const githubUrl = await uploadImageToGithub(
+          `heritage_photo_${Date.now()}.jpg`,
+          base64,
+          'Update Our Heritage cover image'
+        );
+        setEditImageUrl(githubUrl);
+      } catch (err) {
+        setEditImageUrl(base64);
+      } finally {
+        setIsUploading(false);
+      }
     } catch (err) {
       setIsUploading(false);
     }

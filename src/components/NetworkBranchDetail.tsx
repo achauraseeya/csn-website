@@ -11,6 +11,7 @@ import {
 } from '../types';
 import { getBestAlbumCover, getGoogleDriveDownloadUrl, formatDriveImageUrl, formatNumber } from '../utils/mediaUrl';
 import { uploadImageToGithub } from '../utils/githubDb';
+import { compressImageToBase64 } from '../utils/imageUtils';
 import AlbumDetail from './AlbumDetail';
 
 interface NetworkBranchDetailProps {
@@ -124,15 +125,20 @@ export default function NetworkBranchDetail({
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   // Handle Photo Upload base64
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert(lang === 'en' ? 'File is too large! Maximum size allowed is 2MB.' : 'फाइल धेरै ठूलो छ! अधिकतम स्वीकृत आकार २MB हो।');
+        return;
+      }
       setMemberPhotoName(file.name);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setMemberPhotoBase64(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const base64 = await compressImageToBase64(file, 500);
+        setMemberPhotoBase64(base64);
+      } catch (err) {
+        alert(lang === 'en' ? 'Failed to read photo file.' : 'फोटो फाइल पढ्न असफल भयो।');
+      }
     }
   };
 
@@ -251,7 +257,7 @@ export default function NetworkBranchDetail({
 
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
 
-  const handlePhotoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
@@ -259,9 +265,8 @@ export default function NetworkBranchDetail({
       return;
     }
     setIsUploadingMedia(true);
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64 = reader.result as string;
+    try {
+      const base64 = await compressImageToBase64(file, 500);
       const fileName = `chap_${branch.id}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       try {
         const uploadedUrl = await uploadImageToGithub(fileName, base64, `Upload chapter photo ${file.name}`);
@@ -271,8 +276,10 @@ export default function NetworkBranchDetail({
       } finally {
         setIsUploadingMedia(false);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      alert(lang === 'en' ? 'Failed to read photo file.' : 'फोटो फाइल पढ्न असफल भयो।');
+      setIsUploadingMedia(false);
+    }
   };
 
   const handleAlbumSubmit = (e: React.FormEvent) => {
