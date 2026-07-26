@@ -29,6 +29,9 @@ import AdminLoginModal from './components/AdminLoginModal';
 import AddNoticeModal from './components/AddNoticeModal';
 import PrivacySection from './components/PrivacySection';
 import TermsSection from './components/TermsSection';
+import AboutSectionPage from './components/AboutSectionPage';
+import OurHeritagePage from './components/OurHeritagePage';
+import { SitemapModal } from './components/SitemapModal';
 import { SiteTexts } from './types';
 import { apiFetch, apiSave, apiDelete, saveFileToGithub, getGithubSettings, uploadImageToGithub } from './utils/githubDb';
 import { formatNumber } from './utils/mediaUrl';
@@ -749,6 +752,7 @@ export default function App() {
 
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isSitemapModalOpen, setIsSitemapModalOpen] = useState(false);
 
   const handleSelectAlbum = (albumId: string) => {
     setSelectedAlbumId(albumId);
@@ -1510,25 +1514,25 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-teal-200 selection:text-teal-950 transition-colors duration-200 overflow-x-clip">
-      {/* Fixed Sticky Header Wrapper containing logo and navigation menu */}
-      <header className="sticky top-0 z-50 shadow-md bg-white dark:bg-slate-900 transition-all">
-        {/* Brand Top bar */}
-        <div className="bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-teal-50 text-[11px] sm:text-xs py-2 px-4 sm:px-6 lg:px-8 border-b border-teal-800/40">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
-            <span className="font-bold flex items-center gap-2 tracking-wide uppercase">
-              <div className="w-5 h-5 rounded-full bg-white overflow-hidden flex items-center justify-center p-0.5 shadow-sm">
-                <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-cover rounded-full" />
-              </div>
-              {lang === 'en' ? siteTexts.taglineEn : siteTexts.taglineNe}
-            </span>
-            <div className="flex items-center gap-4 text-emerald-200 font-medium">
-              <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5" /> SWC Registered</span>
-              <span className="hidden sm:inline opacity-50">|</span>
-              <span className="hidden sm:inline hover:text-white transition-colors cursor-pointer">✉️ {siteTexts.footerEmail}</span>
+      {/* Top Ribbon with SWC Registered (Scrolls with page body) */}
+      <div className="bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-teal-50 text-[11px] sm:text-xs py-2 px-4 sm:px-6 lg:px-8 border-b border-teal-800/40">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+          <span className="font-bold flex items-center gap-2 tracking-wide uppercase">
+            <div className="w-5 h-5 rounded-full bg-white overflow-hidden flex items-center justify-center p-0.5 shadow-sm">
+              <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-cover rounded-full" />
             </div>
+            {lang === 'en' ? siteTexts.taglineEn : siteTexts.taglineNe}
+          </span>
+          <div className="flex items-center gap-4 text-emerald-200 font-medium">
+            <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5" /> SWC Registered</span>
+            <span className="hidden sm:inline opacity-50">|</span>
+            <span className="hidden sm:inline hover:text-white transition-colors cursor-pointer">✉️ {siteTexts.footerEmail}</span>
           </div>
         </div>
+      </div>
 
+      {/* Fixed Sticky Header Wrapper containing navigation menu */}
+      <header className="sticky top-0 z-50 shadow-md bg-white dark:bg-slate-900 transition-all">
         {/* Navigation header */}
         <Navigation
           currentTab={currentTab}
@@ -1547,7 +1551,7 @@ export default function App() {
 
       {/* Main body viewport container */}
       <main className="flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        {currentTab === 'history' && (
+        {(currentTab === 'history' || currentTab === 'home') && (
           <HistorySection
             lang={lang}
             onNavigate={handleNavigate}
@@ -1570,6 +1574,24 @@ export default function App() {
             onSelectNetwork={handleSelectNetwork}
             onAddNetwork={handleAddNetwork}
             onDeleteNetwork={handleDeleteNetwork}
+          />
+        )}
+
+        {(currentTab.startsWith('about-') || currentTab === 'about') && (
+          <AboutSectionPage
+            currentTab={currentTab}
+            onNavigate={handleNavigate}
+            lang={lang}
+            isAdmin={isAdmin}
+            onTrackAction={handleTrackAction}
+          />
+        )}
+
+        {currentTab === 'our-heritage' && (
+          <OurHeritagePage
+            lang={lang}
+            isAdmin={isAdmin}
+            onTrackAction={handleTrackAction}
           />
         )}
 
@@ -1745,6 +1767,7 @@ export default function App() {
           <AbhishekBio
             lang={lang}
             onTrackAction={handleTrackAction}
+            isAdmin={isAdmin}
           />
         )}
 
@@ -1823,10 +1846,14 @@ export default function App() {
           <div className="md:col-span-3 space-y-3">
             <h4 className="font-bold text-white mb-2">Quick Links</h4>
             <div className="flex flex-col gap-2.5 text-sm text-gray-400 font-medium">
-              <button onClick={() => handleNavigate('history')} className="hover:text-emerald-400 text-left transition-colors">About Us</button>
+              <button onClick={() => handleNavigate('home')} className="hover:text-emerald-400 text-left transition-colors">Home</button>
+              <button onClick={() => handleNavigate('about-vision')} className="hover:text-emerald-400 text-left transition-colors">About Us</button>
+              <button onClick={() => handleNavigate('our-heritage')} className="hover:text-emerald-400 text-left transition-colors">Our Heritage</button>
               <button onClick={() => handleNavigate('events')} className="hover:text-emerald-400 text-left transition-colors">Projects & Programs</button>
               <button onClick={() => handleNavigate('directory')} className="hover:text-emerald-400 text-left transition-colors">Committee Members</button>
-              <button onClick={() => handleNavigate('blogger-exporter')} className="hover:text-emerald-400 text-left transition-colors">{lang === 'en' ? 'Blogger XML Theme' : 'ब्लगर XML थिम'}</button>
+              <button onClick={() => setIsSitemapModalOpen(true)} className="hover:text-emerald-400 text-left transition-colors font-bold text-emerald-400 flex items-center gap-1 cursor-pointer">
+                <span>{lang === 'en' ? 'Sitemap' : 'सामाग्री नक्सा'}</span>
+              </button>
               <button onClick={() => handleNavigate('transparency')} className="hover:text-emerald-400 text-left transition-colors">Transparency</button>
             </div>
           </div>
@@ -1917,6 +1944,14 @@ export default function App() {
         onClose={() => setIsAddNoticeModalOpen(false)}
         lang={lang}
         onAddNotice={handleAddNotice}
+      />
+
+      {/* Sitemap Modal */}
+      <SitemapModal
+        isOpen={isSitemapModalOpen}
+        onClose={() => setIsSitemapModalOpen(false)}
+        lang={lang}
+        onNavigate={handleNavigate}
       />
     </div>
   );

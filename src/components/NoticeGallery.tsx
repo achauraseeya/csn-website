@@ -32,6 +32,21 @@ export default function NoticeGallery({
   const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
   const [viewPdfNoticeId, setViewPdfNoticeId] = useState<string | null>(null);
 
+  // Back button popstate listener
+  React.useEffect(() => {
+    const handlePopState = () => {
+      if (selectedImage) {
+        setSelectedImage(null);
+      } else if (viewPdfNoticeId) {
+        setViewPdfNoticeId(null);
+      } else if (expandedNoticeId) {
+        setExpandedNoticeId(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [selectedImage, viewPdfNoticeId, expandedNoticeId]);
+
   const t = {
     noticesHeading: { en: 'Official Notices & Current Works', ne: 'आधिकारिक सूचनाहरू र वर्तमान कार्यहरू' },
     galleryHeading: { en: 'Interactive Media Gallery', ne: 'अन्तरक्रियात्मक मिडिया ग्यालरी' },
@@ -52,6 +67,7 @@ export default function NoticeGallery({
   });
 
   const handleOpenLightbox = (item: GalleryItem) => {
+    window.history.pushState({ modal: 'notice-gallery' }, '');
     setSelectedImage(item);
     onTrackAction(`Open gallery image: ${item.title[lang]}`);
   };
@@ -61,14 +77,14 @@ export default function NoticeGallery({
       {/* Notices & Bulletins Row */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Notices list column */}
-        <div className="lg:col-span-12 bg-white p-6 sm:p-8 rounded-2xl border border-teal-100 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-teal-50 pb-4">
+        <div className="lg:col-span-12 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-teal-50 dark:border-slate-800 pb-4">
             <div>
-              <h2 className="text-2xl font-extrabold text-teal-950 flex items-center gap-2">
-                <FileText className="w-6 h-6 text-teal-600" />
+              <h2 className="text-2xl font-extrabold text-teal-950 dark:text-teal-100 flex items-center gap-2">
+                <FileText className="w-6 h-6 text-teal-600 dark:text-emerald-400" />
                 {t.noticesHeading[lang]}
               </h2>
-              <p className="text-xs font-bold text-teal-600 uppercase tracking-wide mt-1">
+              <p className="text-xs font-bold text-teal-600 dark:text-emerald-400 uppercase tracking-wide mt-1">
                 Transparency and announcements portal
               </p>
             </div>
@@ -88,7 +104,7 @@ export default function NoticeGallery({
               )}
 
               {/* Filter buttons */}
-              <div className="flex flex-wrap gap-1 bg-teal-50 p-1 rounded-lg border border-teal-100">
+              <div className="flex flex-wrap gap-1 bg-teal-50 dark:bg-slate-800 p-1 rounded-lg border border-teal-100 dark:border-slate-700">
                 {(['all', 'work', 'notice', 'press'] as const).map((cat) => (
                   <button
                     key={cat}
@@ -98,8 +114,8 @@ export default function NoticeGallery({
                     }}
                     className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
                       selectedNoticeCat === cat
-                        ? 'bg-teal-700 text-white shadow-sm'
-                        : 'text-teal-800 hover:bg-teal-100'
+                        ? 'bg-teal-700 dark:bg-emerald-600 text-white shadow-sm'
+                        : 'text-teal-800 dark:text-teal-200 hover:bg-teal-100 dark:hover:bg-slate-700'
                     }`}
                   >
                     {t[cat][lang]}
@@ -111,13 +127,13 @@ export default function NoticeGallery({
 
           {/* Search box */}
           <div className="relative">
-            <Search className="absolute left-3.5 top-3.5 w-5 h-5 text-teal-600/60" />
+            <Search className="absolute left-3.5 top-3.5 w-5 h-5 text-teal-600/60 dark:text-emerald-400/60" />
             <input
               type="text"
               placeholder={t.searchPlaceholder[lang]}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-teal-50/50 border border-teal-100 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:bg-white transition-all text-teal-900"
+              className="w-full pl-11 pr-4 py-3 bg-teal-50/50 dark:bg-slate-800/80 border border-teal-100 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-teal-500 dark:focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 transition-all text-teal-900 dark:text-teal-100 placeholder:text-gray-400"
             />
           </div>
 
@@ -127,10 +143,10 @@ export default function NoticeGallery({
               filteredNotices.map((notice) => (
                 <div
                   key={notice.id}
-                  className="rounded-xl border border-teal-100 bg-gradient-to-b from-white to-teal-50/20 hover:shadow-md hover:border-teal-200 transition-all overflow-hidden"
+                  className="rounded-xl border border-teal-100 dark:border-slate-800 bg-gradient-to-b from-white to-teal-50/20 dark:from-slate-900 dark:to-slate-800/50 hover:shadow-md hover:border-teal-200 dark:hover:border-slate-700 transition-all overflow-hidden"
                 >
                   <div 
-                    className="p-5 cursor-pointer hover:bg-teal-50/50 transition-colors"
+                    className="p-5 cursor-pointer hover:bg-teal-50/50 dark:hover:bg-slate-800/50 transition-colors"
                     onClick={() => {
                       setExpandedNoticeId(prev => prev === notice.id ? null : notice.id);
                       setViewPdfNoticeId(null);
@@ -142,40 +158,40 @@ export default function NoticeGallery({
                         <span
                           className={`px-2.5 py-1 text-[10px] font-extrabold tracking-wide rounded uppercase ${
                             notice.category === 'work'
-                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-800'
                               : notice.category === 'notice'
-                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                              : 'bg-teal-100 text-teal-800 border border-teal-200'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-800'
+                              : 'bg-teal-100 text-teal-800 border border-teal-200 dark:bg-teal-950/80 dark:text-teal-300 dark:border-teal-800'
                           }`}
                         >
                           {t[notice.category][lang]}
                         </span>
-                        <span className="text-xs font-semibold text-teal-600/80 font-mono">
+                        <span className="text-xs font-semibold text-teal-600/80 dark:text-emerald-400/80 font-mono">
                           🗓️ {formatNumber(notice.date, lang)}
                         </span>
                       </div>
                       <ChevronRight className={`w-5 h-5 text-teal-400 transition-transform ${expandedNoticeId === notice.id ? 'rotate-90' : ''}`} />
                     </div>
-                    <h3 className="text-lg font-extrabold text-teal-950 transition-colors">
+                    <h3 className="text-lg font-extrabold text-teal-950 dark:text-teal-100 transition-colors">
                       {formatNumber(notice.title[lang], lang)}
                     </h3>
-                    <p className="text-gray-600 text-sm mt-3 leading-relaxed">
+                    <p className="text-gray-600 dark:text-gray-300 text-sm mt-3 leading-relaxed">
                       {formatNumber(notice.content[lang], lang)}
                     </p>
                   </div>
                   
                   {expandedNoticeId === notice.id && (
-                    <div className="px-5 pb-5 pt-3 bg-teal-50/40 border-t border-teal-100 space-y-4">
+                    <div className="px-5 pb-5 pt-3 bg-teal-50/40 dark:bg-slate-800/80 border-t border-teal-100 dark:border-slate-800 space-y-4">
                       {/* Attached File Google Drive Banner */}
                       {(notice.driveFileUrl || notice.fileUrl) && (
-                        <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-emerald-950 font-medium">
+                        <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-emerald-950 dark:text-emerald-200 font-medium">
                           <div className="flex items-center gap-2">
                             <span className="p-1.5 bg-emerald-600 text-white rounded-lg">📄</span>
                             <div>
-                              <span className="font-extrabold block text-emerald-900">
+                              <span className="font-extrabold block text-emerald-900 dark:text-emerald-300">
                                 {lang === 'en' ? 'Google Drive Attached Document/File' : 'गुगल ड्राइभ संलग्न कागजात/फाइल'}
                               </span>
-                              <span className="text-[11px] text-emerald-700">
+                              <span className="text-[11px] text-emerald-700 dark:text-emerald-400">
                                 {notice.driveFileUrl || notice.fileUrl}
                               </span>
                             </div>
@@ -200,7 +216,7 @@ export default function NoticeGallery({
                               setViewPdfNoticeId(prev => prev === notice.id ? null : notice.id);
                               onTrackAction(`Toggled view PDF: ${notice.title.en}`);
                             }}
-                            className="text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                            className="text-xs font-bold text-white bg-teal-700 dark:bg-emerald-600 hover:bg-teal-800 dark:hover:bg-emerald-500 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
                           >
                             {viewPdfNoticeId === notice.id ? <X className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                             {viewPdfNoticeId === notice.id 
@@ -215,9 +231,9 @@ export default function NoticeGallery({
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={() => onTrackAction(`Opened notice file in Drive: ${notice.title.en}`)}
-                                className="text-xs font-bold text-teal-800 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                                className="text-xs font-bold text-teal-800 dark:text-teal-200 bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-700 hover:bg-teal-50 dark:hover:bg-slate-800 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
                               >
-                                <ExternalLink className="w-3.5 h-3.5 text-teal-600" />
+                                <ExternalLink className="w-3.5 h-3.5 text-teal-600 dark:text-emerald-400" />
                                 {lang === 'en' ? 'View on Google Drive' : 'गुगल ड्राइभमा हेर्नुहोस्'}
                               </a>
                               <a 
@@ -226,9 +242,9 @@ export default function NoticeGallery({
                                 rel="noopener noreferrer"
                                 download={`Notice_${notice.date || 'file'}`}
                                 onClick={() => onTrackAction(`Downloaded notice file directly: ${notice.title.en}`)}
-                                className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                                className="text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
                               >
-                                <Download className="w-3.5 h-3.5 text-emerald-600" />
+                                <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                                 {lang === 'en' ? 'Direct Download File' : 'फाइल सिधा डाउनलोड गर्नुहोस्'}
                               </a>
                             </>
@@ -238,9 +254,9 @@ export default function NoticeGallery({
                               target="_blank"
                               download={`Notice_${notice.date}.pdf`}
                               onClick={() => onTrackAction(`Downloaded notice: ${notice.title.en}`)}
-                              className="text-xs font-bold text-teal-800 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                              className="text-xs font-bold text-teal-800 dark:text-teal-200 bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-700 hover:bg-teal-50 dark:hover:bg-slate-800 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
                             >
-                              <Download className="w-3.5 h-3.5 text-teal-600" />
+                              <Download className="w-3.5 h-3.5 text-teal-600 dark:text-emerald-400" />
                               {lang === 'en' ? 'Download PDF' : 'PDF डाउनलोड गर्नुहोस्'}
                             </a>
                           )}
@@ -254,7 +270,7 @@ export default function NoticeGallery({
                                 onDeleteNotice(notice.id);
                               }
                             }}
-                            className="text-xs font-extrabold text-red-600 hover:text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+                            className="text-xs font-extrabold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>{lang === 'en' ? 'Delete Notice (Admin)' : 'सूचना हटाउनुहोस्'}</span>
@@ -263,7 +279,7 @@ export default function NoticeGallery({
                       </div>
                       
                       {viewPdfNoticeId === notice.id && (
-                        <div className="mt-4 rounded-2xl overflow-hidden border border-teal-200 shadow-inner bg-slate-900">
+                        <div className="mt-4 rounded-2xl overflow-hidden border border-teal-200 dark:border-slate-700 shadow-inner bg-slate-900">
                           {(() => {
                             const rawUrl = notice.driveFileUrl || notice.fileUrl;
                             const driveId = rawUrl ? extractGoogleDriveId(rawUrl) : null;
@@ -286,7 +302,7 @@ export default function NoticeGallery({
                 </div>
               ))
             ) : (
-              <div className="text-center py-10 bg-teal-50/40 border border-dashed border-teal-200 rounded-xl text-gray-500">
+              <div className="text-center py-10 bg-teal-50/40 dark:bg-slate-800/40 border border-dashed border-teal-200 dark:border-slate-700 rounded-xl text-gray-500 dark:text-gray-400">
                 No active notices found matching your filters.
               </div>
             )}
@@ -295,13 +311,13 @@ export default function NoticeGallery({
       </section>
 
       {/* Interactive Gallery Section */}
-      <section className="bg-white p-6 sm:p-8 rounded-2xl border border-teal-100 shadow-sm space-y-6">
-        <div className="border-b border-teal-50 pb-4">
-          <h2 className="text-2xl font-extrabold text-teal-950 flex items-center gap-2">
-            <ImageIcon className="w-6 h-6 text-teal-600" />
+      <section className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-6">
+        <div className="border-b border-teal-50 dark:border-slate-800 pb-4">
+          <h2 className="text-2xl font-extrabold text-teal-950 dark:text-teal-100 flex items-center gap-2">
+            <ImageIcon className="w-6 h-6 text-teal-600 dark:text-emerald-400" />
             {t.galleryHeading[lang]}
           </h2>
-          <p className="text-xs font-bold text-teal-600 uppercase tracking-wide mt-1">
+          <p className="text-xs font-bold text-teal-600 dark:text-emerald-400 uppercase tracking-wide mt-1">
             Visual archive of community outreach, events, and agricultural fields
           </p>
         </div>
@@ -312,7 +328,7 @@ export default function NoticeGallery({
             <div
               key={item.id}
               onClick={() => handleOpenLightbox(item)}
-              className="group cursor-pointer bg-teal-50/30 rounded-xl overflow-hidden border border-teal-100 hover:border-teal-300 hover:shadow-md transition-all flex flex-col"
+              className="group cursor-pointer bg-teal-50/30 dark:bg-slate-800/40 rounded-xl overflow-hidden border border-teal-100 dark:border-slate-800 hover:border-teal-300 dark:hover:border-slate-700 hover:shadow-md transition-all flex flex-col"
             >
               <div className="relative overflow-hidden aspect-video bg-teal-900">
                 <img
@@ -329,10 +345,10 @@ export default function NoticeGallery({
               </div>
               <div className="p-4 flex-grow flex flex-col justify-between">
                 <div>
-                  <h4 className="font-bold text-teal-950 text-sm group-hover:text-teal-700 transition-colors">
+                  <h4 className="font-bold text-teal-950 dark:text-teal-100 text-sm group-hover:text-teal-700 dark:group-hover:text-emerald-400 transition-colors">
                     {item.title[lang]}
                   </h4>
-                  <p className="text-gray-500 text-xs mt-1.5 line-clamp-2">
+                  <p className="text-gray-500 dark:text-gray-400 text-xs mt-1.5 line-clamp-2">
                     {item.description[lang]}
                   </p>
                 </div>
@@ -345,7 +361,7 @@ export default function NoticeGallery({
       {/* Lightbox Modal */}
       {selectedImage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative max-w-3xl w-full bg-white rounded-2xl overflow-hidden border border-teal-100 shadow-2xl flex flex-col md:flex-row">
+          <div className="relative max-w-3xl w-full bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-teal-100 dark:border-slate-800 shadow-2xl flex flex-col md:flex-row">
             {/* Close Button */}
             <button
               onClick={() => setSelectedImage(null)}
@@ -366,26 +382,26 @@ export default function NoticeGallery({
             </div>
 
             {/* Text details side */}
-            <div className="md:w-2/5 p-6 sm:p-8 flex flex-col justify-between bg-teal-50/20">
+            <div className="md:w-2/5 p-6 sm:p-8 flex flex-col justify-between bg-teal-50/20 dark:bg-slate-800/50">
               <div className="space-y-4">
-                <span className="inline-block px-2.5 py-1 bg-teal-100 text-teal-800 text-[10px] font-extrabold uppercase tracking-wide rounded">
+                <span className="inline-block px-2.5 py-1 bg-teal-100 dark:bg-slate-700 text-teal-800 dark:text-emerald-300 text-[10px] font-extrabold uppercase tracking-wide rounded">
                   Chaurasiya Archive
                 </span>
-                <h3 className="text-xl font-extrabold text-teal-950">
+                <h3 className="text-xl font-extrabold text-teal-950 dark:text-teal-100">
                   {selectedImage.title[lang]}
                 </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
                   {selectedImage.description[lang]}
                 </p>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-teal-100/60 flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold">
+              <div className="mt-6 pt-4 border-t border-teal-100/60 dark:border-slate-700 flex items-center gap-3">
+                <span className="w-8 h-8 rounded-full bg-teal-600 dark:bg-emerald-600 flex items-center justify-center text-white text-xs font-bold">
                   CS
                 </span>
                 <div>
-                  <span className="block text-xs font-bold text-teal-900">Chaurasiya Samaj Nepal</span>
-                  <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Historical Gallery</span>
+                  <span className="block text-xs font-bold text-teal-900 dark:text-teal-100">Chaurasiya Samaj Nepal</span>
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">Historical Gallery</span>
                 </div>
               </div>
             </div>

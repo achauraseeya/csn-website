@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, Clock, CheckCircle2, Award, ClipboardList, Info, Plus, Trash2, X, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, Clock, CheckCircle2, Award, ClipboardList, Info, Plus, Trash2, X, Sparkles, Loader2 } from 'lucide-react';
 import { Language, CommunityEvent } from '../types';
 import { upcomingEvents as initialUpcomingEvents } from '../data/communityData';
 import { formatNumber } from '../utils/mediaUrl';
+import { AdminFormFieldEditor } from './AdminFormFieldEditor';
+import { getCustomFormFields, CustomFormField } from '../utils/customFormFields';
 
 interface EventsSectionProps {
   lang: Language;
@@ -29,7 +31,12 @@ export default function EventsSection({
   const [volunteerPhone, setVolunteerPhone] = useState('');
   const [volunteerEmail, setVolunteerEmail] = useState('');
   const [volunteerSkills, setVolunteerSkills] = useState('');
+  const [isSubmittingVol, setIsSubmittingVol] = useState(false);
   const [successMsg, setSuccessMsg] = useState(false);
+
+  // Custom Form Fields State
+  const [evtVolCustomFields, setEvtVolCustomFields] = useState<CustomFormField[]>(() => getCustomFormFields('event_volunteer'));
+  const [evtVolCustomAnswers, setEvtVolCustomAnswers] = useState<Record<string, string>>({});
 
   // Add Event Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -37,6 +44,17 @@ export default function EventsSection({
   const [eventTitleNe, setEventTitleNe] = useState('');
   const [eventDescEn, setEventDescEn] = useState('');
   const [eventDescNe, setEventDescNe] = useState('');
+
+  // Back button popstate listener
+  React.useEffect(() => {
+    const handlePopState = () => {
+      if (showAddModal) {
+        setShowAddModal(false);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [showAddModal]);
   const [eventDate, setEventDate] = useState('');
   const [eventTime, setEventTime] = useState('');
   const [eventLocEn, setEventLocEn] = useState('');
@@ -93,19 +111,46 @@ export default function EventsSection({
     setEventLocNe('');
   };
 
-  const handleVolunteerSubmit = (e: React.FormEvent) => {
+  const handleVolunteerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!volunteerName || !volunteerPhone) return;
+
+    setIsSubmittingVol(true);
 
     const data = {
       name: volunteerName,
       phone: volunteerPhone,
       email: volunteerEmail,
       eventId: selectedEventId,
+      eventTitle: selectedEvent.title.en,
       skills: volunteerSkills,
+      customFields: evtVolCustomAnswers,
     };
 
+    try {
+      await fetch('https://formsubmit.co/ajax/csnepalwebsite@gmail.com', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          _subject: `Event Volunteer Enrollment: ${volunteerName} (${selectedEvent.title.en})`,
+          _template: 'table',
+          'Volunteer Name': volunteerName,
+          'Phone / Mobile': volunteerPhone,
+          'Email Address': volunteerEmail || 'N/A',
+          'Event Selected': selectedEvent.title.en,
+          'Skills & Comments': volunteerSkills || 'N/A',
+          ...evtVolCustomAnswers,
+        }),
+      });
+    } catch (err) {
+      console.warn('FormSubmit network response handled:', err);
+    }
+
     onRegisterVolunteer(data);
+    setIsSubmittingVol(false);
     setSuccessMsg(true);
     onTrackAction(`Register volunteer: ${volunteerName} for event ${selectedEvent.title[lang]}`);
 
@@ -115,7 +160,8 @@ export default function EventsSection({
       setVolunteerPhone('');
       setVolunteerEmail('');
       setVolunteerSkills('');
-    }, 5000);
+      setEvtVolCustomAnswers({});
+    }, 6000);
   };
 
   // Static list of calendar dates for August 2026
@@ -193,17 +239,17 @@ export default function EventsSection({
       {/* Admin Add Event Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-teal-100 dark:border-slate-800 text-gray-900 dark:text-white rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200">
             <button
               onClick={() => setShowAddModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
-              <Sparkles className="w-5 h-5 text-emerald-600" />
-              <h3 className="text-lg font-bold text-teal-950">
+            <div className="flex items-center gap-2 border-b border-gray-100 dark:border-slate-800 pb-3">
+              <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              <h3 className="text-lg font-bold text-teal-950 dark:text-teal-100">
                 {lang === 'en' ? 'Add New Community Event' : 'नयाँ सामुदायिक कार्यक्रम थप्नुहोस्'}
               </h3>
             </div>
@@ -211,95 +257,95 @@ export default function EventsSection({
             <form onSubmit={handleAddEventSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">Event Title (English) *</label>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Event Title (English) *</label>
                   <input
                     type="text"
                     required
                     value={eventTitleEn}
                     onChange={(e) => setEventTitleEn(e.target.value)}
                     placeholder="e.g. Free Eye Checkup Camp"
-                    className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-600 text-gray-900 dark:text-white"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">कार्यक्रम शीर्षक (नेपाली)</label>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">कार्यक्रम शीर्षक (नेपाली)</label>
                   <input
                     type="text"
                     value={eventTitleNe}
                     onChange={(e) => setEventTitleNe(e.target.value)}
                     placeholder="उदा. नि:शुल्क आँखा जाँच शिविर"
-                    className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-600 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">Date (e.g., Aug 25, 2026) *</label>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Date (e.g., Aug 25, 2026) *</label>
                   <input
                     type="text"
                     required
                     value={eventDate}
                     onChange={(e) => setEventDate(e.target.value)}
                     placeholder="Aug 25, 2026"
-                    className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-600 text-gray-900 dark:text-white"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">Time (e.g., 10:00 AM - 4:00 PM)</label>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Time (e.g., 10:00 AM - 4:00 PM)</label>
                   <input
                     type="text"
                     value={eventTime}
                     onChange={(e) => setEventTime(e.target.value)}
                     placeholder="10:00 AM - 4:00 PM"
-                    className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-600 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">Location (English) *</label>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Location (English) *</label>
                   <input
                     type="text"
                     required
                     value={eventLocEn}
                     onChange={(e) => setEventLocEn(e.target.value)}
                     placeholder="Community Hall, Birgunj"
-                    className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-600 text-gray-900 dark:text-white"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">स्थान (नेपाली)</label>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">स्थान (नेपाली)</label>
                   <input
                     type="text"
                     value={eventLocNe}
                     onChange={(e) => setEventLocNe(e.target.value)}
                     placeholder="सामुदायिक हल, वीरगन्ज"
-                    className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-600 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">Description (English)</label>
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Description (English)</label>
                 <textarea
                   value={eventDescEn}
                   onChange={(e) => setEventDescEn(e.target.value)}
                   placeholder="Details about the event, medical staff, registration info..."
                   rows={2}
-                  className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-600 text-gray-900 dark:text-white"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">विवरण (नेपाली)</label>
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">विवरण (नेपाली)</label>
                 <textarea
                   value={eventDescNe}
                   onChange={(e) => setEventDescNe(e.target.value)}
                   placeholder="कार्यक्रमको विस्तृत विवरण..."
                   rows={2}
-                  className="w-full p-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:border-teal-600"
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-600 text-gray-900 dark:text-white"
                 />
               </div>
 
@@ -307,7 +353,7 @@ export default function EventsSection({
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-lg"
+                  className="px-4 py-2 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg"
                 >
                   Cancel
                 </button>
@@ -328,34 +374,34 @@ export default function EventsSection({
         {/* Left Column: List and Details */}
         <div className="lg:col-span-7 space-y-6">
           {/* Active Event Showcase Card */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-teal-100 shadow-sm space-y-5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-teal-800 text-xs font-black rounded-full border border-teal-200 uppercase tracking-wide">
+          <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 dark:bg-emerald-950/80 text-teal-800 dark:text-emerald-300 text-xs font-black rounded-full border border-teal-200 dark:border-emerald-800 uppercase tracking-wide">
               Selected Agenda
             </span>
-            <h3 className="text-xl sm:text-2xl font-extrabold text-teal-950">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-teal-950 dark:text-teal-100">
               {formatNumber(selectedEvent.title[lang], lang)}
             </h3>
-            <p className="text-gray-600 text-sm leading-relaxed">
+            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
               {formatNumber(selectedEvent.description[lang], lang)}
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-teal-50/50 p-4 rounded-xl border border-teal-100/60 text-xs font-semibold text-teal-900">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-teal-50/50 dark:bg-slate-800/80 p-4 rounded-xl border border-teal-100/60 dark:border-slate-700 text-xs font-semibold text-teal-900 dark:text-teal-100">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-teal-700 shrink-0" />
+                <Calendar className="w-4 h-4 text-teal-700 dark:text-emerald-400 shrink-0" />
                 <span>Date: {formatNumber(selectedEvent.date, lang)}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-teal-700 shrink-0" />
+                <Clock className="w-4 h-4 text-teal-700 dark:text-emerald-400 shrink-0" />
                 <span>Time: {formatNumber(selectedEvent.time, lang)}</span>
               </div>
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-teal-700 shrink-0" />
+                <MapPin className="w-4 h-4 text-teal-700 dark:text-emerald-400 shrink-0" />
                 <span>{formatNumber(selectedEvent.location[lang], lang)}</span>
               </div>
             </div>
 
-            <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 flex items-start gap-3 text-xs text-amber-900">
-              <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+            <div className="p-4 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
+              <Info className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
               <div>
                 <strong>Volunteer Requirements:</strong> This event requires active support for logistical desk duty, medical triage assistants, and youth transport supervisors. Register using the side portal.
               </div>
@@ -375,15 +421,15 @@ export default function EventsSection({
                   }}
                   className={`p-5 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative group ${
                     isSelected
-                      ? 'bg-teal-700 text-white border-teal-800 shadow-md transform translate-x-1'
-                      : 'bg-white text-teal-950 border-teal-100 hover:border-teal-300 hover:bg-teal-50/20'
+                      ? 'bg-teal-700 dark:bg-emerald-700 text-white border-teal-800 shadow-md transform translate-x-1'
+                      : 'bg-white dark:bg-slate-900 text-teal-950 dark:text-teal-100 border-teal-100 dark:border-slate-800 hover:border-teal-300 dark:hover:border-slate-700 hover:bg-teal-50/20 dark:hover:bg-slate-800/50'
                   }`}
                 >
                   <div className="space-y-1.5 flex-1 pr-8 sm:pr-0">
                     <h4 className="font-extrabold text-base leading-tight">
                       {formatNumber(evt.title[lang], lang)}
                     </h4>
-                    <div className={`flex items-center gap-2 text-xs ${isSelected ? 'text-teal-200' : 'text-gray-500'}`}>
+                    <div className={`flex items-center gap-2 text-xs ${isSelected ? 'text-teal-200' : 'text-gray-500 dark:text-gray-400'}`}>
                       <Calendar className="w-3.5 h-3.5" />
                       <span>{formatNumber(evt.date, lang)}</span>
                       <span>•</span>
@@ -396,8 +442,8 @@ export default function EventsSection({
                     <span
                       className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border shrink-0 ${
                         isSelected
-                          ? 'bg-teal-800 text-emerald-300 border-teal-900'
-                          : 'bg-emerald-100 text-teal-800 border-teal-200'
+                          ? 'bg-teal-800 dark:bg-emerald-900 text-emerald-300 border-teal-900'
+                          : 'bg-emerald-100 dark:bg-slate-800 text-teal-800 dark:text-teal-200 border-teal-200 dark:border-slate-700'
                       }`}
                     >
                       SELECT
@@ -428,20 +474,20 @@ export default function EventsSection({
         {/* Right Column: Calendar Grid & Volunteer Sign-Up Form */}
         <div className="lg:col-span-5 space-y-6">
           {/* Calendar Widget */}
-          <div className="bg-white p-6 rounded-2xl border border-teal-100 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-teal-50 pb-2">
-              <h3 className="font-extrabold text-sm text-teal-950 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-teal-700" />
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-teal-50 dark:border-slate-800 pb-2">
+              <h3 className="font-extrabold text-sm text-teal-950 dark:text-teal-100 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-teal-700 dark:text-emerald-400" />
                 {t.calendarTitle[lang]}
               </h3>
-              <span className="text-[10px] font-black text-teal-600 bg-teal-50 px-2 py-0.5 rounded uppercase">August 2026</span>
+              <span className="text-[10px] font-black text-teal-600 dark:text-emerald-400 bg-teal-50 dark:bg-slate-800 px-2 py-0.5 rounded uppercase">August 2026</span>
             </div>
 
             {/* Calendar grid */}
             <div className="grid grid-cols-7 gap-1 text-center text-[10px]">
               {/* Day headers */}
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-                <div key={d} className="font-bold text-gray-400 py-1">{d}</div>
+                <div key={d} className="font-bold text-gray-400 dark:text-gray-500 py-1">{d}</div>
               ))}
 
               {/* Days rendering */}
@@ -453,31 +499,31 @@ export default function EventsSection({
                     key={idx}
                     className={`p-1.5 rounded-md flex flex-col items-center justify-between min-h-[36px] relative border transition-all ${
                       isSelectedEventDay
-                        ? 'bg-teal-700 text-white border-teal-800 shadow-sm'
+                        ? 'bg-teal-700 dark:bg-emerald-600 text-white border-teal-800 shadow-sm'
                         : hasEvent
-                        ? 'bg-teal-50 text-teal-800 border-teal-200 hover:bg-teal-100'
+                        ? 'bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 border-teal-200 dark:border-slate-700 hover:bg-teal-100'
                         : c.isCurrentMonth
-                        ? 'bg-white text-gray-700 border-gray-50 hover:bg-teal-50/40'
-                        : 'bg-gray-50/50 text-gray-300 border-transparent'
+                        ? 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border-gray-50 dark:border-slate-800/50 hover:bg-teal-50/40 dark:hover:bg-slate-800'
+                        : 'bg-gray-50/50 dark:bg-slate-900/40 text-gray-300 dark:text-gray-600 border-transparent'
                     }`}
                   >
                     <span className="font-bold">{formatNumber(c.day, lang)}</span>
                     {c.label && (
-                      <span className="text-[7px] font-bold text-teal-600 uppercase absolute top-0.5 left-0.5">{c.label}</span>
+                      <span className="text-[7px] font-bold text-teal-600 dark:text-emerald-400 uppercase absolute top-0.5 left-0.5">{c.label}</span>
                     )}
                     {hasEvent && (
-                      <span className={`w-1.5 h-1.5 rounded-full ${isSelectedEventDay ? 'bg-emerald-300' : 'bg-teal-700'}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${isSelectedEventDay ? 'bg-emerald-300' : 'bg-teal-700 dark:bg-emerald-400'}`} />
                     )}
                   </div>
                 );
               })}
             </div>
-            <div className="flex flex-wrap gap-3 pt-2 border-t border-teal-50 text-[10px] text-gray-500 font-bold justify-between">
+            <div className="flex flex-wrap gap-3 pt-2 border-t border-teal-50 dark:border-slate-800 text-[10px] text-gray-500 dark:text-gray-400 font-bold justify-between">
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-teal-700" /> Selected Event
+                <span className="w-2.5 h-2.5 rounded-full bg-teal-700 dark:bg-emerald-500" /> Selected Event
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded bg-teal-50 border border-teal-200" /> Scheduled Event
+                <span className="w-2.5 h-2.5 rounded bg-teal-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700" /> Scheduled Event
               </span>
             </div>
           </div>
@@ -491,6 +537,16 @@ export default function EventsSection({
               </h3>
               <p className="text-xs text-teal-300 mt-1">{t.volFormSubtitle[lang]}</p>
             </div>
+
+            {/* Admin Form Editor for Event Volunteer Form */}
+            {isAdmin && (
+              <AdminFormFieldEditor
+                formId="event_volunteer"
+                lang={lang}
+                isAdmin={isAdmin}
+                onFieldsUpdated={() => setEvtVolCustomFields(getCustomFormFields('event_volunteer'))}
+              />
+            )}
 
             {successMsg ? (
               <div className="p-4 bg-teal-955 border border-emerald-400/40 text-emerald-300 rounded-xl flex items-start gap-3 text-xs leading-relaxed font-bold animate-in zoom-in duration-200">
@@ -562,12 +618,67 @@ export default function EventsSection({
                   />
                 </div>
 
+                {/* Custom Fields Render */}
+                {evtVolCustomFields.length > 0 && (
+                  <div className="space-y-3 pt-3 border-t border-teal-800/80">
+                    <h5 className="font-extrabold text-teal-300 text-[11px] uppercase tracking-wide">
+                      {lang === 'en' ? 'Additional Questions:' : 'थप प्रश्नहरू:'}
+                    </h5>
+                    {evtVolCustomFields.map((cf) => (
+                      <div key={cf.id} className="space-y-1">
+                        <label className="text-[10px] font-bold text-teal-300 uppercase tracking-wider block">
+                          {cf.label[lang] || cf.label.en} {cf.required && '*'}
+                        </label>
+                        {cf.fieldType === 'textarea' ? (
+                          <textarea
+                            required={cf.required}
+                            rows={2}
+                            value={evtVolCustomAnswers[cf.id] || ''}
+                            onChange={(e) => setEvtVolCustomAnswers({ ...evtVolCustomAnswers, [cf.id]: e.target.value })}
+                            className="w-full p-2.5 bg-teal-950/60 border border-teal-800 text-sm text-white rounded-lg focus:outline-none focus:border-emerald-400"
+                          />
+                        ) : cf.fieldType === 'select' ? (
+                          <select
+                            required={cf.required}
+                            value={evtVolCustomAnswers[cf.id] || ''}
+                            onChange={(e) => setEvtVolCustomAnswers({ ...evtVolCustomAnswers, [cf.id]: e.target.value })}
+                            className="w-full p-2.5 bg-teal-950/80 border border-teal-800 text-sm text-white rounded-lg focus:outline-none focus:border-emerald-400 font-bold"
+                          >
+                            <option value="">Select option...</option>
+                            {cf.options?.map((opt) => (
+                              <option key={opt} value={opt} className="text-teal-950">{opt}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type={cf.fieldType === 'number' ? 'number' : 'text'}
+                            required={cf.required}
+                            value={evtVolCustomAnswers[cf.id] || ''}
+                            onChange={(e) => setEvtVolCustomAnswers({ ...evtVolCustomAnswers, [cf.id]: e.target.value })}
+                            className="w-full p-2.5 bg-teal-950/60 border border-teal-800 text-sm text-white rounded-lg focus:outline-none focus:border-emerald-400"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
+                  disabled={isSubmittingVol}
+                  className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  <Award className="w-4 h-4 text-teal-950" />
-                  {t.regBtn[lang]}
+                  {isSubmittingVol ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-teal-950" />
+                      Sending Registration...
+                    </>
+                  ) : (
+                    <>
+                      <Award className="w-4 h-4 text-teal-950" />
+                      {t.regBtn[lang]}
+                    </>
+                  )}
                 </button>
               </form>
             )}

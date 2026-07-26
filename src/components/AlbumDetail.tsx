@@ -178,12 +178,12 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
             </button>
           </div>
 
-          {(onAddMedia || isAdmin) && (
+          {isAdmin && onAddMedia && (
             <button
               onClick={() => setIsAddingInline(!isAddingInline)}
               className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
             >
-              <span>+ Add Media</span>
+              <span>+ Add Media (Admin)</span>
             </button>
           )}
 

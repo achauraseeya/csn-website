@@ -33,6 +33,7 @@ export default function LeaderBio({
   const [leader, setLeader] = useState<Member>(foundMember);
   const [isEditing, setIsEditing] = useState(false);
   const [msgSubmitted, setMsgSubmitted] = useState(false);
+  const [msgSubmitting, setMsgSubmitting] = useState(false);
   const [msgText, setMsgText] = useState('');
   const [senderName, setSenderName] = useState('');
   const [senderContact, setSenderContact] = useState('');
@@ -118,9 +119,33 @@ export default function LeaderBio({
     alert(lang === 'en' ? 'Profile updated successfully!' : 'प्रोफाइल सफलतापूर्वक अद्यावधिक गरियो!');
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!msgText.trim()) return;
+
+    setMsgSubmitting(true);
+    onTrackAction(`Sent direct message to leader: ${leader.name.en}`);
+
+    const formData = new FormData();
+    formData.append('_subject', `Leadership Profile Message for ${leader.name.en} (${leader.role.en})`);
+    formData.append('_template', 'table');
+    formData.append('_captcha', 'false');
+    formData.append('Recipient Leader Name', leader.name.en);
+    formData.append('Recipient Leader Role', leader.role.en);
+    formData.append('Sender Name', senderName);
+    formData.append('Sender Contact (Phone/Email)', senderContact);
+    formData.append('Message Body', msgText);
+
+    try {
+      await fetch('https://formsubmit.co/ajax/csnepalwebsite@gmail.com', {
+        method: 'POST',
+        body: formData,
+      });
+    } catch (err) {
+      console.error('Error submitting form:', err);
+    }
+
+    setMsgSubmitting(false);
     setMsgSubmitted(true);
     setTimeout(() => {
       setMsgSubmitted(false);
@@ -454,9 +479,12 @@ export default function LeaderBio({
                 />
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-6 py-2.5 bg-teal-700 hover:bg-teal-800 text-white rounded-xl font-bold shadow-md transition-colors cursor-pointer"
+                  disabled={msgSubmitting}
+                  className="w-full sm:w-auto px-6 py-2.5 bg-teal-700 hover:bg-teal-800 text-white rounded-xl font-bold shadow-md transition-colors cursor-pointer disabled:opacity-50"
                 >
-                  {lang === 'en' ? 'Send Message' : 'सन्देश पठाउनुहोस्'}
+                  {msgSubmitting
+                    ? (lang === 'en' ? 'Sending Message...' : 'सन्देश पठाइँदैछ...')
+                    : (lang === 'en' ? 'Send Message to Leader' : 'सन्देश पठाउनुहोस्')}
                 </button>
               </form>
             )}

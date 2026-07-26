@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Settings, X, Check, FileQuestion } from 'lucide-react';
+import { Plus, Trash2, Settings, X, Check, FileQuestion, Edit2 } from 'lucide-react';
 import { Language } from '../types';
 import {
+  FormId,
   CustomFormField,
   getCustomFormFields,
   saveCustomFormField,
@@ -9,7 +10,7 @@ import {
 } from '../utils/customFormFields';
 
 interface AdminFormFieldEditorProps {
-  formId: 'membership' | 'volunteer' | 'matrimonial' | 'contact';
+  formId: FormId;
   lang: Language;
   isAdmin: boolean;
   onFieldsUpdated?: () => void;
@@ -24,7 +25,10 @@ export function AdminFormFieldEditor({
   const [isOpen, setIsOpen] = useState(false);
   const [fields, setFields] = useState<CustomFormField[]>(() => getCustomFormFields(formId));
 
-  // New field form state
+  // Editing state
+  const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
+
+  // New field or edit form state
   const [labelEn, setLabelEn] = useState('');
   const [labelNe, setLabelNe] = useState('');
   const [fieldType, setFieldType] = useState<'text' | 'number' | 'textarea' | 'select'>('text');
@@ -33,12 +37,30 @@ export function AdminFormFieldEditor({
 
   if (!isAdmin) return null;
 
-  const handleAddField = (e: React.FormEvent) => {
+  const handleStartEdit = (field: CustomFormField) => {
+    setEditingFieldId(field.id);
+    setLabelEn(field.label.en);
+    setLabelNe(field.label.ne || field.label.en);
+    setFieldType(field.fieldType);
+    setRequired(field.required);
+    setOptionsStr(field.options ? field.options.join(', ') : '');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingFieldId(null);
+    setLabelEn('');
+    setLabelNe('');
+    setFieldType('text');
+    setRequired(false);
+    setOptionsStr('');
+  };
+
+  const handleSaveField = (e: React.FormEvent) => {
     e.preventDefault();
     if (!labelEn.trim()) return;
 
-    const newField: CustomFormField = {
-      id: `field-${Date.now()}`,
+    const savedField: CustomFormField = {
+      id: editingFieldId || `field-${Date.now()}`,
       formId,
       label: {
         en: labelEn.trim(),
@@ -49,12 +71,9 @@ export function AdminFormFieldEditor({
       options: fieldType === 'select' ? optionsStr.split(',').map(s => s.trim()).filter(Boolean) : undefined,
     };
 
-    const updated = saveCustomFormField(newField);
+    const updated = saveCustomFormField(savedField);
     setFields(updated);
-    setLabelEn('');
-    setLabelNe('');
-    setOptionsStr('');
-    setRequired(false);
+    handleCancelEdit();
     if (onFieldsUpdated) onFieldsUpdated();
   };
 
@@ -80,7 +99,7 @@ export function AdminFormFieldEditor({
           className="px-3 py-1.5 bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
         >
           {isOpen ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-          {isOpen ? (lang === 'en' ? 'Close Editor' : 'सम्पादक बन्द गर्नुहोस्') : (lang === 'en' ? '+ Add Custom Field' : '+ थप क्षेत्र थप्नुहोस्')}
+          {isOpen ? (lang === 'en' ? 'Close Editor' : 'सम्पादक बन्द गर्नुहोस्') : (lang === 'en' ? 'Manage Custom Fields' : 'थप प्रश्नहरू व्यवस्थापन गर्नुहोस्')}
         </button>
       </div>
 
@@ -94,7 +113,7 @@ export function AdminFormFieldEditor({
               </h5>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {fields.map(f => (
-                  <div key={f.id} className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-800 flex items-center justify-between gap-2">
+                  <div key={f.id} className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-800 flex items-center justify-between gap-2 shadow-sm">
                     <div className="min-w-0">
                       <p className="font-bold text-gray-900 dark:text-white truncate">
                         {f.label[lang] || f.label.en}
@@ -103,25 +122,50 @@ export function AdminFormFieldEditor({
                         Type: {f.fieldType} {f.required ? '• Required' : ''}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(f.id)}
-                      className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors cursor-pointer"
-                      title="Delete field"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleStartEdit(f)}
+                        className="p-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 dark:bg-slate-800 dark:text-teal-300 rounded-lg transition-colors cursor-pointer"
+                        title="Edit field"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(f.id)}
+                        className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 rounded-lg transition-colors cursor-pointer"
+                        title="Delete field"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Add New Field Form */}
-          <form onSubmit={handleAddField} className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-teal-200 dark:border-slate-800 space-y-3">
-            <div className="flex items-center gap-1.5 font-bold text-teal-900 dark:text-teal-100">
-              <FileQuestion className="w-4 h-4 text-emerald-500" />
-              <span>{lang === 'en' ? 'Add New Question to Form' : 'फारममा नयाँ प्रश्न थप्नुहोस्'}</span>
+          {/* Add or Edit Field Form */}
+          <form onSubmit={handleSaveField} className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-teal-200 dark:border-slate-800 space-y-3">
+            <div className="flex items-center justify-between font-bold text-teal-900 dark:text-teal-100">
+              <div className="flex items-center gap-1.5">
+                <FileQuestion className="w-4 h-4 text-emerald-500" />
+                <span>
+                  {editingFieldId
+                    ? (lang === 'en' ? 'Edit Question Details' : 'प्रश्न सम्पादन गर्नुहोस्')
+                    : (lang === 'en' ? 'Add New Question to Form' : 'फारममा नयाँ प्रश्न थप्नुहोस्')}
+                </span>
+              </div>
+              {editingFieldId && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="text-[11px] text-rose-600 hover:underline font-bold cursor-pointer"
+                >
+                  Cancel Edit
+                </button>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -202,7 +246,9 @@ export function AdminFormFieldEditor({
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl shadow-sm transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <Check className="w-3.5 h-3.5" />
-                {lang === 'en' ? 'Save New Field' : 'क्षेत्र बचत गर्नुहोस्'}
+                {editingFieldId
+                  ? (lang === 'en' ? 'Update Field' : 'अद्यावधिक गर्नुहोस्')
+                  : (lang === 'en' ? 'Save New Field' : 'क्षेत्र बचत गर्नुहोस्')}
               </button>
             </div>
           </form>

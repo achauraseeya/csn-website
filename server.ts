@@ -184,6 +184,44 @@ async function startServer() {
     }
   });
 
+  // --- Dynamic XML Sitemap Route for Search Engines ---
+  app.get("/sitemap.xml", (req, res) => {
+    const domain = `${req.protocol}://${req.get("host")}`;
+    const today = new Date().toISOString().split("T")[0];
+    const pages = [
+      "",
+      "#directory",
+      "#matrimonial",
+      "#events",
+      "#membership-donation",
+      "#our-heritage",
+      "#albums-gallery",
+      "#notices-gallery",
+      "#transparency",
+      "#privacy",
+      "#terms",
+    ];
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+${pages
+  .map(
+    (page) => `  <url>
+    <loc>${domain}/${page}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>${page === "" ? "1.0" : "0.8"}</priority>
+  </url>`
+  )
+  .join("\n")}
+</urlset>`;
+
+    res.header("Content-Type", "application/xml");
+    res.send(xml);
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

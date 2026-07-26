@@ -79,11 +79,11 @@ export default function BlogPostDetail({
       </div>
 
       {/* Main Post Container */}
-      <article className="bg-white rounded-3xl border border-teal-100 shadow-xl overflow-hidden">
+      <article className="bg-white dark:bg-slate-900 rounded-3xl border border-teal-100 dark:border-slate-800 shadow-xl overflow-hidden">
         
         {/* Cover Featured Image (if available) */}
         {post.imageUrl && (
-          <div className="relative aspect-[21/9] sm:aspect-[2/1] overflow-hidden bg-teal-950 border-b border-teal-100">
+          <div className="relative aspect-[21/9] sm:aspect-[2/1] overflow-hidden bg-teal-950 border-b border-teal-100 dark:border-slate-800">
             <img
               src={post.imageUrl}
               alt={titleText}
@@ -102,7 +102,7 @@ export default function BlogPostDetail({
               {post.tags.map((tag, i) => (
                 <span
                   key={i}
-                  className="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full text-xs font-bold uppercase tracking-wider"
+                  className="px-3 py-1 bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-full text-xs font-bold uppercase tracking-wider"
                 >
                   #{tag}
                 </span>
@@ -111,18 +111,18 @@ export default function BlogPostDetail({
           )}
 
           {/* Article Title */}
-          <h1 className="text-2xl sm:text-4xl font-black text-teal-950 leading-tight tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-black text-teal-950 dark:text-teal-100 leading-tight tracking-tight">
             {titleText}
           </h1>
 
           {/* Metadata Row */}
-          <div className="flex flex-wrap items-center justify-between gap-4 py-3 border-y border-teal-50 text-xs sm:text-sm text-gray-600 font-semibold">
+          <div className="flex flex-wrap items-center justify-between gap-4 py-3 border-y border-teal-50 dark:border-slate-800 text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-semibold">
             <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 text-teal-700 font-bold">
-                <User className="w-4 h-4 text-emerald-600" /> {post.author || 'Chaurasiya Samaj Admin'}
+              <span className="flex items-center gap-1.5 text-teal-700 dark:text-emerald-400 font-bold">
+                <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> {post.author || 'Chaurasiya Samaj Admin'}
               </span>
               <span className="flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-teal-600" /> {post.date}
+                <Calendar className="w-4 h-4 text-teal-600 dark:text-emerald-400" /> {post.date}
               </span>
             </div>
 
@@ -130,16 +130,16 @@ export default function BlogPostDetail({
             <div className="flex items-center gap-2">
               <button
                 onClick={handleShare}
-                className="p-2 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 transition-colors flex items-center gap-1 text-xs font-bold"
+                className="p-2 rounded-lg bg-teal-50 dark:bg-slate-800 hover:bg-teal-100 dark:hover:bg-slate-700 text-teal-800 dark:text-teal-200 transition-colors flex items-center gap-1 text-xs font-bold"
                 title="Copy Link"
               >
-                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4 text-teal-600" />}
+                {copied ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Share2 className="w-4 h-4 text-teal-600 dark:text-emerald-400" />}
                 <span>{copied ? 'Copied!' : 'Share'}</span>
               </button>
 
               <button
                 onClick={shareOnWhatsApp}
-                className="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors"
+                className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 transition-colors"
                 title="Share on WhatsApp"
               >
                 <MessageCircle className="w-4 h-4" />
@@ -147,7 +147,7 @@ export default function BlogPostDetail({
 
               <button
                 onClick={shareOnFacebook}
-                className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors"
+                className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 transition-colors"
                 title="Share on Facebook"
               >
                 <Facebook className="w-4 h-4" />
@@ -156,11 +156,11 @@ export default function BlogPostDetail({
           </div>
 
           {/* Full Post Content (HTML or formatted text) */}
-          <div className="prose prose-teal max-w-none text-gray-800 font-medium text-base sm:text-lg leading-relaxed space-y-4 [&_img]:max-w-full [&_img]:rounded-2xl [&_img]:shadow-md [&_img]:my-6 [&_p]:my-4 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-teal-950 [&_h2]:mt-8 [&_h2]:mb-4 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-teal-900 [&_a]:text-teal-700 [&_a]:underline [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:border-teal-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600">
+          <div className="prose prose-teal dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 font-medium text-base sm:text-lg leading-relaxed space-y-4 [&_img]:max-w-full [&_img]:rounded-2xl [&_img]:shadow-md [&_img]:my-6 [&_p]:my-4 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-teal-950 dark:[&_h2]:text-teal-100 [&_h2]:mt-8 [&_h2]:mb-4 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-teal-900 dark:[&_h3]:text-teal-200 [&_a]:text-teal-700 dark:[&_a]:text-emerald-400 [&_a]:underline [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:border-teal-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600 dark:[&_blockquote]:text-gray-400">
             {contentHtml ? (
               <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
             ) : (
-              <p className="text-gray-500 italic">
+              <p className="text-gray-500 dark:text-gray-400 italic">
                 {lang === 'en'
                   ? 'The content for this blog post is being loaded from Blogger...'
                   : 'यस ब्लग पोस्टको सामग्री ब्लगरबाट लोड हुँदैछ...'}
@@ -169,10 +169,10 @@ export default function BlogPostDetail({
           </div>
 
           {/* Footer Navigation */}
-          <div className="pt-8 border-t border-teal-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="pt-8 border-t border-teal-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
             <button
               onClick={onBackToHome}
-              className="px-6 py-3 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-teal-700 dark:bg-emerald-600 hover:bg-teal-800 dark:hover:bg-emerald-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>{lang === 'en' ? 'Back to Homepage' : 'गृहपृष्ठमा फर्कनुहोस्'}</span>
@@ -183,9 +183,9 @@ export default function BlogPostDetail({
 
       {/* Recommended / Recent Posts Section */}
       {recentPosts.length > 0 && (
-        <div className="bg-teal-50/60 rounded-3xl p-6 sm:p-8 border border-teal-100 space-y-6">
-          <div className="flex items-center gap-2 text-teal-950 font-black text-lg">
-            <Sparkles className="w-5 h-5 text-emerald-600" />
+        <div className="bg-teal-50/60 dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-teal-100 dark:border-slate-800 space-y-6">
+          <div className="flex items-center gap-2 text-teal-950 dark:text-teal-100 font-black text-lg">
+            <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             <h3>{lang === 'en' ? 'More Articles & Community Stories' : 'थप लेख तथा सामुदायिक कथाहरू'}</h3>
           </div>
 
@@ -200,12 +200,12 @@ export default function BlogPostDetail({
                     window.location.href = rPost.link;
                   }
                 }}
-                className="bg-white rounded-2xl p-4 border border-teal-100 hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer group space-y-2"
+                className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-teal-100 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer group space-y-2"
               >
-                <span className="text-[10px] font-bold text-teal-600 uppercase flex items-center gap-1">
+                <span className="text-[10px] font-bold text-teal-600 dark:text-emerald-400 uppercase flex items-center gap-1">
                   <Calendar className="w-3 h-3" /> {rPost.date}
                 </span>
-                <h4 className="font-extrabold text-sm text-teal-950 group-hover:text-teal-700 line-clamp-2 transition-colors">
+                <h4 className="font-extrabold text-sm text-teal-950 dark:text-teal-100 group-hover:text-teal-700 dark:group-hover:text-emerald-400 line-clamp-2 transition-colors">
                   {rPost.title[lang] || rPost.title.en}
                 </h4>
               </div>

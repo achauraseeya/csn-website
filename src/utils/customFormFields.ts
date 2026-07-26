@@ -1,6 +1,8 @@
+export type FormId = 'membership' | 'volunteer' | 'matrimonial' | 'contact' | 'add-member' | 'donation' | 'event_volunteer';
+
 export interface CustomFormField {
   id: string;
-  formId: 'membership' | 'volunteer' | 'matrimonial' | 'contact';
+  formId: FormId;
   label: { en: string; ne: string };
   fieldType: 'text' | 'number' | 'textarea' | 'select';
   required: boolean;
@@ -9,7 +11,7 @@ export interface CustomFormField {
 
 const STORAGE_KEY = 'csn_custom_form_fields_v1';
 
-export function getCustomFormFields(formId: 'membership' | 'volunteer' | 'matrimonial' | 'contact'): CustomFormField[] {
+export function getCustomFormFields(formId: FormId): CustomFormField[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
@@ -32,7 +34,7 @@ export function saveCustomFormField(field: CustomFormField): CustomFormField[] {
   }
 }
 
-export function deleteCustomFormField(fieldId: string, formId: 'membership' | 'volunteer' | 'matrimonial' | 'contact'): CustomFormField[] {
+export function deleteCustomFormField(fieldId: string, formId: FormId): CustomFormField[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];

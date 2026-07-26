@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { Landmark, Heart, Award, Users, Mail, Phone, MapPin, Briefcase, FileText, CheckCircle2, Loader2, Send } from 'lucide-react';
 import { Language } from '../types';
 import { AdminFormFieldEditor } from './AdminFormFieldEditor';
+import { AdminCategoryManagerModal } from './AdminCategoryManagerModal';
 import { getCustomFormFields, CustomFormField } from '../utils/customFormFields';
+import { getMemberCategories, MemberCategory } from '../utils/memberCategories';
 
 interface MembershipDonationProps {
   lang: Language;
@@ -20,12 +22,22 @@ export default function MembershipDonation({
   // Portal Tab State
   const [activeSubTab, setActiveSubTab] = useState<'membership' | 'volunteer' | 'donation'>('membership');
 
+  // Dynamic Member Categories
+  const [memberCategories, setMemberCategories] = useState<MemberCategory[]>(() => getMemberCategories());
+
+  const refreshMemberCategories = () => {
+    setMemberCategories(getMemberCategories());
+  };
+
   // Custom Form Fields State
   const [membCustomFields, setMembCustomFields] = useState<CustomFormField[]>(() => getCustomFormFields('membership'));
   const [membCustomAnswers, setMembCustomAnswers] = useState<Record<string, string>>({});
 
   const [volCustomFields, setVolCustomFields] = useState<CustomFormField[]>(() => getCustomFormFields('volunteer'));
   const [volCustomAnswers, setVolCustomAnswers] = useState<Record<string, string>>({});
+
+  const [donateCustomFields, setDonateCustomFields] = useState<CustomFormField[]>(() => getCustomFormFields('donation'));
+  const [donateCustomAnswers, setDonateCustomAnswers] = useState<Record<string, string>>({});
 
   // Membership Form state
   const [membAppType, setMembAppType] = useState<'new' | 'renewal'>('new');
@@ -57,7 +69,40 @@ export default function MembershipDonation({
   const [donatePreset, setDonatePreset] = useState<number>(1000);
   const [donateCustom, setDonateCustom] = useState<string>('');
   const [donatedAmt, setDonatedAmt] = useState<number>(1000);
+  const [donorName, setDonorName] = useState('');
+  const [donorPhone, setDonorPhone] = useState('');
+  const [donateSubmitting, setDonateSubmitting] = useState(false);
   const [donateSuccess, setDonateSuccess] = useState(false);
+
+  // Admin editable Donation Info
+  const [donationInfo, setDonationInfo] = useState(() => {
+    const saved = localStorage.getItem('chaurasiya_donation_info');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { /* ignore */ }
+    }
+    return {
+      titleEn: 'Support Our Benevolent Welfare Initiatives',
+      titleNe: 'परोपकारी कल्याणकारी पहलहरूमा सहयोग गर्नुहोस्',
+      descEn: 'Your financial support funds free rural healthcare checkup camps, student stationery kits, and seed support programs for betel farmers.',
+      descNe: 'तपाईंको आर्थिक सहयोगले ग्रामीण स्वास्थ्य जाँच शिविर, विद्यार्थी शैक्षिक सामग्री र पान कृषकहरूका लागि बीउ सहयोग कार्यक्रमहरूमा रकम प्रदान गर्दछ।',
+      bankName: 'Global IME Bank Ltd., Birgunj Branch',
+      accountName: 'Chaurasiya Samaj Nepal',
+      accountNumber: '010101005234902 (Welfare Fund)',
+      esewaId: '9812345678 (CSN Official)',
+      contactEmail: 'csnepalwebsite@gmail.com',
+    };
+  });
+
+  const [showEditDonationModal, setShowEditDonationModal] = useState(false);
+  const [editDonationForm, setEditDonationForm] = useState(donationInfo);
+
+  const handleSaveDonationInfo = (e: React.FormEvent) => {
+    e.preventDefault();
+    setDonationInfo(editDonationForm);
+    localStorage.setItem('chaurasiya_donation_info', JSON.stringify(editDonationForm));
+    setShowEditDonationModal(false);
+    onTrackAction('Admin updated Welfare Donation info');
+  };
 
   // Handle Membership Form Submission via direct Email Pipeline
   const handleMembershipSubmit = async (e: React.FormEvent) => {
@@ -161,13 +206,35 @@ export default function MembershipDonation({
     );
   };
 
-  const handleDonateSubmit = (e: React.FormEvent) => {
+  const handleDonateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalAmt = donateCustom ? parseInt(donateCustom, 10) : donatePreset;
     if (isNaN(finalAmt) || finalAmt <= 0) return;
+
     setDonatedAmt(finalAmt);
-    setDonateSuccess(true);
+    setDonateSubmitting(true);
     onTrackAction(`Completed donation submission: NPR ${finalAmt}`);
+
+    const formData = new FormData();
+    formData.append('_subject', `New Welfare Donation Pledge - NPR ${finalAmt.toLocaleString()}`);
+    formData.append('_template', 'table');
+    formData.append('_captcha', 'false');
+    formData.append('Donor Name', donorName || 'Anonymous / Well-wisher');
+    formData.append('Donor Phone / Mobile', donorPhone || 'Not provided');
+    formData.append('Pledged Amount (NPR)', `NPR ${finalAmt.toLocaleString()}`);
+    formData.append('Target Fund', 'Welfare & Healthcare Support Fund');
+
+    try {
+      await fetch(`https://formsubmit.co/ajax/${donationInfo.contactEmail || 'csnepalwebsite@gmail.com'}`, {
+        method: 'POST',
+        body: formData,
+      });
+    } catch {
+      // fallback
+    }
+
+    setDonateSuccess(true);
+    setDonateSubmitting(false);
   };
 
   return (
@@ -217,14 +284,34 @@ export default function MembershipDonation({
             </p>
           </div>
 
-          {/* Admin Form Customizer */}
+          {/* Admin Form Customizer & Category Committee Manager */}
           {isAdmin && (
-            <AdminFormFieldEditor
-              formId="membership"
-              lang={lang}
-              isAdmin={isAdmin}
-              onFieldsUpdated={() => setMembCustomFields(getCustomFormFields('membership'))}
-            />
+            <div className="space-y-4">
+              <div className="p-4 bg-teal-50/70 dark:bg-slate-800/80 border border-teal-200 dark:border-slate-700 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-xs font-black uppercase text-teal-900 dark:text-emerald-400">
+                    {lang === 'en' ? 'Admin Category Committee Controls' : 'प्रशासक समिति श्रेणी नियन्त्रण'}
+                  </h4>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                    {lang === 'en'
+                      ? 'Add, edit, or remove member types and committee categories. Changes update automatically here and in the Directory.'
+                      : 'सदस्य प्रकार र समिति श्रेणीहरू थप्नुहोस्, सम्पादन गर्नुहोस् वा हटाउनुहोस्। परिवर्तनहरू यहाँ र डाइरेक्टरीमा स्वतः अद्यावधिक हुन्छन्।'}
+                  </p>
+                </div>
+                <AdminCategoryManagerModal
+                  lang={lang}
+                  isAdmin={isAdmin}
+                  onCategoriesUpdated={refreshMemberCategories}
+                />
+              </div>
+
+              <AdminFormFieldEditor
+                formId="membership"
+                lang={lang}
+                isAdmin={isAdmin}
+                onFieldsUpdated={() => setMembCustomFields(getCustomFormFields('membership'))}
+              />
+            </div>
           )}
 
           {membSuccess ? (
@@ -369,16 +456,18 @@ export default function MembershipDonation({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Membership Tier
+                    Membership Tier (सदस्यता प्रकार)
                   </label>
                   <select
                     value={membType}
                     onChange={e => setMembType(e.target.value)}
                     className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
                   >
-                    <option value="General Membership (NPR 1,000)">General Membership (साधारण - NPR 1,000)</option>
-                    <option value="Life Membership (NPR 11,000)">Life Membership (आजीवन - NPR 11,000)</option>
-                    <option value="Patron Membership (NPR 51,000)">Patron / Donor Member (संरक्षक - NPR 51,000)</option>
+                    {memberCategories.map(cat => (
+                      <option key={cat.id} value={`${cat.label.en} (${cat.feeInfo || 'Standard'})`}>
+                        {cat.label[lang] || cat.label.en} ({cat.label.en}) - {cat.feeInfo || 'Fee TBD'}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -470,12 +559,12 @@ export default function MembershipDonation({
                 {membSubmitting ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Sending Application to Email...
+                    Sending Application...
                   </>
                 ) : (
                   <>
                     <Send className="w-5 h-5" />
-                    {lang === 'en' ? 'Submit Application to csnepalwebsite@gmail.com' : 'आवेदन पठाउनुहोस्'}
+                    {lang === 'en' ? 'Submit Membership Application' : 'आवेदन पठाउनुहोस्'}
                   </>
                 )}
               </button>
@@ -685,12 +774,12 @@ export default function MembershipDonation({
                 {volSubmitting ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Sending Volunteer Data...
+                    Sending Volunteer Registration...
                   </>
                 ) : (
                   <>
                     <Send className="w-5 h-5" />
-                    {lang === 'en' ? 'Register Volunteer to csnepalwebsite@gmail.com' : 'स्वयंसेवक दर्ता पठाउनुहोस्'}
+                    {lang === 'en' ? 'Register Volunteer' : 'स्वयंसेवक दर्ता पठाउनुहोस्'}
                   </>
                 )}
               </button>
@@ -703,19 +792,47 @@ export default function MembershipDonation({
       {activeSubTab === 'donation' && (
         <div className="bg-teal-950 text-white p-6 sm:p-10 rounded-3xl border-b-8 border-emerald-500 shadow-xl space-y-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl" />
-          <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-bold uppercase tracking-wider rounded-full">
-              Welfare &amp; Healthcare Support Fund
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-white mt-2">
-              {lang === 'en' ? 'Support Our Benevolent Welfare Initiatives' : 'परोपकारी कल्याणकारी पहलहरूमा सहयोग गर्नुहोस्'}
-            </h2>
-            <p className="text-xs sm:text-sm text-teal-200 mt-1.5 leading-relaxed max-w-2xl">
-              {lang === 'en'
-                ? 'Your financial support funds free rural healthcare checkup camps, student stationery kits, and seed support programs for betel farmers.'
-                : 'तपाईंको आर्थिक सहयोगले ग्रामीण स्वास्थ्य जाँच शिविर, विद्यार्थी शैक्षिक सामग्री र पान कृषकहरूका लागि बीउ सहयोग कार्यक्रमहरूमा रकम प्रदान गर्दछ।'}
-            </p>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-bold uppercase tracking-wider rounded-full">
+                Welfare &amp; Healthcare Support Fund
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-white mt-2">
+                {donationInfo[`title${lang === 'en' ? 'En' : 'Ne'}`] || donationInfo.titleEn}
+              </h2>
+              <p className="text-xs sm:text-sm text-teal-200 mt-1.5 leading-relaxed max-w-2xl">
+                {donationInfo[`desc${lang === 'en' ? 'En' : 'Ne'}`] || donationInfo.descEn}
+              </p>
+            </div>
+
+            {/* Admin Edit Donation Details & Custom Form Editor */}
+            {isAdmin && (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => {
+                    setEditDonationForm(donationInfo);
+                    setShowEditDonationModal(true);
+                  }}
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-teal-950 text-xs font-black uppercase tracking-wider rounded-xl shadow transition-all shrink-0 cursor-pointer"
+                >
+                  ✏️ Edit Donation Content
+                </button>
+              </div>
+            )}
           </div>
+
+          {/* Admin Custom Field Editor for Donation */}
+          {isAdmin && (
+            <div className="mt-4">
+              <AdminFormFieldEditor
+                formId="donation"
+                lang={lang}
+                isAdmin={isAdmin}
+                onFieldsUpdated={() => setDonateCustomFields(getCustomFormFields('donation'))}
+              />
+            </div>
+          )}
 
           {donateSuccess ? (
             <div className="p-6 bg-teal-900/90 border border-emerald-500/40 text-emerald-300 rounded-2xl flex items-start gap-4 animate-in zoom-in-95 duration-200">
@@ -723,12 +840,41 @@ export default function MembershipDonation({
               <div>
                 <h4 className="text-lg font-black">Heartfelt Thank You!</h4>
                 <p className="text-xs leading-relaxed mt-1">
-                  Your pledge of NPR {donatedAmt.toLocaleString()} has been logged. Please send the bank deposit/transfer copy to <strong>csnepalwebsite@gmail.com</strong>.
+                  Your pledge of NPR {donatedAmt.toLocaleString()} has been logged and notified to <strong>{donationInfo.contactEmail}</strong>. Please send the bank deposit/transfer copy to our email for verification.
                 </p>
+                <button
+                  onClick={() => setDonateSuccess(false)}
+                  className="mt-3 px-4 py-1.5 bg-emerald-500 text-teal-950 font-extrabold text-xs rounded-lg hover:bg-emerald-400"
+                >
+                  Make Another Pledge
+                </button>
               </div>
             </div>
           ) : (
             <form onSubmit={handleDonateSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">Donor Full Name</label>
+                  <input
+                    type="text"
+                    value={donorName}
+                    onChange={(e) => setDonorName(e.target.value)}
+                    placeholder="e.g. Alok Kumar Chaurasiya"
+                    className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">Donor Phone / Mobile</label>
+                  <input
+                    type="tel"
+                    value={donorPhone}
+                    onChange={(e) => setDonorPhone(e.target.value)}
+                    placeholder="e.g. 9845012345"
+                    className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">
                   Select Donation Amount (NPR)
@@ -774,31 +920,217 @@ export default function MembershipDonation({
                 />
               </div>
 
+              {/* Dynamic Custom Fields for Donation */}
+              {donateCustomFields.length > 0 && (
+                <div className="space-y-4 pt-4 border-t border-teal-800">
+                  <h5 className="font-extrabold text-teal-300 text-xs uppercase tracking-wide">
+                    {lang === 'en' ? 'Additional Information' : 'थप जानकारी'}:
+                  </h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {donateCustomFields.map(cf => (
+                      <div key={cf.id} className={cf.fieldType === 'textarea' ? 'sm:col-span-2' : ''}>
+                        <label className="block text-xs font-bold text-teal-300 mb-1">
+                          {cf.label[lang] || cf.label.en} {cf.required && '*'}
+                        </label>
+                        {cf.fieldType === 'textarea' ? (
+                          <textarea
+                            required={cf.required}
+                            rows={2}
+                            value={donateCustomAnswers[cf.id] || ''}
+                            onChange={e => setDonateCustomAnswers({ ...donateCustomAnswers, [cf.id]: e.target.value })}
+                            className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400"
+                          />
+                        ) : cf.fieldType === 'select' ? (
+                          <select
+                            required={cf.required}
+                            value={donateCustomAnswers[cf.id] || ''}
+                            onChange={e => setDonateCustomAnswers({ ...donateCustomAnswers, [cf.id]: e.target.value })}
+                            className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400 font-bold"
+                          >
+                            <option value="">Select option...</option>
+                            {cf.options?.map(opt => (
+                              <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type={cf.fieldType === 'number' ? 'number' : 'text'}
+                            required={cf.required}
+                            value={donateCustomAnswers[cf.id] || ''}
+                            onChange={e => setDonateCustomAnswers({ ...donateCustomAnswers, [cf.id]: e.target.value })}
+                            className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="p-5 bg-teal-900/50 rounded-2xl border border-teal-800 space-y-3">
                 <h4 className="text-sm font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
                   <Landmark className="w-5 h-5" />
                   Direct Bank Wire Info &amp; QR Payments
                 </h4>
                 <div className="text-sm space-y-2 text-teal-200/90 leading-relaxed font-medium">
-                  <div><strong className="text-white">Bank Name:</strong> Global IME Bank Ltd., Birgunj Branch</div>
-                  <div><strong className="text-white">Account Name:</strong> Chaurasiya Samaj Nepal</div>
-                  <div><strong className="text-white">Account Number:</strong> 010101005234902 (Welfare Fund)</div>
-                  <div><strong className="text-white">eSewa / Khalti ID:</strong> 9812345678 (CSN Official)</div>
+                  <div><strong className="text-white">Bank Name:</strong> {donationInfo.bankName}</div>
+                  <div><strong className="text-white">Account Name:</strong> {donationInfo.accountName}</div>
+                  <div><strong className="text-white">Account Number:</strong> {donationInfo.accountNumber}</div>
+                  <div><strong className="text-white">eSewa / Khalti ID:</strong> {donationInfo.esewaId}</div>
                   <div className="text-xs text-teal-400 italic pt-2 border-t border-teal-800/50">
-                    * Please email transaction copies to <strong>csnepalwebsite@gmail.com</strong> for tax receipts.
+                    * Please email transaction copies to <strong>{donationInfo.contactEmail}</strong> for official receipts.
                   </div>
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                disabled={donateSubmitting}
+                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
-                <Heart className="w-5 h-5 text-teal-950 fill-teal-950" />
-                Record Donation Pledge
+                {donateSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin text-teal-950" />
+                    Recording Pledge...
+                  </>
+                ) : (
+                  <>
+                    <Heart className="w-5 h-5 text-teal-950 fill-teal-950" />
+                    Record Donation Pledge
+                  </>
+                )}
               </button>
             </form>
           )}
+        </div>
+      )}
+
+      {/* Admin Edit Donation Modal (Top-Level Overlay) */}
+      {showEditDonationModal && (
+        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 text-slate-900">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200 border border-teal-100 dark:border-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-lg font-black text-teal-950 dark:text-teal-100">Edit Welfare Donation Page Details</h3>
+              <button
+                type="button"
+                onClick={() => setShowEditDonationModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveDonationInfo} className="space-y-4 text-xs font-bold">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300">Title (English)</label>
+                  <input
+                    type="text"
+                    value={editDonationForm.titleEn}
+                    onChange={(e) => setEditDonationForm({ ...editDonationForm, titleEn: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300">Title (Nepali)</label>
+                  <input
+                    type="text"
+                    value={editDonationForm.titleNe}
+                    onChange={(e) => setEditDonationForm({ ...editDonationForm, titleNe: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-slate-700 dark:text-slate-300">Description (English)</label>
+                <textarea
+                  rows={2}
+                  value={editDonationForm.descEn}
+                  onChange={(e) => setEditDonationForm({ ...editDonationForm, descEn: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-700 dark:text-slate-300">Description (Nepali)</label>
+                <textarea
+                  rows={2}
+                  value={editDonationForm.descNe}
+                  onChange={(e) => setEditDonationForm({ ...editDonationForm, descNe: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300">Bank Name</label>
+                  <input
+                    type="text"
+                    value={editDonationForm.bankName}
+                    onChange={(e) => setEditDonationForm({ ...editDonationForm, bankName: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300">Account Name</label>
+                  <input
+                    type="text"
+                    value={editDonationForm.accountName}
+                    onChange={(e) => setEditDonationForm({ ...editDonationForm, accountName: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300">Account Number</label>
+                  <input
+                    type="text"
+                    value={editDonationForm.accountNumber}
+                    onChange={(e) => setEditDonationForm({ ...editDonationForm, accountNumber: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300">eSewa / Khalti ID</label>
+                  <input
+                    type="text"
+                    value={editDonationForm.esewaId}
+                    onChange={(e) => setEditDonationForm({ ...editDonationForm, esewaId: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-slate-700 dark:text-slate-300">Notification &amp; Contact Email</label>
+                <input
+                  type="email"
+                  value={editDonationForm.contactEmail}
+                  onChange={(e) => setEditDonationForm({ ...editDonationForm, contactEmail: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowEditDonationModal(false)}
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg font-bold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-bold cursor-pointer shadow-md"
+                >
+                  Save Donation Settings
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

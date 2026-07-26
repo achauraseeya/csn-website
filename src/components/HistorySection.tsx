@@ -1699,13 +1699,13 @@ export default function HistorySection({
 
       {/* Blog Section */}
       <section className="space-y-6 py-2">
-        <h3 className="text-2xl sm:text-3xl font-black text-teal-950 text-center uppercase tracking-tight flex items-center justify-center gap-2">
-          <BookOpen className="w-8 h-8 text-teal-600" />
+        <h3 className="text-2xl sm:text-3xl font-black text-teal-950 dark:text-teal-50 text-center uppercase tracking-tight flex items-center justify-center gap-2">
+          <BookOpen className="w-8 h-8 text-teal-600 dark:text-emerald-400" />
           {lang === 'en' ? 'Latest Blog Posts' : 'पछिल्लो ब्लग पोस्टहरू'}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {loadingPosts ? (
-            <div className="col-span-1 md:col-span-3 text-center py-12 text-teal-600 font-bold animate-pulse">
+            <div className="col-span-1 md:col-span-3 text-center py-12 text-teal-600 dark:text-emerald-400 font-bold animate-pulse">
               {lang === 'en' ? 'Loading latest posts from Blogger...' : 'ब्लगरबाट पछिल्लो पोस्टहरू लोड गर्दैछ...'}
             </div>
           ) : livePosts.map((post) => (
@@ -1721,7 +1721,7 @@ export default function HistorySection({
                   onTrackAction(`Read live blog post: ${post.title.en || post.title.ne}`);
                 }
               }}
-              className="bg-white rounded-2xl shadow-sm border border-teal-100 overflow-hidden hover:shadow-md transition-shadow group block cursor-pointer"
+              className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-teal-100 dark:border-slate-800 overflow-hidden hover:shadow-md transition-shadow group block cursor-pointer"
             >
               <div className="aspect-video overflow-hidden">
                 <img 
@@ -1731,27 +1731,27 @@ export default function HistorySection({
                 />
               </div>
               <div className="p-6 flex flex-col h-full">
-                <div className="flex items-center justify-between text-xs font-bold text-teal-600 mb-3">
+                <div className="flex items-center justify-between text-xs font-bold text-teal-600 dark:text-emerald-400 mb-3">
                   <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {formatNumber(post.date, lang)}</span>
                   <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {post.author}</span>
                 </div>
                 {post.tags && post.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
                     {post.tags.slice(0, 2).map((tag: string, i: number) => (
-                      <span key={i} className="text-[10px] uppercase font-bold px-2 py-0.5 bg-teal-50 text-teal-600 rounded-full">
+                      <span key={i} className="text-[10px] uppercase font-bold px-2 py-0.5 bg-teal-50 dark:bg-slate-800 text-teal-600 dark:text-emerald-300 rounded-full">
                         {tag}
                       </span>
                     ))}
                   </div>
                 )}
-                <h4 className="text-xl font-bold text-teal-950 mb-2 line-clamp-2 group-hover:text-teal-700 transition-colors">
+                <h4 className="text-xl font-bold text-teal-950 dark:text-teal-100 mb-2 line-clamp-2 group-hover:text-teal-700 dark:group-hover:text-emerald-400 transition-colors">
                   {post.title[lang] || post.title.en}
                 </h4>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3 flex-grow">
+                <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4 line-clamp-3 flex-grow">
                   {post.excerpt[lang] || post.excerpt.en}
                 </p>
                 <div 
-                  className="text-sm font-bold text-teal-700 group-hover:text-teal-900 inline-flex items-center gap-1 transition-colors mt-auto"
+                  className="text-sm font-bold text-teal-700 dark:text-emerald-400 group-hover:text-teal-900 dark:group-hover:text-emerald-300 inline-flex items-center gap-1 transition-colors mt-auto"
                 >
                   {lang === 'en' ? 'Read More' : 'थप पढ्नुहोस्'} <ChevronRight className="w-4 h-4" />
                 </div>
@@ -1762,18 +1762,18 @@ export default function HistorySection({
       </section>
 
       {/* Glimpses to Our Journey Albums Section */}
-      <section className="space-y-6 py-4 border-t border-teal-100">
+      <section className="space-y-6 py-4 border-t border-teal-100 dark:border-slate-800">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-800 text-xs font-bold uppercase tracking-wider border border-teal-200">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              Photo & Video Gallery
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider border border-teal-200 dark:border-slate-700">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              Photo &amp; Video Gallery
             </span>
-            <h3 className="text-2xl sm:text-3xl font-black text-teal-950 uppercase tracking-tight flex items-center justify-center sm:justify-start gap-2">
-              <ImageIcon className="w-8 h-8 text-teal-600" />
+            <h3 className="text-2xl sm:text-3xl font-black text-teal-950 dark:text-teal-50 uppercase tracking-tight flex items-center justify-center sm:justify-start gap-2">
+              <ImageIcon className="w-8 h-8 text-teal-600 dark:text-emerald-400" />
               {t.photoGallery[lang]}
             </h3>
-            <p className="text-sm text-gray-600 font-medium max-w-2xl">
+            <p className="text-sm text-gray-600 dark:text-gray-300 font-medium max-w-2xl">
               {lang === 'en' 
                 ? 'Browse interactive media albums capturing healthcare camps, cultural expos, youth workshops, and community events.'
                 : 'स्वास्थ्य शिविर, सांस्कृतिक मेला, युवा कार्यशाला र सामुदायिक कार्यक्रमहरू समेटिएका अन्तरक्रियात्मक मिडिया एल्बमहरू हेर्नुहोस्।'}
@@ -1810,7 +1810,7 @@ export default function HistorySection({
                   }
                   onTrackAction(`Open Album Dedicated Page: ${album.title.en}`);
                 }}
-                className="bg-white rounded-3xl border border-teal-100 shadow-sm hover:shadow-xl hover:border-emerald-300 transition-all duration-300 overflow-hidden cursor-pointer group flex flex-col"
+                className="bg-white dark:bg-slate-900 rounded-3xl border border-teal-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-emerald-300 dark:hover:border-emerald-500 transition-all duration-300 overflow-hidden cursor-pointer group flex flex-col"
               >
                 {/* Cover Preview Image */}
                 <div className="relative aspect-[16/10] overflow-hidden bg-teal-950">
@@ -1857,35 +1857,35 @@ export default function HistorySection({
                 {/* Album Description & Info */}
                 <div className="p-6 flex-grow flex flex-col justify-between space-y-3">
                   <div>
-                    <div className="flex items-center gap-3 text-xs font-bold text-teal-600 mb-2">
+                    <div className="flex items-center gap-3 text-xs font-bold text-teal-600 dark:text-emerald-400 mb-2">
                       <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {formatNumber(album.date, lang)}</span>
-                          <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {formatNumber(album.location[lang], lang)}</span>
-                        </div>
-                        <h4 className="text-lg font-extrabold text-teal-950 group-hover:text-teal-700 transition-colors line-clamp-2">
-                          {formatNumber(album.title[lang], lang)}
-                        </h4>
-                        <p className="text-gray-600 text-xs sm:text-sm mt-2 line-clamp-2 font-medium leading-relaxed">
-                          {formatNumber(album.description[lang], lang)}
-                        </p>
-                      </div>
-
-                      <div className="pt-3 border-t border-teal-50 flex items-center justify-between">
-                        <div className="flex flex-wrap gap-1">
-                          {album.tags.slice(0, 2).map((tag, i) => (
-                            <span key={i} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-teal-50 text-teal-700 rounded-md">
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                        <span className="text-xs font-black text-teal-700 group-hover:text-emerald-600 inline-flex items-center gap-1 uppercase tracking-wider">
-                          {lang === 'en' ? 'Open Album' : 'एल्बम खोल्नुहोस्'} <ChevronRight className="w-4 h-4" />
-                        </span>
-                      </div>
+                      <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {formatNumber(album.location[lang], lang)}</span>
                     </div>
+                    <h4 className="text-lg font-extrabold text-teal-950 dark:text-teal-100 group-hover:text-teal-700 dark:group-hover:text-emerald-400 transition-colors line-clamp-2">
+                      {formatNumber(album.title[lang], lang)}
+                    </h4>
+                    <p className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm mt-2 line-clamp-2 font-medium leading-relaxed">
+                      {formatNumber(album.description[lang], lang)}
+                    </p>
                   </div>
-                );
-              })}
-            </div>
+
+                  <div className="pt-3 border-t border-teal-50 dark:border-slate-800 flex items-center justify-between">
+                    <div className="flex flex-wrap gap-1">
+                      {album.tags.slice(0, 2).map((tag, i) => (
+                        <span key={i} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-teal-50 dark:bg-slate-800 text-teal-700 dark:text-emerald-300 rounded-md">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-xs font-black text-teal-700 dark:text-emerald-400 group-hover:text-emerald-600 inline-flex items-center gap-1 uppercase tracking-wider">
+                      {lang === 'en' ? 'Open Album' : 'एल्बम खोल्नुहोस्'} <ChevronRight className="w-4 h-4" />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
         {/* View All Button below albums */}
         <div className="text-center pt-4">

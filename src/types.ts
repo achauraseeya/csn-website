@@ -191,6 +191,7 @@ export interface NetworkBranch {
 
 export interface MatrimonialProfile {
   id: string;
+  uniqueId?: string; // e.g. CSN-MAT-101
   lookingFor: 'groom' | 'bride'; // वर or वधू
   fullName: string;
   age: number;
