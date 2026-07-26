@@ -1,0 +1,74 @@
+[
+  {
+    "id": "evt_1785076538505",
+    "title": {
+      "en": "rgdfg",
+      "ne": "dfgd"
+    },
+    "description": {
+      "en": "dfgdfg",
+      "ne": "dfgd"
+    },
+    "date": "dfgd",
+    "time": "dfgdfg",
+    "location": {
+      "en": "dfgdf",
+      "ne": "dfgdf"
+    },
+    "status": "upcoming"
+  },
+  {
+    "id": "e1",
+    "title": {
+      "en": "Free Medical Camp & Blood Donation Drive",
+      "ne": "नि:शुल्क स्वास्थ्य शिविर तथा रक्तदान कार्यक्रम"
+    },
+    "description": {
+      "en": "A collaborative health drive providing free checkups, diabetes testing, pediatric care, and a voluntary blood donation setup in Bara district.",
+      "ne": "बारा जिल्लामा नि:शुल्क परीक्षण, मधुमेह परीक्षण, बाल हेरचाह र स्वैच्छिक रक्तदान कार्यक्रम प्रदान गर्ने एक संयुक्त स्वास्थ्य अभियान।"
+    },
+    "date": "2026-07-28",
+    "time": "08:00 AM - 04:00 PM",
+    "location": {
+      "en": "Community Health Post, Bara",
+      "ne": "सामुदायिक स्वास्थ्य चौकी, बारा"
+    },
+    "status": "upcoming"
+  },
+  {
+    "id": "e2",
+    "title": {
+      "en": "Chaurasiya Youth Leadership & Tech Summit",
+      "ne": "चौरसिया युवा नेतृत्व तथा प्रविधि सम्मेलन"
+    },
+    "description": {
+      "en": "An enriching conference led by Abhishek Kumar Chaurasiya to guide students into careers in tech, digital marketing, and modern business startups in Nepal.",
+      "ne": "नेपालमा प्रविधि, डिजिटल मार्केटिङ र आधुनिक व्यवसायिक स्टार्टअपहरूमा विद्यार्थीहरूलाई करियर मार्गदर्शन गर्न अभिषेक कुमार चौरसियाको नेतृत्वमा हुने एक सम्मेलन।"
+    },
+    "date": "2026-08-15",
+    "time": "10:00 AM - 05:00 PM",
+    "location": {
+      "en": "Lalitpur Heritage Hall, Patan",
+      "ne": "ललितपुर हेरिटेज हल, पाटन"
+    },
+    "status": "upcoming"
+  },
+  {
+    "id": "e3",
+    "title": {
+      "en": "Annual Paan Leaf Festival & Cultural Puja",
+      "ne": "वार्षिक पान महोत्सव तथा सांस्कृतिक पूजा"
+    },
+    "description": {
+      "en": "An amazing social gathering celebrating our historical farming culture with traditional foods, dances, agricultural displays, and worship of nature.",
+      "ne": "परम्परागत खाना, नृत्य, कृषि प्रदर्शनी र प्रकृति पूजाको साथ हाम्रो ऐतिहासिक कृषि संस्कृतिको उत्सव मनाउने एक अद्भुत सामाजिक भेला।"
+    },
+    "date": "2026-09-02",
+    "time": "02:00 PM - 09:00 PM",
+    "location": {
+      "en": "Janaki Mandir Ground, Janakpur",
+      "ne": "जानकी मन्दिर परिसर, जनकपुर"
+    },
+    "status": "upcoming"
+  }
+]
