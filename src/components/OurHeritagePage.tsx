@@ -103,13 +103,11 @@ export default function OurHeritagePage({ lang, isAdmin, onTrackAction }: OurHer
     apiFetch<HeritageData>('/api/our-heritage', 'our_heritage.json', defaultHeritageData)
       .then((cloudData) => {
         if (cloudData && typeof cloudData === 'object' && cloudData.title) {
-          setHeritageData((prev) => {
-            const merged = { ...prev, ...cloudData };
-            try {
-              localStorage.setItem('chaurasiya_our_heritage_data', JSON.stringify(merged));
-            } catch (e) {}
-            return merged;
-          });
+          const merged = { ...defaultHeritageData, ...cloudData };
+          setHeritageData(merged);
+          try {
+            localStorage.setItem('chaurasiya_our_heritage_data', JSON.stringify(merged));
+          } catch (e) {}
         }
       })
       .catch(() => {});

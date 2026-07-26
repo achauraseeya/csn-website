@@ -179,13 +179,11 @@ export default function AboutSectionPage({
     apiFetch<Record<AboutSubsectionId, AboutSectionData>>('/api/about-sections', 'about_sections.json', defaultAboutData)
       .then((cloudData) => {
         if (cloudData && typeof cloudData === 'object' && Object.keys(cloudData).length > 0) {
-          setSectionsData((prev) => {
-            const merged = { ...prev, ...cloudData };
-            try {
-              localStorage.setItem('chaurasiya_about_sections_data', JSON.stringify(merged));
-            } catch (e) {}
-            return merged;
-          });
+          const merged = { ...defaultAboutData, ...cloudData };
+          setSectionsData(merged);
+          try {
+            localStorage.setItem('chaurasiya_about_sections_data', JSON.stringify(merged));
+          } catch (e) {}
         }
       })
       .catch(() => {});

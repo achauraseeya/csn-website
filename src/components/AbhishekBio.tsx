@@ -69,13 +69,30 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
     apiFetch<any>('/api/abhishek-profile', 'abhishek_profile.json', null)
       .then((cloudProfile) => {
         if (cloudProfile && typeof cloudProfile === 'object' && cloudProfile.name) {
-          setProfile((prev: any) => {
-            const merged = { ...prev, ...cloudProfile };
-            try {
-              localStorage.setItem('chaurasiya_abhishek_profile_data', JSON.stringify(merged));
-            } catch (e) {}
-            return merged;
-          });
+          const updatedProfile = {
+            name: cloudProfile.name || defaultDesignerProfile.name,
+            title: cloudProfile.title || 'General Secretary, CTO & Chief Digital Designer of Chaurasiya Samaj Nepal',
+            subtitleNe: cloudProfile.subtitleNe || 'महासचिव, सीटीओ र चौरसिया समाज नेपालका प्रमुख डिजिटल डिजाइनर',
+            bioEn: cloudProfile.bioEn || defaultDesignerProfile.bio.en,
+            bioNe: cloudProfile.bioNe || defaultDesignerProfile.bio.ne,
+            education: cloudProfile.education || defaultDesignerProfile.education,
+            university: cloudProfile.university || 'Tribhuvan University, Nepal',
+            email: cloudProfile.email || defaultDesignerProfile.email,
+            phone: cloudProfile.phone || defaultDesignerProfile.phone || '+977-9800000000',
+            github: cloudProfile.github || 'https://github.com/achauraseeya',
+            websiteUrl: cloudProfile.websiteUrl || 'https://www.achaurasiya.com.np',
+            avatarUrl: cloudProfile.avatarUrl || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200',
+            skills: Array.isArray(cloudProfile.skills) ? cloudProfile.skills : defaultDesignerProfile.skills,
+            quoteEn: cloudProfile.quoteEn || '"Technology holds the power to simplify grassroots community work. By building fast, accessible portals, we elevate traditional agriculture and unite our people under one digital roof."',
+            quoteNe: cloudProfile.quoteNe || '"प्रविधिले तल्लो तहका सामुदायिक कार्यहरूलाई सरलीकरण गर्ने शक्ति राख्छ। द्रुत र पहुँचयोग्य पोर्टलहरू निर्माण गरेर, हामी परम्परागत कृषि र हाम्रो समाजलाई एकै थलोमा जोड्छौँ।"',
+            portalTextEn: cloudProfile.portalTextEn || 'Discover complete software projects, research papers, and technical blogs at www.achaurasiya.com.np',
+            portalTextNe: cloudProfile.portalTextNe || 'www.achaurasiya.com.np मा सम्पूर्ण सफ्टवेयर परियोजनाहरू, अनुसन्धान पत्रहरू र ब्लगहरू हेर्नुहोस्।',
+            contributions: cloudProfile.contributions || []
+          };
+          setProfile(updatedProfile);
+          try {
+            localStorage.setItem('chaurasiya_abhishek_profile_data', JSON.stringify(updatedProfile));
+          } catch (e) {}
         }
       })
       .catch(() => {});

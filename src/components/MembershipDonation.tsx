@@ -102,14 +102,11 @@ export default function MembershipDonation({
     apiFetch<any>('/api/donation-info', 'donation_info.json', null)
       .then((cloudInfo) => {
         if (cloudInfo && typeof cloudInfo === 'object' && cloudInfo.bankName) {
-          setDonationInfo((prev: any) => {
-            const merged = { ...prev, ...cloudInfo };
-            try {
-              localStorage.setItem('chaurasiya_donation_info', JSON.stringify(merged));
-            } catch (e) {}
-            return merged;
-          });
-          setEditDonationForm((prev: any) => ({ ...prev, ...cloudInfo }));
+          setDonationInfo(cloudInfo);
+          setEditDonationForm(cloudInfo);
+          try {
+            localStorage.setItem('chaurasiya_donation_info', JSON.stringify(cloudInfo));
+          } catch (e) {}
         }
       })
       .catch(() => {});

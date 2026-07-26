@@ -75,6 +75,24 @@ export async function uploadImageToGithub(fileName: string, base64Data: string, 
   return `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${path}`;
 }
 
+function utf8ToBase64(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function base64ToUtf8(base64Str: string): string {
+  const binary = atob(base64Str.replace(/\s/g, ''));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
 export async function saveFileToGithub(path: string, content: any, commitMessage: string) {
   const cleanKey = path.replace(/\.json$/, '');
 
@@ -98,7 +116,7 @@ export async function saveFileToGithub(path: string, content: any, commitMessage
     const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${path}`;
     const sha = await fetchFileSha(path, settings, pat);
 
-    const base64Content = btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2))));
+    const base64Content = utf8ToBase64(JSON.stringify(content, null, 2));
 
     const res = await fetch(url, {
       method: 'PUT',
@@ -140,36 +158,44 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
     // Server fetch error, proceed to GitHub fallback
   }
 
-  // 2. Fallback to GitHub API (if PAT present) or GitHub raw contents
+  // 2. Fallback to GitHub API (works for BOTH admin with PAT and public users without PAT!)
   const settings = getGithubSettings();
   if (!settings.enabled) return fallbackData;
 
   const pat = getPat();
 
   try {
+    const headers: Record<string, string> = {
+      'Accept': 'application/vnd.github.v3+json',
+      'Cache-Control': 'no-cache'
+    };
     if (pat) {
-      const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${fileName}?ref=${settings.branch}&t=${Date.now()}`;
-      const res = await fetch(url, {
-        headers: {
-          'Authorization': `token ${pat}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Cache-Control': 'no-cache'
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.content) {
-          const contentStr = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
-          return JSON.parse(contentStr) as T;
-        }
+      headers['Authorization'] = `token ${pat}`;
+    }
+
+    const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${fileName}?ref=${settings.branch}&t=${Date.now()}`;
+    const res = await fetch(url, { headers });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.content) {
+        const contentStr = base64ToUtf8(data.content);
+        return JSON.parse(contentStr) as T;
       }
     }
 
-    // Public / Fallback fetch with cache-busting
+    // 3. Fallback to jsDelivr GitHub CDN
+    const cdnUrl = `https://cdn.jsdelivr.net/gh/${settings.username}/${settings.repo}@${settings.branch}/${fileName}?t=${Date.now()}`;
+    const cdnRes = await fetch(cdnUrl, { cache: 'no-store' });
+    if (cdnRes.ok) {
+      const data = await cdnRes.json();
+      return data as T;
+    }
+
+    // 4. Fallback to raw.githubusercontent.com
     const rawUrl = `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${fileName}?t=${Date.now()}`;
-    const res = await fetch(rawUrl, { cache: 'no-store' });
-    if (res.ok) {
-      const data = await res.json();
+    const rawRes = await fetch(rawUrl, { cache: 'no-store' });
+    if (rawRes.ok) {
+      const data = await rawRes.json();
       return data as T;
     }
   } catch (err) {
