@@ -643,6 +643,47 @@ export default function App() {
     deleteSubscriberFromCloud(id);
   };
 
+  const getFeaturedLeaders = (): Member[] => {
+    try {
+      if (siteTexts.leadershipIdsJson) {
+        const parsed = JSON.parse(siteTexts.leadershipIdsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return [];
+  };
+
+  const syncMemberToFeaturedLeadership = (updatedMember: Member): { nextTexts: SiteTexts; updated: boolean } => {
+    const nextTexts = { ...siteTexts };
+    let updated = false;
+    try {
+      if (siteTexts.leadershipIdsJson) {
+        const parsed = JSON.parse(siteTexts.leadershipIdsJson);
+        if (Array.isArray(parsed)) {
+          const existsInFeatured = parsed.some((item: any) => item.id === updatedMember.id);
+          if (existsInFeatured) {
+            const updatedFeatured = parsed.map((item: any) => {
+              if (item.id === updatedMember.id) {
+                return {
+                  ...item,
+                  ...updatedMember, // update with new profile info
+                };
+              }
+              return item;
+            });
+            nextTexts.leadershipIdsJson = JSON.stringify(updatedFeatured);
+            updated = true;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to parse/update leadershipIdsJson during sync:', e);
+    }
+    return { nextTexts, updated };
+  };
+
   const handleUpdateMember = async (updatedMember: Member) => {
     // 1. Immediately update local state
     setMembers(prev => {
@@ -654,7 +695,13 @@ export default function App() {
       return updated;
     });
 
-    // 2. Push to GitHub
+    // 2. ALSO update in siteTexts.leadershipIdsJson if they are featured in leadership!
+    const { nextTexts, updated: leadershipUpdated } = syncMemberToFeaturedLeadership(updatedMember);
+    if (leadershipUpdated) {
+      setSiteTexts(nextTexts);
+    }
+
+    // 3. Push to GitHub / server database
     try {
       // Need members array from state. We use members from scope.
       const cleanList = members.filter(m => m.id !== updatedMember.id);
@@ -667,6 +714,14 @@ export default function App() {
         `Update member profile: ${updatedMember.name.en}`,
         getAuthHeaders()
       );
+
+      // Save site texts if leadership changed
+      if (leadershipUpdated) {
+        const { enabled } = getGithubSettings();
+        if (enabled) {
+          await saveFileToGithub('site_texts.json', nextTexts, `Update featured leadership profile info for ${updatedMember.name.en}`);
+        }
+      }
     } catch (e) {
       console.error('Failed to save updated member:', e);
     }
@@ -934,6 +989,41 @@ export default function App() {
     } catch (err) {
       console.error('Failed to delete event:', err);
     }
+  };
+
+  const handleUpdateEventRequirements = async (eventId: string, requirements: { en: string; ne: string }) => {
+    setEvents((prev) => {
+      const updated = prev.map((e) => {
+        if (e.id === eventId) {
+          return { ...e, requirements };
+        }
+        return e;
+      });
+      try {
+        localStorage.setItem('chaurasiya_events', JSON.stringify(updated));
+      } catch (err) {}
+      
+      // Save updated list in background
+      (async () => {
+        try {
+          const fullEvent = updated.find(e => e.id === eventId);
+          if (fullEvent) {
+            await apiSave<CommunityEvent>(
+              '/api/events',
+              'community_events.json',
+              updated,
+              fullEvent,
+              `Update volunteer requirements for event ${eventId}`,
+              getAuthHeaders()
+            );
+          }
+        } catch (err) {
+          console.error('Failed to update event requirements in API:', err);
+        }
+      })();
+      
+      return updated;
+    });
   };
 
   // --- MEMBERS API & Handlers ---
@@ -1368,6 +1458,12 @@ export default function App() {
       return updated;
     });
 
+    // Sync to featured leadership list on the homepage
+    const { nextTexts, updated: leadershipUpdated } = syncMemberToFeaturedLeadership(displayMember);
+    if (leadershipUpdated) {
+      setSiteTexts(nextTexts);
+    }
+
     if (!hasId && !displayMember.chapterId) {
       setMetrics((prev) => ({
         ...prev,
@@ -1391,6 +1487,14 @@ export default function App() {
       try {
         localStorage.setItem('chaurasiya_members', JSON.stringify(updatedList));
       } catch (e) {}
+
+      // Save site texts to GitHub if leadership was synchronized
+      if (leadershipUpdated) {
+        const { enabled } = getGithubSettings();
+        if (enabled) {
+          await saveFileToGithub('site_texts.json', nextTexts, `Update featured leadership profile info for ${displayMember.name.en}`);
+        }
+      }
     } catch (e) {
       console.error('Failed to save member nomination:', e);
     }
@@ -1711,7 +1815,7 @@ export default function App() {
             lang={lang}
             leaderId={selectedLeaderId}
             onTrackAction={handleTrackAction}
-            members={members}
+            members={[...members, ...getFeaturedLeaders()]}
             onUpdateMember={handleUpdateMember}
             isAdmin={isAdmin}
           />
@@ -1762,6 +1866,7 @@ export default function App() {
             eventsList={events.filter(e => !e.chapterId)}
             onAddEvent={handleAddEvent}
             onDeleteEvent={handleDeleteEvent}
+            onUpdateEventRequirements={handleUpdateEventRequirements}
           />
         )}
 

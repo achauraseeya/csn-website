@@ -77,9 +77,13 @@ export default function MembershipDonation({
 
   // Admin editable Donation Info
   const [donationInfo, setDonationInfo] = useState(() => {
-    const saved = localStorage.getItem('chaurasiya_donation_info');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { /* ignore */ }
+    try {
+      const saved = localStorage.getItem('chaurasiya_donation_info');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.warn('Local storage access restricted:', e);
     }
     return {
       titleEn: 'Support Our Benevolent Welfare Initiatives',

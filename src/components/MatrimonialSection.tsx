@@ -158,6 +158,32 @@ export default function MatrimonialSection({
   const [guardianPhone, setGuardianPhone] = useState('');
   const [guardianEmail, setGuardianEmail] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploadingPhoto(true);
+      const { compressImageToBase64 } = await import('../utils/imageUtils');
+      const { uploadImageToGithub } = await import('../utils/githubDb');
+      const base64 = await compressImageToBase64(file, 450);
+      try {
+        const githubUrl = await uploadImageToGithub(
+          `matrimony_${Date.now()}.jpg`,
+          base64,
+          `Upload matrimonial photo`
+        );
+        setPhotoUrl(githubUrl);
+      } catch (err) {
+        setPhotoUrl(base64);
+      }
+    } catch (err) {
+      console.error('Photo upload failed:', err);
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
   const [adminStatusDirect, setAdminStatusDirect] = useState<'approved' | 'pending'>('approved');
   const [formSubmitted, setFormSubmitted] = useState(false);
 
@@ -780,14 +806,27 @@ export default function MatrimonialSection({
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-gray-700 dark:text-gray-300 mb-1">Photo URL (Optional)</label>
-                    <input
-                      type="url"
-                      value={photoUrl}
-                      onChange={e => setPhotoUrl(e.target.value)}
-                      placeholder="https://..."
-                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-                    />
+                    <label className="block text-gray-700 dark:text-gray-300 mb-1">
+                      {lang === 'en' ? 'Photo URL or Upload Photo' : 'फोटो लिङ्क वा फोटो अपलोड गर्नुहोस्'}
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="url"
+                        value={photoUrl}
+                        onChange={e => setPhotoUrl(e.target.value)}
+                        placeholder="https://... or upload a photo directly"
+                        className="flex-grow p-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                      />
+                      <label className="flex items-center justify-center gap-2 px-4 py-2 bg-teal-800 hover:bg-teal-700 text-white text-xs font-bold rounded-xl cursor-pointer transition-colors shrink-0">
+                        <span>{isUploadingPhoto ? 'Uploading...' : 'Upload Photo'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   </div>
 
                   <div className="sm:col-span-2">

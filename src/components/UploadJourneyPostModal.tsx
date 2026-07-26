@@ -29,7 +29,12 @@ export default function UploadJourneyPostModal({
 
   // Admin Auth State
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem('chaurasiya_admin_authenticated') === 'true';
+    try {
+      return sessionStorage.getItem('chaurasiya_admin_authenticated') === 'true';
+    } catch (e) {
+      console.warn('Session storage access is restricted:', e);
+      return false;
+    }
   });
 
   const effectiveIsAdmin = isAdmin || isAdminAuthenticated;

@@ -176,14 +176,18 @@ export function getBestAlbumCover(album: Album): string {
     return 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=1200';
   }
 
-  // 1. Check if we have individual photo media items
+  // 1. Check if we have individual photo media items (ignoring embed folders)
   if (album.mediaItems && album.mediaItems.length > 0) {
-    const firstPhoto = album.mediaItems.find(item => item.type === 'photo');
+    const firstPhoto = album.mediaItems.find(item => {
+      if (item.type !== 'photo') return false;
+      const isFolder = item.url.includes('folders') || item.url.includes('/drive/folders') || item.url.includes('embeddedfolderview');
+      return !isFolder;
+    });
     if (firstPhoto && firstPhoto.url) {
       return formatDriveImageUrl(firstPhoto.url);
     }
 
-    // 2. No photos, check for a video and use its YouTube thumbnail if possible
+    // 2. No direct photos, check for a video and use its YouTube thumbnail if possible
     const firstVideo = album.mediaItems.find(item => item.type === 'video');
     if (firstVideo && firstVideo.url) {
       const ytId = extractYouTubeId(firstVideo.url);
@@ -193,7 +197,12 @@ export function getBestAlbumCover(album: Album): string {
     }
   }
 
-  // 3. Fallback scenic Nepal view
+  // 3. Check if album has a predefined coverUrl (which is not a folder)
+  if (album.coverUrl && !album.coverUrl.includes('folders') && !album.coverUrl.includes('/drive/folders')) {
+    return formatDriveImageUrl(album.coverUrl);
+  }
+
+  // 4. Fallback scenic Nepal view
   return 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=1200';
 }
 

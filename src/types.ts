@@ -46,6 +46,7 @@ export interface CommunityEvent {
   time: string;
   location: LocalizedString;
   status: 'upcoming' | 'completed';
+  requirements?: LocalizedString;
   chapterId?: string; // Links event to a specific chapter/sister org
 }
 

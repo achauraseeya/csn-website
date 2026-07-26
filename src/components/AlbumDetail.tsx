@@ -429,7 +429,20 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
           {filteredItems.map((item, idx) => {
             const itemParsed = parseMediaUrl(item.url, item.type);
             const isSelected = idx === activeIdx;
-            const thumbSrc = item.thumbnailUrl || (item.type === 'photo' ? itemParsed.formattedUrl : album.coverUrl);
+
+            // Automatically select the best photo in the album as a high-quality thumbnail fallback
+            const bestPhotoItem = album.mediaItems.find(it => {
+              const p = parseMediaUrl(it.url, it.type);
+              return it.type === 'photo' && !p.isEmbed;
+            });
+            const bestPhotoUrl = bestPhotoItem 
+              ? parseMediaUrl(bestPhotoItem.url, 'photo').formattedUrl 
+              : getBestAlbumCover(album);
+
+            const thumbSrc = item.thumbnailUrl || 
+              (item.type === 'photo' && !itemParsed.isEmbed 
+                ? itemParsed.formattedUrl 
+                : bestPhotoUrl);
 
             return (
               <button

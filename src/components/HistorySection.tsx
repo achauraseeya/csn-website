@@ -179,6 +179,8 @@ export default function HistorySection({
   };
 
   useEffect(() => {
+    if (!isEditingTexts) return;
+
     setEditHeroTitleEn(siteTexts.heroTitleEn);
     setEditHeroTitleNe(siteTexts.heroTitleNe);
     setEditHeroSubEn(siteTexts.heroSubEn);
@@ -259,7 +261,7 @@ export default function HistorySection({
     } catch (e) {
       setEditLeadership(boardMembers.filter(m => m.id === '1' || m.id === 'vc1'));
     }
-  }, [siteTexts, isEditingTexts]);
+  }, [isEditingTexts]);
 
   const handleSaveTexts = async (e: React.FormEvent) => {
     e.preventDefault();

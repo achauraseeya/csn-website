@@ -14,6 +14,7 @@ interface EventsSectionProps {
   eventsList?: CommunityEvent[];
   onAddEvent?: (newEvent: CommunityEvent) => void;
   onDeleteEvent?: (id: string) => void;
+  onUpdateEventRequirements?: (eventId: string, requirements: { en: string; ne: string }) => void;
 }
 
 export default function EventsSection({
@@ -24,6 +25,7 @@ export default function EventsSection({
   eventsList = initialUpcomingEvents,
   onAddEvent,
   onDeleteEvent,
+  onUpdateEventRequirements,
 }: EventsSectionProps) {
   const events = eventsList.length > 0 ? eventsList : initialUpcomingEvents;
   const [selectedEventId, setSelectedEventId] = useState<string>(events[0]?.id || '');
@@ -44,6 +46,8 @@ export default function EventsSection({
   const [eventTitleNe, setEventTitleNe] = useState('');
   const [eventDescEn, setEventDescEn] = useState('');
   const [eventDescNe, setEventDescNe] = useState('');
+  const [eventReqEn, setEventReqEn] = useState('');
+  const [eventReqNe, setEventReqNe] = useState('');
 
   // Back button popstate listener
   React.useEffect(() => {
@@ -73,8 +77,8 @@ export default function EventsSection({
     },
     regBtn: { en: 'Submit Volunteer Enrollment', ne: 'स्वयंसेवक दर्ता बुझाउनुहोस्' },
     successMessage: {
-      en: 'Your volunteer profile has been recorded in our centralized roster! Abhishek’s desk will contact you.',
-      ne: 'तपाईको स्वयंसेवक प्रोफाइल हाम्रो केन्द्रीय रोस्टरमा दर्ता गरिएको छ! अभिषेकको डेस्कले तपाईलाई सम्पर्क गर्नेछ।',
+      en: 'Your volunteer profile has been recorded in our centralized roster! We will contact you soon.',
+      ne: 'तपाईको स्वयंसेवक प्रोफाइल हाम्रो केन्द्रीय रोस्टरमा दर्ता गरिएको छ! हामी तपाईलाई चाँडै सम्पर्क गर्नेछौं।',
     },
     calendarTitle: { en: 'July - September 2026 Calendar Overview', ne: 'जुलाई - सेप्टेम्बर २०२६ पात्रो सिंहावलोकन' },
   };
@@ -93,6 +97,7 @@ export default function EventsSection({
       time: eventTime || '10:00 AM onwards',
       location: { en: eventLocEn, ne: eventLocNe || eventLocEn },
       status: 'upcoming',
+      requirements: eventReqEn.trim() ? { en: eventReqEn, ne: eventReqNe || eventReqEn } : undefined,
     };
 
     if (onAddEvent) {
@@ -109,6 +114,8 @@ export default function EventsSection({
     setEventTime('');
     setEventLocEn('');
     setEventLocNe('');
+    setEventReqEn('');
+    setEventReqNe('');
   };
 
   const handleVolunteerSubmit = async (e: React.FormEvent) => {
@@ -239,7 +246,7 @@ export default function EventsSection({
       {/* Admin Add Event Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-teal-100 dark:border-slate-800 text-gray-900 dark:text-white rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-teal-100 dark:border-slate-800 text-gray-900 dark:text-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200">
             <button
               onClick={() => setShowAddModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
@@ -281,13 +288,12 @@ export default function EventsSection({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Date (e.g., Aug 25, 2026) *</label>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Select Date *</label>
                   <input
-                    type="text"
+                    type="date"
                     required
                     value={eventDate}
                     onChange={(e) => setEventDate(e.target.value)}
-                    placeholder="Aug 25, 2026"
                     className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-600 text-gray-900 dark:text-white"
                   />
                 </div>
@@ -349,6 +355,28 @@ export default function EventsSection({
                 />
               </div>
 
+              <div className="space-y-1 pt-1 border-t border-gray-100 dark:border-slate-800">
+                <label className="text-xs font-black text-teal-800 dark:text-teal-300 uppercase tracking-wider block">Volunteer Requirements (English) *</label>
+                <textarea
+                  value={eventReqEn}
+                  onChange={(e) => setEventReqEn(e.target.value)}
+                  placeholder="Specific requirements for volunteers..."
+                  rows={2}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-600 text-gray-900 dark:text-white font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-800 dark:text-teal-300 uppercase tracking-wider block">स्वयंसेवक आवश्यकताहरू (नेपाली)</label>
+                <textarea
+                  value={eventReqNe}
+                  onChange={(e) => setEventReqNe(e.target.value)}
+                  placeholder="स्वयंसेवकहरूका लागि विशेष आवश्यकताहरू..."
+                  rows={2}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-600 text-gray-900 dark:text-white font-medium"
+                />
+              </div>
+
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
@@ -400,12 +428,53 @@ export default function EventsSection({
               </div>
             </div>
 
-            <div className="p-4 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
-              <Info className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <strong>Volunteer Requirements:</strong> This event requires active support for logistical desk duty, medical triage assistants, and youth transport supervisors. Register using the side portal.
+            {isAdmin ? (
+              <div className="p-4 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-300 dark:border-amber-800/80 space-y-2 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-amber-950 dark:text-amber-200">Volunteer Requirements (Editable by Admin)</span>
+                  <span className="text-[10px] text-amber-600 font-bold uppercase">{lang === 'en' ? 'English & Nepali' : 'अंग्रेजी र नेपाली'}</span>
+                </div>
+                <div className="space-y-1.5">
+                  <textarea
+                    rows={2}
+                    value={selectedEvent.requirements?.en || ''}
+                    placeholder="Volunteer requirements in English..."
+                    onChange={(e) => {
+                      const updatedRequirements = {
+                        en: e.target.value,
+                        ne: selectedEvent.requirements?.ne || e.target.value,
+                      };
+                      if (onUpdateEventRequirements) {
+                        onUpdateEventRequirements(selectedEvent.id, updatedRequirements);
+                      }
+                    }}
+                    className="w-full p-2 bg-white dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-lg focus:outline-none text-gray-900 dark:text-white"
+                  />
+                  <textarea
+                    rows={2}
+                    value={selectedEvent.requirements?.ne || ''}
+                    placeholder="स्वयंसेवक आवश्यकताहरू (नेपाली)..."
+                    onChange={(e) => {
+                      const updatedRequirements = {
+                        en: selectedEvent.requirements?.en || e.target.value,
+                        ne: e.target.value,
+                      };
+                      if (onUpdateEventRequirements) {
+                        onUpdateEventRequirements(selectedEvent.id, updatedRequirements);
+                      }
+                    }}
+                    className="w-full p-2 bg-white dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-lg focus:outline-none text-gray-900 dark:text-white"
+                  />
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-4 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
+                <Info className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong>Volunteer Requirements:</strong> {selectedEvent.requirements?.[lang] || (lang === 'en' ? 'This event requires active support for logistical desk duty, medical triage assistants, and youth transport supervisors. Register using the side portal.' : 'यस कार्यक्रमको लागि व्यवस्थापकीय डेस्क ड्युटी, चिकित्सा सहायता र युवा यातायात पर्यवेक्षकहरूको सक्रिय सहयोग आवश्यक पर्दछ। दर्ता गर्न साइड पोर्टल प्रयोग गर्नुहोस्।')}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Upcoming Event Cards list */}

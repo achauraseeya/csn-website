@@ -9,7 +9,7 @@ import {
   Language, Member, CommunityEvent, Notice, Album, 
   NetworkBranch, AlbumMediaItem 
 } from '../types';
-import { getBestAlbumCover, getGoogleDriveDownloadUrl, formatDriveImageUrl, formatNumber } from '../utils/mediaUrl';
+import { getBestAlbumCover, getGoogleDriveDownloadUrl, formatDriveImageUrl, formatNumber, parseMediaUrl } from '../utils/mediaUrl';
 import { uploadImageToGithub } from '../utils/githubDb';
 import { compressImageToBase64 } from '../utils/imageUtils';
 import AlbumDetail from './AlbumDetail';
@@ -910,7 +910,15 @@ export default function NetworkBranchDetail({
                                     <Video className="w-3 h-3 text-emerald-400" />
                                   </div>
                                 ) : (
-                                  <img src={med.url} alt="" className="w-full h-full object-cover" />
+                                  <img 
+                                    src={med.url.includes('folders') || med.url.includes('/drive/folders') || med.url.includes('embeddedfolderview')
+                                      ? (album.coverUrl || 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=1200')
+                                      : parseMediaUrl(med.url, 'photo').formattedUrl
+                                    } 
+                                    alt="" 
+                                    className="w-full h-full object-cover" 
+                                    referrerPolicy="no-referrer"
+                                  />
                                 )}
 
                                 {isAdmin && (
