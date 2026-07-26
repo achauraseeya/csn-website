@@ -69,7 +69,10 @@ export default function Navigation({
     { id: 'our-heritage', label: { en: 'Our Heritage', ne: 'हाम्रो सम्पदा' } },
     { id: 'albums-gallery', label: { en: 'Journey Albums', ne: 'यात्रा एल्बमहरू' } },
     { id: 'notices-gallery', label: { en: 'Notices & Gallery', ne: 'सूचना र ग्यालरी' } },
-    ...(isAdmin ? [{ id: 'analytics', label: { en: 'Analytics', ne: 'एनालिटिक्स' } }] : []),
+    ...(isAdmin ? [
+      { id: 'analytics', label: { en: 'Analytics', ne: 'एनालिटिक्स' } },
+      { id: 'blogger-exporter', label: { en: 'Blogger XML Setup', ne: 'ब्लगर XML सेटअप' } }
+    ] : []),
   ];
 
   const handleTabChange = (tabId: string) => {
