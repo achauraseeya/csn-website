@@ -46,6 +46,84 @@ async function startServer() {
 
   // API Routes
 
+  // --- Google Drive Folder Images Scraper ---
+  app.get("/api/drive-folder-images", async (req, res) => {
+    try {
+      const { folderId } = req.query;
+      if (!folderId || typeof folderId !== "string") {
+        return res.status(400).json({ error: "folderId is required" });
+      }
+
+      const url = `https://drive.google.com/embeddedfolderview?id=${folderId}`;
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        }
+      });
+
+      if (!response.ok) {
+        return res.status(500).json({ error: "Failed to fetch folder view from Google Drive" });
+      }
+
+      const html = await response.text();
+      
+      const files: Array<{ id: string; name: string; type: "photo" | "video" }> = [];
+      const seenIds = new Set<string>();
+
+      // 1. Match by mime type inside JS array (very reliable)
+      const mimeRegex = /['"]([a-zA-Z0-9_-]{19,45})['"]\s*,\s*['"]([^'"]+?)['"]\s*,\s*['"](image|video)\/([a-zA-Z0-9+-]+)['"]/gi;
+      let match;
+      while ((match = mimeRegex.exec(html)) !== null) {
+        const id = match[1];
+        const name = match[2];
+        const category = match[3]; // 'image' or 'video'
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          files.push({
+            id,
+            name,
+            type: category === "video" ? "video" : "photo"
+          });
+        }
+      }
+
+      // 2. Match by file extensions (fallback)
+      const extRegex = /['"]([a-zA-Z0-9_-]{19,45})['"]\s*,\s*['"]([^'"]+?\.(?:jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm))['"]/gi;
+      while ((match = extRegex.exec(html)) !== null) {
+        const id = match[1];
+        const name = match[2];
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
+          files.push({
+            id,
+            name,
+            type: isVideo ? "video" : "photo"
+          });
+        }
+      }
+
+      // 3. Match by content URL (additional fallback)
+      const contentRegex = /googleusercontent\.com\/d\/([a-zA-Z0-9_-]{19,45})/gi;
+      while ((match = contentRegex.exec(html)) !== null) {
+        const id = match[1];
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          files.push({
+            id,
+            name: `Photo_${files.length + 1}.jpg`,
+            type: "photo"
+          });
+        }
+      }
+
+      return res.json({ files });
+    } catch (err: any) {
+      console.error("Error in drive-folder-images route:", err);
+      return res.status(500).json({ error: err.message || "Failed to process folder images" });
+    }
+  });
+
   // --- Matrimonial Profiles ---
   app.get("/api/matrimony", async (req, res) => {
     try {

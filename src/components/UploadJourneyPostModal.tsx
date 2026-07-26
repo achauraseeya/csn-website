@@ -76,9 +76,9 @@ export default function UploadJourneyPostModal({
     }
   ]);
 
-  if (!isOpen) return null;
-
   const [isVerifying, setIsVerifying] = useState(false);
+
+  if (!isOpen) return null;
 
   const handleVerifyPasscode = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -9,7 +9,7 @@ import {
   Language, Member, CommunityEvent, Notice, Album, 
   NetworkBranch, AlbumMediaItem 
 } from '../types';
-import { getBestAlbumCover, getGoogleDriveDownloadUrl, formatDriveImageUrl, formatNumber, parseMediaUrl } from '../utils/mediaUrl';
+import { getBestAlbumCover, getGoogleDriveDownloadUrl, formatDriveImageUrl, formatNumber, parseMediaUrl, extractGoogleDriveFolderId } from '../utils/mediaUrl';
 import { uploadImageToGithub } from '../utils/githubDb';
 import { compressImageToBase64 } from '../utils/imageUtils';
 import AlbumDetail from './AlbumDetail';
@@ -113,6 +113,7 @@ export default function NetworkBranchDetail({
   const [albumDate, setAlbumDate] = useState('');
   const [albumLocEn, setAlbumLocEn] = useState('');
   const [albumLocNe, setAlbumLocNe] = useState('');
+  const [albumDriveFolderUrl, setAlbumDriveFolderUrl] = useState('');
 
   // 5. Add Media Item Form
   const [mediaTitleEn, setMediaTitleEn] = useState('');
@@ -253,6 +254,7 @@ export default function NetworkBranchDetail({
     setAlbumDate('');
     setAlbumLocEn('');
     setAlbumLocNe('');
+    setAlbumDriveFolderUrl('');
   };
 
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
@@ -294,16 +296,32 @@ export default function NetworkBranchDetail({
       }
     }
 
+    const folderId = extractGoogleDriveFolderId(albumDriveFolderUrl);
+    const mediaItems: AlbumMediaItem[] = [];
+    if (albumDriveFolderUrl.trim()) {
+      mediaItems.push({
+        id: `media-chapter-${Date.now()}-folder`,
+        title: { en: 'Google Drive Photo Folder Gallery', ne: 'गूगल ड्राइभ फोटो फोल्डर ग्यालरी' },
+        description: { en: albumDescEn || 'Chapter Album', ne: albumDescNe || 'शाखा एल्बम' },
+        type: 'photo',
+        url: albumDriveFolderUrl.trim(),
+        date: albumDate || new Date().toISOString().split('T')[0],
+        location: { en: albumLocEn || branch.location.en, ne: albumLocNe || branch.location.ne }
+      });
+    }
+
     const newAlbum: Album = {
       id: `alb_${Date.now()}`,
       title: { en: albumTitleEn, ne: albumTitleNe || albumTitleEn },
       description: { en: albumDescEn, ne: albumDescNe || albumDescEn },
-      coverUrl: finalCover,
+      coverUrl: finalCover || 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=1200',
       date: albumDate || new Date().toISOString().split('T')[0],
       location: { en: albumLocEn || branch.location.en, ne: albumLocNe || branch.location.ne },
       tags: [branch.id, 'chapter'],
-      mediaItems: [],
-      chapterId: branch.id
+      mediaItems: mediaItems,
+      chapterId: branch.id,
+      driveFolderUrl: albumDriveFolderUrl.trim() || undefined,
+      driveFolderId: folderId || undefined
     };
 
     onAddAlbum(newAlbum);
@@ -1428,6 +1446,20 @@ export default function NetworkBranchDetail({
                     />
                   </div>
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-gray-500 uppercase tracking-wider block">Google Drive Folder URL (Optional)</label>
+                <input 
+                  type="url" 
+                  value={albumDriveFolderUrl} 
+                  onChange={e => setAlbumDriveFolderUrl(e.target.value)} 
+                  placeholder="https://drive.google.com/drive/folders/..."
+                  className="w-full px-3.5 py-2 rounded-xl border border-teal-100/75 dark:border-slate-800 bg-teal-50/20 dark:bg-slate-950 focus:outline-none focus:border-teal-500 text-teal-950 dark:text-white"
+                />
+                <p className="text-[10px] text-teal-600 dark:text-teal-400 font-medium">
+                  Provide a public Google Drive folder link to fetch and display its photos inside the slider automatically.
+                </p>
               </div>
 
               <button

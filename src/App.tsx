@@ -834,6 +834,61 @@ export default function App() {
       });
   }, []);
 
+  // Set to keep track of folder IDs we've already fetched
+  const fetchedFoldersRef = useRef<Set<string>>(new Set());
+
+  // Dynamic runtime loading of Google Drive folder photos
+  useEffect(() => {
+    // Find all albums that have a driveFolderId
+    const albumsWithFolders = albums.filter(a => a.driveFolderId && !fetchedFoldersRef.current.has(a.driveFolderId));
+    
+    if (albumsWithFolders.length === 0) return;
+
+    albumsWithFolders.forEach(album => {
+      const folderId = album.driveFolderId;
+      if (!folderId) return;
+
+      fetchedFoldersRef.current.add(folderId);
+
+      fetch(`/api/drive-folder-images?folderId=${folderId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && Array.isArray(data.files) && data.files.length > 0) {
+            // Convert fetched files to AlbumMediaItem format
+            const folderMediaItems = data.files.map((file: any, index: number) => ({
+              id: `gdrive-fetched-${album.id}-${file.id}`,
+              title: {
+                en: file.name ? file.name.replace(/\.[a-zA-Z0-9]+$/, '') : `Photo ${index + 1}`,
+                ne: file.name ? file.name.replace(/\.[a-zA-Z0-9]+$/, '') : `तस्बिर ${index + 1}`
+              },
+              description: album.description,
+              type: file.type || 'photo',
+              url: `https://lh3.googleusercontent.com/d/${file.id}`,
+              date: album.date,
+              location: album.location
+            }));
+
+            // Update in-memory albums state
+            setAlbums(prev => prev.map(a => {
+              if (a.id === album.id) {
+                // Filter out any placeholders or existing folder embed items, then append fetched items
+                const cleanMediaItems = (a.mediaItems || []).filter(item => !item.url.includes('folders') && !item.url.includes('/drive/folders') && !item.url.includes('embeddedfolderview'));
+                return {
+                  ...a,
+                  // Let's place the fetched folder items first, then any specific custom added items
+                  mediaItems: [...folderMediaItems, ...cleanMediaItems]
+                };
+              }
+              return a;
+            }));
+          }
+        })
+        .catch(err => {
+          console.error(`Failed to fetch Google Drive folder photos for album ${album.id}:`, err);
+        });
+    });
+  }, [albums]);
+
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isSitemapModalOpen, setIsSitemapModalOpen] = useState(false);
