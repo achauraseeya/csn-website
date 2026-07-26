@@ -146,7 +146,22 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
   const settings = getGithubSettings();
   const pat = getPat();
 
-  // 1. Try fetching directly from GitHub repository FIRST (Source of Truth)
+  // 1. Try local server API endpoint FIRST for instant real-time sync!
+  // (Admin POSTs here first, so it has the absolute latest data instantly)
+  try {
+    const serverUrl = `/api/site-data/${cleanKey}?t=${Date.now()}`;
+    const res = await fetch(serverUrl);
+    if (res.ok) {
+      const data = await res.json();
+      if (data !== null && data !== undefined) {
+        return data as T;
+      }
+    }
+  } catch (err) {
+    // Ignore server fallback error and proceed to GitHub
+  }
+
+  // 2. Try fetching directly from GitHub repository (Source of Truth)
   if (settings.enabled && settings.username && settings.repo) {
     // A) If Admin with PAT, try GitHub API contents endpoint with Auth header
     if (pat) {
@@ -198,20 +213,6 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
     } catch (e) {
       // Fallback
     }
-  }
-
-  // 2. Fallback to local server API endpoint if running in Express backend environment
-  try {
-    const serverUrl = `/api/site-data/${cleanKey}?t=${Date.now()}`;
-    const res = await fetch(serverUrl);
-    if (res.ok) {
-      const data = await res.json();
-      if (data !== null && data !== undefined) {
-        return data as T;
-      }
-    }
-  } catch (err) {
-    // Ignore server fallback error
   }
 
   return fallbackData;
