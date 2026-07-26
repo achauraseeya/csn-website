@@ -46,118 +46,101 @@ async function startServer() {
 
   // API Routes
 
-  // --- Google Drive Folder Images Scraper ---
-  app.get("/api/drive-folder-images", async (req, res) => {
-    try {
-      const { folderId } = req.query;
-      if (!folderId || typeof folderId !== "string") {
-        return res.status(400).json({ error: "folderId is required" });
+// --- Google Drive Folder Images Scraper with Cache ---
+const driveCache = new Map<string, { files: any[], timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 15; // 15 minutes
+
+app.get("/api/drive-folder-images", async (req, res) => {
+  try {
+    const { folderId } = req.query;
+    if (!folderId || typeof folderId !== "string") {
+      return res.status(400).json({ error: "folderId is required" });
+    }
+
+    // Check cache
+    const cached = driveCache.get(folderId);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return res.json({ files: cached.files, fromCache: true });
+    }
+
+    const url = `https://drive.google.com/embeddedfolderview?id=${folderId}`;
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
       }
+    });
 
-      const url = `https://drive.google.com/embeddedfolderview?id=${folderId}`;
-      const response = await fetch(url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.9",
-        }
-      });
+    if (!response.ok) {
+      return res.status(500).json({ error: `Failed to fetch folder: ${response.status}` });
+    }
 
-      if (!response.ok) {
-        return res.status(500).json({ error: `Failed to fetch folder: ${response.status} ${response.statusText}` });
+    const html = await response.text();
+    const files: Array<{ id: string; name: string; type: "photo" | "video" }> = [];
+    const seenIds = new Set<string>();
+
+    // Priority 1: Direct JSON-like data structure matches
+    // Matches: [ "ID", "Name", "mime/type", ... ]
+    const dataRegex = /\[\s*["']([a-zA-Z0-9_-]{25,})["']\s*,\s*["']([^"']{1,255}?)["']\s*,\s*["'](image|video)\/[^"']+?["']/gi;
+    let match;
+    while ((match = dataRegex.exec(html)) !== null) {
+      const id = match[1];
+      const name = match[2];
+      const type = match[3] === "video" ? "video" : "photo";
+      if (!seenIds.has(id)) {
+        seenIds.add(id);
+        files.push({ id, name, type });
       }
+    }
 
-      const html = await response.text();
-      
-      const files: Array<{ id: string; name: string; type: "photo" | "video" }> = [];
-      const seenIds = new Set<string>();
+    // Priority 2: Extension based matches for slightly different formats
+    const extRegex = /["']([a-zA-Z0-9_-]{25,})["']\s*,\s*["']([^"']+?\.(?:jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm))["']/gi;
+    while ((match = extRegex.exec(html)) !== null) {
+      const id = match[1];
+      const name = match[2];
+      const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
+      if (!seenIds.has(id)) {
+        seenIds.add(id);
+        files.push({ id, name, type: isVideo ? "video" : "photo" });
+      }
+    }
 
-      // 1. New, more flexible regex for Google's internal data structure
-      // Matches: [ "ID", "Name", "mime/type", ... ]
-      const dataRegex = /\[\s*["']([a-zA-Z0-9_-]{19,45})["']\s*,\s*["']([^"']{1,255}?)["']\s*,\s*["'](image|video)\/[^"']+?["']/gi;
-      let match;
-      while ((match = dataRegex.exec(html)) !== null) {
+    // If no files found, try a very broad search for IDs (33 chars usually)
+    if (files.length === 0) {
+      const broadRegex = /["']([a-zA-Z0-9_-]{33})["']\s*,\s*["']([^"']+?)["']/g;
+      while ((match = broadRegex.exec(html)) !== null) {
         const id = match[1];
         const name = match[2];
-        const type = match[3] === "video" ? "video" : "photo";
-        if (!seenIds.has(id)) {
-          seenIds.add(id);
-          files.push({ id, name, type });
-        }
-      }
-
-      // 2. Extra robust pattern for embedded folder view
-      // Looks for patterns like ["id", "name", "image/jpeg"] or similar in large JSON blocks
-      const robustRegex = /\[\s*["']([a-zA-Z0-9_-]{25,})["']\s*,\s*["']([^"']+?\.(?:jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm))["']\s*,\s*["'](image|video)\/[^"']+?["']/gi;
-      while ((match = robustRegex.exec(html)) !== null) {
-        const id = match[1];
-        const name = match[2];
-        const type = match[3] === "video" ? "video" : "photo";
-        if (!seenIds.has(id)) {
-          seenIds.add(id);
-          files.push({ id, name, type });
-        }
-      }
-
-      // 3. Fallback to existing specific mime regex
-      const mimeRegex = /['"]([a-zA-Z0-9_-]{19,45})['"]\s*,\s*['"]([^'"]+?)['"]\s*,\s*['"](image|video)\/([a-zA-Z0-9+-]+)['"]/gi;
-      while ((match = mimeRegex.exec(html)) !== null) {
-        const id = match[1];
-        const name = match[2];
-        const category = match[3];
-        if (!seenIds.has(id)) {
-          seenIds.add(id);
-          files.push({
-            id,
-            name,
-            type: category === "video" ? "video" : "photo"
-          });
-        }
-      }
-
-      // 4. Fallback to extensions regex
-      const extRegex = /['"]([a-zA-Z0-9_-]{19,45})['"]\s*,\s*['"]([^'"]+?\.(?:jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm))['"]/gi;
-      while ((match = extRegex.exec(html)) !== null) {
-        const id = match[1];
-        const name = match[2];
-        if (!seenIds.has(id)) {
+        // Basic check for image/video extensions or generic names
+        if (!seenIds.has(id) && (/\.(jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm)$/i.test(name) || name.startsWith('IMG_') || name.startsWith('DSC'))) {
           seenIds.add(id);
           const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
-          files.push({
-            id,
-            name,
-            type: isVideo ? "video" : "photo"
-          });
+          files.push({ id, name, type: isVideo ? "video" : "photo" });
         }
       }
-
-      // 5. Very broad ID search for large lists (last resort)
-      if (files.length === 0) {
-        const idOnlyRegex = /["']([a-zA-Z0-9_-]{28,38})["']/g;
-        while ((match = idOnlyRegex.exec(html)) !== null) {
-          const id = match[1];
-          // Usually file IDs are 33 chars. Folder IDs are similar. 
-          // We avoid duplicates and try to filter out common UI strings
-          if (!seenIds.has(id) && id.length >= 30 && !id.includes('drive') && !id.includes('google')) {
-            seenIds.add(id);
-            files.push({ id, name: `Media_${files.length + 1}`, type: "photo" });
-          }
-        }
-      }
-
-      // Sort files by name to ensure consistent order (prevents "random" look)
-      files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
-
-      return res.json({ 
-        files, 
-        count: files.length,
-        folderId 
-      });
-    } catch (err: any) {
-      console.error("Error in drive-folder-images route:", err);
-      return res.status(500).json({ error: err.message || "Failed to process folder images" });
     }
-  });
+
+    // Sort: items with "cover", "main", "thumb" first, then by name
+    files.sort((a, b) => {
+      const aLower = a.name.toLowerCase();
+      const bLower = b.name.toLowerCase();
+      const aIsPrio = aLower.includes('cover') || aLower.includes('main') || aLower.includes('thumb');
+      const bIsPrio = bLower.includes('cover') || bLower.includes('main') || bLower.includes('thumb');
+      
+      if (aIsPrio && !bIsPrio) return -1;
+      if (!aIsPrio && bIsPrio) return 1;
+      return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+    });
+
+    // Update cache
+    driveCache.set(folderId, { files, timestamp: Date.now() });
+
+    return res.json({ files, count: files.length });
+  } catch (err: any) {
+    console.error("Error in drive-folder-images route:", err);
+    return res.status(500).json({ error: err.message || "Failed to process folder images" });
+  }
+});
 
   // --- Matrimonial Profiles ---
   app.get("/api/matrimony", async (req, res) => {

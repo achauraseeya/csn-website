@@ -178,17 +178,17 @@ export function getBestAlbumCover(album: Album): string {
 
   // 1. Check if we have individual photo media items (ignoring embed folders)
   if (album.mediaItems && album.mediaItems.length > 0) {
-    // Look for the "best" photo (favoring 'cover' or 'main' in filename)
+    // Look for the "best" photo (favoring 'cover' or 'main' in title)
     const bestPhoto = album.mediaItems.find(item => {
       if (item.type !== 'photo') return false;
       const url = item.url || '';
       const title = (item.title?.en || '').toLowerCase();
-      const isFolder = url.includes('folders') || url.includes('/drive/folders') || url.includes('embeddedfolderview');
+      const isFolder = url.includes('folders') || url.includes('embeddedfolderview');
       return !isFolder && url.trim().length > 0 && (title.includes('cover') || title.includes('main') || title.includes('thumb'));
     }) || album.mediaItems.find(item => {
       if (item.type !== 'photo') return false;
       const url = item.url || '';
-      const isFolder = url.includes('folders') || url.includes('/drive/folders') || url.includes('embeddedfolderview');
+      const isFolder = url.includes('folders') || url.includes('embeddedfolderview');
       return !isFolder && url.trim().length > 0;
     });
 
@@ -196,22 +196,20 @@ export function getBestAlbumCover(album: Album): string {
       return formatDriveImageUrl(bestPhoto.url);
     }
 
-    // 2. No direct photos, check for a video and use its YouTube thumbnail if possible
+    // 2. Use video thumbnail as fallback
     const firstVideo = album.mediaItems.find(item => item.type === 'video');
     if (firstVideo && firstVideo.url) {
       const ytId = extractYouTubeId(firstVideo.url);
-      if (ytId) {
-        return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
-      }
+      if (ytId) return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
     }
   }
 
-  // 3. Check if album has a predefined coverUrl (which is not a folder)
-  if (album.coverUrl && !album.coverUrl.includes('folders') && !album.coverUrl.includes('/drive/folders') && !album.coverUrl.includes('embeddedfolderview')) {
+  // 3. Predefined cover
+  if (album.coverUrl && !album.coverUrl.includes('folders') && !album.coverUrl.includes('embeddedfolderview')) {
     return formatDriveImageUrl(album.coverUrl);
   }
 
-  // 4. Fallback scenic Nepal view
+  // 4. Default fallback
   return 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=1200';
 }
 

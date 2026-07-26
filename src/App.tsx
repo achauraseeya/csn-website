@@ -837,72 +837,46 @@ export default function App() {
   // Set to keep track of folder IDs we've already fetched
   const fetchedFoldersRef = useRef<Set<string>>(new Set());
 
-  // Dynamic runtime loading of Google Drive folder photos
+  // Optimized fetch for Google Drive folder images
   useEffect(() => {
-    // Find all albums that have a driveFolderId
-    const albumsWithFolders = albums.filter(a => a.driveFolderId && !fetchedFoldersRef.current.has(a.driveFolderId));
+    const pendingAlbums = albums.filter(a => a.driveFolderId && !a.isDriveFetched && !fetchedFoldersRef.current.has(a.driveFolderId));
     
-    if (albumsWithFolders.length === 0) return;
+    if (pendingAlbums.length === 0) return;
 
-    albumsWithFolders.forEach(album => {
-      const folderId = album.driveFolderId;
-      if (!folderId) return;
-
+    pendingAlbums.forEach(album => {
+      const folderId = album.driveFolderId!;
       fetchedFoldersRef.current.add(folderId);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 20000); 
 
       fetch(`/api/drive-folder-images?folderId=${folderId}`, { signal: controller.signal })
         .then(res => res.json())
         .then(data => {
           clearTimeout(timeoutId);
-          if (data && Array.isArray(data.files) && data.files.length > 0) {
-            // Convert fetched files to AlbumMediaItem format
-            const folderMediaItems = data.files.map((file: any, index: number) => ({
-              id: `gdrive-fetched-${album.id}-${file.id}`,
-              title: {
-                en: file.name ? file.name.replace(/\.[a-zA-Z0-9]+$/, '') : `Photo ${index + 1}`,
-                ne: file.name ? file.name.replace(/\.[a-zA-Z0-9]+$/, '') : `तस्बिर ${index + 1}`
-              },
-              description: album.description,
-              type: file.type || 'photo',
+          if (data && Array.isArray(data.files)) {
+            const folderMediaItems = data.files.map((file: any) => ({
+              id: `${album.id}-drive-${file.id}`,
+              title: { en: file.name, ne: file.name },
               url: `https://lh3.googleusercontent.com/d/${file.id}`,
-              date: album.date,
-              location: album.location
+              type: file.type || 'photo'
             }));
 
-            // Update in-memory albums state
             setAlbums(prev => prev.map(a => {
               if (a.id === album.id) {
-                // Filter out any placeholders or existing folder embed items, then append fetched items
-                const cleanMediaItems = (a.mediaItems || []).filter(item => !item.url.includes('folders') && !item.url.includes('/drive/folders') && !item.url.includes('embeddedfolderview'));
-                const newMediaItems = [...folderMediaItems, ...cleanMediaItems];
+                const cleanExisting = (a.mediaItems || []).filter(item => 
+                  !item.url.includes('folders') && !item.url.includes('embeddedfolderview')
+                );
                 
-                // If the album cover is generic or missing, pick the first image from the folder
-                const currentCover = a.coverUrl || '';
-                const isGenericCover = !currentCover || currentCover.includes('unsplash') || currentCover.includes('folders');
+                const isGenericCover = !a.coverUrl || a.coverUrl.includes('drive-folder') || a.coverUrl.includes('images/album-placeholder') || a.coverUrl.includes('unsplash');
                 const bestCover = (isGenericCover && folderMediaItems.length > 0) 
                   ? folderMediaItems[0].url 
-                  : currentCover;
+                  : a.coverUrl;
 
                 return {
                   ...a,
+                  mediaItems: [...cleanExisting, ...folderMediaItems],
                   coverUrl: bestCover,
-                  mediaItems: newMediaItems,
-                  isDriveFetched: true
-                };
-              }
-              return a;
-            }));
-          } else {
-            // Even if empty, update the album to remove any placeholder "folder" items so spinner stops
-            setAlbums(prev => prev.map(a => {
-              if (a.id === album.id) {
-                const cleanMediaItems = (a.mediaItems || []).filter(item => !item.url.includes('folders') && !item.url.includes('/drive/folders') && !item.url.includes('embeddedfolderview'));
-                return {
-                  ...a,
-                  mediaItems: cleanMediaItems.length > 0 ? cleanMediaItems : a.mediaItems,
                   isDriveFetched: true
                 };
               }
@@ -912,12 +886,13 @@ export default function App() {
         })
         .catch(err => {
           clearTimeout(timeoutId);
-          console.error(`Failed to fetch Google Drive folder photos for album ${album.id}:`, err);
-          // On error, also try to stop the spinner by removing placeholder if it was the only item
+          console.error(`Error fetching drive folder ${folderId}:`, err);
           setAlbums(prev => prev.map(a => {
             if (a.id === album.id) {
-              const cleanMediaItems = (a.mediaItems || []).filter(item => !item.url.includes('folders') && !item.url.includes('/drive/folders') && !item.url.includes('embeddedfolderview'));
-              return { ...a, mediaItems: cleanMediaItems, isDriveFetched: true };
+              const cleanExisting = (a.mediaItems || []).filter(item => 
+                !item.url.includes('folders') && !item.url.includes('embeddedfolderview')
+              );
+              return { ...a, mediaItems: cleanExisting, isDriveFetched: true };
             }
             return a;
           }));
