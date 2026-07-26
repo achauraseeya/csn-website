@@ -383,12 +383,40 @@ export default function LeaderBio({
             </div>
             <div>
               <label className="block text-gray-700 dark:text-gray-300 mb-1">Avatar / Photo URL</label>
-              <input
-                type="text"
-                value={editAvatarUrl}
-                onChange={e => setEditAvatarUrl(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={editAvatarUrl}
+                  onChange={e => setEditAvatarUrl(e.target.value)}
+                  className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                />
+                <label className="px-4 py-2.5 bg-teal-700 hover:bg-teal-800 text-white rounded-xl font-bold cursor-pointer flex items-center justify-center shadow-sm whitespace-nowrap">
+                  Upload
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 2 * 1024 * 1024) {
+                        alert(lang === 'en' ? 'File too large (Max 2MB)' : 'फाइल धेरै ठूलो छ (अधिकतम २MB)');
+                        return;
+                      }
+                      try {
+                        const { compressImageToBase64 } = await import('../utils/imageUtils');
+                        const { uploadImageToGithub } = await import('../utils/githubDb');
+                        const base64 = await compressImageToBase64(file, 500);
+                        const fileName = `leader_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+                        const url = await uploadImageToGithub(fileName, base64, `Upload leader photo ${file.name}`);
+                        setEditAvatarUrl(url);
+                      } catch (err) {
+                        alert('Upload failed');
+                      }
+                    }}
+                  />
+                </label>
+              </div>
             </div>
 
             <div className="md:col-span-2 flex justify-end gap-3 pt-4 border-t dark:border-slate-800">

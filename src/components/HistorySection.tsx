@@ -403,7 +403,17 @@ export default function HistorySection({
       if (siteTexts.leadershipIdsJson) {
         const parsed = JSON.parse(siteTexts.leadershipIdsJson);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          // Merge with latest data from membersList or boardMembers
+          return parsed.map((item: any) => {
+            const latestMember = membersList?.find(m => m.id === item.id) || boardMembers.find(m => m.id === item.id);
+            if (latestMember) {
+              return {
+                ...item,
+                ...latestMember, // Override with latest data
+              };
+            }
+            return item;
+          });
         }
       }
     } catch (e) {}
@@ -1195,119 +1205,18 @@ export default function HistorySection({
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
 
-                      <div className="flex flex-col gap-3 border-b border-teal-100 pb-3 pr-6">
+                      <div className="flex flex-col gap-3 pt-2">
                         <div className="flex items-center gap-3">
                           <div className="relative w-12 h-12 rounded-full overflow-hidden border border-teal-200 shrink-0 bg-teal-50 flex items-center justify-center">
                             <img src={member.avatarUrl} alt="" className="w-full h-full object-cover" />
                           </div>
                           <div className="space-y-1 w-full">
-                            <label className="text-[10px] font-bold text-teal-900 uppercase block">Leader Photo (Upload or URL)</label>
-                            <div className="flex gap-1.5">
-                              <input
-                                type="text"
-                                placeholder="Image URL"
-                                required
-                                value={member.avatarUrl}
-                                onChange={(e) => {
-                                  const updated = [...editLeadership];
-                                  updated[lIdx] = { ...updated[lIdx], avatarUrl: e.target.value };
-                                  setEditLeadership(updated);
-                                }}
-                                className="w-full p-1.5 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                              />
-                              <label className="px-2.5 py-1.5 bg-teal-700 hover:bg-teal-800 text-white rounded-lg text-[10px] font-bold uppercase cursor-pointer flex items-center justify-center whitespace-nowrap shadow-sm">
-                                Upload
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={async (e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      try {
-                                        const url = await handleFileUpload(file);
-                                        const updated = [...editLeadership];
-                                        updated[lIdx] = { ...updated[lIdx], avatarUrl: url };
-                                        setEditLeadership(updated);
-                                      } catch (err: any) {
-                                        alert(err.message || 'Failed to upload photo');
-                                      }
-                                    }
-                                  }}
-                                />
-                              </label>
-                            </div>
+                            <h5 className="text-xs font-bold text-teal-950">{member.name?.en || ''}</h5>
+                            <p className="text-[10px] text-teal-700 uppercase font-semibold">{member.role?.en || ''}</p>
+                            <p className="text-[10px] text-gray-500 italic mt-1">
+                              {lang === 'en' ? 'Profile details (photo, name, role) are synced from the Member Directory. Edit them there.' : 'प्रोफाइल विवरण (फोटो, नाम, भूमिका) सदस्य निर्देशिकाबाट सिंक गरिएको छ। त्यहाँ सम्पादन गर्नुहोस्।'}
+                            </p>
                           </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        {/* Name English */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-teal-900 uppercase">Name (EN)</label>
-                          <input
-                            type="text"
-                            required
-                            value={member.name?.en || ''}
-                            onChange={(e) => {
-                              const updated = [...editLeadership];
-                              const name = { ...(updated[lIdx].name || { en: '', ne: '' }), en: e.target.value };
-                              updated[lIdx] = { ...updated[lIdx], name };
-                              setEditLeadership(updated);
-                            }}
-                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs font-bold text-teal-950 focus:outline-none"
-                          />
-                        </div>
-
-                        {/* Name Nepali */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-teal-900 uppercase">Name (NE)</label>
-                          <input
-                            type="text"
-                            required
-                            value={member.name?.ne || ''}
-                            onChange={(e) => {
-                              const updated = [...editLeadership];
-                              const name = { ...(updated[lIdx].name || { en: '', ne: '' }), ne: e.target.value };
-                              updated[lIdx] = { ...updated[lIdx], name };
-                              setEditLeadership(updated);
-                            }}
-                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs font-bold text-teal-950 focus:outline-none"
-                          />
-                        </div>
-
-                        {/* Role English */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-teal-900 uppercase">Role (EN)</label>
-                          <input
-                            type="text"
-                            required
-                            value={member.role?.en || ''}
-                            onChange={(e) => {
-                              const updated = [...editLeadership];
-                              const role = { ...(updated[lIdx].role || { en: '', ne: '' }), en: e.target.value };
-                              updated[lIdx] = { ...updated[lIdx], role };
-                              setEditLeadership(updated);
-                            }}
-                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                          />
-                        </div>
-
-                        {/* Role Nepali */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-teal-900 uppercase">Role (NE)</label>
-                          <input
-                            type="text"
-                            required
-                            value={member.role?.ne || ''}
-                            onChange={(e) => {
-                              const updated = [...editLeadership];
-                              const role = { ...(updated[lIdx].role || { en: '', ne: '' }), ne: e.target.value };
-                              updated[lIdx] = { ...updated[lIdx], role };
-                              setEditLeadership(updated);
-                            }}
-                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                          />
                         </div>
                       </div>
                     </div>
