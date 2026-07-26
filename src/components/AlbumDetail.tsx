@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   X, ChevronLeft, ChevronRight, Play, Maximize2, Minimize2, 
   Calendar, MapPin, Tag, Film, Image as ImageIcon, ExternalLink, Share2, Info, ArrowLeft,
-  Check, FolderPlus
+  Check, FolderPlus, RefreshCw, Loader2, Plus
 } from 'lucide-react';
 import { Album, AlbumMediaItem, Language } from '../types';
 import { parseMediaUrl, extractGoogleDriveFolderId, getGoogleDriveFolderViewUrl, getBestAlbumCover, formatNumber } from '../utils/mediaUrl';
@@ -119,7 +119,11 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
 
   const parsed = currentItem ? parseMediaUrl(currentItem.url, currentItem.type) : null;
 
-  const isFetchingDrive = album.driveFolderId && !album.isDriveFetched && ((album.mediaItems?.length || 0) === 0 || (album.mediaItems?.length === 1 && (album.mediaItems[0].url.includes('folders') || album.mediaItems[0].url.includes('embeddedfolderview'))));
+  const isFetchingDrive = album.driveFolderId && !album.isDriveFetched;
+
+  const handleManualRefresh = () => {
+    window.location.reload(); 
+  };
 
   return (
     <div className={`transition-all duration-300 ${isFullscreen ? 'fixed inset-0 z-50 bg-black flex flex-col justify-between overflow-hidden p-0' : 'space-y-8 bg-slate-900 text-white rounded-3xl p-4 sm:p-8 shadow-2xl border border-teal-800'}`}>
@@ -141,6 +145,21 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
             <div className="flex items-center gap-3 text-xs text-teal-400 font-semibold mt-0.5 flex-wrap">
               <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {formatNumber(album.date, lang)}</span>
               <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {formatNumber(album.location[lang], lang)}</span>
+              {isFetchingDrive && (
+                <span className="flex items-center gap-1.5 px-2 py-0.5 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-full animate-pulse">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  {lang === 'en' ? 'Fetching...' : 'खोज्दै...'}
+                </span>
+              )}
+              {album.driveFolderId && (
+                <button 
+                  onClick={handleManualRefresh}
+                  className="p-1 hover:bg-gray-800 rounded-md transition-colors text-gray-500 hover:text-white"
+                  title="Refresh"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                </button>
+              )}
               {(album.driveFolderUrl || (currentItem && extractGoogleDriveFolderId(currentItem.url))) && (
                 <a
                   href={album.driveFolderUrl || getGoogleDriveFolderViewUrl(extractGoogleDriveFolderId(currentItem?.url || '') || '')}
