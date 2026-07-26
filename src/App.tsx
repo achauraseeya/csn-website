@@ -1706,16 +1706,24 @@ export default function App() {
           </div>
         )}
 
-        {currentTab === 'leader-bio' && (
-          <LeaderBio
-            lang={lang}
-            leaderId={selectedLeaderId}
-            onTrackAction={handleTrackAction}
-            members={members}
-            onUpdateMember={handleUpdateMember}
-            isAdmin={isAdmin}
-          />
-        )}
+        {currentTab === 'leader-bio' && (() => {
+          let featuredLeaders = [];
+          try {
+            if (siteTexts.leadershipIdsJson) {
+              featuredLeaders = JSON.parse(siteTexts.leadershipIdsJson);
+            }
+          } catch (e) {}
+          return (
+            <LeaderBio
+              lang={lang}
+              leaderId={selectedLeaderId}
+              onTrackAction={handleTrackAction}
+              members={[...members, ...featuredLeaders]}
+              onUpdateMember={handleUpdateMember}
+              isAdmin={isAdmin}
+            />
+          );
+        })()}
 
         {currentTab === 'matrimonial' && (
           <MatrimonialSection
