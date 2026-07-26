@@ -1,0 +1,203 @@
+[
+  {
+    "id": "2",
+    "name": {
+      "en": "Abhishek Kumar Chaurasiya",
+      "ne": "अभिषेक कुमार चौरसिया"
+    },
+    "role": {
+      "en": "Chief Technology Officer & General Secretary",
+      "ne": "मुख्य प्रविधि अधिकारी र महासचिव"
+    },
+    "category": "secretary",
+    "phone": "+977-9812345678",
+    "email": "abhishek@chaurasiyasamaaj.org.np",
+    "address": {
+      "en": "Birgunj, Parsa, Nepal",
+      "ne": "वीरगन्ज, पर्सा, नेपाल"
+    },
+    "bio": {
+      "en": "A visionary software engineer and designer dedicated to digitizing our community services and building modern web portals.",
+      "ne": "हाम्रो सामुदायिक सेवाहरूलाई डिजिटाइज गर्न र आधुनिक वेब पोर्टलहरू निर्माण गर्न समर्पित एक दूरदर्शी सफ्टवेयर इन्जिनियर र डिजाइनर।"
+    },
+    "avatarUrl": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200"
+  },
+  {
+    "id": "4",
+    "name": {
+      "en": "Dr. Devendra Prasad Chaurasiya",
+      "ne": "डा. देवेन्द्र प्रसाद चौरसिया"
+    },
+    "role": {
+      "en": "Treasurer & Medical Advisor",
+      "ne": "कोषाध्यक्ष र चिकित्सा सल्लाहकार"
+    },
+    "category": "board",
+    "phone": "+977-9855012345",
+    "email": "devendra@chaurasiyasamaaj.org.np",
+    "address": {
+      "en": "Janakpur, Nepal",
+      "ne": "जनकपुर, नेपाल"
+    },
+    "bio": {
+      "en": "Managing the community welfare fund and leading the weekend free healthcare clinics program.",
+      "ne": "सामुदायिक कल्याण कोषको व्यवस्थापन र सप्ताहन्त नि:शुल्क स्वास्थ्य क्लिनिक कार्यक्रमको नेतृत्व गर्दै।"
+    },
+    "avatarUrl": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=200"
+  },
+  {
+    "id": "5",
+    "name": {
+      "en": "Krishna Kant Chaurasiya",
+      "ne": "कृष्ण कान्त चौरसिया"
+    },
+    "role": {
+      "en": "Senior Advisor",
+      "ne": "वरिष्ठ सल्लाहकार"
+    },
+    "category": "board",
+    "phone": "+977-9801098765",
+    "address": {
+      "en": "Biratnagar, Nepal",
+      "ne": "विराटनगर, नेपाल"
+    },
+    "bio": {
+      "en": "Guiding the community’s social and legal frameworks with a lifelong dedication to public welfare.",
+      "ne": "जनताको कल्याणका लागि आजीवन समर्पणका साथ समुदायको सामाजिक र कानुनी संरचनालाई मार्गदर्शन गर्दै।"
+    },
+    "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200"
+  },
+  {
+    "id": "6",
+    "name": {
+      "en": "Anil Kumar Chaurasiya",
+      "ne": "अनिल कुमार चौरसिया"
+    },
+    "role": {
+      "en": "Executive Youth Member",
+      "ne": "कार्यकारी युवा सदस्य"
+    },
+    "category": "general",
+    "phone": "+977-9818812345",
+    "address": {
+      "en": "Bara, Nepal",
+      "ne": "बारा, नेपाल"
+    },
+    "bio": {
+      "en": "Coordinating youth blood donation networks and emergency relief activities in Madhesh Province.",
+      "ne": "मधेश प्रदेशमा युवा रक्तदान सञ्जाल र आपतकालीन राहत गतिविधिको समन्वय गर्दै।"
+    },
+    "avatarUrl": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=200"
+  },
+  {
+    "id": "m_1785063031821",
+    "name": {
+      "en": "werwe",
+      "ne": "wer"
+    },
+    "role": {
+      "en": "wer",
+      "ne": "wer"
+    },
+    "category": "board",
+    "phone": "",
+    "email": "",
+    "address": {
+      "en": "Kathmandu, Bagmati",
+      "ne": "काठमाडौं, बागमती"
+    },
+    "bio": {
+      "en": "",
+      "ne": ""
+    },
+    "avatarUrl": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200",
+    "chapterId": "chapter-kathmandu"
+  },
+  {
+    "id": "1",
+    "name": {
+      "en": "saraswati",
+      "ne": "राम विलास चौरसिया"
+    },
+    "role": {
+      "en": "Chief President (Chairperson)",
+      "ne": "मुख्य अध्यक्ष (अध्यक्ष)"
+    },
+    "category": "chief",
+    "phone": "+977-9851000001",
+    "email": "president@chaurasiyasamaaj.org.np",
+    "address": {
+      "en": "Kathmandu, Nepal",
+      "ne": "काठमाडौं, नेपाल"
+    },
+    "bio": {
+      "en": "Leading the organization with over 20 years of experience in community leadership and social development.",
+      "ne": "सामुदायिक नेतृत्व र सामाजिक विकासमा २० वर्ष भन्दा बढीको अनुभवका साथ संस्थाको नेतृत्व गर्दै।"
+    },
+    "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
+    "education": {
+      "en": "Higher Education Degree",
+      "ne": "उच्च शिक्षा डिग्री"
+    },
+    "vision": {
+      "en": "Dedicated to modernizing agriculture, expanding youth IT scholarships, and upholding cultural heritage.",
+      "ne": "कृषिको आधुनिकीकरण, युवा सूचना प्रविधि छात्रवृत्ति विस्तार र सांस्कृतिक सम्पदाको संरक्षणमा समर्पित।"
+    },
+    "termPeriod": "2025 - 2028"
+  },
+  {
+    "id": "vc1",
+    "name": {
+      "en": "Sita Ram Chaurasiya",
+      "ne": "सीता राम चौरसिया"
+    },
+    "role": {
+      "en": "Vice Chairperson",
+      "ne": "उपाध्यक्ष"
+    },
+    "category": "chief",
+    "phone": "+977-9851000002",
+    "email": "vicepresident@chaurasiyasamaaj.org.np",
+    "address": {
+      "en": "Birgunj, Nepal",
+      "ne": "वीरगन्ज, नेपाल"
+    },
+    "bio": {
+      "en": "Dedicated to community upliftment and strategic planning for Chaurasiya Samaj.",
+      "ne": "चौरसिया समाजको सामुदायिक उत्थान र रणनीतिक योजनाको लागि समर्पित।"
+    },
+    "avatarUrl": "https://raw.githubusercontent.com/achauraseeya/csn-website/main/assets/uploads/1785066288263_CSN_logo.jpg"
+  },
+  {
+    "id": "3",
+    "name": {
+      "en": "Saraswati Chaurasiya",
+      "ne": "सरस्वती चौरसिया"
+    },
+    "role": {
+      "en": "Joint Secretary",
+      "ne": "सह-सचिव"
+    },
+    "category": "secretary",
+    "phone": "+977-9841234567",
+    "email": "saraswati@chaurasiyasamaaj.org.np",
+    "address": {
+      "en": "Lalitpur, Nepal",
+      "ne": "ललितपुर, नेपाल"
+    },
+    "bio": {
+      "en": "Actively coordinates women-led educational schemes, empowerment workshops, and health awareness campaigns.",
+      "ne": "महिलाहरूको नेतृत्वमा शैक्षिक योजनाहरू, सशक्तिकरण कार्यशालाहरू र स्वास्थ्य सचेतना अभियानहरूको सक्रिय समन्वय गर्नुहुन्छ।"
+    },
+    "avatarUrl": "https://raw.githubusercontent.com/achauraseeya/csn-website/main/assets/uploads/1785067287390_CSN_logo.jpg",
+    "education": {
+      "en": "Higher Education Degree",
+      "ne": "उच्च शिक्षा डिग्री"
+    },
+    "vision": {
+      "en": "asad",
+      "ne": "कृषिको आधुनिकीकरण, युवा सूचना प्रविधि छात्रवृत्ति विस्तार र सांस्कृतिक सम्पदाको संरक्षणमा समर्पित।"
+    },
+    "termPeriod": "2025 - 2028"
+  }
+]
