@@ -98,7 +98,7 @@ export default function OurHeritagePage({ lang, isAdmin, onTrackAction }: OurHer
     return defaultHeritageData;
   });
 
-  // Fetch online server heritage data on mount so ALL devices get updated content
+  // Fetch online GitHub heritage data on mount
   useEffect(() => {
     apiFetch<HeritageData>('/api/our-heritage', 'our_heritage.json', defaultHeritageData)
       .then((cloudData) => {

@@ -63,3 +63,10 @@ export const newsletterSubscribers = pgTable('newsletter_subscribers', {
   subscribedAt: text('subscribed_at').notNull(),
   source: text('source'),
 });
+
+export const siteData = pgTable('site_data', {
+  key: text('key').primaryKey(),
+  content: text('content').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+

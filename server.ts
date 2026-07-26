@@ -12,13 +12,13 @@ async function startServer() {
 
   app.use(express.json({ limit: '10mb' }));
 
-  // Ensure data_store directory exists
+  // Ensure data_store directory exists for local filesystem cache
   const DATA_DIR = path.join(process.cwd(), 'data_store');
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 
-  // --- Universal JSON Site Data Persistence Endpoints ---
+  // --- Universal Pure JSON Site Data Persistence Endpoints (GitHub-backed) ---
   app.get("/api/site-data/:key", (req, res) => {
     try {
       const key = req.params.key.replace(/[^a-zA-Z0-9_-]/g, '');
@@ -29,7 +29,6 @@ async function startServer() {
       }
       return res.status(404).json({ error: "Site data key not found" });
     } catch (err) {
-      console.error(`Failed to read site data key ${req.params.key}:`, err);
       return res.status(500).json({ error: "Failed to read site data" });
     }
   });
@@ -41,7 +40,6 @@ async function startServer() {
       fs.writeFileSync(filePath, JSON.stringify(req.body, null, 2), 'utf-8');
       return res.json({ success: true, key });
     } catch (err) {
-      console.error(`Failed to save site data key ${req.params.key}:`, err);
       return res.status(500).json({ error: "Failed to save site data" });
     }
   });

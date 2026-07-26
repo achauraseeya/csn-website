@@ -64,7 +64,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
     };
   });
 
-  // Fetch online server profile data on mount
+  // Fetch official profile data from GitHub repository on mount
   useEffect(() => {
     apiFetch<any>('/api/abhishek-profile', 'abhishek_profile.json', null)
       .then((cloudProfile) => {
@@ -87,7 +87,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
             quoteNe: cloudProfile.quoteNe || '"प्रविधिले तल्लो तहका सामुदायिक कार्यहरूलाई सरलीकरण गर्ने शक्ति राख्छ। द्रुत र पहुँचयोग्य पोर्टलहरू निर्माण गरेर, हामी परम्परागत कृषि र हाम्रो समाजलाई एकै थलोमा जोड्छौँ।"',
             portalTextEn: cloudProfile.portalTextEn || 'Discover complete software projects, research papers, and technical blogs at www.achaurasiya.com.np',
             portalTextNe: cloudProfile.portalTextNe || 'www.achaurasiya.com.np मा सम्पूर्ण सफ्टवेयर परियोजनाहरू, अनुसन्धान पत्रहरू र ब्लगहरू हेर्नुहोस्।',
-            contributions: cloudProfile.contributions || []
+            contributions: Array.isArray(cloudProfile.contributions) ? cloudProfile.contributions : []
           };
           setProfile(updatedProfile);
           try {
@@ -96,7 +96,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
         }
       })
       .catch(() => {});
-  }, []);
+  }, [isAdmin]);
 
   // Admin edit modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);

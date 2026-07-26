@@ -97,7 +97,7 @@ export default function MembershipDonation({
   const [showEditDonationModal, setShowEditDonationModal] = useState(false);
   const [editDonationForm, setEditDonationForm] = useState(donationInfo);
 
-  // Fetch online server donation settings on mount
+  // Fetch online GitHub donation settings on mount
   useEffect(() => {
     apiFetch<any>('/api/donation-info', 'donation_info.json', null)
       .then((cloudInfo) => {

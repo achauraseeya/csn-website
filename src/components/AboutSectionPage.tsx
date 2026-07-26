@@ -174,7 +174,7 @@ export default function AboutSectionPage({
     return defaultAboutData;
   });
 
-  // Fetch online server about sections on mount so ALL devices get updated content
+  // Fetch online GitHub about sections on mount
   useEffect(() => {
     apiFetch<Record<AboutSubsectionId, AboutSectionData>>('/api/about-sections', 'about_sections.json', defaultAboutData)
       .then((cloudData) => {
