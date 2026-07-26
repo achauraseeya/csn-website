@@ -1,0 +1,56 @@
+{
+  "name": "Abhishek Kumar Chaurasiya",
+  "title": "Volunteer, Chaurasiya Samaj Nepal",
+  "subtitleNe": "स्वयम्सेवक, चौरसिया समाज नेपाल",
+  "bioEn": "Abhishek Kumar Chaurasiya is a passionate software architect, tech community leader, and the General Secretary & CTO of Chaurasiya Samaj Nepal. Driven by a deep love for his community and technological advancements, Abhishek designed this responsive platform to digitize resources, expand outreach, and deliver a clean digital ecosystem. He specializes in designing modern full-stack systems, mobile apps, and robust cloud services, while preserving cultural legacies through innovative open-source solutions.",
+  "bioNe": "अभिषेक कुमार चौरसिया एक भावुक सफ्टवेयर आर्किटेक्ट, प्रविधि समुदायका नेता र चौरसिया समाज नेपालका महासचिव तथा सीटीओ हुन्। आफ्नो समुदाय र प्राविधिक विकासप्रति गहिरो मायाले प्रेरित भई, अभिषेकले स्रोतहरूलाई डिजिटलाइज गर्न, पहुँच विस्तार गर्न र सफा डिजिटल इकोसिस्टम प्रदान गर्न यो उत्तरदायी प्लेटफर्मको डिजाइन गरेका हुन्। उनी नवीन ओपन-सोर्स समाधानहरू मार्फत सांस्कृतिक विरासतहरू जोगाउँदै आधुनिक फुल-स्ट्याक प्रणालीहरू, मोबाइल एपहरू र बलियो क्लाउड सेवाहरू डिजाइन गर्न विशेषज्ञ छन्।",
+  "education": "M.Tech (Structural Engineering)",
+  "university": "Tribhuvan University, Nepal",
+  "email": "achauraseeya@gmail.com",
+  "phone": "+977-9818471605",
+  "github": "https://github.com/achauraseeya",
+  "websiteUrl": "https://www.achaurasiya.com.np",
+  "avatarUrl": "https://raw.githubusercontent.com/achauraseeya/csn-website/main/assets/uploads/abhishek_profile_1785062838750.jpg",
+  "skills": [
+    "Performance Based Design",
+    "Seismic Design of Buildings",
+    "Performance Assessment of Structures",
+    "Contract Management"
+  ],
+  "quoteEn": "\"Technology holds the power to simplify grassroots community work. By building fast, accessible portals, we elevate traditional agriculture and unite our people under one digital roof.\"",
+  "quoteNe": "\"प्रविधिले तल्लो तहका सामुदायिक कार्यहरूलाई सरलीकरण गर्ने शक्ति राख्छ। द्रुत र पहुँचयोग्य पोर्टलहरू निर्माण गरेर, हामी परम्परागत कृषि र हाम्रो समाजलाई एकै थलोमा जोड्छौँ।\"",
+  "portalTextEn": "Discover complete software projects, research papers, and technical blogs at www.achaurasiya.com.np",
+  "portalTextNe": "www.achaurasiya.com.np मा सम्पूर्ण सफ्टवेयर परियोजनाहरू, अनुसन्धान पत्रहरू र ब्लगहरू हेर्नुहोस्।",
+  "contributions": [
+    {
+      "title": {
+        "en": "Centralized Member Database Deployed",
+        "ne": "केन्द्रीकृत सदस्य डाटाबेस"
+      },
+      "desc": {
+        "en": "Designed and deployed a responsive cloud directory to organize and verify community members, preventing fraud.",
+        "ne": "समुदायका सदस्यहरूलाई व्यवस्थित र प्रमाणित गर्न एक उत्तरदायी क्लाउड निर्देशिका डिजाइन र तैनात गर्नुभयो।"
+      }
+    },
+    {
+      "title": {
+        "en": "Blogger.com Integration Engine",
+        "ne": "ब्लगर एकीकरण इन्जिन"
+      },
+      "desc": {
+        "en": "Developed custom XML template compiler that generates secure blogger.com layouts for low-budget deployment.",
+        "ne": "कम बजेटको प्रयोगका लागि सुरक्षित ब्लगर ढाँचाहरू उत्पन्न गर्ने अनुकूलन XML टेम्पलेट कम्पाइलर विकास गर्नुभयो।"
+      }
+    },
+    {
+      "title": {
+        "en": "Rural Farmers Mobile Support",
+        "ne": "ग्रामीण किसान मोबाइल सहयोग"
+      },
+      "desc": {
+        "en": "Engineered notification portals so rural betel leaf (paan) farmers receive instant cold and storm warning bulletins.",
+        "ne": "ग्रामीण पान उत्पादक कृषकहरूले तत्काल चिसो र आँधीबेहरीको चेतावनी बुलेटिनहरू प्राप्त गर्न सक्ने गरी सूचना पोर्टलको निर्माण गर्नुभयो।"
+      }
+    }
+  ]
+}
