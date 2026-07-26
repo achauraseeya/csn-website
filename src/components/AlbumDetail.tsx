@@ -2,10 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   X, ChevronLeft, ChevronRight, Play, Maximize2, Minimize2, 
   Calendar, MapPin, Tag, Film, Image as ImageIcon, ExternalLink, Share2, Info, ArrowLeft,
-  Check, FolderPlus, RefreshCw, Loader2, Plus
+  Check, FolderPlus, RefreshCw, Loader2, Plus, ExternalLink as ExternalIcon
 } from 'lucide-react';
 import { Album, AlbumMediaItem, Language } from '../types';
-import { parseMediaUrl, extractGoogleDriveFolderId, getGoogleDriveFolderViewUrl, getBestAlbumCover, formatNumber } from '../utils/mediaUrl';
+import { 
+  parseMediaUrl, 
+  extractGoogleDriveFolderId, 
+  getGoogleDriveFolderViewUrl, 
+  getBestAlbumCover, 
+  formatNumber,
+  getDriveFileViewUrl
+} from '../utils/mediaUrl';
 
 interface AlbumDetailProps {
   album: Album;
@@ -438,20 +445,36 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
             {/* Caption Info Overlay */}
             {showInfo && (
               <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-4 sm:p-6 text-white backdrop-blur-sm border-t border-white/5">
-                <h3 className="text-base sm:text-lg font-extrabold text-teal-200">
-                  {currentItem.title[lang]}
-                </h3>
-                {currentItem.description && (
-                  <p className="text-xs sm:text-sm text-gray-300 font-medium max-w-4xl mt-1 leading-relaxed line-clamp-2 sm:line-clamp-none">
-                    {currentItem.description[lang]}
-                  </p>
-                )}
-                {currentItem.location && (
-                  <div className="flex items-center gap-2 mt-2 text-[11px] font-semibold text-emerald-400">
-                    <MapPin className="w-3 h-3" />
-                    <span>{currentItem.location[lang]}</span>
+                <div className="flex justify-between items-end gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-base sm:text-lg font-extrabold text-teal-200">
+                      {currentItem.title[lang]}
+                    </h3>
+                    {currentItem.description && (
+                      <p className="text-xs sm:text-sm text-gray-300 font-medium max-w-4xl mt-1 leading-relaxed line-clamp-2 sm:line-clamp-none">
+                        {currentItem.description[lang]}
+                      </p>
+                    )}
+                    {currentItem.location && (
+                      <div className="flex items-center gap-2 mt-2 text-[11px] font-semibold text-emerald-400">
+                        <MapPin className="w-3 h-3" />
+                        <span>{currentItem.location[lang]}</span>
+                      </div>
+                    )}
                   </div>
-                )}
+                  
+                  {currentItem.url.includes('drive.google.com') && (
+                    <a 
+                      href={getDriveFileViewUrl(currentItem.url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 text-[10px] sm:text-xs font-bold rounded-xl border border-emerald-500/30 transition-all whitespace-nowrap mb-1 shadow-lg backdrop-blur-md"
+                    >
+                      <ExternalIcon className="w-3.5 h-3.5" />
+                      {lang === 'en' ? 'Open Original' : 'असली खोल्नुहोस्'}
+                    </a>
+                  )}
+                </div>
               </div>
             )}
           </>

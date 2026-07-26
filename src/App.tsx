@@ -858,7 +858,7 @@ export default function App() {
             const folderMediaItems = data.files.map((file: any) => ({
               id: `${album.id}-drive-${file.id}`,
               title: { en: file.name, ne: file.name },
-              url: `https://lh3.googleusercontent.com/d/${file.id}`,
+              url: `https://drive.google.com/uc?export=view&id=${file.id}`,
               type: file.type || 'photo'
             }));
 
@@ -882,6 +882,13 @@ export default function App() {
               }
               return a;
             }));
+          } else {
+            setAlbums(prev => prev.map(a => {
+              if (a.id === album.id) {
+                return { ...a, isDriveFetched: true };
+              }
+              return a;
+            }));
           }
         })
         .catch(err => {
@@ -889,14 +896,12 @@ export default function App() {
           console.error(`Error fetching drive folder ${folderId}:`, err);
           setAlbums(prev => prev.map(a => {
             if (a.id === album.id) {
-              const cleanExisting = (a.mediaItems || []).filter(item => 
-                !item.url.includes('folders') && !item.url.includes('embeddedfolderview')
-              );
-              return { ...a, mediaItems: cleanExisting, isDriveFetched: true };
+              return { ...a, isDriveFetched: true };
             }
             return a;
           }));
         });
+
     });
   }, [albums]);
 

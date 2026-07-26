@@ -63,7 +63,15 @@ export function getGoogleDriveFolderViewUrl(folderId: string): string {
 export function formatDriveImageUrl(urlOrId: string): string {
   const fileId = extractGoogleDriveId(urlOrId) || urlOrId.trim();
   if (fileId && fileId.length > 10 && !fileId.startsWith('http')) {
-    return `https://lh3.googleusercontent.com/d/${fileId}`;
+    return `https://drive.google.com/uc?export=view&id=${fileId}`;
+  }
+  return urlOrId;
+}
+
+export function getDriveFileViewUrl(urlOrId: string): string {
+  const fileId = extractGoogleDriveId(urlOrId);
+  if (fileId) {
+    return `https://drive.google.com/file/d/${fileId}/view`;
   }
   return urlOrId;
 }

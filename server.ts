@@ -46,139 +46,109 @@ async function startServer() {
 
   // API Routes
 
-// --- Google Drive Folder Images Scraper with Cache ---
-const driveCache = new Map<string, { files: any[], timestamp: number }>();
-const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+    // --- Google Drive Folder Images Scraper with Cache ---
+    const driveCache = new Map<string, { files: any[], timestamp: number }>();
+    const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
-app.get("/api/drive-folder-images", async (req, res) => {
-  const { folderId } = req.query;
-  if (!folderId || typeof folderId !== "string") {
-    return res.status(400).json({ error: "folderId is required" });
-  }
+    app.get("/api/drive-folder-images", async (req, res) => {
+      const { folderId } = req.query;
+      if (!folderId || typeof folderId !== "string") {
+        return res.status(400).json({ error: "folderId is required" });
+      }
 
-  try {
-    // Check cache
-    const cached = driveCache.get(folderId);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return res.json({ files: cached.files, fromCache: true });
-    }
-
-    // Try multiple URLs for reliability
-    const urls = [
-      `https://drive.google.com/embeddedfolderview?id=${folderId}`,
-      `https://drive.google.com/drive/folders/${folderId}`
-    ];
-
-    let html = "";
-    let success = false;
-
-    for (const url of urls) {
       try {
-        const response = await fetch(url, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-          },
-          // @ts-ignore - timeout is supported in some fetch environments or can be handled via AbortController
-          signal: AbortSignal.timeout(8000) 
-        });
+        // Check cache
+        const cached = driveCache.get(folderId);
+        if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+          return res.json({ files: cached.files, fromCache: true });
+        }
 
-        if (response.ok) {
-          html = await response.text();
-          if (html.includes(folderId) || html.includes('drive-viewer')) {
-            success = true;
-            break;
+        const urls = [
+          `https://drive.google.com/embeddedfolderview?id=${folderId}`,
+          `https://drive.google.com/drive/folders/${folderId}`
+        ];
+
+        let html = "";
+        let success = false;
+
+        for (const url of urls) {
+          try {
+            const response = await fetch(url, {
+              headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+              }
+            });
+
+            if (response.ok) {
+              html = await response.text();
+              if (html.length > 1000) {
+                success = true;
+                break;
+              }
+            }
+          } catch (e) {
+            console.error(`Fetch attempt failed for ${url}`);
           }
         }
-      } catch (e) {
-        console.error(`Fetch failed for ${url}:`, e);
-      }
-    }
 
-    if (!success) {
-      return res.status(500).json({ error: "Failed to reach Google Drive after multiple attempts" });
-    }
-
-    const files: Array<{ id: string; name: string; type: "photo" | "video" }> = [];
-    const seenIds = new Set<string>();
-
-    // 1. Target the JSON-like data structure used in Drive's bootstrap data
-    // Usually looks like: ["ID", "Name", "mime/type", ...]
-    const coreDataRegex = /\[\s*["']([a-zA-Z0-9_-]{25,45})["']\s*,\s*["']([^"']{1,255}?)["']\s*,\s*["'](image|video)\/[^"']+?["']/gi;
-    let match;
-    while ((match = coreDataRegex.exec(html)) !== null) {
-      const id = match[1];
-      const name = match[2];
-      const type = match[3] === "video" ? "video" : "photo";
-      if (!seenIds.has(id) && id.length >= 25) {
-        seenIds.add(id);
-        files.push({ id, name, type });
-      }
-    }
-
-    // 2. Secondary regex for folder items in older formats or different views
-    const alternateRegex = /["']([a-zA-Z0-9_-]{25,45})["']\s*,\s*["']([^"']+?\.(?:jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm))["']/gi;
-    while ((match = alternateRegex.exec(html)) !== null) {
-      const id = match[1];
-      const name = match[2];
-      if (!seenIds.has(id)) {
-        seenIds.add(id);
-        const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
-        files.push({ id, name, type: isVideo ? "video" : "photo" });
-      }
-    }
-
-    // 3. Look for AF_initDataCallback or other large JSON data chunks
-    const jsonLikeRegex = /["']([a-zA-Z0-9_-]{28,45})["']\s*,\s*\[\s*["']([^"']{1,255}?)["']/g;
-    while ((match = jsonLikeRegex.exec(html)) !== null) {
-      const id = match[1];
-      const name = match[2];
-      if (!seenIds.has(id) && id.length >= 28 && name.length > 2) {
-        if (/\.(jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm)$/i.test(name) || name.startsWith('IMG_') || name.startsWith('DSC_')) {
-          seenIds.add(id);
-          const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
-          files.push({ id, name, type: isVideo ? "video" : "photo" });
+        if (!success) {
+          return res.status(500).json({ error: "Could not reach Google Drive folders. Ensure the folder is public." });
         }
-      }
-    }
 
-    // 4. Fallback for IDs that might be missing explicit extensions but are in image arrays
-    if (files.length < 5) {
-      const genericIdRegex = /["']([a-zA-Z0-9_-]{33})["']\s*,\s*["']([^"']{3,50}?)["']/g;
-      while ((match = genericIdRegex.exec(html)) !== null) {
-        const id = match[1];
-        const name = match[2];
-        if (!seenIds.has(id) && !id.includes('drive') && !id.includes('google') && name.length > 0) {
-          if (/^[a-zA-Z0-9_\-\.\s]+$/.test(name)) {
+        const files: Array<{ id: string; name: string; type: "photo" | "video" }> = [];
+        const seenIds = new Set<string>();
+
+        // Pattern 1: JSON data in AF_initDataCallback or similar structured blocks
+        // Matches: ["id", "name", ..., "mimeType"]
+        const jsonPattern = /\[\s*["']([a-zA-Z0-9_-]{25,45})["']\s*,\s*["']([^"']+?)["']\s*,\s*["'](image|video)\/([^"']+?)["']/gi;
+        let match;
+        while ((match = jsonPattern.exec(html)) !== null) {
+          const id = match[1];
+          const name = match[2];
+          const type = match[3] === "video" ? "video" : "photo";
+          if (!seenIds.has(id)) {
             seenIds.add(id);
-            files.push({ id, name, type: "photo" });
+            files.push({ id, name, type });
           }
         }
-      }
-    }
 
-    // Sort files: Prio keywords first, then natural numeric sort
-    files.sort((a, b) => {
-      const aLower = a.name.toLowerCase();
-      const bLower = b.name.toLowerCase();
-      const aPrio = aLower.includes('cover') || aLower.includes('main') || aLower.includes('thumb');
-      const bPrio = bLower.includes('cover') || bLower.includes('main') || bLower.includes('thumb');
-      
-      if (aPrio && !bPrio) return -1;
-      if (!aPrio && bPrio) return 1;
-      return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+        // Pattern 2: Fallback for different HTML structures (matches ID and filename with extension)
+        if (files.length < 5) {
+          const fallbackPattern = /["']([a-zA-Z0-9_-]{28,45})["']\s*,\s*["']([^"']+?\.(?:jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm))["']/gi;
+          while ((match = fallbackPattern.exec(html)) !== null) {
+            const id = match[1];
+            const name = match[2];
+            const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
+            if (!seenIds.has(id)) {
+              seenIds.add(id);
+              files.push({ id, name, type: isVideo ? "video" : "photo" });
+            }
+          }
+        }
+
+        // Pattern 3: Deep scan for IDs that look like Drive IDs in image context
+        if (files.length === 0) {
+          const idOnlyPattern = /["']([a-zA-Z0-9_-]{33})["']/g;
+          while ((match = idOnlyPattern.exec(html)) !== null) {
+            const id = match[1];
+            if (!seenIds.has(id) && !id.includes('drive') && !id.includes('google')) {
+              seenIds.add(id);
+              files.push({ id, name: `Image_${files.length + 1}`, type: "photo" });
+            }
+          }
+        }
+
+        // Final sort
+        files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
+        driveCache.set(folderId, { files, timestamp: Date.now() });
+        return res.json({ files, count: files.length });
+      } catch (err) {
+        return res.status(500).json({ error: "Internal server error during folder fetch" });
+      }
     });
 
-    // Cache the result
-    driveCache.set(folderId, { files, timestamp: Date.now() });
-
-    return res.json({ files, count: files.length, status: "ok" });
-  } catch (err: any) {
-    console.error("Critical error in drive-folder-images:", err);
-    return res.status(500).json({ error: "Internal server error during scraping" });
-  }
-});
 
   // --- Matrimonial Profiles ---
   app.get("/api/matrimony", async (req, res) => {
