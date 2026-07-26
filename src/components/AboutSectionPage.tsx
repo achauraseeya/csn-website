@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Target, Compass, CheckCircle2, History, Edit, Save, X, ExternalLink, Image as ImageIcon, Upload, Sparkles, ShieldCheck } from 'lucide-react';
 import { Language } from '../types';
-import { uploadImageToGithub } from '../utils/githubDb';
+import { uploadImageToGithub, apiFetch, saveFileToGithub } from '../utils/githubDb';
 
 export type AboutSubsectionId = 'about-vision' | 'about-mission' | 'about-objectives' | 'about-history';
 
@@ -174,6 +174,23 @@ export default function AboutSectionPage({
     return defaultAboutData;
   });
 
+  // Fetch online server about sections on mount so ALL devices get updated content
+  useEffect(() => {
+    apiFetch<Record<AboutSubsectionId, AboutSectionData>>('/api/about-sections', 'about_sections.json', defaultAboutData)
+      .then((cloudData) => {
+        if (cloudData && typeof cloudData === 'object' && Object.keys(cloudData).length > 0) {
+          setSectionsData((prev) => {
+            const merged = { ...prev, ...cloudData };
+            try {
+              localStorage.setItem('chaurasiya_about_sections_data', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Active subsection fallback
   const activeSubsectionId: AboutSubsectionId = (
     currentTab === 'about-vision' || currentTab === 'about-mission' || currentTab === 'about-objectives' || currentTab === 'about-history'
@@ -233,6 +250,7 @@ export default function AboutSectionPage({
 
     setSectionsData(nextSections);
     localStorage.setItem('chaurasiya_about_sections_data', JSON.stringify(nextSections));
+    saveFileToGithub('about_sections.json', nextSections, `Admin edited About section ${activeSubsectionId}`).catch(() => {});
     setIsEditModalOpen(false);
     onTrackAction(`Admin edited ${activeSubsectionId}`);
   };

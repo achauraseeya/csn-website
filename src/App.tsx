@@ -34,6 +34,8 @@ import OurHeritagePage from './components/OurHeritagePage';
 import { SitemapModal } from './components/SitemapModal';
 import { SiteTexts } from './types';
 import { apiFetch, apiSave, apiDelete, saveFileToGithub, getGithubSettings, uploadImageToGithub } from './utils/githubDb';
+import { syncCustomFormFieldsFromGithub } from './utils/customFormFields';
+import { syncMemberCategoriesFromGithub } from './utils/memberCategories';
 import { formatNumber } from './utils/mediaUrl';
 import {
   subscribeMatrimonialProfiles,
@@ -467,6 +469,12 @@ export default function App() {
     };
   }, []);
 
+  // Sync custom form fields and member categories from GitHub on app mount
+  useEffect(() => {
+    syncCustomFormFieldsFromGithub().catch(() => {});
+    syncMemberCategoriesFromGithub().catch(() => {});
+  }, []);
+
   // Fetch online server notices on mount so ALL visitors see new notices automatically!
   useEffect(() => {
     apiFetch<Notice[]>('/api/notices', 'community_notices.json', [])
@@ -480,7 +488,9 @@ export default function App() {
                 mergedMap.set(n.id, n);
               }
             });
-            return Array.from(mergedMap.values());
+            const finalNotices = Array.from(mergedMap.values());
+            try { localStorage.setItem('chaurasiya_notices', JSON.stringify(finalNotices)); } catch (e) {}
+            return finalNotices;
           });
         }
       })
@@ -847,17 +857,13 @@ export default function App() {
   useEffect(() => {
     apiFetch<CommunityEvent[]>('/api/events', 'community_events.json', [])
       .then((serverEvents) => {
-        if (Array.isArray(serverEvents)) {
-          if (serverEvents.length === 0) {
-            setEvents(initialEvents);
-          } else {
-            setEvents(serverEvents);
-          }
+        if (Array.isArray(serverEvents) && serverEvents.length > 0) {
+          setEvents(serverEvents);
+          try { localStorage.setItem('chaurasiya_events', JSON.stringify(serverEvents)); } catch (e) {}
         }
       })
       .catch((err) => {
         console.warn('Offline events endpoint, falling back:', err);
-        setEvents(initialEvents);
       });
   }, []);
 
@@ -915,17 +921,13 @@ export default function App() {
   useEffect(() => {
     apiFetch<Member[]>('/api/members', 'community_members.json', [])
       .then((serverMembers) => {
-        if (Array.isArray(serverMembers)) {
-          if (serverMembers.length === 0) {
-            setMembers(initialMembers);
-          } else {
-            setMembers(serverMembers);
-          }
+        if (Array.isArray(serverMembers) && serverMembers.length > 0) {
+          setMembers(serverMembers);
+          try { localStorage.setItem('chaurasiya_members', JSON.stringify(serverMembers)); } catch (e) {}
         }
       })
       .catch((err) => {
         console.warn('Offline members endpoint, falling back:', err);
-        setMembers(initialMembers);
       });
   }, []);
 
@@ -957,17 +959,13 @@ export default function App() {
   useEffect(() => {
     apiFetch<Document[]>('/api/documents', 'community_documents.json', [])
       .then((serverDocs) => {
-        if (Array.isArray(serverDocs)) {
-          if (serverDocs.length === 0) {
-            setDocumentsList(initialDocuments);
-          } else {
-            setDocumentsList(serverDocs);
-          }
+        if (Array.isArray(serverDocs) && serverDocs.length > 0) {
+          setDocumentsList(serverDocs);
+          try { localStorage.setItem('chaurasiya_documents', JSON.stringify(serverDocs)); } catch (e) {}
         }
       })
       .catch((err) => {
         console.warn('Offline documents endpoint, falling back:', err);
-        setDocumentsList(initialDocuments);
       });
   }, []);
 

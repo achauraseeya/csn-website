@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Phone, Github, Award, BookOpen, Cpu, ShieldCheck, Heart, Edit, Save, X, ExternalLink, Upload, Globe } from 'lucide-react';
 import { Language } from '../types';
 import { designerProfile as defaultDesignerProfile } from '../data/communityData';
-import { uploadImageToGithub } from '../utils/githubDb';
+import { uploadImageToGithub, apiFetch, saveFileToGithub } from '../utils/githubDb';
 
 interface AbhishekBioProps {
   lang: Language;
@@ -27,6 +27,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
       bioEn: profileData?.bioEn || defaultDesignerProfile.bio.en,
       bioNe: profileData?.bioNe || defaultDesignerProfile.bio.ne,
       education: profileData?.education || defaultDesignerProfile.education,
+      university: profileData?.university || 'Tribhuvan University, Nepal',
       email: profileData?.email || defaultDesignerProfile.email,
       phone: profileData?.phone || defaultDesignerProfile.phone || '+977-9800000000',
       github: profileData?.github || 'https://github.com/achauraseeya',
@@ -63,6 +64,23 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
     };
   });
 
+  // Fetch online server profile data on mount
+  useEffect(() => {
+    apiFetch<any>('/api/abhishek-profile', 'abhishek_profile.json', null)
+      .then((cloudProfile) => {
+        if (cloudProfile && typeof cloudProfile === 'object' && cloudProfile.name) {
+          setProfile((prev: any) => {
+            const merged = { ...prev, ...cloudProfile };
+            try {
+              localStorage.setItem('chaurasiya_abhishek_profile_data', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Admin edit modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editName, setEditName] = useState('');
@@ -75,6 +93,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
   const [editPortalTextEn, setEditPortalTextEn] = useState('');
   const [editPortalTextNe, setEditPortalTextNe] = useState('');
   const [editEducation, setEditEducation] = useState('');
+  const [editUniversity, setEditUniversity] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editGithub, setEditGithub] = useState('');
@@ -129,6 +148,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
     setEditPortalTextEn(profile.portalTextEn || '');
     setEditPortalTextNe(profile.portalTextNe || '');
     setEditEducation(profile.education);
+    setEditUniversity(profile.university || 'Tribhuvan University, Nepal');
     setEditEmail(profile.email);
     setEditPhone(profile.phone);
     setEditGithub(profile.github);
@@ -155,6 +175,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
       portalTextEn: editPortalTextEn,
       portalTextNe: editPortalTextNe,
       education: editEducation,
+      university: editUniversity,
       email: editEmail,
       phone: editPhone,
       github: editGithub,
@@ -166,6 +187,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
 
     setProfile(updatedProfile);
     localStorage.setItem('chaurasiya_abhishek_profile_data', JSON.stringify(updatedProfile));
+    saveFileToGithub('abhishek_profile.json', updatedProfile, 'Update Abhishek profile data').catch(() => {});
     setIsEditModalOpen(false);
     onTrackAction('Admin edited Abhishek profile');
   };
@@ -315,7 +337,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
               {profile.education}
             </p>
             <p className="text-[11px] text-teal-600 dark:text-emerald-400 font-bold uppercase tracking-wide">
-              Tribhuvan University, Nepal
+              {profile.university || 'Tribhuvan University, Nepal'}
             </p>
           </div>
 
@@ -588,7 +610,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Education</label>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Education Degree / Qualification</label>
                   <input
                     type="text"
                     value={editEducation}
@@ -597,14 +619,25 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Official Website</label>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">University / Academic Institution</label>
                   <input
-                    type="url"
-                    value={editWebsiteUrl}
-                    onChange={(e) => setEditWebsiteUrl(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm font-mono"
+                    type="text"
+                    value={editUniversity}
+                    onChange={(e) => setEditUniversity(e.target.value)}
+                    placeholder="Tribhuvan University, Nepal"
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm font-medium"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Official Website</label>
+                <input
+                  type="url"
+                  value={editWebsiteUrl}
+                  onChange={(e) => setEditWebsiteUrl(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm font-mono"
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

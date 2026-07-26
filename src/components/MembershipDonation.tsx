@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Landmark, Heart, Award, Users, Mail, Phone, MapPin, Briefcase, FileText, CheckCircle2, Loader2, Send } from 'lucide-react';
 import { Language } from '../types';
 import { AdminFormFieldEditor } from './AdminFormFieldEditor';
 import { AdminCategoryManagerModal } from './AdminCategoryManagerModal';
 import { getCustomFormFields, CustomFormField } from '../utils/customFormFields';
 import { getMemberCategories, MemberCategory } from '../utils/memberCategories';
+import { apiFetch, saveFileToGithub } from '../utils/githubDb';
 
 interface MembershipDonationProps {
   lang: Language;
@@ -96,10 +97,29 @@ export default function MembershipDonation({
   const [showEditDonationModal, setShowEditDonationModal] = useState(false);
   const [editDonationForm, setEditDonationForm] = useState(donationInfo);
 
+  // Fetch online server donation settings on mount
+  useEffect(() => {
+    apiFetch<any>('/api/donation-info', 'donation_info.json', null)
+      .then((cloudInfo) => {
+        if (cloudInfo && typeof cloudInfo === 'object' && cloudInfo.bankName) {
+          setDonationInfo((prev: any) => {
+            const merged = { ...prev, ...cloudInfo };
+            try {
+              localStorage.setItem('chaurasiya_donation_info', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
+          setEditDonationForm((prev: any) => ({ ...prev, ...cloudInfo }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const handleSaveDonationInfo = (e: React.FormEvent) => {
     e.preventDefault();
     setDonationInfo(editDonationForm);
     localStorage.setItem('chaurasiya_donation_info', JSON.stringify(editDonationForm));
+    saveFileToGithub('donation_info.json', editDonationForm, 'Update Welfare Donation settings').catch(() => {});
     setShowEditDonationModal(false);
     onTrackAction('Admin updated Welfare Donation info');
   };

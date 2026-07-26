@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { db } from "./src/db/index.js";
 import { matrimonialProfiles, volunteerApplications, membershipApplications, newsletterSubscribers } from "./src/db/schema.js";
@@ -9,7 +10,41 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
+
+  // Ensure data_store directory exists
+  const DATA_DIR = path.join(process.cwd(), 'data_store');
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+
+  // --- Universal JSON Site Data Persistence Endpoints ---
+  app.get("/api/site-data/:key", (req, res) => {
+    try {
+      const key = req.params.key.replace(/[^a-zA-Z0-9_-]/g, '');
+      const filePath = path.join(DATA_DIR, `${key}.json`);
+      if (fs.existsSync(filePath)) {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        return res.json(JSON.parse(content));
+      }
+      return res.status(404).json({ error: "Site data key not found" });
+    } catch (err) {
+      console.error(`Failed to read site data key ${req.params.key}:`, err);
+      return res.status(500).json({ error: "Failed to read site data" });
+    }
+  });
+
+  app.post("/api/site-data/:key", (req, res) => {
+    try {
+      const key = req.params.key.replace(/[^a-zA-Z0-9_-]/g, '');
+      const filePath = path.join(DATA_DIR, `${key}.json`);
+      fs.writeFileSync(filePath, JSON.stringify(req.body, null, 2), 'utf-8');
+      return res.json({ success: true, key });
+    } catch (err) {
+      console.error(`Failed to save site data key ${req.params.key}:`, err);
+      return res.status(500).json({ error: "Failed to save site data" });
+    }
+  });
 
   // API Routes
 

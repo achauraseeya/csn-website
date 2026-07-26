@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, Sparkles, Edit, Save, X, ExternalLink, ShieldCheck, Heart, Leaf, MapPin, Upload } from 'lucide-react';
 import { Language } from '../types';
-import { uploadImageToGithub } from '../utils/githubDb';
+import { uploadImageToGithub, apiFetch, saveFileToGithub } from '../utils/githubDb';
 
 interface HeritageData {
   title: { en: string; ne: string };
@@ -98,6 +98,23 @@ export default function OurHeritagePage({ lang, isAdmin, onTrackAction }: OurHer
     return defaultHeritageData;
   });
 
+  // Fetch online server heritage data on mount so ALL devices get updated content
+  useEffect(() => {
+    apiFetch<HeritageData>('/api/our-heritage', 'our_heritage.json', defaultHeritageData)
+      .then((cloudData) => {
+        if (cloudData && typeof cloudData === 'object' && cloudData.title) {
+          setHeritageData((prev) => {
+            const merged = { ...prev, ...cloudData };
+            try {
+              localStorage.setItem('chaurasiya_our_heritage_data', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Admin edit modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editTitleEn, setEditTitleEn] = useState('');
@@ -145,6 +162,7 @@ export default function OurHeritagePage({ lang, isAdmin, onTrackAction }: OurHer
 
     setHeritageData(updated);
     localStorage.setItem('chaurasiya_our_heritage_data', JSON.stringify(updated));
+    saveFileToGithub('our_heritage.json', updated, 'Admin edited Our Heritage page data').catch(() => {});
     setIsEditModalOpen(false);
     onTrackAction('Admin edited Our Heritage page');
   };
