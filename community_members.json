@@ -1,28 +1,5 @@
 [
   {
-    "id": "vc1",
-    "name": {
-      "en": "Sita Ram Chaurasiya",
-      "ne": "सीता राम चौरसिया"
-    },
-    "role": {
-      "en": "Vice Chairperson",
-      "ne": "उपाध्यक्ष"
-    },
-    "category": "chief",
-    "phone": "+977-9851000002",
-    "email": "vicepresident@chaurasiyasamaaj.org.np",
-    "address": {
-      "en": "Birgunj, Nepal",
-      "ne": "वीरगन्ज, नेपाल"
-    },
-    "bio": {
-      "en": "Dedicated to community upliftment and strategic planning for Chaurasiya Samaj.",
-      "ne": "चौरसिया समाजको सामुदायिक उत्थान र रणनीतिक योजनाको लागि समर्पित।"
-    },
-    "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200"
-  },
-  {
     "id": "2",
     "name": {
       "en": "Abhishek Kumar Chaurasiya",
@@ -190,5 +167,28 @@
       "ne": "कृषिको आधुनिकीकरण, युवा सूचना प्रविधि छात्रवृत्ति विस्तार र सांस्कृतिक सम्पदाको संरक्षणमा समर्पित।"
     },
     "termPeriod": "2025 - 2028"
+  },
+  {
+    "id": "vc1",
+    "name": {
+      "en": "Sita Ram Chaurasiya",
+      "ne": "सीता राम चौरसिया"
+    },
+    "role": {
+      "en": "Vice Chairperson",
+      "ne": "उपाध्यक्ष"
+    },
+    "category": "chief",
+    "phone": "+977-9851000002",
+    "email": "vicepresident@chaurasiyasamaaj.org.np",
+    "address": {
+      "en": "Birgunj, Nepal",
+      "ne": "वीरगन्ज, नेपाल"
+    },
+    "bio": {
+      "en": "Dedicated to community upliftment and strategic planning for Chaurasiya Samaj.",
+      "ne": "चौरसिया समाजको सामुदायिक उत्थान र रणनीतिक योजनाको लागि समर्पित।"
+    },
+    "avatarUrl": "https://raw.githubusercontent.com/achauraseeya/csn-website/main/assets/uploads/1785066288263_CSN_logo.jpg"
   }
 ]
