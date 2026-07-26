@@ -119,6 +119,8 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
 
   const parsed = currentItem ? parseMediaUrl(currentItem.url, currentItem.type) : null;
 
+  const isFetchingDrive = album.driveFolderId && ((album.mediaItems?.length || 0) === 0 || (album.mediaItems?.length === 1 && (album.mediaItems[0].url.includes('folders') || album.mediaItems[0].url.includes('embeddedfolderview'))));
+
   return (
     <div className={`transition-all duration-300 ${isFullscreen ? 'fixed inset-0 z-50 bg-black flex flex-col justify-between overflow-hidden p-0' : 'space-y-8 bg-slate-900 text-white rounded-3xl p-4 sm:p-8 shadow-2xl border border-teal-800'}`}>
       
@@ -268,7 +270,26 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
       {/* Main Interactive Media Viewport Slider */}
       <div className="relative group bg-black/90 rounded-2xl overflow-hidden border border-gray-800 flex items-center justify-center min-h-[350px] sm:min-h-[520px] max-h-[750px]">
         
-        {!currentItem ? (
+        {isFetchingDrive ? (
+          <div className="flex flex-col items-center justify-center text-center p-8 space-y-6 max-w-md mx-auto">
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full border-4 border-teal-500/20 border-t-teal-500 animate-spin"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <ImageIcon className="w-8 h-8 text-teal-500 animate-pulse" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-white uppercase tracking-tight">
+                {lang === 'en' ? 'Fetching Photos...' : 'फोटोहरू लोड हुँदैछ...'}
+              </h3>
+              <p className="text-xs text-gray-400 mt-2 font-medium">
+                {lang === 'en' 
+                  ? 'Connecting to Google Drive to fetch the latest photos from the folder. Please wait a moment.'
+                  : 'हामी फोल्डरबाट भर्खरका फोटोहरू ल्याउन गुगल ड्राइभमा जडान गर्दैछौं। कृपया एकछिन पर्खनुहोस्।'}
+              </p>
+            </div>
+          </div>
+        ) : !currentItem ? (
           <div className="flex flex-col items-center justify-center text-center p-8 space-y-4 max-w-md mx-auto">
             <div className="w-16 h-16 rounded-full bg-slate-800 border border-teal-500/30 flex items-center justify-center text-teal-400">
               <ImageIcon className="w-8 h-8" />

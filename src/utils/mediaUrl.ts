@@ -178,12 +178,15 @@ export function getBestAlbumCover(album: Album): string {
 
   // 1. Check if we have individual photo media items (ignoring embed folders)
   if (album.mediaItems && album.mediaItems.length > 0) {
+    // Look for the first item that is a photo and not a folder link
     const firstPhoto = album.mediaItems.find(item => {
       if (item.type !== 'photo') return false;
-      const isFolder = item.url.includes('folders') || item.url.includes('/drive/folders') || item.url.includes('embeddedfolderview');
-      return !isFolder;
+      const url = item.url || '';
+      const isFolder = url.includes('folders') || url.includes('/drive/folders') || url.includes('embeddedfolderview');
+      return !isFolder && url.trim().length > 0;
     });
-    if (firstPhoto && firstPhoto.url) {
+
+    if (firstPhoto) {
       return formatDriveImageUrl(firstPhoto.url);
     }
 
@@ -198,7 +201,7 @@ export function getBestAlbumCover(album: Album): string {
   }
 
   // 3. Check if album has a predefined coverUrl (which is not a folder)
-  if (album.coverUrl && !album.coverUrl.includes('folders') && !album.coverUrl.includes('/drive/folders')) {
+  if (album.coverUrl && !album.coverUrl.includes('folders') && !album.coverUrl.includes('/drive/folders') && !album.coverUrl.includes('embeddedfolderview')) {
     return formatDriveImageUrl(album.coverUrl);
   }
 

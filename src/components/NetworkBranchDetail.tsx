@@ -57,7 +57,7 @@ export default function NetworkBranchDetail({
   const branchMembers = members.filter(m => m.chapterId === branch.id);
   const branchEvents = events.filter(e => e.chapterId === branch.id);
   const branchNotices = notices.filter(n => n.chapterId === branch.id);
-  const branchAlbums = albums.filter(a => a.chapterId === branch.id);
+  const branchAlbums = (albums || []).filter(a => a.chapterId === branch.id);
 
   // Modals state
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);

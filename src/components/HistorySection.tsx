@@ -6,7 +6,7 @@ import { compressImageToBase64 } from '../utils/imageUtils';
 import { communityHistory, impactStats, galleryItems, boardMembers, notices as defaultNotices, blogPosts } from '../data/communityData';
 import { journeyAlbums as defaultJourneyAlbums } from '../data/albumsData';
 import AlbumDetail from './AlbumDetail';
-import { extractGoogleDriveId, formatNumber } from '../utils/mediaUrl';
+import { extractGoogleDriveId, formatNumber, getBestAlbumCover } from '../utils/mediaUrl';
 
 interface HistorySectionProps {
   lang: Language;
@@ -1702,7 +1702,7 @@ export default function HistorySection({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {albums.slice(0, 3).map((album) => {
+          {(albums || []).slice(0, 3).map((album) => {
             const photosCount = album.mediaItems.filter(i => i.type === 'photo').length;
             const videosCount = album.mediaItems.filter(i => i.type === 'video').length;
 
@@ -1722,7 +1722,7 @@ export default function HistorySection({
                 {/* Cover Preview Image */}
                 <div className="relative aspect-[16/10] overflow-hidden bg-teal-950">
                   <img
-                    src={album.coverUrl}
+                    src={getBestAlbumCover(album)}
                     alt={album.title[lang]}
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"

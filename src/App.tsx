@@ -873,10 +873,19 @@ export default function App() {
               if (a.id === album.id) {
                 // Filter out any placeholders or existing folder embed items, then append fetched items
                 const cleanMediaItems = (a.mediaItems || []).filter(item => !item.url.includes('folders') && !item.url.includes('/drive/folders') && !item.url.includes('embeddedfolderview'));
+                const newMediaItems = [...folderMediaItems, ...cleanMediaItems];
+                
+                // If the album cover is generic or missing, pick the first image from the folder
+                const currentCover = a.coverUrl || '';
+                const isGenericCover = !currentCover || currentCover.includes('unsplash') || currentCover.includes('folders');
+                const bestCover = (isGenericCover && folderMediaItems.length > 0) 
+                  ? folderMediaItems[0].url 
+                  : currentCover;
+
                 return {
                   ...a,
-                  // Let's place the fetched folder items first, then any specific custom added items
-                  mediaItems: [...folderMediaItems, ...cleanMediaItems]
+                  coverUrl: bestCover,
+                  mediaItems: newMediaItems
                 };
               }
               return a;
