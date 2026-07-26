@@ -9,7 +9,7 @@
       "en": "dsgg",
       "ne": "sdggs"
     },
-    "coverUrl": "",
+    "coverUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d?usp=drive_link",
     "date": "2026-07-22",
     "location": {
       "en": "sdg",
@@ -19,7 +19,17 @@
       "sister-youth",
       "chapter"
     ],
-    "mediaItems": [],
+    "mediaItems": [
+      {
+        "id": "med_1785075782355",
+        "title": {
+          "en": "fsafsf",
+          "ne": "fsafsf"
+        },
+        "type": "photo",
+        "url": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d?usp=drive_link"
+      }
+    ],
     "chapterId": "sister-youth"
   },
   {
