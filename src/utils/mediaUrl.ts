@@ -178,16 +178,22 @@ export function getBestAlbumCover(album: Album): string {
 
   // 1. Check if we have individual photo media items (ignoring embed folders)
   if (album.mediaItems && album.mediaItems.length > 0) {
-    // Look for the first item that is a photo and not a folder link
-    const firstPhoto = album.mediaItems.find(item => {
+    // Look for the "best" photo (favoring 'cover' or 'main' in filename)
+    const bestPhoto = album.mediaItems.find(item => {
+      if (item.type !== 'photo') return false;
+      const url = item.url || '';
+      const title = (item.title?.en || '').toLowerCase();
+      const isFolder = url.includes('folders') || url.includes('/drive/folders') || url.includes('embeddedfolderview');
+      return !isFolder && url.trim().length > 0 && (title.includes('cover') || title.includes('main') || title.includes('thumb'));
+    }) || album.mediaItems.find(item => {
       if (item.type !== 'photo') return false;
       const url = item.url || '';
       const isFolder = url.includes('folders') || url.includes('/drive/folders') || url.includes('embeddedfolderview');
       return !isFolder && url.trim().length > 0;
     });
 
-    if (firstPhoto) {
-      return formatDriveImageUrl(firstPhoto.url);
+    if (bestPhoto) {
+      return formatDriveImageUrl(bestPhoto.url);
     }
 
     // 2. No direct photos, check for a video and use its YouTube thumbnail if possible

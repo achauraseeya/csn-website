@@ -129,6 +129,7 @@ export interface Album {
   driveFolderId?: string;
   mediaItems: AlbumMediaItem[];
   chapterId?: string; // Links album to a specific chapter/sister org
+  isDriveFetched?: boolean;
 }
 
 export interface SiteTexts {

@@ -58,11 +58,13 @@ async function startServer() {
       const response = await fetch(url, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
         }
       });
 
       if (!response.ok) {
-        return res.status(500).json({ error: "Failed to fetch folder view from Google Drive" });
+        return res.status(500).json({ error: `Failed to fetch folder: ${response.status} ${response.statusText}` });
       }
 
       const html = await response.text();
@@ -70,13 +72,39 @@ async function startServer() {
       const files: Array<{ id: string; name: string; type: "photo" | "video" }> = [];
       const seenIds = new Set<string>();
 
-      // 1. Match by mime type inside JS array (very reliable)
-      const mimeRegex = /['"]([a-zA-Z0-9_-]{19,45})['"]\s*,\s*['"]([^'"]+?)['"]\s*,\s*['"](image|video)\/([a-zA-Z0-9+-]+)['"]/gi;
+      // 1. New, more flexible regex for Google's internal data structure
+      // Matches: [ "ID", "Name", "mime/type", ... ]
+      const dataRegex = /\[\s*["']([a-zA-Z0-9_-]{19,45})["']\s*,\s*["']([^"']{1,255}?)["']\s*,\s*["'](image|video)\/[^"']+?["']/gi;
       let match;
+      while ((match = dataRegex.exec(html)) !== null) {
+        const id = match[1];
+        const name = match[2];
+        const type = match[3] === "video" ? "video" : "photo";
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          files.push({ id, name, type });
+        }
+      }
+
+      // 2. Extra robust pattern for embedded folder view
+      // Looks for patterns like ["id", "name", "image/jpeg"] or similar in large JSON blocks
+      const robustRegex = /\[\s*["']([a-zA-Z0-9_-]{25,})["']\s*,\s*["']([^"']+?\.(?:jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm))["']\s*,\s*["'](image|video)\/[^"']+?["']/gi;
+      while ((match = robustRegex.exec(html)) !== null) {
+        const id = match[1];
+        const name = match[2];
+        const type = match[3] === "video" ? "video" : "photo";
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          files.push({ id, name, type });
+        }
+      }
+
+      // 3. Fallback to existing specific mime regex
+      const mimeRegex = /['"]([a-zA-Z0-9_-]{19,45})['"]\s*,\s*['"]([^'"]+?)['"]\s*,\s*['"](image|video)\/([a-zA-Z0-9+-]+)['"]/gi;
       while ((match = mimeRegex.exec(html)) !== null) {
         const id = match[1];
         const name = match[2];
-        const category = match[3]; // 'image' or 'video'
+        const category = match[3];
         if (!seenIds.has(id)) {
           seenIds.add(id);
           files.push({
@@ -87,7 +115,7 @@ async function startServer() {
         }
       }
 
-      // 2. Match by file extensions (fallback)
+      // 4. Fallback to extensions regex
       const extRegex = /['"]([a-zA-Z0-9_-]{19,45})['"]\s*,\s*['"]([^'"]+?\.(?:jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm))['"]/gi;
       while ((match = extRegex.exec(html)) !== null) {
         const id = match[1];
@@ -103,21 +131,28 @@ async function startServer() {
         }
       }
 
-      // 3. Match by content URL (additional fallback)
-      const contentRegex = /googleusercontent\.com\/d\/([a-zA-Z0-9_-]{19,45})/gi;
-      while ((match = contentRegex.exec(html)) !== null) {
-        const id = match[1];
-        if (!seenIds.has(id)) {
-          seenIds.add(id);
-          files.push({
-            id,
-            name: `Photo_${files.length + 1}.jpg`,
-            type: "photo"
-          });
+      // 5. Very broad ID search for large lists (last resort)
+      if (files.length === 0) {
+        const idOnlyRegex = /["']([a-zA-Z0-9_-]{28,38})["']/g;
+        while ((match = idOnlyRegex.exec(html)) !== null) {
+          const id = match[1];
+          // Usually file IDs are 33 chars. Folder IDs are similar. 
+          // We avoid duplicates and try to filter out common UI strings
+          if (!seenIds.has(id) && id.length >= 30 && !id.includes('drive') && !id.includes('google')) {
+            seenIds.add(id);
+            files.push({ id, name: `Media_${files.length + 1}`, type: "photo" });
+          }
         }
       }
 
-      return res.json({ files });
+      // Sort files by name to ensure consistent order (prevents "random" look)
+      files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+      return res.json({ 
+        files, 
+        count: files.length,
+        folderId 
+      });
     } catch (err: any) {
       console.error("Error in drive-folder-images route:", err);
       return res.status(500).json({ error: err.message || "Failed to process folder images" });

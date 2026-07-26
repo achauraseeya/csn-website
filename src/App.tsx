@@ -850,9 +850,13 @@ export default function App() {
 
       fetchedFoldersRef.current.add(folderId);
 
-      fetch(`/api/drive-folder-images?folderId=${folderId}`)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+      fetch(`/api/drive-folder-images?folderId=${folderId}`, { signal: controller.signal })
         .then(res => res.json())
         .then(data => {
+          clearTimeout(timeoutId);
           if (data && Array.isArray(data.files) && data.files.length > 0) {
             // Convert fetched files to AlbumMediaItem format
             const folderMediaItems = data.files.map((file: any, index: number) => ({
@@ -885,7 +889,21 @@ export default function App() {
                 return {
                   ...a,
                   coverUrl: bestCover,
-                  mediaItems: newMediaItems
+                  mediaItems: newMediaItems,
+                  isDriveFetched: true
+                };
+              }
+              return a;
+            }));
+          } else {
+            // Even if empty, update the album to remove any placeholder "folder" items so spinner stops
+            setAlbums(prev => prev.map(a => {
+              if (a.id === album.id) {
+                const cleanMediaItems = (a.mediaItems || []).filter(item => !item.url.includes('folders') && !item.url.includes('/drive/folders') && !item.url.includes('embeddedfolderview'));
+                return {
+                  ...a,
+                  mediaItems: cleanMediaItems.length > 0 ? cleanMediaItems : a.mediaItems,
+                  isDriveFetched: true
                 };
               }
               return a;
@@ -893,7 +911,16 @@ export default function App() {
           }
         })
         .catch(err => {
+          clearTimeout(timeoutId);
           console.error(`Failed to fetch Google Drive folder photos for album ${album.id}:`, err);
+          // On error, also try to stop the spinner by removing placeholder if it was the only item
+          setAlbums(prev => prev.map(a => {
+            if (a.id === album.id) {
+              const cleanMediaItems = (a.mediaItems || []).filter(item => !item.url.includes('folders') && !item.url.includes('/drive/folders') && !item.url.includes('embeddedfolderview'));
+              return { ...a, mediaItems: cleanMediaItems, isDriveFetched: true };
+            }
+            return a;
+          }));
         });
     });
   }, [albums]);

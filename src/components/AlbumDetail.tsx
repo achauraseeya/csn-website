@@ -119,7 +119,7 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
 
   const parsed = currentItem ? parseMediaUrl(currentItem.url, currentItem.type) : null;
 
-  const isFetchingDrive = album.driveFolderId && ((album.mediaItems?.length || 0) === 0 || (album.mediaItems?.length === 1 && (album.mediaItems[0].url.includes('folders') || album.mediaItems[0].url.includes('embeddedfolderview'))));
+  const isFetchingDrive = album.driveFolderId && !album.isDriveFetched && ((album.mediaItems?.length || 0) === 0 || (album.mediaItems?.length === 1 && (album.mediaItems[0].url.includes('folders') || album.mediaItems[0].url.includes('embeddedfolderview'))));
 
   return (
     <div className={`transition-all duration-300 ${isFullscreen ? 'fixed inset-0 z-50 bg-black flex flex-col justify-between overflow-hidden p-0' : 'space-y-8 bg-slate-900 text-white rounded-3xl p-4 sm:p-8 shadow-2xl border border-teal-800'}`}>
