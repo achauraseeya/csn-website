@@ -839,16 +839,18 @@ export default function App() {
 
   // Optimized fetch for Google Drive folder images
   useEffect(() => {
-    // 1. Ensure all albums have driveFolderId if they contain a folder link in mediaItems
+    // 1. Ensure all albums have driveFolderId if they contain a folder link in mediaItems or driveFolderUrl
     let changedState = false;
     const updatedAlbumsWithIds = albums.map(album => {
       if (!album.driveFolderId) {
+        // Check if there is a driveFolderUrl field
         const folderIdFromUrl = extractGoogleDriveFolderId(album.driveFolderUrl || '');
         if (folderIdFromUrl) {
           changedState = true;
           return { ...album, driveFolderId: folderIdFromUrl };
         }
         
+        // Check if any media item is a folder link
         const folderMediaItem = (album.mediaItems || []).find(item => extractGoogleDriveFolderId(item.url));
         if (folderMediaItem) {
           const folderId = extractGoogleDriveFolderId(folderMediaItem.url);
@@ -895,14 +897,19 @@ export default function App() {
                   !item.url.includes('folders') && !item.url.includes('embeddedfolderview')
                 );
                 
+                // Sort naturally by name
+                const sortedNewItems = [...folderMediaItems].sort((a, b) => 
+                  a.title.en.localeCompare(b.title.en, undefined, { numeric: true, sensitivity: 'base' })
+                );
+
                 const isGenericCover = !a.coverUrl || a.coverUrl.includes('drive-folder') || a.coverUrl.includes('images/album-placeholder') || a.coverUrl.includes('unsplash');
-                const bestCover = (isGenericCover && folderMediaItems.length > 0) 
-                  ? folderMediaItems[0].url 
+                const bestCover = (isGenericCover && sortedNewItems.length > 0) 
+                  ? sortedNewItems[0].url 
                   : a.coverUrl;
 
                 return {
                   ...a,
-                  mediaItems: [...cleanExisting, ...folderMediaItems],
+                  mediaItems: [...cleanExisting, ...sortedNewItems],
                   coverUrl: bestCover,
                   isDriveFetched: true
                 };

@@ -115,8 +115,8 @@ async function startServer() {
         }
 
         // Pattern 2: Search for data chunks in the drive-viewer format
-        // Usually matches patterns like ["id",null,"name",...]
-        const viewerPattern = /\[\s*["']([a-zA-Z0-9_-]{28,45})["']\s*,\s*null\s*,\s*["']([^"']+?)["']/gi;
+        // Usually matches patterns like ["id",null,"name",...] or ["id", ["name", ...]]
+        const viewerPattern = /\[\s*["']([a-zA-Z0-9_-]{25,45})["']\s*,\s*(?:null|\[)\s*,\s*["']([^"']+?)["']/gi;
         while ((match = viewerPattern.exec(html)) !== null) {
           const id = match[1];
           const name = match[2];
@@ -127,7 +127,20 @@ async function startServer() {
           }
         }
 
-        // Pattern 3: Fallback for different HTML structures (matches ID and filename with extension)
+        // Pattern 3: Look for the specific "item" array in Drive bootstrap data
+        // Matches: [null, null, null, "id", "name", ...]
+        const bootstrapPattern = /\[\s*null\s*,\s*null\s*,\s*null\s*,\s*["']([a-zA-Z0-9_-]{25,45})["']\s*,\s*["']([^"']+?)["']/gi;
+        while ((match = bootstrapPattern.exec(html)) !== null) {
+          const id = match[1];
+          const name = match[2];
+          if (!seenIds.has(id)) {
+            seenIds.add(id);
+            const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
+            files.push({ id, name, type: isVideo ? "video" : "photo" });
+          }
+        }
+
+        // Pattern 4: Fallback for different HTML structures (matches ID and filename with extension)
         if (files.length < 5) {
           const fallbackPattern = /["']([a-zA-Z0-9_-]{28,45})["']\s*,\s*["']([^"']+?\.(?:jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm))["']/gi;
           while ((match = fallbackPattern.exec(html)) !== null) {
@@ -141,7 +154,7 @@ async function startServer() {
           }
         }
 
-        // Pattern 4: Deep scan for any strings that look like Drive IDs (33 chars) if still empty
+        // Pattern 5: Deep scan for any strings that look like Drive IDs (33 chars) if still empty
         if (files.length === 0) {
           const idPattern = /["']([a-zA-Z0-9_-]{33})["']/g;
           while ((match = idPattern.exec(html)) !== null) {

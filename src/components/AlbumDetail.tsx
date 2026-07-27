@@ -39,6 +39,12 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const filteredItems = album.mediaItems.filter((item) => {
+    // Exclude folder links from the slider/grid view
+    const url = item.url.toLowerCase();
+    if (url.includes('drive.google.com/drive/folders/') || url.includes('embeddedfolderview')) {
+      return false;
+    }
+    
     if (filter === 'photo') return item.type === 'photo';
     if (filter === 'video') return item.type === 'video';
     return true;
@@ -322,12 +328,12 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">
-                {album.mediaItems.length === 0
+                {filteredItems.length === 0
                   ? (lang === 'en' ? 'No Media Items in this Album Yet' : 'यस एल्बममा हाल कुनै फोटो/भिडियो छैन')
                   : (lang === 'en' ? `No ${filter} items found` : `कुनै ${filter} भेटिएन`)}
               </h3>
               <p className="text-xs text-gray-400 mt-1">
-                {album.mediaItems.length === 0
+                {filteredItems.length === 0
                   ? (lang === 'en' 
                       ? 'No media items have been uploaded to this album. You can add photos or view the Google Drive folder if available.'
                       : 'यस एल्बममा फोटो वा भिडियोहरू थपिएका छैनन्।')
