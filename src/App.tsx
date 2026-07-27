@@ -980,9 +980,41 @@ export default function App() {
   };
 
   const handleAddAlbum = async (newAlbum: Album) => {
+    // EAGERLY fetch Google Drive photos before saving to GitHub!
+    let albumToSave = { ...newAlbum };
+    if (!albumToSave.isDriveFetched && (albumToSave.driveFolderId || albumToSave.driveFolderUrl)) {
+      const driveId = albumToSave.driveFolderId || extractGoogleDriveFolderId(albumToSave.driveFolderUrl || '');
+      if (driveId) {
+         try {
+           const res = await fetch(`/api/drive-folder-images?folderId=${driveId}`);
+           const data = await res.json();
+           if (data && Array.isArray(data.files) && data.files.length > 0) {
+             const folderMediaItems = data.files.map((file: any) => ({
+               id: `${albumToSave.id}-drive-${file.id}`,
+               title: { en: file.name, ne: file.name },
+               url: `https://lh3.googleusercontent.com/d/${file.id}`,
+               type: file.type || 'photo'
+             }));
+             const sortedNewItems = [...folderMediaItems].sort((a, b) => 
+               a.title.en.localeCompare(b.title.en, undefined, { numeric: true, sensitivity: 'base' })
+             );
+             albumToSave.mediaItems = [...(albumToSave.mediaItems || []), ...sortedNewItems];
+             albumToSave.isDriveFetched = true;
+             albumToSave.driveFolderId = driveId;
+             
+             if (!albumToSave.coverUrl || albumToSave.coverUrl.includes('drive-folder') || albumToSave.coverUrl.includes('unsplash') || albumToSave.coverUrl.includes('images/album-placeholder')) {
+                albumToSave.coverUrl = sortedNewItems[0].url;
+             }
+           }
+         } catch (err) {
+           console.error("Eager drive fetch failed:", err);
+         }
+      }
+    }
+
     // 1. Immediately update local state & localStorage for fast feedback
     setAlbums((prev) => {
-      const updated = [newAlbum, ...prev.filter(a => a.id !== newAlbum.id)];
+      const updated = [albumToSave, ...prev.filter(a => a.id !== albumToSave.id)];
       try {
         localStorage.setItem('chaurasiya_journey_albums', JSON.stringify(updated));
       } catch (e) {
@@ -993,14 +1025,14 @@ export default function App() {
 
     // 2. Persist using unified API abstraction
     try {
-      const cleanList = albums.filter(a => a.id !== newAlbum.id);
-      const fullList = [newAlbum, ...cleanList];
+      const cleanList = albums.filter(a => a.id !== albumToSave.id);
+      const fullList = [albumToSave, ...cleanList];
       const updatedList = await apiSave<Album>(
         '/api/albums',
         'journey_albums.json',
         fullList,
-        newAlbum,
-        `Post journey album: ${typeof newAlbum.title === 'object' ? newAlbum.title.en : newAlbum.title}`,
+        albumToSave,
+        `Post journey album: ${typeof albumToSave.title === 'object' ? albumToSave.title.en : albumToSave.title}`,
         getAuthHeaders()
       );
       setAlbums((prev) => {
