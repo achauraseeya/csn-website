@@ -821,10 +821,21 @@ export default function App() {
         if (Array.isArray(serverAlbums) && serverAlbums.length > 0) {
           setAlbums((prev) => {
             const mergedMap = new Map<string, Album>();
-            // Add default initial albums
-            initialJourneyAlbums.forEach(a => mergedMap.set(a.id, a));
+            // Preserve existing state (which might have fetched media items)
+            prev.forEach(a => mergedMap.set(a.id, a));
+            // Add default initial albums if not already present
+            initialJourneyAlbums.forEach(a => {
+              if (!mergedMap.has(a.id)) mergedMap.set(a.id, a);
+            });
             // Add or overwrite with server online custom albums
-            serverAlbums.forEach(a => mergedMap.set(a.id, a));
+            serverAlbums.forEach(a => {
+              const existing = mergedMap.get(a.id);
+              if (existing && existing.isDriveFetched) {
+                 mergedMap.set(a.id, { ...a, driveFolderId: existing.driveFolderId, isDriveFetched: existing.isDriveFetched, mediaItems: existing.mediaItems, coverUrl: existing.coverUrl });
+              } else {
+                 mergedMap.set(a.id, a);
+              }
+            });
             return Array.from(mergedMap.values());
           });
         }
