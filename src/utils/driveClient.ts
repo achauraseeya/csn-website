@@ -15,7 +15,22 @@ export async function fetchDriveFolderImagesClient(folderId: string): Promise<{ 
       console.warn("Relative backend fetch failed, trying external proxies...", e);
     }
 
-    // 2. Try fetching via public CORS proxies
+    // 2. Try fetching via hosted AI Studio Cloud Run backend (with CORS enabled)
+    // This allows static deployments (like GitHub Pages) to fetch drive folder contents reliably!
+    try {
+      const aiStudioUrl = `https://ais-pre-gcntazvnndte5whjvz5kvt-253948748508.asia-southeast1.run.app/api/drive-folder-images?folderId=${folderId}`;
+      const res = await fetch(aiStudioUrl);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.files) && data.files.length > 0) {
+          return data;
+        }
+      }
+    } catch (e) {
+      console.warn("Hosted backend fetch failed, trying public CORS proxies...", e);
+    }
+
+    // 3. Try fetching via public CORS proxies
     const targetUrl = `https://drive.google.com/drive/folders/${folderId}`;
     
     const proxies = [

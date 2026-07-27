@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   X, ChevronLeft, ChevronRight, Play, Maximize2, Minimize2, 
   Calendar, MapPin, Tag, Film, Image as ImageIcon, ExternalLink, Share2, Info, ArrowLeft,
@@ -40,6 +40,7 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const [localItems, setLocalItems] = useState<AlbumMediaItem[]>(album.mediaItems || []);
+  const [isFetchingDrive, setIsFetchingDrive] = useState(false);
 
   useEffect(() => {
     setLocalItems(album.mediaItems || []);
@@ -49,11 +50,19 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
     extractGoogleDriveFolderId(album.driveFolderUrl || '') || 
     (album.mediaItems || []).map(i => extractGoogleDriveFolderId(i.url)).find(Boolean);
 
-  const driveEmbedUrl = detectedDriveFolderId 
-    ? `https://drive.google.com/embeddedfolderview?id=${detectedDriveFolderId}#grid` 
-    : null;
+  const deduplicatedItems = useMemo(() => {
+    const seenUrls = new Set<string>();
+    const seenIds = new Set<string>();
+    return (localItems || []).filter((item) => {
+      if (!item) return false;
+      if (seenUrls.has(item.url) || seenIds.has(item.id)) return false;
+      seenUrls.add(item.url);
+      seenIds.add(item.id);
+      return true;
+    });
+  }, [localItems]);
 
-  const filteredItems = localItems.filter((item) => {
+  const filteredItems = deduplicatedItems.filter((item) => {
     // Exclude folder links from the slider/grid view
     const url = item.url.toLowerCase();
     if (url.includes('drive.google.com/drive/folders/') || url.includes('embeddedfolderview')) {
@@ -68,6 +77,7 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
   // Client-side drive background fetch on mount if filteredItems is empty
   useEffect(() => {
     if (detectedDriveFolderId && filteredItems.length === 0) {
+      setIsFetchingDrive(true);
       fetchDriveFolderImagesClient(detectedDriveFolderId)
         .then(data => {
           if (data && Array.isArray(data.files) && data.files.length > 0) {
@@ -79,12 +89,14 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
             }));
             setLocalItems(prev => {
               const existingUrls = new Set(prev.map(i => i.url));
-              const uniques = folderMediaItems.filter(i => !existingUrls.has(i.url));
+              const existingIds = new Set(prev.map(i => i.id));
+              const uniques = folderMediaItems.filter(i => !existingUrls.has(i.url) && !existingIds.has(i.id));
               return [...prev, ...uniques];
             });
           }
         })
-        .catch(err => console.warn('Background drive fetch in detail view failed', err));
+        .catch(err => console.warn('Background drive fetch in detail view failed', err))
+        .finally(() => setIsFetchingDrive(false));
     }
   }, [detectedDriveFolderId]);
 
@@ -169,8 +181,6 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
   };
 
   const parsed = currentItem ? parseMediaUrl(currentItem.url, currentItem.type) : null;
-
-  const isFetchingDrive = album.driveFolderId && !album.isDriveFetched;
 
   const handleManualRefresh = () => {
     window.location.reload(); 
@@ -360,33 +370,6 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
             </div>
           </div>
         ) : !currentItem ? (
-          driveEmbedUrl ? (
-            <div className="w-full h-full min-h-[480px] sm:min-h-[550px] flex flex-col p-3 sm:p-5">
-              <div className="flex items-center justify-between bg-slate-900/90 p-3 sm:p-4 rounded-xl border border-teal-500/30 mb-3 shadow-lg">
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-extrabold text-emerald-400">
-                  <FolderPlus className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 shrink-0" />
-                  <span>{lang === 'en' ? 'Interactive Google Drive Photo Gallery' : 'इन्टरएक्टिभ गुगल ड्राइभ फोटो ग्यालरी'}</span>
-                </div>
-                <a
-                  href={album.driveFolderUrl || `https://drive.google.com/drive/folders/${detectedDriveFolderId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 shadow-md shrink-0"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>{lang === 'en' ? 'Open Drive ↗' : 'गुगल ड्राइभ ↗'}</span>
-                </a>
-              </div>
-              <div className="w-full flex-1 min-h-[400px] sm:min-h-[480px] rounded-xl overflow-hidden border border-gray-800 bg-black relative shadow-2xl">
-                <iframe
-                  src={driveEmbedUrl}
-                  title={album.title[lang]}
-                  className="w-full h-full min-h-[400px] sm:min-h-[480px] border-0"
-                  allow="autoplay"
-                />
-              </div>
-            </div>
-          ) : (
             <div className="flex flex-col items-center justify-center text-center p-8 space-y-4 max-w-md mx-auto">
               <div className="w-16 h-16 rounded-full bg-slate-800 border border-teal-500/30 flex items-center justify-center text-teal-400">
                 <ImageIcon className="w-8 h-8" />
@@ -400,7 +383,7 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
                 <p className="text-xs text-gray-400 mt-1">
                   {filteredItems.length === 0
                     ? (lang === 'en' 
-                        ? 'No media items have been uploaded to this album. You can add photos or view the Google Drive folder if available.'
+                        ? 'No media items have been loaded yet. Click below to view the Drive folder or add photos.'
                         : 'यस एल्बममा फोटो वा भिडियोहरू थपिएका छैनन्।')
                     : (lang === 'en' ? 'Try changing or resetting your media filter.' : 'फिल्टर परिवर्तन गर्नुहोस्।')}
                 </p>
@@ -435,7 +418,6 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
                 )}
               </div>
             </div>
-          )
         ) : (
           <>
             {/* Navigation Arrow Left */}
@@ -595,7 +577,7 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
 
             return (
               <button
-                key={item.id}
+                key={`${item.id}-${idx}`}
                 onClick={() => setActiveIdx(idx)}
                 className={`relative shrink-0 w-24 h-16 sm:w-32 sm:h-20 rounded-xl overflow-hidden border-2 transition-all group ${
                   isSelected

@@ -923,23 +923,36 @@ export default function App() {
 
             setAlbums(prev => prev.map(a => {
               if (a.id === album.id) {
-                const cleanExisting = (a.mediaItems || []).filter(item => 
-                  !item.url.includes('folders') && !item.url.includes('embeddedfolderview')
-                );
+                const existingUrls = new Set<string>();
+                const existingIds = new Set<string>();
+
+                const cleanExisting = (a.mediaItems || []).filter(item => {
+                  if (item.url.includes('folders') || item.url.includes('embeddedfolderview')) return false;
+                  if (existingUrls.has(item.url) || existingIds.has(item.id)) return false;
+                  existingUrls.add(item.url);
+                  existingIds.add(item.id);
+                  return true;
+                });
                 
                 // Sort naturally by name
                 const sortedNewItems = [...folderMediaItems].sort((a, b) => 
                   a.title.en.localeCompare(b.title.en, undefined, { numeric: true, sensitivity: 'base' })
                 );
 
+                const uniqueNewItems = sortedNewItems.filter(item => 
+                  !existingUrls.has(item.url) && !existingIds.has(item.id)
+                );
+
+                const finalMediaItems = [...cleanExisting, ...uniqueNewItems];
+
                 const isGenericCover = !a.coverUrl || a.coverUrl.includes('drive-folder') || a.coverUrl.includes('images/album-placeholder') || a.coverUrl.includes('unsplash');
-                const bestCover = (isGenericCover && sortedNewItems.length > 0) 
-                  ? sortedNewItems[0].url 
+                const bestCover = (isGenericCover && finalMediaItems.length > 0) 
+                  ? finalMediaItems[0].url 
                   : a.coverUrl;
 
                 return {
                   ...a,
-                  mediaItems: [...cleanExisting, ...sortedNewItems],
+                  mediaItems: finalMediaItems,
                   coverUrl: bestCover,
                   isDriveFetched: true
                 };
@@ -998,7 +1011,11 @@ export default function App() {
              const sortedNewItems = [...folderMediaItems].sort((a, b) => 
                a.title.en.localeCompare(b.title.en, undefined, { numeric: true, sensitivity: 'base' })
              );
-             albumToSave.mediaItems = [...(albumToSave.mediaItems || []), ...sortedNewItems];
+             const existingUrls = new Set((albumToSave.mediaItems || []).map(i => i.url));
+             const existingIds = new Set((albumToSave.mediaItems || []).map(i => i.id));
+             const uniqueNewItems = sortedNewItems.filter(i => !existingUrls.has(i.url) && !existingIds.has(i.id));
+
+             albumToSave.mediaItems = [...(albumToSave.mediaItems || []), ...uniqueNewItems];
              albumToSave.isDriveFetched = true;
              albumToSave.driveFolderId = driveId;
              

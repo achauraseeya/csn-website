@@ -918,9 +918,9 @@ export default function NetworkBranchDetail({
                         <div className="pt-3 border-t border-teal-50/60 dark:border-slate-800/80">
                           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5">Slides list</span>
                           <div className="flex flex-wrap gap-1.5 max-h-12 overflow-hidden">
-                            {album.mediaItems.map((med) => (
+                            {album.mediaItems.map((med, idx) => (
                               <div 
-                                key={med.id} 
+                                key={`${med.id}-${idx}`} 
                                 className="relative w-8 h-8 rounded-md overflow-hidden bg-gray-100 border border-teal-500/10 shrink-0 group/media"
                               >
                                 {med.type === 'video' ? (
