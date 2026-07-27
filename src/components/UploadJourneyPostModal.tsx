@@ -497,6 +497,17 @@ export default function UploadJourneyPostModal({
                   className="w-full px-4 py-3 bg-white border-2 border-emerald-400 rounded-xl text-xs sm:text-sm font-semibold text-emerald-950 placeholder:text-gray-400 focus:outline-none focus:border-emerald-600 shadow-sm"
                 />
 
+                {driveFolderUrl.includes('folders') && (
+                  <div className="flex items-center gap-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl animate-in slide-in-from-top-1 duration-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span className="text-[10px] sm:text-xs font-bold text-emerald-800">
+                      {lang === 'en' 
+                        ? 'Folder Detected! All photos inside will be automatically displayed in the slider.' 
+                        : 'फोल्डर फेला पर्यो! भित्रका सबै फोटोहरू स्वचालित रूपमा स्लाइडरमा देखिनेछन्।'}
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-2 text-[11px] text-emerald-800 font-bold bg-emerald-100/60 p-2.5 rounded-xl">
                   <span>💡 {lang === 'en' ? 'Requirement:' : 'आवश्यकता:'} Set Google Drive folder sharing permission to <strong>"Anyone with the link can view"</strong>.</span>
                 </div>

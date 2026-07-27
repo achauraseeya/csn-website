@@ -36,7 +36,7 @@ import { SiteTexts } from './types';
 import { apiFetch, apiSave, apiDelete, saveFileToGithub, getGithubSettings, uploadImageToGithub } from './utils/githubDb';
 import { syncCustomFormFieldsFromGithub } from './utils/customFormFields';
 import { syncMemberCategoriesFromGithub } from './utils/memberCategories';
-import { formatNumber } from './utils/mediaUrl';
+import { formatNumber, extractGoogleDriveFolderId } from './utils/mediaUrl';
 import {
   subscribeMatrimonialProfiles,
   saveMatrimonialProfileToCloud,
@@ -839,6 +839,33 @@ export default function App() {
 
   // Optimized fetch for Google Drive folder images
   useEffect(() => {
+    // 1. Ensure all albums have driveFolderId if they contain a folder link in mediaItems
+    let changedState = false;
+    const updatedAlbumsWithIds = albums.map(album => {
+      if (!album.driveFolderId) {
+        const folderIdFromUrl = extractGoogleDriveFolderId(album.driveFolderUrl || '');
+        if (folderIdFromUrl) {
+          changedState = true;
+          return { ...album, driveFolderId: folderIdFromUrl };
+        }
+        
+        const folderMediaItem = (album.mediaItems || []).find(item => extractGoogleDriveFolderId(item.url));
+        if (folderMediaItem) {
+          const folderId = extractGoogleDriveFolderId(folderMediaItem.url);
+          if (folderId) {
+            changedState = true;
+            return { ...album, driveFolderId: folderId };
+          }
+        }
+      }
+      return album;
+    });
+
+    if (changedState) {
+      setAlbums(updatedAlbumsWithIds);
+      return;
+    }
+
     const pendingAlbums = albums.filter(a => a.driveFolderId && !a.isDriveFetched && !fetchedFoldersRef.current.has(a.driveFolderId));
     
     if (pendingAlbums.length === 0) return;

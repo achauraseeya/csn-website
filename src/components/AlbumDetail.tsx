@@ -401,13 +401,27 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
                   Your browser does not support video playback.
                 </video>
               ) : (
-                <img
-                  key={currentItem.id}
-                  src={parsed?.formattedUrl || currentItem.url}
-                  alt={currentItem.title[lang]}
-                  referrerPolicy="no-referrer"
-                  className="max-w-full max-h-[600px] object-contain rounded-xl shadow-2xl select-none transition-opacity duration-300"
-                />
+                <a 
+                  href={getDriveFileViewUrl(currentItem.url)} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="relative group/img cursor-zoom-in"
+                  title={lang === 'en' ? 'Click to view original in Google Drive' : 'गुगल ड्राइभमा असली हेर्न क्लिक गर्नुहोस्'}
+                >
+                  <img
+                    key={currentItem.id}
+                    src={parsed?.formattedUrl || currentItem.url}
+                    alt={currentItem.title[lang]}
+                    referrerPolicy="no-referrer"
+                    className="max-w-full max-h-[600px] object-contain rounded-xl shadow-2xl select-none transition-all duration-500 group-hover/img:scale-[1.01]"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors rounded-xl flex items-center justify-center opacity-0 group-hover/img:opacity-100">
+                    <div className="bg-emerald-500 text-gray-950 px-4 py-2 rounded-full text-[10px] sm:text-xs font-black shadow-2xl flex items-center gap-2 transform translate-y-4 group-hover/img:translate-y-0 transition-transform">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      {lang === 'en' ? 'Open in Drive' : 'ड्राइभमा खोल्नुहोस्'}
+                    </div>
+                  </div>
+                </a>
               )}
             </div>
 

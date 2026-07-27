@@ -101,6 +101,7 @@ async function startServer() {
 
         // Pattern 1: JSON data in AF_initDataCallback or similar structured blocks
         // Matches: ["id", "name", ..., "mimeType"]
+        // The ID is usually 33 characters or 28-45 characters.
         const jsonPattern = /\[\s*["']([a-zA-Z0-9_-]{25,45})["']\s*,\s*["']([^"']+?)["']\s*,\s*["'](image|video)\/([^"']+?)["']/gi;
         let match;
         while ((match = jsonPattern.exec(html)) !== null) {
@@ -113,7 +114,20 @@ async function startServer() {
           }
         }
 
-        // Pattern 2: Fallback for different HTML structures (matches ID and filename with extension)
+        // Pattern 2: Search for data chunks in the drive-viewer format
+        // Usually matches patterns like ["id",null,"name",...]
+        const viewerPattern = /\[\s*["']([a-zA-Z0-9_-]{28,45})["']\s*,\s*null\s*,\s*["']([^"']+?)["']/gi;
+        while ((match = viewerPattern.exec(html)) !== null) {
+          const id = match[1];
+          const name = match[2];
+          if (!seenIds.has(id) && (/\.(jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm)$/i.test(name) || name.includes('IMG_') || name.includes('DSC_'))) {
+            seenIds.add(id);
+            const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
+            files.push({ id, name, type: isVideo ? "video" : "photo" });
+          }
+        }
+
+        // Pattern 3: Fallback for different HTML structures (matches ID and filename with extension)
         if (files.length < 5) {
           const fallbackPattern = /["']([a-zA-Z0-9_-]{28,45})["']\s*,\s*["']([^"']+?\.(?:jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm))["']/gi;
           while ((match = fallbackPattern.exec(html)) !== null) {
@@ -127,14 +141,15 @@ async function startServer() {
           }
         }
 
-        // Pattern 3: Deep scan for IDs that look like Drive IDs in image context
+        // Pattern 4: Deep scan for any strings that look like Drive IDs (33 chars) if still empty
         if (files.length === 0) {
-          const idOnlyPattern = /["']([a-zA-Z0-9_-]{33})["']/g;
-          while ((match = idOnlyPattern.exec(html)) !== null) {
+          const idPattern = /["']([a-zA-Z0-9_-]{33})["']/g;
+          while ((match = idPattern.exec(html)) !== null) {
             const id = match[1];
-            if (!seenIds.has(id) && !id.includes('drive') && !id.includes('google')) {
+            // Exclude known non-file IDs
+            if (!seenIds.has(id) && !id.includes('drive') && !id.includes('google') && !id.includes('shared')) {
               seenIds.add(id);
-              files.push({ id, name: `Image_${files.length + 1}`, type: "photo" });
+              files.push({ id, name: `Media Item ${files.length + 1}`, type: "photo" });
             }
           }
         }
