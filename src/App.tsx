@@ -880,7 +880,13 @@ export default function App() {
     }
 
     
-    const pendingAlbums = albums.filter(a => a.driveFolderId && !a.isDriveFetched && !fetchedFoldersRef.current.has(a.driveFolderId));
+    const pendingAlbums = albums.filter(a => {
+      if (!a.driveFolderId || fetchedFoldersRef.current.has(a.driveFolderId)) return false;
+      if (!a.isDriveFetched) return true;
+      // If it claims to be fetched, but has no actual photos/videos (only the folder itself or nothing), try fetching again
+      const hasActualMedia = (a.mediaItems || []).some(item => !item.url.includes('drive.google.com/drive/folders/'));
+      return !hasActualMedia;
+    });
     
     // Recovery for albums that got overwritten by server sync
     const stuckAlbums = albums.filter(a => a.driveFolderId && !a.isDriveFetched && fetchedFoldersRef.current.has(a.driveFolderId));
