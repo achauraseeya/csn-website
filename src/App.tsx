@@ -879,7 +879,19 @@ export default function App() {
       return;
     }
 
+    
     const pendingAlbums = albums.filter(a => a.driveFolderId && !a.isDriveFetched && !fetchedFoldersRef.current.has(a.driveFolderId));
+    
+    // Recovery for albums that got overwritten by server sync
+    const stuckAlbums = albums.filter(a => a.driveFolderId && !a.isDriveFetched && fetchedFoldersRef.current.has(a.driveFolderId));
+    if (stuckAlbums.length > 0) {
+      stuckAlbums.forEach(a => fetchedFoldersRef.current.delete(a.driveFolderId));
+      // Schedule a re-render to pick them up
+      setTimeout(() => setAlbums(prev => [...prev]), 500);
+    }
+    
+
+
     
     if (pendingAlbums.length === 0) return;
 
