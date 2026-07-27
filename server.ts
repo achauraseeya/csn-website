@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
@@ -8,6 +9,7 @@ import { eq } from "drizzle-orm";
 
 async function startServer() {
   const app = express();
+  app.use(cors());
   const PORT = 3000;
 
   app.use(express.json({ limit: '10mb' }));

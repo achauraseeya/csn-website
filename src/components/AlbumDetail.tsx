@@ -13,6 +13,7 @@ import {
   formatNumber,
   getDriveFileViewUrl
 } from '../utils/mediaUrl';
+import { fetchDriveFolderImagesClient } from '../utils/driveClient';
 
 interface AlbumDetailProps {
   album: Album;
@@ -38,7 +39,21 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
   const [newUrl, setNewUrl] = useState('');
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
-  const filteredItems = album.mediaItems.filter((item) => {
+  const [localItems, setLocalItems] = useState<AlbumMediaItem[]>(album.mediaItems || []);
+
+  useEffect(() => {
+    setLocalItems(album.mediaItems || []);
+  }, [album.mediaItems]);
+
+  const detectedDriveFolderId = album.driveFolderId || 
+    extractGoogleDriveFolderId(album.driveFolderUrl || '') || 
+    (album.mediaItems || []).map(i => extractGoogleDriveFolderId(i.url)).find(Boolean);
+
+  const driveEmbedUrl = detectedDriveFolderId 
+    ? `https://drive.google.com/embeddedfolderview?id=${detectedDriveFolderId}#grid` 
+    : null;
+
+  const filteredItems = localItems.filter((item) => {
     // Exclude folder links from the slider/grid view
     const url = item.url.toLowerCase();
     if (url.includes('drive.google.com/drive/folders/') || url.includes('embeddedfolderview')) {
@@ -49,6 +64,29 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
     if (filter === 'video') return item.type === 'video';
     return true;
   });
+
+  // Client-side drive background fetch on mount if filteredItems is empty
+  useEffect(() => {
+    if (detectedDriveFolderId && filteredItems.length === 0) {
+      fetchDriveFolderImagesClient(detectedDriveFolderId)
+        .then(data => {
+          if (data && Array.isArray(data.files) && data.files.length > 0) {
+            const folderMediaItems: AlbumMediaItem[] = data.files.map((file: any) => ({
+              id: `${album.id}-drive-${file.id}`,
+              title: { en: file.name, ne: file.name },
+              url: `https://lh3.googleusercontent.com/d/${file.id}`,
+              type: file.type || 'photo'
+            }));
+            setLocalItems(prev => {
+              const existingUrls = new Set(prev.map(i => i.url));
+              const uniques = folderMediaItems.filter(i => !existingUrls.has(i.url));
+              return [...prev, ...uniques];
+            });
+          }
+        })
+        .catch(err => console.warn('Background drive fetch in detail view failed', err));
+    }
+  }, [detectedDriveFolderId]);
 
   const currentItem: AlbumMediaItem | undefined = filteredItems[activeIdx] || filteredItems[0];
 
@@ -322,54 +360,82 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
             </div>
           </div>
         ) : !currentItem ? (
-          <div className="flex flex-col items-center justify-center text-center p-8 space-y-4 max-w-md mx-auto">
-            <div className="w-16 h-16 rounded-full bg-slate-800 border border-teal-500/30 flex items-center justify-center text-teal-400">
-              <ImageIcon className="w-8 h-8" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-white">
-                {filteredItems.length === 0
-                  ? (lang === 'en' ? 'No Media Items in this Album Yet' : 'यस एल्बममा हाल कुनै फोटो/भिडियो छैन')
-                  : (lang === 'en' ? `No ${filter} items found` : `कुनै ${filter} भेटिएन`)}
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">
-                {filteredItems.length === 0
-                  ? (lang === 'en' 
-                      ? 'No media items have been uploaded to this album. You can add photos or view the Google Drive folder if available.'
-                      : 'यस एल्बममा फोटो वा भिडियोहरू थपिएका छैनन्।')
-                  : (lang === 'en' ? 'Try changing or resetting your media filter.' : 'फिल्टर परिवर्तन गर्नुहोस्।')}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 justify-center pt-2">
-              {filter !== 'all' && album.mediaItems.length > 0 && (
-                <button
-                  onClick={() => setFilter('all')}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition-all"
-                >
-                  Show All Media ({album.mediaItems.length})
-                </button>
-              )}
-              {album.driveFolderUrl && (
+          driveEmbedUrl ? (
+            <div className="w-full h-full min-h-[480px] sm:min-h-[550px] flex flex-col p-3 sm:p-5">
+              <div className="flex items-center justify-between bg-slate-900/90 p-3 sm:p-4 rounded-xl border border-teal-500/30 mb-3 shadow-lg">
+                <div className="flex items-center gap-2 text-xs sm:text-sm font-extrabold text-emerald-400">
+                  <FolderPlus className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 shrink-0" />
+                  <span>{lang === 'en' ? 'Interactive Google Drive Photo Gallery' : 'इन्टरएक्टिभ गुगल ड्राइभ फोटो ग्यालरी'}</span>
+                </div>
                 <a
-                  href={album.driveFolderUrl}
+                  href={album.driveFolderUrl || `https://drive.google.com/drive/folders/${detectedDriveFolderId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 bg-teal-700 hover:bg-teal-600 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 shadow-md shrink-0"
                 >
-                  <FolderPlus className="w-4 h-4" />
-                  <span>Open Drive Folder ↗</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>{lang === 'en' ? 'Open Drive ↗' : 'गुगल ड्राइभ ↗'}</span>
                 </a>
-              )}
-              {(onAddMedia || isAdmin) && (
-                <button
-                  onClick={() => setIsAddingInline(true)}
-                  className="px-4 py-2 bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl shadow-md hover:bg-emerald-400 transition-all"
-                >
-                  + Add Photos / Videos Now
-                </button>
-              )}
+              </div>
+              <div className="w-full flex-1 min-h-[400px] sm:min-h-[480px] rounded-xl overflow-hidden border border-gray-800 bg-black relative shadow-2xl">
+                <iframe
+                  src={driveEmbedUrl}
+                  title={album.title[lang]}
+                  className="w-full h-full min-h-[400px] sm:min-h-[480px] border-0"
+                  allow="autoplay"
+                />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center p-8 space-y-4 max-w-md mx-auto">
+              <div className="w-16 h-16 rounded-full bg-slate-800 border border-teal-500/30 flex items-center justify-center text-teal-400">
+                <ImageIcon className="w-8 h-8" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">
+                  {filteredItems.length === 0
+                    ? (lang === 'en' ? 'No Media Items in this Album Yet' : 'यस एल्बममा हाल कुनै फोटो/भिडियो छैन')
+                    : (lang === 'en' ? `No ${filter} items found` : `कुनै ${filter} भेटिएन`)}
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">
+                  {filteredItems.length === 0
+                    ? (lang === 'en' 
+                        ? 'No media items have been uploaded to this album. You can add photos or view the Google Drive folder if available.'
+                        : 'यस एल्बममा फोटो वा भिडियोहरू थपिएका छैनन्।')
+                    : (lang === 'en' ? 'Try changing or resetting your media filter.' : 'फिल्टर परिवर्तन गर्नुहोस्।')}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center pt-2">
+                {filter !== 'all' && album.mediaItems.length > 0 && (
+                  <button
+                    onClick={() => setFilter('all')}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition-all"
+                  >
+                    Show All Media ({album.mediaItems.length})
+                  </button>
+                )}
+                {album.driveFolderUrl && (
+                  <a
+                    href={album.driveFolderUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-teal-700 hover:bg-teal-600 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5"
+                  >
+                    <FolderPlus className="w-4 h-4" />
+                    <span>Open Drive Folder ↗</span>
+                  </a>
+                )}
+                {(onAddMedia || isAdmin) && (
+                  <button
+                    onClick={() => setIsAddingInline(true)}
+                    className="px-4 py-2 bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl shadow-md hover:bg-emerald-400 transition-all"
+                  >
+                    + Add Photos / Videos Now
+                  </button>
+                )}
+              </div>
+            </div>
+          )
         ) : (
           <>
             {/* Navigation Arrow Left */}

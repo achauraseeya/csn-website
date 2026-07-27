@@ -1,3 +1,4 @@
+import { fetchDriveFolderImagesClient } from './utils/driveClient';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram, ExternalLink } from 'lucide-react';
 import { Language, AnalyticsMetric, Member, Album, AlbumMediaItem, Notice, Document, CommunityEvent, NetworkBranch, MatrimonialProfile, VolunteerApplication, MembershipApplication, NewsletterSubscriber } from './types';
@@ -908,8 +909,8 @@ export default function App() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20000); 
 
-      fetch(`/api/drive-folder-images?folderId=${folderId}`, { signal: controller.signal })
-        .then(res => res.json())
+      fetchDriveFolderImagesClient(folderId)
+        .then(data => { return data; }) // keeping promise chain
         .then(data => {
           clearTimeout(timeoutId);
           if (data && Array.isArray(data.files)) {
@@ -986,8 +987,7 @@ export default function App() {
       const driveId = albumToSave.driveFolderId || extractGoogleDriveFolderId(albumToSave.driveFolderUrl || '');
       if (driveId) {
          try {
-           const res = await fetch(`/api/drive-folder-images?folderId=${driveId}`);
-           const data = await res.json();
+           const data = await fetchDriveFolderImagesClient(driveId);
            if (data && Array.isArray(data.files) && data.files.length > 0) {
              const folderMediaItems = data.files.map((file: any) => ({
                id: `${albumToSave.id}-drive-${file.id}`,
