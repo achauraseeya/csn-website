@@ -64,7 +64,6 @@ async function startServer() {
         }
 
         const urls = [
-          `https://drive.google.com/embeddedfolderview?id=${folderId}`,
           `https://drive.google.com/drive/folders/${folderId}`
         ];
 
@@ -181,7 +180,9 @@ async function startServer() {
         // Final sort
         files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
-        driveCache.set(folderId, { files, timestamp: Date.now() });
+        if (files.length > 0) {
+          driveCache.set(folderId, { files, timestamp: Date.now() });
+        }
         return res.json({ files, count: files.length });
       } catch (err) {
         return res.status(500).json({ error: "Internal server error during folder fetch" });
