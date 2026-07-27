@@ -887,7 +887,7 @@ export default function App() {
             const folderMediaItems = data.files.map((file: any) => ({
               id: `${album.id}-drive-${file.id}`,
               title: { en: file.name, ne: file.name },
-              url: `https://drive.google.com/uc?export=view&id=${file.id}`,
+              url: `https://lh3.googleusercontent.com/d/${file.id}`,
               type: file.type || 'photo'
             }));
 
