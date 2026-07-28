@@ -24,10 +24,16 @@ async function startServer() {
   app.get("/api/site-data/:key", (req, res) => {
     try {
       const key = req.params.key.replace(/[^a-zA-Z0-9_-]/g, '');
-      const filePath = path.join(DATA_DIR, `${key}.json`);
-      if (fs.existsSync(filePath)) {
-        const content = fs.readFileSync(filePath, 'utf-8');
-        return res.json(JSON.parse(content));
+      const possiblePaths = [
+        path.join(DATA_DIR, `${key}.json`),
+        path.join(process.cwd(), 'public', `${key}.json`),
+        path.join(process.cwd(), `${key}.json`)
+      ];
+      for (const filePath of possiblePaths) {
+        if (fs.existsSync(filePath)) {
+          const content = fs.readFileSync(filePath, 'utf-8');
+          return res.json(JSON.parse(content));
+        }
       }
       return res.status(404).json({ error: "Site data key not found" });
     } catch (err) {
@@ -38,8 +44,24 @@ async function startServer() {
   app.post("/api/site-data/:key", (req, res) => {
     try {
       const key = req.params.key.replace(/[^a-zA-Z0-9_-]/g, '');
-      const filePath = path.join(DATA_DIR, `${key}.json`);
-      fs.writeFileSync(filePath, JSON.stringify(req.body, null, 2), 'utf-8');
+      const content = JSON.stringify(req.body, null, 2);
+      const pathsToUpdate = [
+        path.join(DATA_DIR, `${key}.json`),
+        path.join(process.cwd(), 'public', `${key}.json`),
+        path.join(process.cwd(), `${key}.json`),
+        path.join(process.cwd(), 'dist', `${key}.json`),
+        path.join(process.cwd(), 'dist', 'public', `${key}.json`)
+      ];
+
+      for (const filePath of pathsToUpdate) {
+        try {
+          const dir = path.dirname(filePath);
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+          }
+          fs.writeFileSync(filePath, content, 'utf-8');
+        } catch (e) {}
+      }
       return res.json({ success: true, key });
     } catch (err) {
       return res.status(500).json({ error: "Failed to save site data" });
@@ -66,6 +88,7 @@ async function startServer() {
         }
 
         const urls = [
+          `https://drive.google.com/embeddedfolderview?id=${folderId}#grid`,
           `https://drive.google.com/drive/folders/${folderId}`
         ];
 

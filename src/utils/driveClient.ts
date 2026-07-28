@@ -15,44 +15,58 @@ export async function fetchDriveFolderImagesClient(folderId: string): Promise<{ 
       console.warn("Relative backend fetch failed, trying external proxies...", e);
     }
 
-    // 2. Try fetching via hosted AI Studio Cloud Run backend (with CORS enabled)
+    // 2. Try fetching via hosted AI Studio Cloud Run backends (with CORS enabled)
     // This allows static deployments (like GitHub Pages) to fetch drive folder contents reliably!
-    try {
-      const aiStudioUrl = `https://ais-pre-gcntazvnndte5whjvz5kvt-253948748508.asia-southeast1.run.app/api/drive-folder-images?folderId=${folderId}`;
-      const res = await fetch(aiStudioUrl);
-      if (res.ok) {
-        const data = await res.json();
-        if (data && Array.isArray(data.files) && data.files.length > 0) {
-          return data;
+    const backendUrls = [
+      `https://ais-dev-gcntazvnndte5whjvz5kvt-253948748508.asia-southeast1.run.app/api/drive-folder-images?folderId=${folderId}`,
+      `https://ais-pre-gcntazvnndte5whjvz5kvt-253948748508.asia-southeast1.run.app/api/drive-folder-images?folderId=${folderId}`
+    ];
+
+    for (const backendUrl of backendUrls) {
+      try {
+        const res = await fetch(backendUrl);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.files) && data.files.length > 0) {
+            return data;
+          }
         }
+      } catch (e) {
+        console.warn(`Hosted backend ${backendUrl} fetch failed, trying next...`, e);
       }
-    } catch (e) {
-      console.warn("Hosted backend fetch failed, trying public CORS proxies...", e);
     }
 
     // 3. Try fetching via public CORS proxies
-    const targetUrl = `https://drive.google.com/drive/folders/${folderId}`;
-    
-    const proxies = [
-      {
-        url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`,
-        extractHtml: async (res: Response) => {
-          const json = await res.json();
-          return json?.contents || "";
-        }
-      },
-      {
-        url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-        extractHtml: async (res: Response) => res.text()
-      },
-      {
-        url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
-        extractHtml: async (res: Response) => res.text()
-      }
+    const targetUrls = [
+      `https://drive.google.com/embeddedfolderview?id=${folderId}#grid`,
+      `https://drive.google.com/drive/folders/${folderId}`
     ];
+    
+    for (const targetUrl of targetUrls) {
+      const proxies = [
+        {
+          url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+          extractHtml: async (res: Response) => res.text()
+        },
+        {
+          url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`,
+          extractHtml: async (res: Response) => {
+            const json = await res.json();
+            return json?.contents || "";
+          }
+        },
+        {
+          url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+          extractHtml: async (res: Response) => res.text()
+        },
+        {
+          url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+          extractHtml: async (res: Response) => res.text()
+        }
+      ];
 
-    for (const proxy of proxies) {
-      try {
+      for (const proxy of proxies) {
+        try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 6000);
         
@@ -111,6 +125,7 @@ export async function fetchDriveFolderImagesClient(folderId: string): Promise<{ 
         console.warn(`Proxy ${proxy.url} failed or timed out:`, err);
       }
     }
+  }
 
     return { files: [] };
   } catch (err) {

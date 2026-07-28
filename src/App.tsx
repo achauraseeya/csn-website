@@ -805,8 +805,10 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const customOnly = parsed.filter(p => !initialJourneyAlbums.some(i => i.id === p.id));
-          return [...initialJourneyAlbums, ...customOnly];
+          const mergedMap = new Map<string, Album>();
+          initialJourneyAlbums.forEach(a => mergedMap.set(a.id, a));
+          parsed.forEach(p => mergedMap.set(p.id, p));
+          return Array.from(mergedMap.values());
         }
       }
     } catch (e) {
@@ -831,7 +833,7 @@ export default function App() {
             // Add or overwrite with server online custom albums
             serverAlbums.forEach(a => {
               const existing = mergedMap.get(a.id);
-              if (existing && existing.isDriveFetched) {
+              if (existing && existing.isDriveFetched && (!a.mediaItems || a.mediaItems.length <= 1)) {
                  mergedMap.set(a.id, { ...a, driveFolderId: existing.driveFolderId, isDriveFetched: existing.isDriveFetched, mediaItems: existing.mediaItems, coverUrl: existing.coverUrl });
               } else {
                  mergedMap.set(a.id, a);
@@ -913,7 +915,7 @@ export default function App() {
         .then(data => { return data; }) // keeping promise chain
         .then(data => {
           clearTimeout(timeoutId);
-          if (data && Array.isArray(data.files)) {
+          if (data && Array.isArray(data.files) && data.files.length > 0) {
             const folderMediaItems = data.files.map((file: any) => ({
               id: `${album.id}-drive-${file.id}`,
               title: { en: file.name, ne: file.name },
@@ -1041,20 +1043,19 @@ export default function App() {
     }
 
     // 1. Immediately update local state & localStorage for fast feedback
+    let fullList: Album[] = [];
     setAlbums((prev) => {
-      const updated = [albumToSave, ...prev.filter(a => a.id !== albumToSave.id)];
+      fullList = [albumToSave, ...prev.filter(a => a.id !== albumToSave.id)];
       try {
-        localStorage.setItem('chaurasiya_journey_albums', JSON.stringify(updated));
+        localStorage.setItem('chaurasiya_journey_albums', JSON.stringify(fullList));
       } catch (e) {
         console.error('Failed to save album to localStorage', e);
       }
-      return updated;
+      return fullList;
     });
 
     // 2. Persist using unified API abstraction
     try {
-      const cleanList = albums.filter(a => a.id !== albumToSave.id);
-      const fullList = [albumToSave, ...cleanList];
       const updatedList = await apiSave<Album>(
         '/api/albums',
         'journey_albums.json',
@@ -1074,7 +1075,7 @@ export default function App() {
     }
 
     // 3. Automatically navigate to the dedicated page for this newly created album post!
-    setSelectedAlbumId(newAlbum.id);
+    setSelectedAlbumId(albumToSave.id);
     setCurrentTab('album-detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

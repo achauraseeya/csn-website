@@ -40,11 +40,18 @@ export function extractGoogleDriveId(url: string): string | null {
  */
 export function extractGoogleDriveFolderId(url: string): string | null {
   if (!url) return null;
-  const matchFolder = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  const cleanUrl = url.trim();
+
+  // If provided as raw folder ID string (e.g. 1ttMPCthjxnK6RB4-apZoHO-UioLdz62d)
+  if (!cleanUrl.includes('/') && !cleanUrl.includes('.') && cleanUrl.length >= 25 && cleanUrl.length <= 45) {
+    return cleanUrl;
+  }
+
+  const matchFolder = cleanUrl.match(/\/folders\/([a-zA-Z0-9_-]+)/);
   if (matchFolder && matchFolder[1]) return matchFolder[1];
 
-  const matchFolderParam = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (matchFolderParam && matchFolderParam[1] && url.includes('folders')) return matchFolderParam[1];
+  const matchFolderParam = cleanUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (matchFolderParam && matchFolderParam[1] && (cleanUrl.includes('folder') || cleanUrl.includes('drive'))) return matchFolderParam[1];
 
   return null;
 }

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Album, AlbumMediaItem, Language } from '../types';
 import { formatDriveImageUrl, parseMultipleMediaLinks, extractGoogleDriveFolderId, detectMediaType } from '../utils/mediaUrl';
+import { fetchDriveFolderImagesClient } from '../utils/driveClient';
 
 interface UploadJourneyPostModalProps {
   isOpen: boolean;
@@ -163,28 +164,87 @@ export default function UploadJourneyPostModal({
     ]);
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fetchStatus, setFetchStatus] = useState<string | null>(null);
+
   const handleRemoveMediaRow = (index: number) => {
     setMediaItems(mediaItems.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!titleEn && !titleNe) {
       alert(lang === 'en' ? 'Please enter a post title.' : 'कृपया पोस्ट शीर्षक प्रविष्ट गर्नुहोस्।');
       return;
     }
 
+    setIsSubmitting(true);
+    setFetchStatus(lang === 'en' ? 'Processing Google Drive Photos...' : 'गुगल ड्राइभ फोटोहरू प्रशोधन गर्दै...');
+
     const newAlbumId = `journey-post-${Date.now()}`;
     const parsedTags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
 
-    const folderId = extractGoogleDriveFolderId(driveFolderUrl);
+    let folderId = extractGoogleDriveFolderId(driveFolderUrl);
+    if (!folderId) {
+      for (const m of mediaItems) {
+        const detected = extractGoogleDriveFolderId(m.url);
+        if (detected) {
+          folderId = detected;
+          break;
+        }
+      }
+    }
 
-    // Format all URLs (converting Google Drive links into high speed CDN URLs)
-    const formattedMediaItems: AlbumMediaItem[] = [];
+    let folderPhotos: AlbumMediaItem[] = [];
+    let isDriveFetched = false;
 
-    // If Google Drive Folder URL is provided, put the folder item first
-    if (driveFolderUrl.trim()) {
-      formattedMediaItems.push({
+    // Fetch Google Drive photos RIGHT HERE BEFORE SAVING!
+    if (folderId) {
+      setFetchStatus(lang === 'en' ? 'Scanning Google Drive folder for photos...' : 'गुगल ड्राइभ फोल्डरबाट फोटोहरू स्क्यान गर्दै...');
+      try {
+        const driveResult = await fetchDriveFolderImagesClient(folderId);
+        if (driveResult && Array.isArray(driveResult.files) && driveResult.files.length > 0) {
+          isDriveFetched = true;
+          folderPhotos = driveResult.files.map((file, idx) => ({
+            id: `${newAlbumId}-drive-${file.id}`,
+            title: { en: file.name, ne: file.name },
+            description: { en: descEn, ne: descNe },
+            type: file.type || 'photo',
+            url: `https://lh3.googleusercontent.com/d/${file.id}`,
+            date: dateStr,
+            location: { en: locationEn, ne: locationNe }
+          }));
+        }
+      } catch (err) {
+        console.error("Folder scan error:", err);
+      }
+    }
+
+    // Format individual URLs provided by user (supporting bulk link pasting!)
+    const userMediaItems: AlbumMediaItem[] = [];
+    mediaItems.forEach((m, idx) => {
+      if (m.url.trim()) {
+        const parsedLinks = parseMultipleMediaLinks(m.url.trim());
+        parsedLinks.forEach((link, linkIdx) => {
+          const formattedUrl = formatDriveImageUrl(link.url);
+          userMediaItems.push({
+            id: `media-${newAlbumId}-${idx}-${linkIdx}`,
+            title: { en: m.titleEn || (link.type === 'photo' ? `Photo ${userMediaItems.length + 1}` : `Video ${userMediaItems.length + 1}`), ne: m.titleNe || (link.type === 'photo' ? `फोटो ${userMediaItems.length + 1}` : `भिडियो ${userMediaItems.length + 1}`) },
+            description: { en: descEn, ne: descNe },
+            type: link.type,
+            url: formattedUrl,
+            date: dateStr,
+            location: { en: locationEn, ne: locationNe }
+          });
+        });
+      }
+    });
+
+    const combinedMediaItems = [...folderPhotos, ...userMediaItems];
+
+    if (combinedMediaItems.length === 0 && driveFolderUrl.trim()) {
+      // Fallback: if drive fetch returned 0 photos immediately, include folder item
+      combinedMediaItems.push({
         id: `media-${newAlbumId}-folder`,
         title: { en: 'Google Drive Photo Folder Gallery', ne: 'गूगल ड्राइभ फोटो फोल्डर ग्यालरी' },
         description: { en: descEn, ne: descNe },
@@ -195,56 +255,40 @@ export default function UploadJourneyPostModal({
       });
     }
 
-    // Append individual photo or video items
-    mediaItems.forEach((m, idx) => {
-      if (m.url.trim()) {
-        formattedMediaItems.push({
-          id: `media-${newAlbumId}-${idx}`,
-          title: { en: m.titleEn || (m.type === 'photo' ? `Photo ${idx + 1}` : `Video ${idx + 1}`), ne: m.titleNe || (m.type === 'photo' ? `फोटो ${idx + 1}` : `भिडियो ${idx + 1}`) },
-          description: { en: descEn, ne: descNe },
-          type: m.type,
-          url: m.url.trim(),
-          date: dateStr,
-          location: { en: locationEn, ne: locationNe }
-        });
-      }
-    });
-
-    if (formattedMediaItems.length === 0) {
+    if (combinedMediaItems.length === 0) {
+      setIsSubmitting(false);
       alert(
         lang === 'en' 
-          ? '❌ Error: Please specify at least one Google Drive folder link OR at least one individual Photo/Video URL to create this gallery post.' 
-          : '❌ त्रुटि: कृपया यो ग्यालरी पोस्ट सिर्जना गर्न कम्तिमा एउटा गुगल ड्राइभ फोल्डर लिङ्क वा कम्तिमा एउटा फोटो/भिडियो लिङ्क थप्नुहोस्।'
+          ? '❌ Error: Please specify at least one valid Google Drive folder link OR Photo/Video URL.' 
+          : '❌ त्रुटि: कृपया कम्तिमा एउटा गुगल ड्राइभ फोल्डर लिङ्क वा फोटो/भिडियो लिङ्क थप्नुहोस्।'
       );
       return;
     }
 
-    // Automatic cover banner image from Google Drive folder or clean stock image
-    const formattedCover = 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200';
+    // Determine cover banner image: use first real photo if available!
+    let formattedCover = 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200';
+    const firstRealPhoto = combinedMediaItems.find(m => !m.url.includes('folders') && !m.url.includes('embeddedfolderview'));
+    if (firstRealPhoto) {
+      formattedCover = firstRealPhoto.url;
+    }
 
     const newAlbum: Album = {
       id: newAlbumId,
-      title: {
-        en: titleEn || titleNe,
-        ne: titleNe || titleEn,
-      },
-      description: {
-        en: descEn || 'Community event gallery post from Chaurasiya Samaj.',
-        ne: descNe || 'चौरसिया समाजको सामुदायिक कार्यक्रम ग्यालरी पोस्ट।',
-      },
+      title: { en: titleEn || titleNe, ne: titleNe || titleEn },
+      description: { en: descEn || 'Community event gallery post from Chaurasiya Samaj.', ne: descNe || 'चौरसिया समाजको सामुदायिक कार्यक्रम ग्यालरी पोस्ट।' },
       coverUrl: formattedCover,
       date: dateStr,
-      location: {
-        en: locationEn,
-        ne: locationNe,
-      },
+      location: { en: locationEn, ne: locationNe },
       tags: parsedTags.length > 0 ? parsedTags : ['Community', 'Journey'],
       driveFolderUrl: driveFolderUrl.trim() || undefined,
       driveFolderId: folderId || undefined,
-      mediaItems: formattedMediaItems,
+      isDriveFetched: isDriveFetched,
+      mediaItems: combinedMediaItems,
     };
 
-    onAddAlbum(newAlbum);
+    setFetchStatus(lang === 'en' ? 'Publishing post & syncing to website...' : 'पोस्ट प्रकाशित गर्दै...');
+    await onAddAlbum(newAlbum);
+    setIsSubmitting(false);
     onClose();
   };
 
@@ -694,11 +738,21 @@ export default function UploadJourneyPostModal({
               <div className="pt-2 flex justify-end">
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-teal-700 to-emerald-600 hover:from-teal-800 hover:to-emerald-700 text-white font-extrabold text-sm rounded-2xl shadow-lg transition-all flex items-center gap-2"
+                  disabled={isSubmitting}
+                  className="px-6 py-3 bg-gradient-to-r from-teal-700 to-emerald-600 hover:from-teal-800 hover:to-emerald-700 disabled:opacity-70 text-white font-extrabold text-sm rounded-2xl shadow-lg transition-all flex items-center gap-2"
                 >
-                  <Sparkles className="w-4 h-4" />
-                  <span>{lang === 'en' ? 'Publish & Auto-Generate Dedicated Page' : 'प्रकाशित गर्नुहोस् र अलग पृष्ठ सिर्जना गर्नुहोस्'}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>{fetchStatus || (lang === 'en' ? 'Publishing...' : 'प्रकाशित गर्दै...')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>{lang === 'en' ? 'Publish & Auto-Generate Dedicated Page' : 'प्रकाशित गर्नुहोस् र अलग पृष्ठ सिर्जना गर्नुहोस्'}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
               </div>
             </form>

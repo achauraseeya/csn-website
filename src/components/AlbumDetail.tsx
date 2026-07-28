@@ -183,7 +183,27 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
   const parsed = currentItem ? parseMediaUrl(currentItem.url, currentItem.type) : null;
 
   const handleManualRefresh = () => {
-    window.location.reload(); 
+    if (!detectedDriveFolderId) return;
+    setIsFetchingDrive(true);
+    fetchDriveFolderImagesClient(detectedDriveFolderId)
+      .then(data => {
+        if (data && Array.isArray(data.files) && data.files.length > 0) {
+          const folderMediaItems: AlbumMediaItem[] = data.files.map((file: any) => ({
+            id: `${album.id}-drive-${file.id}`,
+            title: { en: file.name, ne: file.name },
+            url: `https://lh3.googleusercontent.com/d/${file.id}`,
+            type: file.type || 'photo'
+          }));
+          setLocalItems(prev => {
+            const existingUrls = new Set(prev.map(i => i.url));
+            const existingIds = new Set(prev.map(i => i.id));
+            const uniques = folderMediaItems.filter(i => !existingUrls.has(i.url) && !existingIds.has(i.id));
+            return [...prev, ...uniques];
+          });
+        }
+      })
+      .catch(err => console.warn('Manual drive refresh failed', err))
+      .finally(() => setIsFetchingDrive(false));
   };
 
   return (
