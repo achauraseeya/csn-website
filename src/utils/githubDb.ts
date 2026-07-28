@@ -113,31 +113,41 @@ export async function saveFileToGithub(path: string, content: any, commitMessage
   if (!settings.enabled || !pat) return;
 
   try {
-    const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${path}`;
-    const sha = await fetchFileSha(path, settings, pat);
+    // A) Push to primary path in GitHub repo (e.g. journey_albums.json)
+    await pushContentToGithubRepo(path, content, commitMessage, settings, pat);
 
-    const base64Content = utf8ToBase64(JSON.stringify(content, null, 2));
-
-    const res = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `token ${pat}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: commitMessage,
-        content: base64Content,
-        branch: settings.branch,
-        ...(sha ? { sha } : {})
-      })
-    });
-
-    if (!res.ok) {
-      console.warn(`Failed to save ${path} to GitHub: ${res.statusText}`);
+    // B) If path is a json file not in public/, also push to public/ path so GitHub Pages builds automatically include it!
+    if (path.endsWith('.json') && !path.startsWith('public/')) {
+      await pushContentToGithubRepo(`public/${path}`, content, commitMessage, settings, pat).catch(() => {});
     }
   } catch (err) {
     console.warn(`GitHub push failed for ${path}:`, err);
+  }
+}
+
+async function pushContentToGithubRepo(path: string, content: any, commitMessage: string, settings: GithubSettings, pat: string) {
+  const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${path}`;
+  const sha = await fetchFileSha(path, settings, pat);
+
+  const base64Content = utf8ToBase64(JSON.stringify(content, null, 2));
+
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `token ${pat}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      message: commitMessage,
+      content: base64Content,
+      branch: settings.branch,
+      ...(sha ? { sha } : {})
+    })
+  });
+
+  if (!res.ok) {
+    console.warn(`Failed to save ${path} to GitHub: ${res.statusText}`);
   }
 }
 
@@ -147,23 +157,43 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
   const pat = getPat();
 
   // 1. Try local server API endpoint FIRST for instant real-time sync!
-  // (Admin POSTs here first, so it has the absolute latest data instantly)
   try {
     const serverUrl = `/api/site-data/${cleanKey}?t=${Date.now()}`;
     const res = await fetch(serverUrl);
     if (res.ok) {
       const data = await res.json();
-      if (data !== null && data !== undefined) {
+      if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0)) {
         return data as T;
       }
     }
   } catch (err) {
-    // Ignore server fallback error and proceed to GitHub
+    // Ignore server fallback error
   }
 
-  // 2. Try fetching directly from GitHub repository (Source of Truth)
+  // 2. Try fetching static JSON directly from current domain (for static GitHub Pages host)
+  const relativeUrls = [
+    `./${fileName}?t=${Date.now()}`,
+    `./public/${fileName}?t=${Date.now()}`,
+    `/${fileName}?t=${Date.now()}`
+  ];
+  for (const relUrl of relativeUrls) {
+    try {
+      const res = await fetch(relUrl, { cache: 'no-store' });
+      if (res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('json') || relUrl.endsWith('.json')) {
+          const data = await res.json();
+          if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0)) {
+            return data as T;
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 3. Try fetching directly from GitHub repository (Source of Truth)
   if (settings.enabled && settings.username && settings.repo) {
-    // A) First try GitHub API contents endpoint (Source of Truth, bypasses raw CDN cache)
+    // A) First try GitHub API contents endpoint
     try {
       const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${fileName}?ref=${settings.branch}&t=${Date.now()}`;
       const headers: Record<string, string> = {
@@ -179,40 +209,49 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
         const data = await res.json();
         if (data && data.content) {
           const contentStr = base64ToUtf8(data.content);
-          return JSON.parse(contentStr) as T;
+          const parsed = JSON.parse(contentStr);
+          if (parsed !== null && parsed !== undefined && (!Array.isArray(parsed) || parsed.length > 0)) {
+            return parsed as T;
+          }
         }
       }
-    } catch (e) {
-      // Fallback to raw usercontent
-    }
+    } catch (e) {}
 
-    // B) For public users (or if API rate limited), fetch raw file directly from GitHub repository
+    // B) Try raw.githubusercontent for public users
     try {
       const rawUrl = `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${fileName}?t=${Date.now()}`;
       const rawRes = await fetch(rawUrl, { cache: 'no-store' });
       if (rawRes.ok) {
         const data = await rawRes.json();
-        if (data !== null && data !== undefined) {
+        if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0)) {
           return data as T;
         }
       }
-    } catch (e) {
-      // Fallback to jsDelivr or local server
-    }
+    } catch (e) {}
 
-    // C) Fallback to jsDelivr CDN
+    // C) Try raw.githubusercontent under public/ path
+    try {
+      const rawPublicUrl = `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/public/${fileName}?t=${Date.now()}`;
+      const rawPublicRes = await fetch(rawPublicUrl, { cache: 'no-store' });
+      if (rawPublicRes.ok) {
+        const data = await rawPublicRes.json();
+        if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0)) {
+          return data as T;
+        }
+      }
+    } catch (e) {}
+
+    // D) Fallback to jsDelivr CDN
     try {
       const cdnUrl = `https://cdn.jsdelivr.net/gh/${settings.username}/${settings.repo}@${settings.branch}/${fileName}?t=${Date.now()}`;
       const cdnRes = await fetch(cdnUrl, { cache: 'no-store' });
       if (cdnRes.ok) {
         const data = await cdnRes.json();
-        if (data !== null && data !== undefined) {
+        if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0)) {
           return data as T;
         }
       }
-    } catch (e) {
-      // Fallback
-    }
+    } catch (e) {}
   }
 
   return fallbackData;

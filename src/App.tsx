@@ -921,44 +921,55 @@ export default function App() {
               type: file.type || 'photo'
             }));
 
-            setAlbums(prev => prev.map(a => {
-              if (a.id === album.id) {
-                const existingUrls = new Set<string>();
-                const existingIds = new Set<string>();
+            setAlbums(prev => {
+              const nextAlbums = prev.map(a => {
+                if (a.id === album.id) {
+                  const existingUrls = new Set<string>();
+                  const existingIds = new Set<string>();
 
-                const cleanExisting = (a.mediaItems || []).filter(item => {
-                  if (item.url.includes('folders') || item.url.includes('embeddedfolderview')) return false;
-                  if (existingUrls.has(item.url) || existingIds.has(item.id)) return false;
-                  existingUrls.add(item.url);
-                  existingIds.add(item.id);
-                  return true;
-                });
-                
-                // Sort naturally by name
-                const sortedNewItems = [...folderMediaItems].sort((a, b) => 
-                  a.title.en.localeCompare(b.title.en, undefined, { numeric: true, sensitivity: 'base' })
-                );
+                  const cleanExisting = (a.mediaItems || []).filter(item => {
+                    if (item.url.includes('folders') || item.url.includes('embeddedfolderview')) return false;
+                    if (existingUrls.has(item.url) || existingIds.has(item.id)) return false;
+                    existingUrls.add(item.url);
+                    existingIds.add(item.id);
+                    return true;
+                  });
+                  
+                  // Sort naturally by name
+                  const sortedNewItems = [...folderMediaItems].sort((a, b) => 
+                    a.title.en.localeCompare(b.title.en, undefined, { numeric: true, sensitivity: 'base' })
+                  );
 
-                const uniqueNewItems = sortedNewItems.filter(item => 
-                  !existingUrls.has(item.url) && !existingIds.has(item.id)
-                );
+                  const uniqueNewItems = sortedNewItems.filter(item => 
+                    !existingUrls.has(item.url) && !existingIds.has(item.id)
+                  );
 
-                const finalMediaItems = [...cleanExisting, ...uniqueNewItems];
+                  const finalMediaItems = [...cleanExisting, ...uniqueNewItems];
 
-                const isGenericCover = !a.coverUrl || a.coverUrl.includes('drive-folder') || a.coverUrl.includes('images/album-placeholder') || a.coverUrl.includes('unsplash');
-                const bestCover = (isGenericCover && finalMediaItems.length > 0) 
-                  ? finalMediaItems[0].url 
-                  : a.coverUrl;
+                  const isGenericCover = !a.coverUrl || a.coverUrl.includes('drive-folder') || a.coverUrl.includes('images/album-placeholder') || a.coverUrl.includes('unsplash');
+                  const bestCover = (isGenericCover && finalMediaItems.length > 0) 
+                    ? finalMediaItems[0].url 
+                    : a.coverUrl;
 
-                return {
-                  ...a,
-                  mediaItems: finalMediaItems,
-                  coverUrl: bestCover,
-                  isDriveFetched: true
-                };
-              }
-              return a;
-            }));
+                  return {
+                    ...a,
+                    mediaItems: finalMediaItems,
+                    coverUrl: bestCover,
+                    isDriveFetched: true
+                  };
+                }
+                return a;
+              });
+
+              try {
+                localStorage.setItem('chaurasiya_journey_albums', JSON.stringify(nextAlbums));
+              } catch (e) {}
+
+              // Auto-persist expanded photos to GitHub so the live website gets all photos immediately!
+              saveFileToGithub('journey_albums.json', nextAlbums, `Auto-expanded Google Drive photos for album ${album.id}`).catch(() => {});
+
+              return nextAlbums;
+            });
           } else {
             setAlbums(prev => prev.map(a => {
               if (a.id === album.id) {
