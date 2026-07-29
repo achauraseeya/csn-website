@@ -1,5 +1,102 @@
 [
   {
+    "id": "journey-post-1785312970659",
+    "title": {
+      "en": "qwerty",
+      "ne": "qwerty"
+    },
+    "description": {
+      "en": "ijhuhhu",
+      "ne": "चौरसिया समाजको सामुदायिक कार्यक्रम ग्यालरी पोस्ट।"
+    },
+    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
+    "date": "July 29, 2026",
+    "location": {
+      "en": "Parsa, Nepal",
+      "ne": "पर्सा, नेपाल"
+    },
+    "tags": [
+      "Culture"
+    ],
+    "driveFolderUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d?usp=drive_link",
+    "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
+    "isDriveFetched": true,
+    "mediaItems": [
+      {
+        "id": "journey-post-1785312970659-drive-1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
+        "title": {
+          "en": "Abhishek Kumar Chaurasiya.jpeg",
+          "ne": "Abhishek Kumar Chaurasiya.jpeg"
+        },
+        "description": {
+          "en": "ijhuhhu",
+          "ne": ""
+        },
+        "type": "photo",
+        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
+        "date": "July 29, 2026",
+        "location": {
+          "en": "Parsa, Nepal",
+          "ne": "पर्सा, नेपाल"
+        }
+      },
+      {
+        "id": "journey-post-1785312970659-drive-1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
+        "title": {
+          "en": "cdo.jpg",
+          "ne": "cdo.jpg"
+        },
+        "description": {
+          "en": "ijhuhhu",
+          "ne": ""
+        },
+        "type": "photo",
+        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
+        "date": "July 29, 2026",
+        "location": {
+          "en": "Parsa, Nepal",
+          "ne": "पर्सा, नेपाल"
+        }
+      },
+      {
+        "id": "journey-post-1785312970659-drive-19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
+        "title": {
+          "en": "cover.jpg",
+          "ne": "cover.jpg"
+        },
+        "description": {
+          "en": "ijhuhhu",
+          "ne": ""
+        },
+        "type": "photo",
+        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
+        "date": "July 29, 2026",
+        "location": {
+          "en": "Parsa, Nepal",
+          "ne": "पर्सा, नेपाल"
+        }
+      },
+      {
+        "id": "journey-post-1785312970659-drive-10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
+        "title": {
+          "en": "swc.jpg",
+          "ne": "swc.jpg"
+        },
+        "description": {
+          "en": "ijhuhhu",
+          "ne": ""
+        },
+        "type": "photo",
+        "url": "https://lh3.googleusercontent.com/d/10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
+        "date": "July 29, 2026",
+        "location": {
+          "en": "Parsa, Nepal",
+          "ne": "पर्सा, नेपाल"
+        }
+      }
+    ]
+  },
+  {
     "id": "betel-farming-expo-2026",
     "title": {
       "en": "National Betel Farming Expo & Cultural Summit 2026",
@@ -608,7 +705,7 @@
       "en": "asdasd",
       "ne": "चौरसिया समाजको सामुदायिक कार्यक्रम ग्यालरी पोस्ट।"
     },
-    "coverUrl": "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200",
+    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
     "date": "July 27, 2026",
     "location": {
       "en": "Parsa, Nepal",
@@ -621,7 +718,44 @@
     ],
     "driveFolderUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
     "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "mediaItems": [],
+    "mediaItems": [
+      {
+        "id": "journey-post-1785163095699-drive-1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
+        "title": {
+          "en": "Abhishek Kumar Chaurasiya.jpeg",
+          "ne": "Abhishek Kumar Chaurasiya.jpeg"
+        },
+        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
+        "type": "photo"
+      },
+      {
+        "id": "journey-post-1785163095699-drive-1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
+        "title": {
+          "en": "cdo.jpg",
+          "ne": "cdo.jpg"
+        },
+        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
+        "type": "photo"
+      },
+      {
+        "id": "journey-post-1785163095699-drive-19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
+        "title": {
+          "en": "cover.jpg",
+          "ne": "cover.jpg"
+        },
+        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
+        "type": "photo"
+      },
+      {
+        "id": "journey-post-1785163095699-drive-10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
+        "title": {
+          "en": "swc.jpg",
+          "ne": "swc.jpg"
+        },
+        "url": "https://lh3.googleusercontent.com/d/10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
+        "type": "photo"
+      }
+    ],
     "isDriveFetched": true
   },
   {
