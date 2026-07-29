@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, Clock, CheckCircle2, Award, ClipboardList, Info, Plus, Trash2, X, Sparkles, Loader2 } from 'lucide-react';
+import { Calendar, MapPin, Clock, CheckCircle2, Award, ClipboardList, Info, Plus, Trash2, X, Sparkles, Loader2, Share2 } from 'lucide-react';
 import { Language, CommunityEvent } from '../types';
 import { upcomingEvents as initialUpcomingEvents } from '../data/communityData';
 import { formatNumber } from '../utils/mediaUrl';
 import { AdminFormFieldEditor } from './AdminFormFieldEditor';
 import { getCustomFormFields, CustomFormField } from '../utils/customFormFields';
+import ShareModal from './ShareModal';
+import { getShareUrl } from '../utils/shareUtils';
 
 interface EventsSectionProps {
   lang: Language;
@@ -35,6 +37,7 @@ export default function EventsSection({
   const [volunteerSkills, setVolunteerSkills] = useState('');
   const [isSubmittingVol, setIsSubmittingVol] = useState(false);
   const [successMsg, setSuccessMsg] = useState(false);
+  const [shareTargetEvent, setShareTargetEvent] = useState<CommunityEvent | null>(null);
 
   // Custom Form Fields State
   const [evtVolCustomFields, setEvtVolCustomFields] = useState<CustomFormField[]>(() => getCustomFormFields('event_volunteer'));
@@ -403,9 +406,22 @@ export default function EventsSection({
         <div className="lg:col-span-7 space-y-6">
           {/* Active Event Showcase Card */}
           <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 dark:bg-emerald-950/80 text-teal-800 dark:text-emerald-300 text-xs font-black rounded-full border border-teal-200 dark:border-emerald-800 uppercase tracking-wide">
-              Selected Agenda
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 dark:bg-emerald-950/80 text-teal-800 dark:text-emerald-300 text-xs font-black rounded-full border border-teal-200 dark:border-emerald-800 uppercase tracking-wide">
+                Selected Agenda
+              </span>
+
+              <button
+                onClick={() => {
+                  setShareTargetEvent(selectedEvent);
+                  onTrackAction(`Opened share modal for event: ${selectedEvent.title.en}`);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-slate-800 hover:bg-teal-100 dark:hover:bg-slate-700 text-teal-800 dark:text-emerald-300 text-xs font-extrabold transition-all flex items-center gap-1.5 border border-teal-200 dark:border-slate-700"
+              >
+                <Share2 className="w-3.5 h-3.5 text-teal-600 dark:text-emerald-400" />
+                <span>{lang === 'en' ? 'Share Event' : 'कार्यक्रम सेयर'}</span>
+              </button>
+            </div>
             <h3 className="text-xl sm:text-2xl font-extrabold text-teal-950 dark:text-teal-100">
               {formatNumber(selectedEvent.title[lang], lang)}
             </h3>
@@ -754,6 +770,18 @@ export default function EventsSection({
           </div>
         </div>
       </div>
+
+      {/* Share Modal Dialog for Event */}
+      {shareTargetEvent && (
+        <ShareModal
+          isOpen={!!shareTargetEvent}
+          onClose={() => setShareTargetEvent(null)}
+          title={shareTargetEvent.title[lang] || shareTargetEvent.title.en}
+          text={shareTargetEvent.description[lang] || shareTargetEvent.description.en}
+          url={getShareUrl('event', shareTargetEvent.id)}
+          lang={lang}
+        />
+      )}
     </div>
   );
 }

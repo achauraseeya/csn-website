@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Mail, Search, Image as ImageIcon, FileText, CheckCircle2, ChevronRight, X, Download, Eye, Plus, ExternalLink, Trash2, ShieldCheck, Sparkles } from 'lucide-react';
+import { Mail, Search, Image as ImageIcon, FileText, CheckCircle2, ChevronRight, X, Download, Eye, Plus, ExternalLink, Trash2, ShieldCheck, Sparkles, Share2 } from 'lucide-react';
 import { Language, Notice, GalleryItem } from '../types';
 import { notices as defaultNotices, galleryItems } from '../data/communityData';
 import { extractGoogleDriveId, formatDriveImageUrl, getGoogleDriveDownloadUrl, formatNumber } from '../utils/mediaUrl';
+import ShareModal from './ShareModal';
+import { getShareUrl } from '../utils/shareUtils';
 
 interface NoticeGalleryProps {
   lang: Language;
@@ -31,6 +33,7 @@ export default function NoticeGallery({
   
   const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
   const [viewPdfNoticeId, setViewPdfNoticeId] = useState<string | null>(null);
+  const [shareTargetNotice, setShareTargetNotice] = useState<Notice | null>(null);
 
   // Back button popstate listener
   React.useEffect(() => {
@@ -211,17 +214,15 @@ export default function NoticeGallery({
 
                       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                         <div className="flex flex-wrap items-center gap-3">
-                          <button 
+                          <button
                             onClick={() => {
-                              setViewPdfNoticeId(prev => prev === notice.id ? null : notice.id);
-                              onTrackAction(`Toggled view PDF: ${notice.title.en}`);
+                              setShareTargetNotice(notice);
+                              onTrackAction(`Opened share modal for notice: ${notice.title.en}`);
                             }}
-                            className="text-xs font-bold text-white bg-teal-700 dark:bg-emerald-600 hover:bg-teal-800 dark:hover:bg-emerald-500 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                            className="text-xs font-bold text-teal-900 dark:text-emerald-300 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/80 dark:hover:bg-emerald-900 border border-emerald-300 dark:border-emerald-700 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
                           >
-                            {viewPdfNoticeId === notice.id ? <X className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                            {viewPdfNoticeId === notice.id 
-                              ? (lang === 'en' ? 'Close Preview' : 'पूर्वप्रदर्शन बन्द गर्नुहोस्') 
-                              : (lang === 'en' ? 'View Document Preview' : 'कागजात पूर्वप्रदर्शन हेर्नुहोस्')}
+                            <Share2 className="w-3.5 h-3.5 text-teal-700 dark:text-emerald-400" />
+                            <span>{lang === 'en' ? 'Share Notice' : 'सूचना सेयर गर्नुहोस्'}</span>
                           </button>
 
                           {(notice.driveFileUrl || notice.fileUrl) ? (
@@ -407,6 +408,18 @@ export default function NoticeGallery({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Share Modal Dialog for Notice */}
+      {shareTargetNotice && (
+        <ShareModal
+          isOpen={!!shareTargetNotice}
+          onClose={() => setShareTargetNotice(null)}
+          title={shareTargetNotice.title[lang] || shareTargetNotice.title.en}
+          text={shareTargetNotice.content[lang] || shareTargetNotice.content.en}
+          url={getShareUrl('notice', shareTargetNotice.id)}
+          lang={lang}
+        />
       )}
     </div>
   );

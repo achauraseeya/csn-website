@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, Upload, Plus, Trash2, Image as ImageIcon, Film, HelpCircle, 
   Check, Sparkles, FolderPlus, ArrowRight, Video, FileText, Link as LinkIcon,
-  ShieldCheck, Lock, Key, LogOut, Database, CheckCircle2, Layers, DownloadCloud, Globe
+  ShieldCheck, Lock, Key, LogOut, Database, CheckCircle2, Layers, DownloadCloud, Globe, Tag
 } from 'lucide-react';
 import { Album, AlbumMediaItem, Language } from '../types';
 import { formatDriveImageUrl, parseMultipleMediaLinks, extractGoogleDriveFolderId, detectMediaType } from '../utils/mediaUrl';
@@ -50,7 +50,27 @@ export default function UploadJourneyPostModal({
   const [locationEn, setLocationEn] = useState('Parsa, Nepal');
   const [locationNe, setLocationNe] = useState('पर्सा, नेपाल');
   const [dateStr, setDateStr] = useState(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
-  const [tagsStr, setTagsStr] = useState('Community, Journey, Youth');
+  
+  // Custom Thumbnail / Cover Image Link
+  const [coverImageUrl, setCoverImageUrl] = useState('');
+
+  // Interactive Tag Manager State
+  const [tags, setTags] = useState<string[]>(['Community', 'Journey', 'Youth']);
+  const [newTagInput, setNewTagInput] = useState('');
+
+  const PRESET_TAGS = ['Community', 'Journey', 'Youth', 'Health', 'Culture', 'Environment', 'Heritage', 'Education', 'Agriculture', 'Festival'];
+
+  const handleAddTag = (tagToAdd?: string) => {
+    const target = (tagToAdd || newTagInput).trim();
+    if (target && !tags.some(t => t.toLowerCase() === target.toLowerCase())) {
+      setTags(prev => [...prev, target]);
+      setNewTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (indexToRemove: number) => {
+    setTags(prev => prev.filter((_, idx) => idx !== indexToRemove));
+  };
   
   // Remove unused file upload states and handlers
   // Google Drive Folder URL State
@@ -182,7 +202,6 @@ export default function UploadJourneyPostModal({
     setFetchStatus(lang === 'en' ? 'Processing Google Drive Photos...' : 'गुगल ड्राइभ फोटोहरू प्रशोधन गर्दै...');
 
     const newAlbumId = `journey-post-${Date.now()}`;
-    const parsedTags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
 
     let folderId = extractGoogleDriveFolderId(driveFolderUrl);
     if (!folderId) {
@@ -265,11 +284,15 @@ export default function UploadJourneyPostModal({
       return;
     }
 
-    // Determine cover banner image: use first real photo if available!
+    // Determine cover banner image: use user provided thumbnail or first real photo!
     let formattedCover = 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200';
-    const firstRealPhoto = combinedMediaItems.find(m => !m.url.includes('folders') && !m.url.includes('embeddedfolderview'));
-    if (firstRealPhoto) {
-      formattedCover = firstRealPhoto.url;
+    if (coverImageUrl.trim()) {
+      formattedCover = formatDriveImageUrl(coverImageUrl.trim());
+    } else {
+      const firstRealPhoto = combinedMediaItems.find(m => !m.url.includes('folders') && !m.url.includes('embeddedfolderview'));
+      if (firstRealPhoto) {
+        formattedCover = firstRealPhoto.url;
+      }
     }
 
     const newAlbum: Album = {
@@ -279,7 +302,7 @@ export default function UploadJourneyPostModal({
       coverUrl: formattedCover,
       date: dateStr,
       location: { en: locationEn, ne: locationNe },
-      tags: parsedTags.length > 0 ? parsedTags : ['Community', 'Journey'],
+      tags: tags.length > 0 ? tags : ['Community', 'Journey'],
       driveFolderUrl: driveFolderUrl.trim() || undefined,
       driveFolderId: folderId || undefined,
       isDriveFetched: isDriveFetched,
@@ -491,16 +514,116 @@ export default function UploadJourneyPostModal({
                       className="w-full px-3.5 py-2 bg-white border border-teal-200 rounded-xl text-xs font-medium text-teal-950"
                     />
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-teal-900 mb-1">Tags (Comma Separated)</label>
+                {/* Custom Thumbnail / Cover Image Link Input */}
+                <div className="bg-teal-50/60 p-3.5 rounded-xl border border-teal-200 space-y-2">
+                  <label className="block text-xs font-extrabold text-teal-950 uppercase tracking-wider flex items-center gap-1.5">
+                    <ImageIcon className="w-4 h-4 text-teal-600" />
+                    <span>{lang === 'en' ? 'Thumbnail / Cover Image (Google Drive Image Link or Photo URL)' : 'थम्बनेल / कभर फोटो (गुगल ड्राइभ फोटो लिङ्क वा छवि युआरएल)'}</span>
+                  </label>
+                  <p className="text-[11px] text-teal-800 font-medium leading-relaxed">
+                    {lang === 'en'
+                      ? 'Paste a Google Drive image share link (e.g., https://drive.google.com/file/d/.../view) or direct photo URL to set a custom cover thumbnail for this post card.'
+                      : 'यस पोस्ट कार्डको कभर फोटो बनाउन गुगल ड्राइभ छवि सेयर लिङ्क वा सिधा फोटो युआरएल यहाँ राख्नुहोस्।'}
+                  </p>
+                  <input
+                    type="url"
+                    value={coverImageUrl}
+                    onChange={(e) => setCoverImageUrl(e.target.value)}
+                    placeholder="https://drive.google.com/file/d/1A2B3C4D5E/view?usp=sharing"
+                    className="w-full px-3.5 py-2 bg-white border border-teal-300 rounded-xl text-xs font-medium text-teal-950 focus:outline-none focus:border-teal-600 shadow-sm"
+                  />
+                  {coverImageUrl && (
+                    <div className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>{lang === 'en' ? 'Custom thumbnail link provided! Google Drive formatting will be auto-applied.' : 'थम्बनेल लिङ्क राखियो!'}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Interactive Tag Manager (Add, Edit, Delete Tags) */}
+                <div className="bg-teal-50/60 p-3.5 rounded-xl border border-teal-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-extrabold text-teal-950 uppercase tracking-wider flex items-center gap-1.5">
+                      <Tag className="w-4 h-4 text-teal-600" />
+                      <span>{lang === 'en' ? 'Post Tags (Add / Edit / Delete)' : 'पोस्ट ट्यागहरू (थप्नुहोस् / सम्पादन / हटाउनुहोस्)'}</span>
+                    </label>
+                    <span className="text-[10px] font-bold text-teal-700">
+                      {tags.length} {lang === 'en' ? 'Tags Attached' : 'ट्यागहरू'}
+                    </span>
+                  </div>
+
+                  {/* Active Tag Chips with Delete Button */}
+                  <div className="flex flex-wrap gap-2">
+                    {tags.length === 0 ? (
+                      <span className="text-xs italic text-gray-400">No tags added yet. Select from presets below or add custom tags.</span>
+                    ) : (
+                      tags.map((t, idx) => (
+                        <span
+                          key={`${t}-${idx}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-800 text-white text-xs font-bold shadow-sm"
+                        >
+                          <span>#{t}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTag(idx)}
+                            className="p-0.5 rounded-full hover:bg-teal-600 text-teal-200 hover:text-white transition-colors"
+                            title="Remove tag"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </span>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Add Tag Input Bar */}
+                  <div className="flex gap-2">
                     <input
                       type="text"
-                      value={tagsStr}
-                      onChange={(e) => setTagsStr(e.target.value)}
-                      placeholder="Culture, Agriculture, Youth"
-                      className="w-full px-3.5 py-2 bg-white border border-teal-200 rounded-xl text-xs font-medium text-teal-950"
+                      value={newTagInput}
+                      onChange={(e) => setNewTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      }}
+                      placeholder="Type a new tag name and press Enter..."
+                      className="flex-1 px-3.5 py-1.5 bg-white border border-teal-300 rounded-xl text-xs font-medium text-teal-950 focus:outline-none focus:border-teal-600"
                     />
+                    <button
+                      type="button"
+                      onClick={() => handleAddTag()}
+                      className="px-4 py-1.5 bg-teal-700 hover:bg-teal-600 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                    >
+                      + Add Tag
+                    </button>
+                  </div>
+
+                  {/* Preset Tag Quick Add Chips */}
+                  <div className="pt-1">
+                    <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider block mb-1.5">
+                      {lang === 'en' ? 'Quick Add Preset Tags:' : 'द्रुत ट्यागहरू:'}
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {PRESET_TAGS.map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => handleAddTag(preset)}
+                          disabled={tags.some(t => t.toLowerCase() === preset.toLowerCase())}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                            tags.some(t => t.toLowerCase() === preset.toLowerCase())
+                              ? 'bg-teal-200 text-teal-800 opacity-50 cursor-default'
+                              : 'bg-white hover:bg-teal-100 text-teal-900 border border-teal-200'
+                          }`}
+                        >
+                          + {preset}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 

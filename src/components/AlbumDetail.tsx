@@ -14,6 +14,8 @@ import {
   getDriveFileViewUrl
 } from '../utils/mediaUrl';
 import { fetchDriveFolderImagesClient } from '../utils/driveClient';
+import ShareModal from './ShareModal';
+import { getShareUrl, getCleanMediaTitle } from '../utils/shareUtils';
 
 interface AlbumDetailProps {
   album: Album;
@@ -30,6 +32,7 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showInfo, setShowInfo] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Quick inline add media form inside AlbumDetail
   const [isAddingInline, setIsAddingInline] = useState(false);
@@ -135,10 +138,8 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
   };
 
   const handleShare = () => {
-    navigator.clipboard?.writeText(window.location.href);
-    setCopiedLink(true);
-    onTrackAction(`Shared album link: ${album.title.en}`);
-    setTimeout(() => setCopiedLink(false), 3000);
+    setIsShareModalOpen(true);
+    onTrackAction(`Opened share modal for post: ${album.title.en}`);
   };
 
   const photoCount = album.mediaItems.filter((i) => i.type === 'photo').length;
@@ -536,7 +537,7 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
                 <div className="flex justify-between items-end gap-4">
                   <div className="flex-1">
                     <h3 className="text-base sm:text-lg font-extrabold text-teal-200">
-                      {currentItem.title[lang]}
+                      {getCleanMediaTitle(currentItem.title[lang], album.title[lang], activeIdx, filteredItems.length, lang)}
                     </h3>
                     {currentItem.description && (
                       <p className="text-xs sm:text-sm text-gray-300 font-medium max-w-4xl mt-1 leading-relaxed line-clamp-2 sm:line-clamp-none">
@@ -657,6 +658,16 @@ export default function AlbumDetail({ album, lang, onClose, onTrackAction, onAdd
           )}
         </div>
       )}
+
+      {/* Share Modal Dialog */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        title={album.title[lang]}
+        text={album.description[lang]}
+        url={getShareUrl('post', album.id)}
+        lang={lang}
+      />
     </div>
   );
 }

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { 
   Film, Image as ImageIcon, Search, Calendar, MapPin, Tag, ArrowRight, Play, Eye, 
-  Grid, List, Sparkles, Folder, ShieldCheck, Trash2
+  Grid, List, Sparkles, Folder, ShieldCheck, Trash2, Share2
 } from 'lucide-react';
 import { Album, AlbumMediaItem, Language } from '../types';
 import { journeyAlbums as defaultJourneyAlbums } from '../data/albumsData';
 import { getBestAlbumCover } from '../utils/mediaUrl';
 import AlbumDetail from './AlbumDetail';
+import ShareModal from './ShareModal';
+import { getShareUrl } from '../utils/shareUtils';
 
 interface AlbumGalleryProps {
   lang: Language;
@@ -39,6 +41,7 @@ export default function AlbumGallery({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [shareTargetAlbum, setShareTargetAlbum] = useState<Album | null>(null);
 
   // Extract unique tags across all albums
   const allTags = Array.from(new Set(albums.flatMap((a) => a.tags)));
@@ -276,9 +279,23 @@ export default function AlbumGallery({
                       ))}
                     </div>
 
-                    <span className="text-xs font-black text-teal-700 dark:text-emerald-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-300 inline-flex items-center gap-1 uppercase tracking-wider shrink-0">
-                      {lang === 'en' ? 'Open Album' : 'एल्बम हेर्नुहोस्'} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShareTargetAlbum(album);
+                          onTrackAction(`Opened share modal from card: ${album.title.en}`);
+                        }}
+                        className="p-1.5 rounded-xl bg-teal-50 dark:bg-slate-800 hover:bg-teal-100 dark:hover:bg-slate-700 text-teal-700 dark:text-emerald-400 transition-colors"
+                        title="Share Post"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+
+                      <span className="text-xs font-black text-teal-700 dark:text-emerald-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-300 inline-flex items-center gap-1 uppercase tracking-wider shrink-0">
+                        {lang === 'en' ? 'Open Album' : 'एल्बम हेर्नुहोस्'} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -297,6 +314,18 @@ export default function AlbumGallery({
             Clear Filters
           </button>
         </div>
+      )}
+
+      {/* Share Modal Dialog for Card Share Button */}
+      {shareTargetAlbum && (
+        <ShareModal
+          isOpen={!!shareTargetAlbum}
+          onClose={() => setShareTargetAlbum(null)}
+          title={shareTargetAlbum.title[lang]}
+          text={shareTargetAlbum.description[lang]}
+          url={getShareUrl('post', shareTargetAlbum.id)}
+          lang={lang}
+        />
       )}
     </div>
   );

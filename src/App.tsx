@@ -999,10 +999,43 @@ export default function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isSitemapModalOpen, setIsSitemapModalOpen] = useState(false);
 
+  // Deep link URL parameter parser for direct post/notice/event links
+  useEffect(() => {
+    const parseUrlDeepLink = () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const postParam = searchParams.get('post') || searchParams.get('album');
+      const noticeParam = searchParams.get('notice');
+      const eventParam = searchParams.get('event');
+      const newsParam = searchParams.get('news') || searchParams.get('blog');
+      const memberParam = searchParams.get('member');
+      const networkParam = searchParams.get('network') || searchParams.get('branch');
+
+      if (postParam) {
+        setSelectedAlbumId(postParam);
+        setCurrentTab('album-detail');
+      } else if (noticeParam) {
+        setCurrentTab('notices');
+      } else if (eventParam) {
+        setCurrentTab('events');
+      } else if (newsParam) {
+        setCurrentTab('news');
+      } else if (memberParam) {
+        setCurrentTab('directory');
+      } else if (networkParam) {
+        setSelectedNetworkId(networkParam);
+        setCurrentTab('network');
+      }
+    };
+
+    parseUrlDeepLink();
+    window.addEventListener('popstate', parseUrlDeepLink);
+    return () => window.removeEventListener('popstate', parseUrlDeepLink);
+  }, []);
+
   const handleSelectAlbum = (albumId: string) => {
     setSelectedAlbumId(albumId);
     setCurrentTab('album-detail');
-    window.history.pushState({ tab: 'album-detail', albumId }, '');
+    window.history.pushState({ tab: 'album-detail', albumId }, '', `?post=${albumId}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
