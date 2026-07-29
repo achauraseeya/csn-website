@@ -98,6 +98,8 @@ export default function UploadJourneyPostModal({
   ]);
 
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fetchStatus, setFetchStatus] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -183,9 +185,6 @@ export default function UploadJourneyPostModal({
       }
     ]);
   };
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fetchStatus, setFetchStatus] = useState<string | null>(null);
 
   const handleRemoveMediaRow = (index: number) => {
     setMediaItems(mediaItems.filter((_, i) => i !== index));
@@ -317,16 +316,16 @@ export default function UploadJourneyPostModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-3xl w-full border border-teal-100 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+      <div className="bg-white dark:bg-slate-900 text-teal-950 dark:text-slate-100 rounded-3xl max-w-3xl w-full border border-teal-100 dark:border-slate-800 shadow-2xl overflow-hidden my-auto max-h-[92vh] min-h-[400px] flex flex-col">
         
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-white p-6 flex items-center justify-between border-b border-emerald-500/30">
+        <div className="bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-white p-5 sm:p-6 flex items-center justify-between border-b border-emerald-500/30 shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
               <FolderPlus className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-white flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
                 {lang === 'en' ? 'Glimpses of Our Journey — Admin Media Portal' : 'हाम्रो यात्राको झलक — एडमिन मिडिया पोर्टल'}
               </h2>
               <p className="text-xs text-teal-200 font-medium">
@@ -343,7 +342,7 @@ export default function UploadJourneyPostModal({
                 title="Lock Admin Mode"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>{lang === 'en' ? 'Lock Admin' : 'एडमिन बन्द गर्नुहोस्'}</span>
+                <span className="hidden sm:inline">{lang === 'en' ? 'Lock Admin' : 'एडमिन बन्द गर्नुहोस्'}</span>
               </button>
             )}
 
@@ -358,26 +357,26 @@ export default function UploadJourneyPostModal({
 
         {/* If Admin is NOT Authenticated: Show Security Lock Screen */}
         {!effectiveIsAdmin ? (
-          <div className="p-8 space-y-6 text-center max-w-lg mx-auto my-auto">
-            <div className="w-16 h-16 rounded-full bg-teal-50 border-2 border-teal-200 text-teal-800 flex items-center justify-center mx-auto shadow-inner">
-              <Lock className="w-8 h-8 text-teal-700" />
+          <div className="p-8 space-y-6 text-center max-w-lg mx-auto my-auto overflow-y-auto">
+            <div className="w-16 h-16 rounded-full bg-teal-50 dark:bg-slate-800 border-2 border-teal-200 dark:border-slate-700 text-teal-800 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-inner">
+              <Lock className="w-8 h-8 text-teal-700 dark:text-emerald-400" />
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-xl font-black text-teal-950">
+              <h3 className="text-xl font-black text-teal-950 dark:text-slate-100">
                 {lang === 'en' ? 'Admin Verification Required' : 'एडमिन प्रमाणीकरण आवश्यक छ'}
               </h3>
-              <p className="text-xs text-gray-600 font-medium leading-relaxed">
+              <p className="text-xs text-gray-600 dark:text-slate-400 font-medium leading-relaxed">
                 {lang === 'en' 
                   ? 'Adding photos, videos, and creating dedicated journey pages is restricted to authorized Chaurasiya Samaj Executive Admins.'
                   : 'फोटो, भिडियो थप्न र अलग यात्रा पृष्ठहरू सिर्जना गर्न अधिकृत चौरसिया समाज कार्यकारी एडमिनहरूका लागि मात्र सीमित छ।'}
               </p>
             </div>
 
-            <form onSubmit={handleVerifyPasscode} className="space-y-4 text-left bg-teal-50/50 p-6 rounded-2xl border border-teal-100">
+            <form onSubmit={handleVerifyPasscode} className="space-y-4 text-left bg-teal-50/50 dark:bg-slate-800/80 p-6 rounded-2xl border border-teal-100 dark:border-slate-700">
               <div>
-                <label className="block text-xs font-extrabold text-teal-900 mb-1.5 flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-teal-600" />
+                <label className="block text-xs font-extrabold text-teal-900 dark:text-emerald-300 mb-1.5 flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-teal-600 dark:text-emerald-400" />
                   {lang === 'en' ? 'Enter Admin Passcode / PIN' : 'एडमिन पासकोड / पिन प्रविष्ट गर्नुहोस्'}
                 </label>
                 <input
@@ -390,18 +389,18 @@ export default function UploadJourneyPostModal({
                     setPasscodeError(false);
                   }}
                   placeholder={lang === 'en' ? 'Enter passcode' : 'पासकोड प्रविष्ट गर्नुहोस्'}
-                  className="w-full px-4 py-2.5 bg-white border border-teal-200 rounded-xl text-sm font-medium text-teal-950 focus:outline-none focus:border-teal-600 shadow-sm disabled:opacity-60"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-700 rounded-xl text-sm font-medium text-teal-950 dark:text-slate-100 focus:outline-none focus:border-teal-600 dark:focus:border-emerald-500 shadow-sm disabled:opacity-60"
                 />
                 {passcodeError && (
-                  <p className="text-xs font-bold text-red-600 mt-1">
+                  <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-1">
                     {lang === 'en' ? '❌ Invalid Passcode. Access Denied.' : '❌ अमान्य पासकोड। पहुँच अस्वीकृत।'}
                   </p>
                 )}
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-teal-700 font-bold bg-teal-100/60 p-2.5 rounded-xl border border-teal-200/60">
+              <div className="flex items-center justify-between text-[11px] text-teal-700 dark:text-emerald-300 font-bold bg-teal-100/60 dark:bg-emerald-950/60 p-2.5 rounded-xl border border-teal-200/60 dark:border-emerald-800">
                 <span>🔑 {lang === 'en' ? 'Environment Authentication Active' : 'वातावरण प्रमाणीकरण सक्रिय छ'}</span>
-                <span className="text-teal-900">({lang === 'en' ? 'Secure Verification' : 'सुरक्षित प्रमाणीकरण'})</span>
+                <span className="text-teal-900 dark:text-emerald-200">({lang === 'en' ? 'Secure Verification' : 'सुरक्षित प्रमाणीकरण'})</span>
               </div>
 
               <button
@@ -426,27 +425,27 @@ export default function UploadJourneyPostModal({
         ) : (
           <>
             {/* Modal Tabs Header */}
-            <div className="flex items-center justify-between border-b border-teal-100 bg-teal-50/50 px-6 pt-3 gap-2">
+            <div className="flex items-center justify-between border-b border-teal-100 dark:border-slate-800 bg-teal-50/50 dark:bg-slate-800/50 px-6 pt-3 gap-2 shrink-0">
               <div className="flex gap-2">
                 <button
                   onClick={() => setActiveTab('create')}
-                  className={`px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all flex items-center gap-2 border-t border-x ${activeTab === 'create' ? 'bg-white text-teal-950 border-teal-200 border-b-transparent shadow-sm' : 'text-gray-600 hover:text-teal-900'}`}
+                  className={`px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all flex items-center gap-2 border-t border-x ${activeTab === 'create' ? 'bg-white dark:bg-slate-900 text-teal-950 dark:text-emerald-300 border-teal-200 dark:border-slate-700 border-b-transparent shadow-sm' : 'text-gray-600 dark:text-slate-400 hover:text-teal-900 dark:hover:text-slate-200'}`}
                 >
-                  <Plus className="w-4 h-4 text-emerald-600" />
+                  <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>{lang === 'en' ? 'Create & Upload Post' : 'पोस्ट बनाउनुहोस् र अपलोड गर्नुहोस्'}</span>
                 </button>
 
                 <button
                   onClick={() => setActiveTab('guide')}
-                  className={`px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all flex items-center gap-2 border-t border-x ${activeTab === 'guide' ? 'bg-white text-teal-950 border-teal-200 border-b-transparent shadow-sm' : 'text-gray-600 hover:text-teal-900'}`}
+                  className={`px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all flex items-center gap-2 border-t border-x ${activeTab === 'guide' ? 'bg-white dark:bg-slate-900 text-teal-950 dark:text-emerald-300 border-teal-200 dark:border-slate-700 border-b-transparent shadow-sm' : 'text-gray-600 dark:text-slate-400 hover:text-teal-900 dark:hover:text-slate-200'}`}
                 >
-                  <HelpCircle className="w-4 h-4 text-teal-600" />
+                  <HelpCircle className="w-4 h-4 text-teal-600 dark:text-emerald-400" />
                   <span>{lang === 'en' ? 'How to Upload Guide' : 'फाइल/भिडियो अपलोड निर्देशिका'}</span>
                 </button>
               </div>
 
-              <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span>{lang === 'en' ? 'Admin Access Active' : 'एडमिन पहुँच सक्रिय'}</span>
               </div>
             </div>

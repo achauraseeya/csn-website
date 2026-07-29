@@ -1013,17 +1013,23 @@ export default function App() {
       if (postParam) {
         setSelectedAlbumId(postParam);
         setCurrentTab('album-detail');
+        window.history.replaceState({ tab: 'album-detail', albumId: postParam }, '', window.location.href);
       } else if (noticeParam) {
-        setCurrentTab('notices');
+        setCurrentTab('notices-gallery');
+        window.history.replaceState({ tab: 'notices-gallery' }, '', window.location.href);
       } else if (eventParam) {
         setCurrentTab('events');
+        window.history.replaceState({ tab: 'events' }, '', window.location.href);
       } else if (newsParam) {
-        setCurrentTab('news');
+        setCurrentTab('single-post');
+        window.history.replaceState({ tab: 'single-post', postId: newsParam }, '', window.location.href);
       } else if (memberParam) {
         setCurrentTab('directory');
+        window.history.replaceState({ tab: 'directory' }, '', window.location.href);
       } else if (networkParam) {
         setSelectedNetworkId(networkParam);
-        setCurrentTab('network');
+        setCurrentTab('chapter-detail');
+        window.history.replaceState({ tab: 'chapter-detail', networkId: networkParam }, '', window.location.href);
       }
     };
 
@@ -1767,21 +1773,37 @@ export default function App() {
 
   // Mobile Browser & History Back Button Management
   useEffect(() => {
-    // Standardize initial history state as homepage root
+    // Standardize initial history state if no state exists and no query string deep link is active
     if (!window.history.state) {
-      window.history.replaceState({ tab: 'history' }, '');
+      const searchParams = new URLSearchParams(window.location.search);
+      const hasDeepLink = searchParams.has('post') || searchParams.has('album') || searchParams.has('notice') || searchParams.has('event') || searchParams.has('news') || searchParams.has('blog') || searchParams.has('member') || searchParams.has('network') || searchParams.has('branch');
+      if (!hasDeepLink) {
+        window.history.replaceState({ tab: 'history' }, '', window.location.href);
+      }
     }
 
     const handlePopState = (event: PopStateEvent) => {
       const state = event.state;
+      const searchParams = new URLSearchParams(window.location.search);
+      const postParam = searchParams.get('post') || searchParams.get('album');
+      const noticeParam = searchParams.get('notice');
+      const eventParam = searchParams.get('event');
+
       if (state && state.tab && state.tab !== 'history') {
         setCurrentTab(state.tab);
         setSelectedLeaderId(state.leaderId || null);
         setSelectedNetworkId(state.networkId || null);
-        setSelectedAlbumId(state.albumId || null);
+        setSelectedAlbumId(state.albumId || postParam || null);
         if (!state.postId) {
           setSelectedBlogPost(null);
         }
+      } else if (postParam) {
+        setSelectedAlbumId(postParam);
+        setCurrentTab('album-detail');
+      } else if (noticeParam) {
+        setCurrentTab('notices-gallery');
+      } else if (eventParam) {
+        setCurrentTab('events');
       } else {
         // Mobile back button pressed or popped to base: Cancel any active page and return to Homepage!
         setCurrentTab('history');
@@ -2022,8 +2044,29 @@ export default function App() {
         {currentTab === 'album-detail' && (
           <div className="space-y-6">
             {(() => {
-              const currentAlbum = albums.find((a) => a.id === selectedAlbumId) || albums[0];
-              if (!currentAlbum) return null;
+              const matchedAlbum = albums.find((a) => a.id === selectedAlbumId || a.id?.toLowerCase() === selectedAlbumId?.toLowerCase());
+              const currentAlbum = matchedAlbum || (selectedAlbumId ? undefined : albums[0]);
+              
+              if (!currentAlbum) {
+                return (
+                  <div className="bg-white dark:bg-slate-900 p-12 rounded-3xl border border-teal-100 dark:border-slate-800 text-center space-y-4 max-w-lg mx-auto my-8 shadow-sm">
+                    <div className="w-12 h-12 border-4 border-teal-600 dark:border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                    <h3 className="text-base font-extrabold text-teal-950 dark:text-slate-100">
+                      {lang === 'en' ? 'Loading Requested Journey Post...' : 'माग गरिएको यात्रा पोस्ट लोड हुँदैछ...'}
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">
+                      {lang === 'en' ? 'Fetching post details from server...' : 'सर्भरबाट पोस्टको विवरण प्राप्त गर्दैछ...'}
+                    </p>
+                    <button
+                      onClick={() => handleNavigate('albums-gallery')}
+                      className="px-4 py-2 bg-teal-800 hover:bg-teal-700 text-white font-bold text-xs rounded-xl transition-all shadow-sm"
+                    >
+                      {lang === 'en' ? '← View All Journey Posts' : '← सबै यात्रा पोस्टहरू हेर्नुहोस्'}
+                    </button>
+                  </div>
+                );
+              }
+
               return (
                 <AlbumDetail
                   album={currentAlbum}
