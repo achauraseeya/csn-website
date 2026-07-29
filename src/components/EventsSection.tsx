@@ -62,6 +62,18 @@ export default function EventsSection({
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [showAddModal]);
+
+  // Deep link URL parameter listener for specific event share links
+  React.useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const eventParam = searchParams.get('event');
+    if (eventParam && events.length > 0) {
+      const found = events.find(e => e.id === eventParam || e.id?.toLowerCase() === eventParam.toLowerCase());
+      if (found) {
+        setSelectedEventId(found.id);
+      }
+    }
+  }, [events]);
   const [eventDate, setEventDate] = useState('');
   const [eventTime, setEventTime] = useState('');
   const [eventLocEn, setEventLocEn] = useState('');

@@ -183,15 +183,28 @@ export function parseMediaUrl(url: string, mediaType: 'photo' | 'video'): Parsed
 }
 
 /**
- * Dynamically selects the best cover image from an album's mediaItems.
- * It favors photos first, then video thumbnails, and defaults to a scenic Nepal landscape.
+ * Dynamically selects the best cover image from an album.
+ * Primary: Uses explicit thumbnail/cover image link if provided.
+ * Secondary: Fallback to best photo from mediaItems or video thumbnail if no coverUrl is set.
  */
 export function getBestAlbumCover(album: Album): string {
   if (!album) {
     return 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=1200';
   }
 
-  // 1. Check if we have individual photo media items (ignoring embed folders)
+  // 1. Primary: Use explicit thumbnail/cover image share link if available and valid
+  if (
+    album.coverUrl && 
+    album.coverUrl.trim().length > 0 && 
+    !album.coverUrl.includes('folders') && 
+    !album.coverUrl.includes('embeddedfolderview') &&
+    !album.coverUrl.includes('drive-folder') &&
+    !album.coverUrl.includes('images/album-placeholder')
+  ) {
+    return formatDriveImageUrl(album.coverUrl);
+  }
+
+  // 2. Secondary: Fallback to dynamically choosing the best photo from mediaItems if no valid coverUrl is available
   if (album.mediaItems && album.mediaItems.length > 0) {
     // Look for the "best" photo (favoring 'cover' or 'main' in title)
     const bestPhoto = album.mediaItems.find(item => {
@@ -211,17 +224,12 @@ export function getBestAlbumCover(album: Album): string {
       return formatDriveImageUrl(bestPhoto.url);
     }
 
-    // 2. Use video thumbnail as fallback
+    // 3. Use video thumbnail as fallback
     const firstVideo = album.mediaItems.find(item => item.type === 'video');
     if (firstVideo && firstVideo.url) {
       const ytId = extractYouTubeId(firstVideo.url);
       if (ytId) return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
     }
-  }
-
-  // 3. Predefined cover
-  if (album.coverUrl && !album.coverUrl.includes('folders') && !album.coverUrl.includes('embeddedfolderview')) {
-    return formatDriveImageUrl(album.coverUrl);
   }
 
   // 4. Default fallback

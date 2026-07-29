@@ -4,6 +4,7 @@ import {
   ExternalLink, Sparkles, MessageCircle, Facebook, Twitter
 } from 'lucide-react';
 import { Language } from '../types';
+import { getShareUrl } from '../utils/shareUtils';
 
 export interface SinglePostData {
   id: string;
@@ -35,7 +36,7 @@ export default function BlogPostDetail({
 }: BlogPostDetailProps) {
   const [copied, setCopied] = useState(false);
 
-  const pageUrl = post.link || window.location.href;
+  const pageUrl = post.id ? getShareUrl('news', post.id) : (post.link || window.location.href);
 
   const handleShare = () => {
     navigator.clipboard?.writeText(pageUrl);

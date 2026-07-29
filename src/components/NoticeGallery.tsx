@@ -50,6 +50,21 @@ export default function NoticeGallery({
     return () => window.removeEventListener('popstate', handlePopState);
   }, [selectedImage, viewPdfNoticeId, expandedNoticeId]);
 
+  // Deep link URL parameter listener for specific notice share links
+  React.useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const noticeParam = searchParams.get('notice');
+    if (noticeParam) {
+      setExpandedNoticeId(noticeParam);
+      setTimeout(() => {
+        const elem = document.getElementById(`notice-card-${noticeParam}`);
+        if (elem) {
+          elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+    }
+  }, []);
+
   const t = {
     noticesHeading: { en: 'Official Notices & Current Works', ne: 'आधिकारिक सूचनाहरू र वर्तमान कार्यहरू' },
     galleryHeading: { en: 'Interactive Media Gallery', ne: 'अन्तरक्रियात्मक मिडिया ग्यालरी' },
@@ -146,6 +161,7 @@ export default function NoticeGallery({
               filteredNotices.map((notice) => (
                 <div
                   key={notice.id}
+                  id={`notice-card-${notice.id}`}
                   className="rounded-xl border border-teal-100 dark:border-slate-800 bg-gradient-to-b from-white to-teal-50/20 dark:from-slate-900 dark:to-slate-800/50 hover:shadow-md hover:border-teal-200 dark:hover:border-slate-700 transition-all overflow-hidden"
                 >
                   <div 
