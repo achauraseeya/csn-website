@@ -884,11 +884,15 @@ export default function App() {
 
     
     const pendingAlbums = albums.filter(a => {
-      if (!a.driveFolderId || fetchedFoldersRef.current.has(a.driveFolderId)) return false;
-      if (!a.isDriveFetched) return true;
-      // If it claims to be fetched, but has no actual photos/videos (only the folder itself or nothing), try fetching again
-      const hasActualMedia = (a.mediaItems || []).some(item => !item.url.includes('drive.google.com/drive/folders/'));
-      return !hasActualMedia;
+      if (!a.driveFolderId) return false;
+      const hasActualMedia = (a.mediaItems || []).some(item => 
+        item.url && 
+        !item.url.includes('drive.google.com/drive/folders/') && 
+        !item.url.includes('embeddedfolderview')
+      );
+      if (hasActualMedia && a.isDriveFetched) return false;
+      if (fetchedFoldersRef.current.has(a.driveFolderId) && hasActualMedia) return false;
+      return true;
     });
     
     // Recovery for albums that got overwritten by server sync
@@ -949,9 +953,15 @@ export default function App() {
                   const finalMediaItems = [...cleanExisting, ...uniqueNewItems];
 
                   const isGenericCover = !a.coverUrl || a.coverUrl.includes('drive-folder') || a.coverUrl.includes('images/album-placeholder') || a.coverUrl.includes('unsplash');
-                  const bestCover = (isGenericCover && finalMediaItems.length > 0) 
-                    ? finalMediaItems[0].url 
-                    : a.coverUrl;
+                  const coverTitlePhoto = finalMediaItems.find(item => {
+                    if (item.type !== 'photo' || !item.url) return false;
+                    const titleLower = (typeof item.title === 'string' ? item.title : item.title?.en || '').toLowerCase();
+                    return titleLower.includes('cover') || titleLower.includes('main') || titleLower.includes('banner');
+                  });
+
+                  const bestCover = coverTitlePhoto
+                    ? coverTitlePhoto.url
+                    : (isGenericCover && finalMediaItems.length > 0 ? finalMediaItems[0].url : a.coverUrl);
 
                   return {
                     ...a,

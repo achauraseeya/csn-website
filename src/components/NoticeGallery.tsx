@@ -76,13 +76,22 @@ export default function NoticeGallery({
     close: { en: 'Close', ne: 'बन्द गर्नुहोस्' },
   };
 
-  const filteredNotices = noticesList.filter((notice) => {
-    const titleMatch = (notice.title[lang] || notice.title.en || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const contentMatch = (notice.content[lang] || notice.content.en || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSearch = titleMatch || contentMatch;
-    const matchesCat = selectedNoticeCat === 'all' || notice.category === selectedNoticeCat;
-    return matchesSearch && matchesCat;
-  });
+  const filteredNotices = noticesList
+    .filter((notice) => {
+      const titleMatch = (notice.title[lang] || notice.title.en || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const contentMatch = (notice.content[lang] || notice.content.en || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = titleMatch || contentMatch;
+      const matchesCat = selectedNoticeCat === 'all' || notice.category === selectedNoticeCat;
+      return matchesSearch && matchesCat;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (!isNaN(dateA) && !isNaN(dateB) && dateA !== dateB) {
+        return dateB - dateA;
+      }
+      return b.id.localeCompare(a.id);
+    });
 
   const handleOpenLightbox = (item: GalleryItem) => {
     window.history.pushState({ modal: 'notice-gallery' }, '');

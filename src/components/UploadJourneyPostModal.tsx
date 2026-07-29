@@ -283,14 +283,23 @@ export default function UploadJourneyPostModal({
       return;
     }
 
-    // Determine cover banner image: use user provided thumbnail or first real photo!
+    // Determine cover banner image: use user provided thumbnail or best photo from folder!
     let formattedCover = 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200';
     if (coverImageUrl.trim()) {
       formattedCover = formatDriveImageUrl(coverImageUrl.trim());
     } else {
-      const firstRealPhoto = combinedMediaItems.find(m => !m.url.includes('folders') && !m.url.includes('embeddedfolderview'));
-      if (firstRealPhoto) {
-        formattedCover = firstRealPhoto.url;
+      const coverPhotoInItems = combinedMediaItems.find(m => {
+        if (m.type !== 'photo' || !m.url) return false;
+        const titleLower = (typeof m.title === 'string' ? m.title : m.title?.en || '').toLowerCase();
+        return titleLower.includes('cover') || titleLower.includes('main') || titleLower.includes('banner');
+      });
+      if (coverPhotoInItems && coverPhotoInItems.url) {
+        formattedCover = coverPhotoInItems.url;
+      } else {
+        const firstRealPhoto = combinedMediaItems.find(m => !m.url.includes('folders') && !m.url.includes('embeddedfolderview'));
+        if (firstRealPhoto) {
+          formattedCover = firstRealPhoto.url;
+        }
       }
     }
 

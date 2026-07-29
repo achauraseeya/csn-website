@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Calendar, MapPin, Clock, CheckCircle2, Award, ClipboardList, Info, Plus, Trash2, X, Sparkles, Loader2, Share2 } from 'lucide-react';
 import { Language, CommunityEvent } from '../types';
 import { upcomingEvents as initialUpcomingEvents } from '../data/communityData';
@@ -98,7 +98,18 @@ export default function EventsSection({
     calendarTitle: { en: 'July - September 2026 Calendar Overview', ne: 'जुलाई - सेप्टेम्बर २०२६ पात्रो सिंहावलोकन' },
   };
 
-  const selectedEvent = events.find((e) => e.id === selectedEventId) || events[0] || initialUpcomingEvents[0];
+  const sortedEvents = useMemo(() => {
+    return [...events].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (!isNaN(dateA) && !isNaN(dateB) && dateA !== dateB) {
+        return dateB - dateA;
+      }
+      return b.id.localeCompare(a.id);
+    });
+  }, [events]);
+
+  const selectedEvent = sortedEvents.find((e) => e.id === selectedEventId) || sortedEvents[0] || initialUpcomingEvents[0];
 
   const handleAddEventSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -507,7 +518,7 @@ export default function EventsSection({
 
           {/* Upcoming Event Cards list */}
           <div className="space-y-4">
-            {events.map((evt) => {
+            {sortedEvents.map((evt) => {
               const isSelected = evt.id === selectedEventId;
               return (
                 <div

@@ -48,16 +48,25 @@ export default function AlbumGallery({
 
   const selectedAlbum = albums.find((a) => a.id === selectedAlbumId);
 
-  const filteredAlbums = albums.filter((album) => {
-    const matchesSearch = 
-      album.title[lang].toLowerCase().includes(searchTerm.toLowerCase()) ||
-      album.description[lang].toLowerCase().includes(searchTerm.toLowerCase()) ||
-      album.location[lang].toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesTag = selectedTag === 'all' || album.tags.includes(selectedTag);
+  const filteredAlbums = albums
+    .filter((album) => {
+      const matchesSearch = 
+        album.title[lang].toLowerCase().includes(searchTerm.toLowerCase()) ||
+        album.description[lang].toLowerCase().includes(searchTerm.toLowerCase()) ||
+        album.location[lang].toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesTag = selectedTag === 'all' || album.tags.includes(selectedTag);
 
-    return matchesSearch && matchesTag;
-  });
+      return matchesSearch && matchesTag;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (!isNaN(dateA) && !isNaN(dateB) && dateA !== dateB) {
+        return dateB - dateA;
+      }
+      return b.id.localeCompare(a.id);
+    });
 
   const handleOpenAlbum = (albumId: string) => {
     if (onSelectAlbum) {

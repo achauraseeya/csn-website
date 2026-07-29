@@ -192,7 +192,21 @@ export function getBestAlbumCover(album: Album): string {
     return 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=1200';
   }
 
-  // 1. Primary: Use explicit thumbnail/cover image share link if available and valid
+  // 1. Look for a photo inside album's mediaItems that is specifically named 'cover', 'main', or 'banner'
+  if (album.mediaItems && album.mediaItems.length > 0) {
+    const coverTitlePhoto = album.mediaItems.find(item => {
+      if (item.type !== 'photo' || !item.url) return false;
+      const url = item.url.toLowerCase();
+      if (url.includes('folders') || url.includes('embeddedfolderview') || url.includes('drive-folder')) return false;
+      const title = (typeof item.title === 'string' ? item.title : item.title?.en || '').toLowerCase();
+      return title.includes('cover') || title.includes('main') || title.includes('banner') || title.includes('thumb');
+    });
+    if (coverTitlePhoto && coverTitlePhoto.url) {
+      return formatDriveImageUrl(coverTitlePhoto.url);
+    }
+  }
+
+  // 2. Primary: Use explicit thumbnail/cover image share link if available and valid
   if (
     album.coverUrl && 
     album.coverUrl.trim().length > 0 && 
@@ -204,35 +218,28 @@ export function getBestAlbumCover(album: Album): string {
     return formatDriveImageUrl(album.coverUrl);
   }
 
-  // 2. Secondary: Fallback to dynamically choosing the best photo from mediaItems if no valid coverUrl is available
+  // 3. Secondary: Fallback to first non-folder photo in mediaItems
   if (album.mediaItems && album.mediaItems.length > 0) {
-    // Look for the "best" photo (favoring 'cover' or 'main' in title)
-    const bestPhoto = album.mediaItems.find(item => {
-      if (item.type !== 'photo') return false;
-      const url = item.url || '';
-      const title = (item.title?.en || '').toLowerCase();
-      const isFolder = url.includes('folders') || url.includes('embeddedfolderview');
-      return !isFolder && url.trim().length > 0 && (title.includes('cover') || title.includes('main') || title.includes('thumb'));
-    }) || album.mediaItems.find(item => {
-      if (item.type !== 'photo') return false;
-      const url = item.url || '';
-      const isFolder = url.includes('folders') || url.includes('embeddedfolderview');
-      return !isFolder && url.trim().length > 0;
+    const firstRealPhoto = album.mediaItems.find(item => {
+      if (item.type !== 'photo' || !item.url) return false;
+      const url = item.url.toLowerCase();
+      return !url.includes('folders') && !url.includes('embeddedfolderview') && !url.includes('drive-folder');
     });
 
-    if (bestPhoto) {
-      return formatDriveImageUrl(bestPhoto.url);
+    if (firstRealPhoto && firstRealPhoto.url) {
+      return formatDriveImageUrl(firstRealPhoto.url);
     }
 
-    // 3. Use video thumbnail as fallback
+    // 4. Use video thumbnail as fallback
     const firstVideo = album.mediaItems.find(item => item.type === 'video');
     if (firstVideo && firstVideo.url) {
       const ytId = extractYouTubeId(firstVideo.url);
       if (ytId) return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+      if (firstVideo.thumbnailUrl) return formatDriveImageUrl(firstVideo.thumbnailUrl);
     }
   }
 
-  // 4. Default fallback
+  // 5. Default fallback
   return 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=1200';
 }
 

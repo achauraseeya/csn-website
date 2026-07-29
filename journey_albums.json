@@ -1,16 +1,16 @@
 [
   {
-    "id": "journey-post-1785322007228",
+    "id": "journey-post-1785154940754",
     "title": {
-      "en": "fdxgv",
-      "ne": "dfgdfg"
+      "en": "asa",
+      "ne": "AsaS"
     },
     "description": {
-      "en": "dfg",
+      "en": "asS",
       "ne": "चौरसिया समाजको सामुदायिक कार्यक्रम ग्यालरी पोस्ट।"
     },
-    "coverUrl": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-    "date": "July 29, 2026",
+    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
+    "date": "July 27, 2026",
     "location": {
       "en": "Parsa, Nepal",
       "ne": "पर्सा, नेपाल"
@@ -20,29 +20,47 @@
       "Journey",
       "Youth"
     ],
-    "driveFolderUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d?usp=drive_link",
+    "driveFolderUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
     "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "isDriveFetched": false,
     "mediaItems": [
       {
-        "id": "media-journey-post-1785322007228-folder",
+        "id": "journey-post-1785154940754-drive-1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
         "title": {
-          "en": "Google Drive Photo Folder Gallery",
-          "ne": "गूगल ड्राइभ फोटो फोल्डर ग्यालरी"
+          "en": "Abhishek Kumar Chaurasiya.jpeg",
+          "ne": "Abhishek Kumar Chaurasiya.jpeg"
         },
-        "description": {
-          "en": "dfg",
-          "ne": ""
+        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
+        "type": "photo"
+      },
+      {
+        "id": "journey-post-1785154940754-drive-1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
+        "title": {
+          "en": "cdo.jpg",
+          "ne": "cdo.jpg"
         },
-        "type": "photo",
-        "url": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d?usp=drive_link",
-        "date": "July 29, 2026",
-        "location": {
-          "en": "Parsa, Nepal",
-          "ne": "पर्सा, नेपाल"
-        }
+        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
+        "type": "photo"
+      },
+      {
+        "id": "journey-post-1785154940754-drive-19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
+        "title": {
+          "en": "cover.jpg",
+          "ne": "cover.jpg"
+        },
+        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
+        "type": "photo"
+      },
+      {
+        "id": "journey-post-1785154940754-drive-10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
+        "title": {
+          "en": "swc.jpg",
+          "ne": "swc.jpg"
+        },
+        "url": "https://lh3.googleusercontent.com/d/10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
+        "type": "photo"
       }
-    ]
+    ],
+    "isDriveFetched": true
   },
   {
     "id": "betel-farming-expo-2026",
@@ -518,514 +536,6 @@
     ]
   },
   {
-    "id": "journey-post-1785313189565",
-    "title": {
-      "en": "qwerty",
-      "ne": "qwerty"
-    },
-    "description": {
-      "en": "ijhuhhu",
-      "ne": "चौरसिया समाजको सामुदायिक कार्यक्रम ग्यालरी पोस्ट।"
-    },
-    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-    "date": "July 29, 2026",
-    "location": {
-      "en": "Parsa, Nepal",
-      "ne": "पर्सा, नेपाल"
-    },
-    "tags": [
-      "Culture"
-    ],
-    "driveFolderUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d?usp=drive_link",
-    "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "isDriveFetched": true,
-    "mediaItems": [
-      {
-        "id": "journey-post-1785313189565-drive-1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "title": {
-          "en": "Abhishek Kumar Chaurasiya.jpeg",
-          "ne": "Abhishek Kumar Chaurasiya.jpeg"
-        },
-        "description": {
-          "en": "ijhuhhu",
-          "ne": ""
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "date": "July 29, 2026",
-        "location": {
-          "en": "Parsa, Nepal",
-          "ne": "पर्सा, नेपाल"
-        }
-      },
-      {
-        "id": "journey-post-1785313189565-drive-1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "title": {
-          "en": "cdo.jpg",
-          "ne": "cdo.jpg"
-        },
-        "description": {
-          "en": "ijhuhhu",
-          "ne": ""
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "date": "July 29, 2026",
-        "location": {
-          "en": "Parsa, Nepal",
-          "ne": "पर्सा, नेपाल"
-        }
-      },
-      {
-        "id": "journey-post-1785313189565-drive-19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "title": {
-          "en": "cover.jpg",
-          "ne": "cover.jpg"
-        },
-        "description": {
-          "en": "ijhuhhu",
-          "ne": ""
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "date": "July 29, 2026",
-        "location": {
-          "en": "Parsa, Nepal",
-          "ne": "पर्सा, नेपाल"
-        }
-      },
-      {
-        "id": "journey-post-1785313189565-drive-10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "title": {
-          "en": "swc.jpg",
-          "ne": "swc.jpg"
-        },
-        "description": {
-          "en": "ijhuhhu",
-          "ne": ""
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "date": "July 29, 2026",
-        "location": {
-          "en": "Parsa, Nepal",
-          "ne": "पर्सा, नेपाल"
-        }
-      }
-    ]
-  },
-  {
-    "id": "journey-post-1785312970659",
-    "title": {
-      "en": "qwerty",
-      "ne": "qwerty"
-    },
-    "description": {
-      "en": "ijhuhhu",
-      "ne": "चौरसिया समाजको सामुदायिक कार्यक्रम ग्यालरी पोस्ट।"
-    },
-    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-    "date": "July 29, 2026",
-    "location": {
-      "en": "Parsa, Nepal",
-      "ne": "पर्सा, नेपाल"
-    },
-    "tags": [
-      "Culture"
-    ],
-    "driveFolderUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d?usp=drive_link",
-    "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "isDriveFetched": true,
-    "mediaItems": [
-      {
-        "id": "journey-post-1785312970659-drive-1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "title": {
-          "en": "Abhishek Kumar Chaurasiya.jpeg",
-          "ne": "Abhishek Kumar Chaurasiya.jpeg"
-        },
-        "description": {
-          "en": "ijhuhhu",
-          "ne": ""
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "date": "July 29, 2026",
-        "location": {
-          "en": "Parsa, Nepal",
-          "ne": "पर्सा, नेपाल"
-        }
-      },
-      {
-        "id": "journey-post-1785312970659-drive-1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "title": {
-          "en": "cdo.jpg",
-          "ne": "cdo.jpg"
-        },
-        "description": {
-          "en": "ijhuhhu",
-          "ne": ""
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "date": "July 29, 2026",
-        "location": {
-          "en": "Parsa, Nepal",
-          "ne": "पर्सा, नेपाल"
-        }
-      },
-      {
-        "id": "journey-post-1785312970659-drive-19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "title": {
-          "en": "cover.jpg",
-          "ne": "cover.jpg"
-        },
-        "description": {
-          "en": "ijhuhhu",
-          "ne": ""
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "date": "July 29, 2026",
-        "location": {
-          "en": "Parsa, Nepal",
-          "ne": "पर्सा, नेपाल"
-        }
-      },
-      {
-        "id": "journey-post-1785312970659-drive-10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "title": {
-          "en": "swc.jpg",
-          "ne": "swc.jpg"
-        },
-        "description": {
-          "en": "ijhuhhu",
-          "ne": ""
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "date": "July 29, 2026",
-        "location": {
-          "en": "Parsa, Nepal",
-          "ne": "पर्सा, नेपाल"
-        }
-      }
-    ]
-  },
-  {
-    "id": "journey-post-1785236285425",
-    "title": {
-      "en": "khhkkhkj",
-      "ne": "khkhkhkhj"
-    },
-    "description": {
-      "en": "kjkjkjkjg",
-      "ne": "चौरसिया समाजको सामुदायिक कार्यक्रम ग्यालरी पोस्ट।"
-    },
-    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-    "date": "July 28, 2026",
-    "location": {
-      "en": "Parsa, Nepal",
-      "ne": "पर्सा, नेपाल"
-    },
-    "tags": [
-      "Community",
-      "Journey",
-      "Youth"
-    ],
-    "driveFolderUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d?usp=drive_link",
-    "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "mediaItems": [
-      {
-        "id": "journey-post-1785236285425-drive-1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "title": {
-          "en": "Abhishek Kumar Chaurasiya.jpeg",
-          "ne": "Abhishek Kumar Chaurasiya.jpeg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "type": "photo"
-      },
-      {
-        "id": "journey-post-1785236285425-drive-1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "title": {
-          "en": "cdo.jpg",
-          "ne": "cdo.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "type": "photo"
-      },
-      {
-        "id": "journey-post-1785236285425-drive-19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "title": {
-          "en": "cover.jpg",
-          "ne": "cover.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "type": "photo"
-      },
-      {
-        "id": "journey-post-1785236285425-drive-10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "title": {
-          "en": "swc.jpg",
-          "ne": "swc.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "type": "photo"
-      }
-    ],
-    "isDriveFetched": true
-  },
-  {
-    "id": "journey-post-1785235360765",
-    "title": {
-      "en": "fsdfsdf",
-      "ne": "sdfsdf"
-    },
-    "description": {
-      "en": "sdfsdfs",
-      "ne": "चौरसिया समाजको सामुदायिक कार्यक्रम ग्यालरी पोस्ट।"
-    },
-    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-    "date": "July 28, 2026",
-    "location": {
-      "en": "Parsa, Nepal",
-      "ne": "पर्सा, नेपाल"
-    },
-    "tags": [
-      "Community",
-      "Journey",
-      "Youth"
-    ],
-    "driveFolderUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "mediaItems": [
-      {
-        "id": "journey-post-1785235360765-drive-1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "title": {
-          "en": "Abhishek Kumar Chaurasiya.jpeg",
-          "ne": "Abhishek Kumar Chaurasiya.jpeg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "type": "photo"
-      },
-      {
-        "id": "journey-post-1785235360765-drive-1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "title": {
-          "en": "cdo.jpg",
-          "ne": "cdo.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "type": "photo"
-      },
-      {
-        "id": "journey-post-1785235360765-drive-19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "title": {
-          "en": "cover.jpg",
-          "ne": "cover.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "type": "photo"
-      },
-      {
-        "id": "journey-post-1785235360765-drive-10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "title": {
-          "en": "swc.jpg",
-          "ne": "swc.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "type": "photo"
-      }
-    ],
-    "isDriveFetched": true
-  },
-  {
-    "id": "journey-post-1785163095699",
-    "title": {
-      "en": "sad",
-      "ne": "asdasd"
-    },
-    "description": {
-      "en": "asdasd",
-      "ne": "चौरसिया समाजको सामुदायिक कार्यक्रम ग्यालरी पोस्ट।"
-    },
-    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-    "date": "July 27, 2026",
-    "location": {
-      "en": "Parsa, Nepal",
-      "ne": "पर्सा, नेपाल"
-    },
-    "tags": [
-      "Community",
-      "Journey",
-      "Youth"
-    ],
-    "driveFolderUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "mediaItems": [
-      {
-        "id": "journey-post-1785163095699-drive-1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "title": {
-          "en": "Abhishek Kumar Chaurasiya.jpeg",
-          "ne": "Abhishek Kumar Chaurasiya.jpeg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "type": "photo"
-      },
-      {
-        "id": "journey-post-1785163095699-drive-1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "title": {
-          "en": "cdo.jpg",
-          "ne": "cdo.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "type": "photo"
-      },
-      {
-        "id": "journey-post-1785163095699-drive-19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "title": {
-          "en": "cover.jpg",
-          "ne": "cover.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "type": "photo"
-      },
-      {
-        "id": "journey-post-1785163095699-drive-10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "title": {
-          "en": "swc.jpg",
-          "ne": "swc.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "type": "photo"
-      }
-    ],
-    "isDriveFetched": true
-  },
-  {
-    "id": "alb_1785075633695",
-    "title": {
-      "en": "gsdg",
-      "ne": "dsgdsg"
-    },
-    "description": {
-      "en": "dsgg",
-      "ne": "sdggs"
-    },
-    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-    "date": "2026-07-22",
-    "location": {
-      "en": "sdg",
-      "ne": "gds"
-    },
-    "tags": [
-      "sister-youth",
-      "chapter"
-    ],
-    "mediaItems": [
-      {
-        "id": "alb_1785075633695-drive-1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "title": {
-          "en": "Abhishek Kumar Chaurasiya.jpeg",
-          "ne": "Abhishek Kumar Chaurasiya.jpeg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "type": "photo"
-      },
-      {
-        "id": "alb_1785075633695-drive-1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "title": {
-          "en": "cdo.jpg",
-          "ne": "cdo.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "type": "photo"
-      },
-      {
-        "id": "alb_1785075633695-drive-19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "title": {
-          "en": "cover.jpg",
-          "ne": "cover.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "type": "photo"
-      },
-      {
-        "id": "alb_1785075633695-drive-10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "title": {
-          "en": "swc.jpg",
-          "ne": "swc.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "type": "photo"
-      }
-    ],
-    "chapterId": "sister-youth",
-    "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "isDriveFetched": true
-  },
-  {
-    "id": "journey-post-1785154940754",
-    "title": {
-      "en": "asa",
-      "ne": "AsaS"
-    },
-    "description": {
-      "en": "asS",
-      "ne": "चौरसिया समाजको सामुदायिक कार्यक्रम ग्यालरी पोस्ट।"
-    },
-    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-    "date": "July 27, 2026",
-    "location": {
-      "en": "Parsa, Nepal",
-      "ne": "पर्सा, नेपाल"
-    },
-    "tags": [
-      "Community",
-      "Journey",
-      "Youth"
-    ],
-    "driveFolderUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "mediaItems": [
-      {
-        "id": "journey-post-1785154940754-drive-1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "title": {
-          "en": "Abhishek Kumar Chaurasiya.jpeg",
-          "ne": "Abhishek Kumar Chaurasiya.jpeg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
-        "type": "photo"
-      },
-      {
-        "id": "journey-post-1785154940754-drive-1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "title": {
-          "en": "cdo.jpg",
-          "ne": "cdo.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
-        "type": "photo"
-      },
-      {
-        "id": "journey-post-1785154940754-drive-19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "title": {
-          "en": "cover.jpg",
-          "ne": "cover.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
-        "type": "photo"
-      },
-      {
-        "id": "journey-post-1785154940754-drive-10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "title": {
-          "en": "swc.jpg",
-          "ne": "swc.jpg"
-        },
-        "url": "https://lh3.googleusercontent.com/d/10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
-        "type": "photo"
-      }
-    ],
-    "isDriveFetched": true
-  },
-  {
     "id": "alb_1784824616565",
     "title": {
       "en": "C XZCZXC",
@@ -1344,6 +854,68 @@
         "type": "photo"
       }
     ],
+    "isDriveFetched": true
+  },
+  {
+    "id": "alb_1785075633695",
+    "title": {
+      "en": "gsdg",
+      "ne": "dsgdsg"
+    },
+    "description": {
+      "en": "dsgg",
+      "ne": "sdggs"
+    },
+    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
+    "date": "2026-07-22",
+    "location": {
+      "en": "sdg",
+      "ne": "gds"
+    },
+    "tags": [
+      "sister-youth",
+      "chapter"
+    ],
+    "mediaItems": [
+      {
+        "id": "alb_1785075633695-drive-1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
+        "title": {
+          "en": "Abhishek Kumar Chaurasiya.jpeg",
+          "ne": "Abhishek Kumar Chaurasiya.jpeg"
+        },
+        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
+        "type": "photo"
+      },
+      {
+        "id": "alb_1785075633695-drive-1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
+        "title": {
+          "en": "cdo.jpg",
+          "ne": "cdo.jpg"
+        },
+        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM",
+        "type": "photo"
+      },
+      {
+        "id": "alb_1785075633695-drive-19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
+        "title": {
+          "en": "cover.jpg",
+          "ne": "cover.jpg"
+        },
+        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9",
+        "type": "photo"
+      },
+      {
+        "id": "alb_1785075633695-drive-10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
+        "title": {
+          "en": "swc.jpg",
+          "ne": "swc.jpg"
+        },
+        "url": "https://lh3.googleusercontent.com/d/10Ea0X6L_qurlPklwPhbRTLxw61cdS7MQ",
+        "type": "photo"
+      }
+    ],
+    "chapterId": "sister-youth",
+    "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
     "isDriveFetched": true
   }
 ]

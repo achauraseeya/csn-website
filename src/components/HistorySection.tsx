@@ -1457,7 +1457,17 @@ export default function HistorySection({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {noticesList.slice(0, 4).map((notice) => (
+          {[...noticesList]
+            .sort((a, b) => {
+              const dateA = new Date(a.date).getTime();
+              const dateB = new Date(b.date).getTime();
+              if (!isNaN(dateA) && !isNaN(dateB) && dateA !== dateB) {
+                return dateB - dateA;
+              }
+              return b.id.localeCompare(a.id);
+            })
+            .slice(0, 4)
+            .map((notice) => (
             <div key={notice.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-teal-100 dark:border-slate-800 overflow-hidden hover:shadow-md transition-all">
               <div 
                 className="p-6 cursor-pointer hover:bg-teal-50/50 dark:hover:bg-slate-800/50 transition-colors"
@@ -1615,7 +1625,16 @@ export default function HistorySection({
             <div className="col-span-1 md:col-span-3 text-center py-12 text-teal-600 dark:text-emerald-400 font-bold animate-pulse">
               {lang === 'en' ? 'Loading latest posts from Blogger...' : 'ब्लगरबाट पछिल्लो पोस्टहरू लोड गर्दैछ...'}
             </div>
-          ) : livePosts.map((post) => (
+          ) : [...livePosts]
+            .sort((a, b) => {
+              const dateA = new Date(a.date).getTime();
+              const dateB = new Date(b.date).getTime();
+              if (!isNaN(dateA) && !isNaN(dateB) && dateA !== dateB) {
+                return dateB - dateA;
+              }
+              return b.id.localeCompare(a.id);
+            })
+            .map((post) => (
             <a 
               key={post.id} 
               href={post.link || '#'}
@@ -1702,7 +1721,17 @@ export default function HistorySection({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {(albums || []).slice(0, 3).map((album) => {
+          {[...(albums || [])]
+            .sort((a, b) => {
+              const dateA = new Date(a.date).getTime();
+              const dateB = new Date(b.date).getTime();
+              if (!isNaN(dateA) && !isNaN(dateB) && dateA !== dateB) {
+                return dateB - dateA;
+              }
+              return b.id.localeCompare(a.id);
+            })
+            .slice(0, 3)
+            .map((album) => {
             const photosCount = album.mediaItems.filter(i => i.type === 'photo').length;
             const videosCount = album.mediaItems.filter(i => i.type === 'video').length;
 
