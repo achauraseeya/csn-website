@@ -38,8 +38,8 @@ export async function fetchDriveFolderImagesClient(folderId: string): Promise<{ 
 
     // 3. Try fetching via public CORS proxies
     const targetUrls = [
-      `https://drive.google.com/embeddedfolderview?id=${folderId}#grid`,
-      `https://drive.google.com/drive/folders/${folderId}`
+      `https://drive.google.com/drive/folders/${folderId}`,
+      `https://drive.google.com/embeddedfolderview?id=${folderId}#grid`
     ];
     
     for (const targetUrl of targetUrls) {

@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Settings, X, Check, FileQuestion, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Settings, X, Check, FileQuestion, Edit2, EyeOff, Eye } from 'lucide-react';
 import { Language } from '../types';
 import {
   FormId,
   CustomFormField,
+  CustomFieldType,
   getCustomFormFields,
   saveCustomFormField,
   deleteCustomFormField,
+  getHiddenStandardFields,
+  toggleHiddenStandardField,
 } from '../utils/customFormFields';
 
 interface AdminFormFieldEditorProps {
@@ -16,6 +19,40 @@ interface AdminFormFieldEditorProps {
   onFieldsUpdated?: () => void;
 }
 
+const standardFieldsMap: Record<FormId, { key: string; label: string }[]> = {
+  membership: [
+    { key: 'membership-name', label: 'Full Name' },
+    { key: 'membership-phone', label: 'Phone Number' },
+    { key: 'membership-email', label: 'Email Address' },
+    { key: 'membership-address', label: 'Address / District' },
+    { key: 'membership-occupation', label: 'Occupation' },
+    { key: 'membership-type', label: 'Membership Category' },
+    { key: 'membership-duration', label: 'Duration' },
+    { key: 'membership-payment-method', label: 'Payment Method' },
+    { key: 'membership-payment-ref', label: 'Payment Reference' },
+  ],
+  volunteer: [
+    { key: 'volunteer-name', label: 'Full Name' },
+    { key: 'volunteer-phone', label: 'Phone Number' },
+    { key: 'volunteer-email', label: 'Email Address' },
+    { key: 'volunteer-address', label: 'Address / Location' },
+    { key: 'volunteer-interests', label: 'Areas of Interest' },
+    { key: 'volunteer-availability', label: 'Availability' },
+    { key: 'volunteer-notes', label: 'Notes / Motivation' },
+  ],
+  donation: [
+    { key: 'donation-name', label: 'Donor Name' },
+    { key: 'donation-phone', label: 'Donor Phone' },
+    { key: 'donation-presets', label: 'Preset Amount Buttons' },
+    { key: 'donation-custom-amount', label: 'Custom Amount Input' },
+    { key: 'donation-bank-info', label: 'Bank Wire & QR Info Box' },
+  ],
+  matrimonial: [],
+  contact: [],
+  'add-member': [],
+  event_volunteer: []
+};
+
 export function AdminFormFieldEditor({
   formId,
   lang,
@@ -24,6 +61,7 @@ export function AdminFormFieldEditor({
 }: AdminFormFieldEditorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [fields, setFields] = useState<CustomFormField[]>(() => getCustomFormFields(formId));
+  const [hiddenFields, setHiddenFields] = useState<string[]>(() => getHiddenStandardFields());
 
   // Editing state
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
@@ -31,7 +69,7 @@ export function AdminFormFieldEditor({
   // New field or edit form state
   const [labelEn, setLabelEn] = useState('');
   const [labelNe, setLabelNe] = useState('');
-  const [fieldType, setFieldType] = useState<'text' | 'number' | 'textarea' | 'select'>('text');
+  const [fieldType, setFieldType] = useState<CustomFieldType>('text');
   const [required, setRequired] = useState(false);
   const [optionsStr, setOptionsStr] = useState('');
 
@@ -68,7 +106,7 @@ export function AdminFormFieldEditor({
       },
       fieldType,
       required,
-      options: fieldType === 'select' ? optionsStr.split(',').map(s => s.trim()).filter(Boolean) : undefined,
+      options: (fieldType === 'select' || fieldType === 'radio' || fieldType === 'multiselect') ? optionsStr.split(',').map(s => s.trim()).filter(Boolean) : undefined,
     };
 
     const updated = saveCustomFormField(savedField);
@@ -105,6 +143,43 @@ export function AdminFormFieldEditor({
 
       {isOpen && (
         <div className="mt-4 pt-4 border-t border-teal-200 dark:border-slate-700 space-y-4 text-xs">
+          {/* Toggle Default/Standard Fields */}
+          {standardFieldsMap[formId] && standardFieldsMap[formId].length > 0 && (
+            <div className="space-y-2 p-3 bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-800 rounded-xl">
+              <h5 className="font-bold text-teal-950 dark:text-teal-100 uppercase tracking-wide flex items-center gap-1.5">
+                <Eye className="w-4 h-4 text-emerald-600" />
+                <span>{lang === 'en' ? 'Manage Default Form Fields (Show/Hide)' : 'डिफल्ट फारम क्षेत्रहरू व्यवस्थापन गर्नुहोस्'}</span>
+              </h5>
+              <p className="text-[10px] text-slate-500 font-medium">
+                {lang === 'en' 
+                  ? 'Uncheck a field to hide/remove it from the form (effectively deleting it from display).' 
+                  : 'फारमबाट हटाउन वा लुकाउन अनचेक गर्नुहोस्।'}
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+                {standardFieldsMap[formId].map(sf => {
+                  const isVisible = !hiddenFields.includes(sf.key);
+                  return (
+                    <label key={sf.key} className="flex items-center gap-2 p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/60 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={isVisible}
+                        onChange={() => {
+                          const updated = toggleHiddenStandardField(sf.key);
+                          setHiddenFields(updated);
+                          if (onFieldsUpdated) onFieldsUpdated();
+                        }}
+                        className="rounded text-teal-600 focus:ring-teal-500"
+                      />
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 select-none truncate">
+                        {sf.label}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Existing Fields List */}
           {fields.length > 0 && (
             <div className="space-y-2">
@@ -203,26 +278,36 @@ export function AdminFormFieldEditor({
                 <select
                   value={fieldType}
                   onChange={e => setFieldType(e.target.value as any)}
-                  className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 font-bold"
+                  className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 font-bold font-sans text-gray-950 dark:text-white"
                 >
                   <option value="text">Short Text</option>
                   <option value="number">Number</option>
                   <option value="textarea">Paragraph Text</option>
                   <option value="select">Dropdown Menu</option>
+                  <option value="checkbox">Checkbox (Yes/No)</option>
+                  <option value="date">Date Picker</option>
+                  <option value="email">Email Input</option>
+                  <option value="phone">Phone Input</option>
+                  <option value="radio">Radio Buttons</option>
+                  <option value="file">File/Image Upload</option>
+                  <option value="time">Time Picker</option>
+                  <option value="url">URL/Web Link</option>
+                  <option value="password">Password Input</option>
+                  <option value="multiselect">Checkbox List (Multi-Select)</option>
                 </select>
               </div>
 
-              {fieldType === 'select' && (
+              {(fieldType === 'select' || fieldType === 'radio' || fieldType === 'multiselect') && (
                 <div>
                   <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
-                    Dropdown Options (comma-separated)
+                    Options (comma-separated list)
                   </label>
                   <input
                     type="text"
                     value={optionsStr}
                     onChange={e => setOptionsStr(e.target.value)}
                     placeholder="Option 1, Option 2, Option 3"
-                    className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 font-medium"
+                    className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 font-medium text-gray-950 dark:text-white"
                   />
                 </div>
               )}

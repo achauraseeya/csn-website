@@ -1,6 +1,6 @@
 import { fetchDriveFolderImagesClient } from './utils/driveClient';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram, ExternalLink } from 'lucide-react';
+import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram, ExternalLink, X, Edit, Globe, Phone, MapPin, Sparkles } from 'lucide-react';
 import { Language, AnalyticsMetric, Member, Album, AlbumMediaItem, Notice, Document, CommunityEvent, NetworkBranch, MatrimonialProfile, VolunteerApplication, MembershipApplication, NewsletterSubscriber } from './types';
 import { initialNetworks } from './data/networkData';
 import { notices as initialNotices, boardMembers as initialMembers, upcomingEvents as initialEvents, documents as initialDocuments } from './data/communityData';
@@ -32,7 +32,9 @@ import PrivacySection from './components/PrivacySection';
 import TermsSection from './components/TermsSection';
 import AboutSectionPage from './components/AboutSectionPage';
 import OurHeritagePage from './components/OurHeritagePage';
+import SitemapPage from './components/SitemapPage';
 import { SitemapModal } from './components/SitemapModal';
+import EditFooterModal from './components/EditFooterModal';
 import { SiteTexts } from './types';
 import { apiFetch, apiSave, apiDelete, saveFileToGithub, getGithubSettings, uploadImageToGithub } from './utils/githubDb';
 import { syncCustomFormFieldsFromGithub } from './utils/customFormFields';
@@ -140,6 +142,8 @@ export default function App() {
 
   // Dynamic Site Texts State
   const [siteTexts, setSiteTexts] = useState<SiteTexts>(defaultSiteTexts);
+  const [abhishekAvatar, setAbhishekAvatar] = useState('https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200');
+  const [isEditingFooterSocials, setIsEditingFooterSocials] = useState(false);
   
   // Dynamic Member Directory list
   const [members, setMembers] = useState<Member[]>(() => {
@@ -1381,6 +1385,31 @@ export default function App() {
         }
       })
       .catch((err) => console.warn('Offline siteTexts fallback:', err));
+
+    // Load Abhishek avatar
+    try {
+      const saved = localStorage.getItem('chaurasiya_abhishek_profile_data');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.avatarUrl) {
+          setAbhishekAvatar(parsed.avatarUrl);
+        }
+      }
+    } catch (e) {}
+
+    apiFetch<any>('/api/abhishek-profile', 'abhishek_profile.json', null)
+      .then((cloudProfile) => {
+        if (cloudProfile && typeof cloudProfile === 'object' && cloudProfile.avatarUrl) {
+          setAbhishekAvatar(cloudProfile.avatarUrl);
+          try {
+            const saved = localStorage.getItem('chaurasiya_abhishek_profile_data');
+            const parsed = saved ? JSON.parse(saved) : {};
+            parsed.avatarUrl = cloudProfile.avatarUrl;
+            localStorage.setItem('chaurasiya_abhishek_profile_data', JSON.stringify(parsed));
+          } catch (e) {}
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleUpdateSiteTexts = async (updatedTexts: Partial<SiteTexts>) => {
@@ -1989,6 +2018,7 @@ export default function App() {
                 lang={lang}
                 isAdmin={isAdmin}
                 onBack={() => handleNavigate('history')}
+                onUpdateBranch={handleAddNetwork}
                 members={members}
                 onAddMember={handleAddMemberNomination}
                 onDeleteMember={handleDeleteMember}
@@ -2174,6 +2204,7 @@ export default function App() {
             lang={lang}
             onTrackAction={handleTrackAction}
             isAdmin={isAdmin}
+            onUpdateAvatar={(url) => setAbhishekAvatar(url)}
           />
         )}
 
@@ -2205,6 +2236,13 @@ export default function App() {
           />
         )}
 
+        {currentTab === 'sitemap' && (
+          <SitemapPage
+            lang={lang}
+            onNavigate={handleNavigate}
+          />
+        )}
+
         {currentTab === 'contact' && (
           <ContactSection
             lang={lang}
@@ -2230,7 +2268,7 @@ export default function App() {
             <p className="text-sm text-gray-400 leading-relaxed font-medium pr-4">
               {(lang === 'en' ? siteTexts.taglineEn : siteTexts.taglineNe) + " " + (lang === 'en' ? siteTexts.footerAboutEn : siteTexts.footerAboutNe)}
             </p>
-            <div className="flex gap-3 pt-1">
+            <div className="flex gap-3 pt-1 items-center">
                {siteTexts.socialFb && (
                  <a href={siteTexts.socialFb} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center hover:bg-teal-600 transition-colors text-gray-400 hover:text-white" title="Facebook">
                    <Facebook className="w-4 h-4" />
@@ -2246,6 +2284,15 @@ export default function App() {
                    <Instagram className="w-4 h-4" />
                  </a>
                )}
+               {isAdmin && (
+                 <button
+                   onClick={() => setIsEditingFooterSocials(true)}
+                   className="w-9 h-9 rounded-full bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center transition-colors text-white shadow-sm"
+                   title={lang === 'en' ? 'Edit Social Links' : 'सामाजिक लिङ्कहरू सम्पादन गर्नुहोस्'}
+                 >
+                   <Edit className="w-4 h-4" />
+                 </button>
+               )}
             </div>
           </div>
 
@@ -2257,7 +2304,7 @@ export default function App() {
               <button onClick={() => handleNavigate('our-heritage')} className="hover:text-emerald-400 text-left transition-colors">Our Heritage</button>
               <button onClick={() => handleNavigate('events')} className="hover:text-emerald-400 text-left transition-colors">Projects & Programs</button>
               <button onClick={() => handleNavigate('directory')} className="hover:text-emerald-400 text-left transition-colors">Committee Members</button>
-              <button onClick={() => setIsSitemapModalOpen(true)} className="hover:text-emerald-400 text-left transition-colors font-bold text-emerald-400 flex items-center gap-1 cursor-pointer">
+              <button onClick={() => handleNavigate('sitemap')} className="hover:text-emerald-400 text-left transition-colors cursor-pointer">
                 <span>{lang === 'en' ? 'Sitemap' : 'सामाग्री नक्सा'}</span>
               </button>
               <button onClick={() => handleNavigate('transparency')} className="hover:text-emerald-400 text-left transition-colors">Transparency</button>
@@ -2300,7 +2347,7 @@ export default function App() {
           >
             <div className="w-7 h-7 rounded-full overflow-hidden border border-emerald-500/40 shrink-0">
               <img
-                src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200"
+                src={abhishekAvatar}
                 alt="Abhishek Kumar Chaurasiya"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
@@ -2358,6 +2405,15 @@ export default function App() {
         onClose={() => setIsSitemapModalOpen(false)}
         lang={lang}
         onNavigate={handleNavigate}
+      />
+
+      {/* Edit Footer Modal */}
+      <EditFooterModal
+        isOpen={isEditingFooterSocials}
+        onClose={() => setIsEditingFooterSocials(false)}
+        lang={lang}
+        siteTexts={siteTexts}
+        onUpdateSiteTexts={handleUpdateSiteTexts}
       />
     </div>
   );

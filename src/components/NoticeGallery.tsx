@@ -5,6 +5,7 @@ import { notices as defaultNotices, galleryItems } from '../data/communityData';
 import { extractGoogleDriveId, formatDriveImageUrl, getGoogleDriveDownloadUrl, formatNumber } from '../utils/mediaUrl';
 import ShareModal from './ShareModal';
 import { getShareUrl } from '../utils/shareUtils';
+import { getNoticeCategories } from '../utils/noticeCategories';
 
 interface NoticeGalleryProps {
   lang: Language;
@@ -28,12 +29,14 @@ export default function NoticeGallery({
   onDeleteNotice,
 }: NoticeGalleryProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedNoticeCat, setSelectedNoticeCat] = useState<'all' | 'work' | 'notice' | 'press'>('all');
+  const [selectedNoticeCat, setSelectedNoticeCat] = useState<string>('all');
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
   
   const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
   const [viewPdfNoticeId, setViewPdfNoticeId] = useState<string | null>(null);
   const [shareTargetNotice, setShareTargetNotice] = useState<Notice | null>(null);
+
+  const categories = getNoticeCategories();
 
   // Back button popstate listener
   React.useEffect(() => {
@@ -132,20 +135,33 @@ export default function NoticeGallery({
 
               {/* Filter buttons */}
               <div className="flex flex-wrap gap-1 bg-teal-50 dark:bg-slate-800 p-1 rounded-lg border border-teal-100 dark:border-slate-700">
-                {(['all', 'work', 'notice', 'press'] as const).map((cat) => (
+                <button
+                  onClick={() => {
+                    setSelectedNoticeCat('all');
+                    onTrackAction('Filter notices by all');
+                  }}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
+                    selectedNoticeCat === 'all'
+                      ? 'bg-teal-700 dark:bg-emerald-600 text-white shadow-sm'
+                      : 'text-teal-800 dark:text-teal-200 hover:bg-teal-100 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {lang === 'en' ? 'All' : 'सबै'}
+                </button>
+                {categories.map((cat) => (
                   <button
-                    key={cat}
+                    key={cat.code}
                     onClick={() => {
-                      setSelectedNoticeCat(cat);
-                      onTrackAction(`Filter notices by ${cat}`);
+                      setSelectedNoticeCat(cat.code);
+                      onTrackAction(`Filter notices by ${cat.code}`);
                     }}
                     className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
-                      selectedNoticeCat === cat
+                      selectedNoticeCat === cat.code
                         ? 'bg-teal-700 dark:bg-emerald-600 text-white shadow-sm'
                         : 'text-teal-800 dark:text-teal-200 hover:bg-teal-100 dark:hover:bg-slate-700'
                     }`}
                   >
-                    {t[cat][lang]}
+                    {cat.label[lang] || cat.label.en}
                   </button>
                 ))}
               </div>
@@ -192,7 +208,10 @@ export default function NoticeGallery({
                               : 'bg-teal-100 text-teal-800 border border-teal-200 dark:bg-teal-950/80 dark:text-teal-300 dark:border-teal-800'
                           }`}
                         >
-                          {t[notice.category][lang]}
+                          {(() => {
+                            const catObj = categories.find(c => c.code === notice.category);
+                            return catObj ? (catObj.label[lang] || catObj.label.en) : notice.category;
+                          })()}
                         </span>
                         <span className="text-xs font-semibold text-teal-600/80 dark:text-emerald-400/80 font-mono">
                           🗓️ {formatNumber(notice.date, lang)}
@@ -335,105 +354,6 @@ export default function NoticeGallery({
           </div>
         </div>
       </section>
-
-      {/* Interactive Gallery Section */}
-      <section className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-6">
-        <div className="border-b border-teal-50 dark:border-slate-800 pb-4">
-          <h2 className="text-2xl font-extrabold text-teal-950 dark:text-teal-100 flex items-center gap-2">
-            <ImageIcon className="w-6 h-6 text-teal-600 dark:text-emerald-400" />
-            {t.galleryHeading[lang]}
-          </h2>
-          <p className="text-xs font-bold text-teal-600 dark:text-emerald-400 uppercase tracking-wide mt-1">
-            Visual archive of community outreach, events, and agricultural fields
-          </p>
-        </div>
-
-        {/* Gallery Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {galleryItems.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => handleOpenLightbox(item)}
-              className="group cursor-pointer bg-teal-50/30 dark:bg-slate-800/40 rounded-xl overflow-hidden border border-teal-100 dark:border-slate-800 hover:border-teal-300 dark:hover:border-slate-700 hover:shadow-md transition-all flex flex-col"
-            >
-              <div className="relative overflow-hidden aspect-video bg-teal-900">
-                <img
-                  src={item.imageUrl}
-                  alt={item.title[lang]}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                  <span className="text-xs text-white font-bold bg-teal-600/90 px-2 py-1 rounded">
-                    Click to View Details
-                  </span>
-                </div>
-              </div>
-              <div className="p-4 flex-grow flex flex-col justify-between">
-                <div>
-                  <h4 className="font-bold text-teal-950 dark:text-teal-100 text-sm group-hover:text-teal-700 dark:group-hover:text-emerald-400 transition-colors">
-                    {item.title[lang]}
-                  </h4>
-                  <p className="text-gray-500 dark:text-gray-400 text-xs mt-1.5 line-clamp-2">
-                    {item.description[lang]}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Lightbox Modal */}
-      {selectedImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative max-w-3xl w-full bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-teal-100 dark:border-slate-800 shadow-2xl flex flex-col md:flex-row">
-            {/* Close Button */}
-            <button
-              onClick={() => setSelectedImage(null)}
-              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all"
-              title={t.close[lang]}
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Image side */}
-            <div className="md:w-3/5 bg-black flex items-center justify-center aspect-video md:aspect-auto md:h-[450px]">
-              <img
-                src={selectedImage.imageUrl}
-                alt={selectedImage.title[lang]}
-                referrerPolicy="no-referrer"
-                className="max-w-full max-h-full object-contain"
-              />
-            </div>
-
-            {/* Text details side */}
-            <div className="md:w-2/5 p-6 sm:p-8 flex flex-col justify-between bg-teal-50/20 dark:bg-slate-800/50">
-              <div className="space-y-4">
-                <span className="inline-block px-2.5 py-1 bg-teal-100 dark:bg-slate-700 text-teal-800 dark:text-emerald-300 text-[10px] font-extrabold uppercase tracking-wide rounded">
-                  Chaurasiya Archive
-                </span>
-                <h3 className="text-xl font-extrabold text-teal-950 dark:text-teal-100">
-                  {selectedImage.title[lang]}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                  {selectedImage.description[lang]}
-                </p>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-teal-100/60 dark:border-slate-700 flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-teal-600 dark:bg-emerald-600 flex items-center justify-center text-white text-xs font-bold">
-                  CS
-                </span>
-                <div>
-                  <span className="block text-xs font-bold text-teal-900 dark:text-teal-100">Chaurasiya Samaj Nepal</span>
-                  <span className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">Historical Gallery</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Share Modal Dialog for Notice */}
       {shareTargetNotice && (

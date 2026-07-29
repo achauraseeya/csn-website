@@ -25,6 +25,7 @@ export interface Member {
   photoBase64?: string;
   photoName?: string;
   chapterId?: string; // Links member to a specific chapter/sister org
+  orgName?: LocalizedString;
 }
 
 export interface Notice {
@@ -32,7 +33,7 @@ export interface Notice {
   title: LocalizedString;
   content: LocalizedString;
   date: string;
-  category: 'work' | 'notice' | 'press';
+  category: string;
   driveFileUrl?: string;
   fileUrl?: string;
   chapterId?: string; // Links notice to a specific chapter/sister org
@@ -172,6 +173,7 @@ export interface SiteTexts {
   socialTw: string;
   socialIg: string;
   heroImagesJson: string;
+  secondaryImagesJson?: string;
   impactStatsJson?: string;
   leadershipIdsJson?: string;
 }

@@ -55,6 +55,8 @@ export default function LeaderBio({
   const [editAddressNe, setEditAddressNe] = useState(leader?.address?.ne || '');
   const [editAvatarUrl, setEditAvatarUrl] = useState(leader?.avatarUrl || '');
   const [editTermPeriod, setEditTermPeriod] = useState(leader?.termPeriod || '2025 - 2028');
+  const [editOrgNameEn, setEditOrgNameEn] = useState(leader?.orgName?.en || 'Chaurasiya Samaj Nepal Central Executive');
+  const [editOrgNameNe, setEditOrgNameNe] = useState(leader?.orgName?.ne || 'चौरसिया समाज नेपाल केन्द्रीय कार्यसमिति');
 
   React.useEffect(() => {
     if (foundMember) {
@@ -75,6 +77,8 @@ export default function LeaderBio({
       setEditAddressNe(foundMember.address?.ne || 'पर्सा, मधेश प्रदेश, नेपाल');
       setEditAvatarUrl(foundMember.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400');
       setEditTermPeriod(foundMember.termPeriod || '2025 - 2028');
+      setEditOrgNameEn(foundMember.orgName?.en || 'Chaurasiya Samaj Nepal Central Executive');
+      setEditOrgNameNe(foundMember.orgName?.ne || 'चौरसिया समाज नेपाल केन्द्रीय कार्यसमिति');
     }
   }, [foundMember, leaderId]);
 
@@ -110,6 +114,7 @@ export default function LeaderBio({
       address: { en: editAddressEn, ne: editAddressNe },
       avatarUrl: editAvatarUrl,
       termPeriod: editTermPeriod,
+      orgName: { en: editOrgNameEn, ne: editOrgNameNe },
     };
     setLeader(updated);
     if (onUpdateMember) {
@@ -208,7 +213,7 @@ export default function LeaderBio({
                 {formatNumber(leader.name[lang], lang)}
               </h1>
               <p className="text-teal-200 text-sm font-semibold mt-1">
-                {lang === 'en' ? 'Chaurasiya Samaj Nepal Central Executive' : 'चौरसिया समाज नेपाल केन्द्रीय कार्यसमिति'}
+                {leader.orgName?.[lang] || (lang === 'en' ? 'Chaurasiya Samaj Nepal Central Executive' : 'चौरसिया समाज नेपाल केन्द्रीय कार्यसमिति')}
               </p>
             </div>
 
@@ -239,204 +244,240 @@ export default function LeaderBio({
 
       {/* Admin Edit Modal / Panel */}
       {isEditing && (
-        <section className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border-2 border-emerald-500 shadow-2xl animate-in zoom-in-95 duration-200 space-y-6">
-          <div className="flex justify-between items-center border-b pb-4 dark:border-slate-800">
-            <h3 className="text-xl font-black text-teal-950 dark:text-teal-100 flex items-center gap-2">
-              <Edit className="w-5 h-5 text-emerald-600" />
-              {lang === 'en' ? 'Edit Member Profile Details' : 'सदस्य प्रोफाइल विवरणहरू सम्पादन गर्नुहोस्'}
-            </h3>
-            <button
-              onClick={() => setIsEditing(false)}
-              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <form onSubmit={handleSaveProfile} className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold">
-            <div>
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Name (English)</label>
-              <input
-                type="text"
-                value={editNameEn}
-                onChange={e => setEditNameEn(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Name (Nepali)</label>
-              <input
-                type="text"
-                value={editNameNe}
-                onChange={e => setEditNameNe(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Role/Designation (English)</label>
-              <input
-                type="text"
-                value={editRoleEn}
-                onChange={e => setEditRoleEn(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Role/Designation (Nepali)</label>
-              <input
-                type="text"
-                value={editRoleNe}
-                onChange={e => setEditRoleNe(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-                required
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Biography (English)</label>
-              <textarea
-                rows={3}
-                value={editBioEn}
-                onChange={e => setEditBioEn(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Biography (Nepali)</label>
-              <textarea
-                rows={3}
-                value={editBioNe}
-                onChange={e => setEditBioNe(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Education (English)</label>
-              <input
-                type="text"
-                value={editEduEn}
-                onChange={e => setEditEduEn(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Education (Nepali)</label>
-              <input
-                type="text"
-                value={editEduNe}
-                onChange={e => setEditEduNe(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Vision Statement (English)</label>
-              <input
-                type="text"
-                value={editVisionEn}
-                onChange={e => setEditVisionEn(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Vision Statement (Nepali)</label>
-              <input
-                type="text"
-                value={editVisionNe}
-                onChange={e => setEditVisionNe(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Email</label>
-              <input
-                type="email"
-                value={editEmail}
-                onChange={e => setEditEmail(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Phone</label>
-              <input
-                type="text"
-                value={editPhone}
-                onChange={e => setEditPhone(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Address (English)</label>
-              <input
-                type="text"
-                value={editAddressEn}
-                onChange={e => setEditAddressEn(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 dark:text-gray-300 mb-1">Avatar / Photo URL</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={editAvatarUrl}
-                  onChange={e => setEditAvatarUrl(e.target.value)}
-                  className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
-                />
-                <label className="px-4 py-2.5 bg-teal-700 hover:bg-teal-800 text-white rounded-xl font-bold cursor-pointer flex items-center justify-center shadow-sm whitespace-nowrap">
-                  Upload
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      if (file.size > 2 * 1024 * 1024) {
-                        alert(lang === 'en' ? 'File too large (Max 2MB)' : 'फाइल धेरै ठूलो छ (अधिकतम २MB)');
-                        return;
-                      }
-                      try {
-                        const { compressImageToBase64 } = await import('../utils/imageUtils');
-                        const { uploadImageToGithub } = await import('../utils/githubDb');
-                        const base64 = await compressImageToBase64(file, 500);
-                        const fileName = `leader_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-                        const url = await uploadImageToGithub(fileName, base64, `Upload leader photo ${file.name}`);
-                        setEditAvatarUrl(url);
-                      } catch (err) {
-                        alert('Upload failed');
-                      }
-                    }}
-                  />
-                </label>
-              </div>
-            </div>
-
-            <div className="md:col-span-2 flex justify-end gap-3 pt-4 border-t dark:border-slate-800">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-0 sm:p-4">
+          <section className="bg-white dark:bg-slate-900 p-5 sm:p-8 rounded-none sm:rounded-3xl border-0 sm:border border-emerald-500 shadow-2xl animate-in zoom-in-95 duration-200 w-full h-full sm:h-auto sm:max-h-[92vh] max-w-4xl overflow-hidden flex flex-col space-y-4">
+            <div className="flex justify-between items-center border-b pb-4 dark:border-slate-800 shrink-0">
+              <h3 className="text-lg sm:text-xl font-black text-teal-950 dark:text-teal-100 flex items-center gap-2">
+                <Edit className="w-5 h-5 text-emerald-600" />
+                {lang === 'en' ? 'Edit Member Profile Details' : 'सदस्य प्रोफाइल विवरणहरू सम्पादन गर्नुहोस्'}
+              </h3>
               <button
-                type="button"
                 onClick={() => setIsEditing(false)}
-                className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100"
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer"
               >
-                {lang === 'en' ? 'Cancel' : 'रद्द गर्नुहोस्'}
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-2 shadow-md"
-              >
-                <Save className="w-4 h-4" />
-                {lang === 'en' ? 'Save Changes' : 'परिवर्तनहरू बचत गर्नुहोस्'}
+                <X className="w-5 h-5" />
               </button>
             </div>
-          </form>
-        </section>
+
+            <form onSubmit={handleSaveProfile} className="flex-grow overflow-y-auto pr-1 space-y-6 flex flex-col">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold flex-grow">
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Name (English)</label>
+                  <input
+                    type="text"
+                    value={editNameEn}
+                    onChange={e => setEditNameEn(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Name (Nepali)</label>
+                  <input
+                    type="text"
+                    value={editNameNe}
+                    onChange={e => setEditNameNe(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Role/Designation (English)</label>
+                  <input
+                    type="text"
+                    value={editRoleEn}
+                    onChange={e => setEditRoleEn(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Role/Designation (Nepali)</label>
+                  <input
+                    type="text"
+                    value={editRoleNe}
+                    onChange={e => setEditRoleNe(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                    required
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Organization / Executive Body Name (English)</label>
+                  <input
+                    type="text"
+                    value={editOrgNameEn}
+                    onChange={e => setEditOrgNameEn(e.target.value)}
+                    placeholder="e.g. Chaurasiya Samaj Nepal Central Executive"
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Organization / Executive Body Name (Nepali)</label>
+                  <input
+                    type="text"
+                    value={editOrgNameNe}
+                    onChange={e => setEditOrgNameNe(e.target.value)}
+                    placeholder="उदा. चौरसिया समाज नेपाल केन्द्रीय कार्यसमिति"
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Biography (English)</label>
+                  <textarea
+                    rows={3}
+                    value={editBioEn}
+                    onChange={e => setEditBioEn(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Biography (Nepali)</label>
+                  <textarea
+                    rows={3}
+                    value={editBioNe}
+                    onChange={e => setEditBioNe(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Education (English)</label>
+                  <input
+                    type="text"
+                    value={editEduEn}
+                    onChange={e => setEditEduEn(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Education (Nepali)</label>
+                  <input
+                    type="text"
+                    value={editEduNe}
+                    onChange={e => setEditEduNe(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Vision Statement (English)</label>
+                  <input
+                    type="text"
+                    value={editVisionEn}
+                    onChange={e => setEditVisionEn(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Vision Statement (Nepali)</label>
+                  <input
+                    type="text"
+                    value={editVisionNe}
+                    onChange={e => setEditVisionNe(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={e => setEditEmail(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Phone</label>
+                  <input
+                    type="text"
+                    value={editPhone}
+                    onChange={e => setEditPhone(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Address (English)</label>
+                  <input
+                    type="text"
+                    value={editAddressEn}
+                    onChange={e => setEditAddressEn(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Tenure / Term Period (e.g. 2025 - 2028)</label>
+                  <input
+                    type="text"
+                    value={editTermPeriod}
+                    onChange={e => setEditTermPeriod(e.target.value)}
+                    placeholder="2025 - 2028 / २०८२ - २०८५"
+                    className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Avatar / Photo URL</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={editAvatarUrl}
+                      onChange={e => setEditAvatarUrl(e.target.value)}
+                      className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white flex-grow"
+                    />
+                    <label className="px-4 py-2.5 bg-teal-700 hover:bg-teal-800 text-white rounded-xl font-bold cursor-pointer flex items-center justify-center shadow-sm whitespace-nowrap">
+                      Upload
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) {
+                            alert(lang === 'en' ? 'File too large (Max 2MB)' : 'फाइल धेरै ठूलो छ (अधिकतम २MB)');
+                            return;
+                          }
+                          try {
+                            const { compressImageToBase64 } = await import('../utils/imageUtils');
+                            const { uploadImageToGithub } = await import('../utils/githubDb');
+                            const base64 = await compressImageToBase64(file, 500);
+                            const fileName = `leader_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+                            const url = await uploadImageToGithub(fileName, base64, `Upload leader photo ${file.name}`);
+                            setEditAvatarUrl(url);
+                          } catch (err) {
+                            alert('Upload failed');
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t dark:border-slate-800 shrink-0 sticky bottom-0 bg-white dark:bg-slate-900 z-10 pb-1">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100"
+                >
+                  {lang === 'en' ? 'Cancel' : 'रद्द गर्नुहोस्'}
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-2 shadow-md"
+                >
+                  <Save className="w-4 h-4" />
+                  {lang === 'en' ? 'Save Changes' : 'परिवर्तनहरू बचत गर्नुहोस्'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
       )}
 
       {/* Main Details Grid */}

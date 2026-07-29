@@ -66,15 +66,17 @@ export default function HistorySection({
   onDeleteNetwork,
   membersList,
 }: HistorySectionProps) {
-  const [currentImageIdx, setCurrentImageIdx] = useState(0);
+  const [heroImageIdx, setHeroImageIdx] = useState(0);
+  const [secondaryImageIdx, setSecondaryImageIdx] = useState(0);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
   const [viewPdfNoticeId, setViewPdfNoticeId] = useState<string | null>(null);
   const [livePosts, setLivePosts] = useState<any[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
-  // Network creation modal states
+  // Network creation/editing modal states
   const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
+  const [editingNetId, setEditingNetId] = useState<string | null>(null);
   const [netNameEn, setNetNameEn] = useState('');
   const [netNameNe, setNetNameNe] = useState('');
   const [netType, setNetType] = useState<'chapter' | 'sister'>('chapter');
@@ -131,6 +133,24 @@ export default function HistorySection({
     } catch (e) {}
     return [...galleryItems];
   });
+
+  const [editSecondaryImages, setEditSecondaryImages] = useState<any[]>(() => {
+    try {
+      if (siteTexts.secondaryImagesJson) {
+        const parsed = JSON.parse(siteTexts.secondaryImagesJson);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [...galleryItems];
+  });
+
+  // State for adding a new secondary slider image
+  const [newSecondaryImage, setNewSecondaryImage] = useState('');
+  const [newSecondaryTitleEn, setNewSecondaryTitleEn] = useState('');
+  const [newSecondaryTitleNe, setNewSecondaryTitleNe] = useState('');
+  const [newSecondaryDescEn, setNewSecondaryDescEn] = useState('');
+  const [newSecondaryDescNe, setNewSecondaryDescNe] = useState('');
+  const [uploadingSecondarySlide, setUploadingSecondarySlide] = useState(false);
 
   // Dynamic statistics editor state
   const [editImpactStats, setEditImpactStats] = useState<any[]>(() => {
@@ -303,6 +323,7 @@ export default function HistorySection({
         socialTw: editSocialTw,
         socialIg: editSocialIg,
         heroImagesJson: JSON.stringify(editHeroImages),
+        secondaryImagesJson: JSON.stringify(editSecondaryImages),
         impactStatsJson: JSON.stringify(editImpactStats),
         leadershipIdsJson: JSON.stringify(editLeadership)
       });
@@ -422,29 +443,55 @@ export default function HistorySection({
     return boardMembers.filter(m => m.id === '1' || m.id === 'vc1');
   };
 
+  const getActiveSecondaryImages = (): any[] => {
+    try {
+      if (siteTexts.secondaryImagesJson) {
+        const parsed = JSON.parse(siteTexts.secondaryImagesJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return galleryItems;
+  };
+
   const activeHeroImages = getActiveHeroImages();
+  const activeSecondaryImages = getActiveSecondaryImages();
   const activeImpactStats = getActiveImpactStats();
   const activeLeadership = getActiveLeadership();
 
-  const nextImage = () => {
-    setCurrentImageIdx((prev) => (prev + 1) % activeHeroImages.length);
+  // Hero background slider timer (6s)
+  useEffect(() => {
+    if (!activeHeroImages.length) return;
+    const timer = setInterval(() => {
+      setHeroImageIdx((prev) => (prev + 1) % activeHeroImages.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [activeHeroImages.length]);
+
+  // Secondary gallery slider controls & timer (4.5s)
+  const nextSecondaryImage = () => {
+    if (!activeSecondaryImages.length) return;
+    setSecondaryImageIdx((prev) => (prev + 1) % activeSecondaryImages.length);
   };
 
-  const prevImage = () => {
-    setCurrentImageIdx((prev) => (prev - 1 + activeHeroImages.length) % activeHeroImages.length);
+  const prevSecondaryImage = () => {
+    if (!activeSecondaryImages.length) return;
+    setSecondaryImageIdx((prev) => (prev - 1 + activeSecondaryImages.length) % activeSecondaryImages.length);
   };
 
   useEffect(() => {
+    if (!activeSecondaryImages.length) return;
     const timer = setInterval(() => {
-      nextImage();
-    }, 5000);
+      nextSecondaryImage();
+    }, 4500);
     return () => clearInterval(timer);
-  }, [activeHeroImages.length]);
+  }, [activeSecondaryImages.length]);
 
   const t = {
     ctaButton: { en: 'Join Our Community', ne: 'हाम्रो समुदायमा सामेल हुनुहोस्' },
     bloggerBannerButton: { en: 'Blogger XML Layout', ne: 'ब्लगर XML लेआउट' },
-    photoGallery: { en: 'Glimpses of Our Journey', ne: 'हाम्रो यात्राको झलक' },
+    photoGallery: { en: 'Recent Updates', ne: 'हालैका अपडेटहरू' },
     impactHeader: { en: 'Empowering & Transforming Lives', ne: 'सशक्तिकरण र जीवन परिवर्तन' },
   };
 
@@ -1012,7 +1059,182 @@ export default function HistorySection({
                     className="px-4 py-2 bg-teal-700 hover:bg-teal-850 text-white disabled:opacity-50 text-xs font-bold uppercase rounded-lg transition-colors flex items-center gap-1 shadow-sm border border-teal-800"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Add to Slider List</span>
+                    <span>Add to Hero Slider List</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Secondary Gallery Carousel Manager */}
+              <div className="md:col-span-2 border-t border-teal-200 pt-6 space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-extrabold text-teal-950 uppercase tracking-wide">Manage Secondary Gallery Carousel Images</h4>
+                    <p className="text-xs text-gray-500">Add, reorder, or remove images for the 'Glimpses of Our Journey' gallery carousel independently.</p>
+                  </div>
+                  <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-300">
+                    {editSecondaryImages.length} Gallery Images
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {editSecondaryImages.map((slide, sIdx) => (
+                    <div key={slide.id || sIdx} className="p-3 bg-white rounded-2xl border border-teal-200 space-y-2 relative group shadow-sm">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditSecondaryImages(editSecondaryImages.filter((_, idx) => idx !== sIdx));
+                        }}
+                        className="absolute top-2 right-2 p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors border border-red-200 z-10"
+                        title="Delete Slide"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      <div className="h-28 rounded-xl overflow-hidden bg-gray-100 border border-teal-100">
+                        <img src={slide.imageUrl} alt="" className="w-full h-full object-cover" />
+                      </div>
+
+                      <div className="space-y-1">
+                        <input
+                          type="text"
+                          value={slide.title?.en || ''}
+                          placeholder="Title (English)"
+                          onChange={(e) => {
+                            const updated = [...editSecondaryImages];
+                            updated[sIdx] = {
+                              ...updated[sIdx],
+                              title: { ...(updated[sIdx].title || { en: '', ne: '' }), en: e.target.value }
+                            };
+                            setEditSecondaryImages(updated);
+                          }}
+                          className="w-full p-1.5 bg-teal-50/50 border border-teal-200 rounded text-xs font-bold text-teal-900"
+                        />
+                        <input
+                          type="text"
+                          value={slide.title?.ne || ''}
+                          placeholder="Title (Nepali)"
+                          onChange={(e) => {
+                            const updated = [...editSecondaryImages];
+                            updated[sIdx] = {
+                              ...updated[sIdx],
+                              title: { ...(updated[sIdx].title || { en: '', ne: '' }), ne: e.target.value }
+                            };
+                            setEditSecondaryImages(updated);
+                          }}
+                          className="w-full p-1.5 bg-teal-50/50 border border-teal-200 rounded text-xs text-teal-900"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add New Secondary Gallery Slide */}
+                <div className="p-4 bg-teal-50/50 rounded-2xl border border-teal-200 space-y-3">
+                  <h5 className="text-xs font-extrabold text-teal-950 uppercase tracking-wide">Add Image to Secondary Gallery Carousel</h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="sm:col-span-2 space-y-1">
+                      <label className="text-[10px] font-bold text-teal-900 uppercase">Image File / URL</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newSecondaryImage}
+                          onChange={(e) => setNewSecondaryImage(e.target.value)}
+                          placeholder="Paste image URL or click upload"
+                          className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                        />
+                        <label className="px-3 py-2 bg-teal-800 hover:bg-teal-700 text-white rounded-lg text-xs font-bold cursor-pointer shrink-0 flex items-center justify-center">
+                          {uploadingSecondarySlide ? 'Uploading...' : 'Upload'}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              setUploadingSecondarySlide(true);
+                              try {
+                                const url = await handleFileUpload(file);
+                                setNewSecondaryImage(url);
+                              } catch (err) {
+                                alert('Failed to upload image');
+                              } finally {
+                                setUploadingSecondarySlide(false);
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-teal-900 uppercase">Title (English)</label>
+                      <input
+                        type="text"
+                        value={newSecondaryTitleEn}
+                        onChange={(e) => setNewSecondaryTitleEn(e.target.value)}
+                        placeholder="e.g. Annual Cultural Program"
+                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-teal-900 uppercase">Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={newSecondaryTitleNe}
+                        onChange={(e) => setNewSecondaryTitleNe(e.target.value)}
+                        placeholder="वार्षिक सांस्कृतिक कार्यक्रम"
+                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-teal-900 uppercase">Description (English)</label>
+                      <input
+                        type="text"
+                        value={newSecondaryDescEn}
+                        onChange={(e) => setNewSecondaryDescEn(e.target.value)}
+                        placeholder="Brief caption..."
+                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-teal-900 uppercase">Description (Nepali)</label>
+                      <input
+                        type="text"
+                        value={newSecondaryDescNe}
+                        onChange={(e) => setNewSecondaryDescNe(e.target.value)}
+                        placeholder="छोटो विवरण..."
+                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={uploadingSecondarySlide || !newSecondaryImage}
+                    onClick={() => {
+                      const newSlide = {
+                        id: 'gallery_slide_' + Date.now(),
+                        imageUrl: newSecondaryImage,
+                        title: {
+                          en: newSecondaryTitleEn || 'Gallery Slide',
+                          ne: newSecondaryTitleNe || 'ग्यालेरी स्लाइड'
+                        },
+                        description: {
+                          en: newSecondaryDescEn || '',
+                          ne: newSecondaryDescNe || ''
+                        }
+                      };
+                      setEditSecondaryImages([...editSecondaryImages, newSlide]);
+                      setNewSecondaryImage('');
+                      setNewSecondaryTitleEn('');
+                      setNewSecondaryTitleNe('');
+                      setNewSecondaryDescEn('');
+                      setNewSecondaryDescNe('');
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 text-xs font-bold uppercase rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add to Gallery Carousel</span>
                   </button>
                 </div>
               </div>
@@ -1271,7 +1493,7 @@ export default function HistorySection({
         {activeHeroImages.map((item, idx) => (
           <div
             key={item.id || idx}
-            className={`absolute inset-0 transition-opacity duration-1000 ${idx === currentImageIdx ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 transition-opacity duration-1000 ${idx === heroImageIdx ? 'opacity-100' : 'opacity-0'}`}
           >
             <img 
               src={item.imageUrl} 
@@ -1318,40 +1540,40 @@ export default function HistorySection({
           {t.photoGallery[lang]}
         </h2>
         <div className="relative w-full aspect-video sm:aspect-[21/9] rounded-2xl overflow-hidden bg-gray-100 group shadow-inner">
-          {activeHeroImages[currentImageIdx] && (
+          {activeSecondaryImages[secondaryImageIdx] && (
             <>
               <img 
-                src={activeHeroImages[currentImageIdx].imageUrl}
-                alt={activeHeroImages[currentImageIdx].title?.[lang] || ''}
+                src={activeSecondaryImages[secondaryImageIdx].imageUrl}
+                alt={activeSecondaryImages[secondaryImageIdx].title?.[lang] || ''}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-10 text-white">
-                <h3 className="text-xl sm:text-3xl font-bold mb-2 shadow-sm">{activeHeroImages[currentImageIdx].title?.[lang] || ''}</h3>
-                <p className="text-teal-50 text-sm sm:text-base max-w-2xl font-medium">{activeHeroImages[currentImageIdx].description?.[lang] || ''}</p>
+                <h3 className="text-xl sm:text-3xl font-bold mb-2 shadow-sm">{activeSecondaryImages[secondaryImageIdx].title?.[lang] || ''}</h3>
+                <p className="text-teal-50 text-sm sm:text-base max-w-2xl font-medium">{activeSecondaryImages[secondaryImageIdx].description?.[lang] || ''}</p>
               </div>
             </>
           )}
           
           <button 
-            onClick={prevImage}
+            onClick={prevSecondaryImage}
             className="absolute left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-sm transition-all"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           
           <button 
-            onClick={nextImage}
+            onClick={nextSecondaryImage}
             className="absolute right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-sm transition-all"
           >
             <ChevronRight className="w-6 h-6" />
           </button>
 
           <div className="absolute bottom-4 right-4 flex gap-2">
-            {galleryItems.map((_, idx) => (
+            {activeSecondaryImages.map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => setCurrentImageIdx(idx)}
-                className={`w-2.5 h-2.5 rounded-full transition-all ${idx === currentImageIdx ? 'bg-emerald-400 w-6' : 'bg-white/50 hover:bg-white'}`}
+                onClick={() => setSecondaryImageIdx(idx)}
+                className={`w-2.5 h-2.5 rounded-full transition-all ${idx === secondaryImageIdx ? 'bg-emerald-400 w-6' : 'bg-white/50 hover:bg-white'}`}
               />
             ))}
           </div>
@@ -1622,9 +1844,13 @@ export default function HistorySection({
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {loadingPosts ? (
-            <div className="col-span-1 md:col-span-3 text-center py-12 text-teal-600 dark:text-emerald-400 font-bold animate-pulse">
-              {lang === 'en' ? 'Loading latest posts from Blogger...' : 'ब्लगरबाट पछिल्लो पोस्टहरू लोड गर्दैछ...'}
-            </div>
+            [1, 2, 3].map((n) => (
+              <div key={n} className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-teal-100 dark:border-slate-800 space-y-3 animate-pulse shadow-sm">
+                <div className="w-full h-44 bg-teal-100/50 dark:bg-slate-800 rounded-xl" />
+                <div className="h-4 bg-teal-100/60 dark:bg-slate-800 rounded-md w-3/4" />
+                <div className="h-3 bg-teal-100/40 dark:bg-slate-800 rounded-md w-1/2" />
+              </div>
+            ))
           ) : [...livePosts]
             .sort((a, b) => {
               const dateA = new Date(a.date).getTime();
@@ -1851,7 +2077,17 @@ export default function HistorySection({
             </h3>
             {isAdmin && (
               <button
-                onClick={() => setIsNetworkModalOpen(true)}
+                onClick={() => {
+                  setEditingNetId(null);
+                  setNetNameEn('');
+                  setNetNameNe('');
+                  setNetType('chapter');
+                  setNetDescEn('');
+                  setNetDescNe('');
+                  setNetLocEn('');
+                  setNetLocNe('');
+                  setIsNetworkModalOpen(true);
+                }}
                 className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -1886,25 +2122,47 @@ export default function HistorySection({
                     onClick={() => onSelectNetwork && onSelectNetwork(net.id)}
                     className="flex gap-3 items-start p-3 rounded-xl hover:bg-teal-50/45 dark:hover:bg-slate-800/30 transition-colors cursor-pointer group relative border border-transparent hover:border-teal-100/40"
                   >
-                    {isAdmin && onDeleteNetwork && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm('Are you sure you want to delete this branch and its data?')) {
-                            onDeleteNetwork(net.id);
-                          }
-                        }}
-                        className="absolute top-2 right-2 p-1 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 rounded-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                        title="Delete Branch"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                    {isAdmin && (
+                      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingNetId(net.id);
+                            setNetNameEn(net.name?.en || '');
+                            setNetNameNe(net.name?.ne || '');
+                            setNetType(net.type || 'chapter');
+                            setNetDescEn(net.description?.en || '');
+                            setNetDescNe(net.description?.ne || '');
+                            setNetLocEn(net.location?.en || '');
+                            setNetLocNe(net.location?.ne || '');
+                            setIsNetworkModalOpen(true);
+                          }}
+                          className="p-1 bg-teal-50 hover:bg-teal-100 text-teal-700 dark:bg-slate-800 dark:text-teal-300 rounded-md shadow-sm"
+                          title="Edit Chapter"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        {onDeleteNetwork && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm('Are you sure you want to delete this branch and its data?')) {
+                                onDeleteNetwork(net.id);
+                              }
+                            }}
+                            className="p-1 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 rounded-md shadow-sm"
+                            title="Delete Branch"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     )}
 
                     <div className="p-2 rounded-lg bg-teal-50 dark:bg-slate-800 text-teal-700 dark:text-teal-300 shrink-0 mt-0.5">
                       <MapPin className="w-4 h-4" />
                     </div>
-                    <div className="space-y-1 pr-6">
+                    <div className="space-y-1 pr-12">
                       <h5 className="font-extrabold text-sm text-teal-950 dark:text-teal-50 group-hover:text-teal-700 dark:group-hover:text-teal-400 transition-colors flex items-center gap-1.5">
                         {net.name[lang]}
                         <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -1941,25 +2199,47 @@ export default function HistorySection({
                     onClick={() => onSelectNetwork && onSelectNetwork(net.id)}
                     className="flex gap-3 items-start p-3 rounded-xl hover:bg-emerald-50/45 dark:hover:bg-slate-800/30 transition-colors cursor-pointer group relative border border-transparent hover:border-emerald-100/40"
                   >
-                    {isAdmin && onDeleteNetwork && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm('Are you sure you want to delete this branch and its data?')) {
-                            onDeleteNetwork(net.id);
-                          }
-                        }}
-                        className="absolute top-2 right-2 p-1 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 rounded-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                        title="Delete Sister Org"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                    {isAdmin && (
+                      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingNetId(net.id);
+                            setNetNameEn(net.name?.en || '');
+                            setNetNameNe(net.name?.ne || '');
+                            setNetType(net.type || 'sister');
+                            setNetDescEn(net.description?.en || '');
+                            setNetDescNe(net.description?.ne || '');
+                            setNetLocEn(net.location?.en || '');
+                            setNetLocNe(net.location?.ne || '');
+                            setIsNetworkModalOpen(true);
+                          }}
+                          className="p-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-slate-800 dark:text-emerald-300 rounded-md shadow-sm"
+                          title="Edit Sister Org"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        {onDeleteNetwork && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm('Are you sure you want to delete this branch and its data?')) {
+                                onDeleteNetwork(net.id);
+                              }
+                            }}
+                            className="p-1 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 rounded-md shadow-sm"
+                            title="Delete Sister Org"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     )}
 
                     <div className="p-2 rounded-lg bg-emerald-50 dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 shrink-0 mt-0.5">
                       <ShieldCheck className="w-4 h-4" />
                     </div>
-                    <div className="space-y-1 pr-6">
+                    <div className="space-y-1 pr-12">
                       <h5 className="font-extrabold text-sm text-teal-950 dark:text-teal-50 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-1.5">
                         {net.name[lang]}
                         <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -1978,13 +2258,13 @@ export default function HistorySection({
           </div>
         </div>
 
-        {/* ADMIN MODAL TO ADD NETWORK BRANCH */}
+        {/* ADMIN MODAL TO ADD/EDIT NETWORK BRANCH */}
         {isNetworkModalOpen && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-teal-100 dark:border-slate-800 max-w-md w-full text-xs font-semibold space-y-4">
               <div className="flex justify-between items-center pb-2 border-b border-teal-50 dark:border-slate-800">
                 <h3 className="font-black text-lg text-teal-950 dark:text-teal-50 uppercase tracking-tight">
-                  Add Network Branch (Chapter / Sister Institution)
+                  {editingNetId ? 'Edit Network Branch' : 'Add Network Branch'}
                 </h3>
                 <button 
                   onClick={() => setIsNetworkModalOpen(false)}
@@ -1998,15 +2278,16 @@ export default function HistorySection({
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (!netNameEn || !netDescEn) return;
-                  const newBranch: NetworkBranch = {
-                    id: netNameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `branch-${Date.now()}`,
+                  const branchToSave: NetworkBranch = {
+                    id: editingNetId || netNameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `branch-${Date.now()}`,
                     type: netType,
                     name: { en: netNameEn, ne: netNameNe || netNameEn },
                     description: { en: netDescEn, ne: netDescNe || netDescEn },
                     location: { en: netLocEn || 'Nepal', ne: netLocNe || 'नेपाल' }
                   };
-                  if (onAddNetwork) onAddNetwork(newBranch);
+                  if (onAddNetwork) onAddNetwork(branchToSave);
                   setIsNetworkModalOpen(false);
+                  setEditingNetId(null);
                   // Reset fields
                   setNetNameEn('');
                   setNetNameNe('');

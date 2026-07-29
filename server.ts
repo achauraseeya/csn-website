@@ -88,12 +88,12 @@ async function startServer() {
         }
 
         const urls = [
-          `https://drive.google.com/embeddedfolderview?id=${folderId}#grid`,
-          `https://drive.google.com/drive/folders/${folderId}`
+          `https://drive.google.com/drive/folders/${folderId}`,
+          `https://drive.google.com/embeddedfolderview?id=${folderId}#grid`
         ];
 
-        let html = "";
-        let success = false;
+        const files: Array<{ id: string; name: string; type: "photo" | "video" }> = [];
+        const seenIds = new Set<string>();
 
         for (const url of urls) {
           try {
@@ -104,101 +104,92 @@ async function startServer() {
               }
             });
 
-            if (response.ok) {
-              html = await response.text();
-              if (html.length > 1000) {
-                success = true;
-                break;
+            if (!response.ok) continue;
+
+            const html = await response.text();
+            if (!html || html.length < 500) continue;
+
+            // Pattern 1: Tooltip format (data-id="id" ... data-tooltip="name Image")
+            const tooltipPattern = /data-id=["']([a-zA-Z0-9_-]{28,45})["'][^>]+?data-tooltip=["']([^"']+?)\s+(?:Image|Video)["']/gi;
+            let match;
+            while ((match = tooltipPattern.exec(html)) !== null) {
+              const id = match[1];
+              const name = match[2];
+              const type = match[0].includes('Video') ? "video" : "photo";
+              if (id !== folderId && !seenIds.has(id)) {
+                seenIds.add(id);
+                files.push({ id, name, type });
               }
             }
+
+            // Pattern 2: JSON data in AF_initDataCallback or similar structured blocks
+            const jsonPattern = /\[\s*["']([a-zA-Z0-9_-]{25,45})["']\s*,\s*["']([^"']+?)["']\s*,\s*["'](image|video)\/([^"']+?)["']/gi;
+            while ((match = jsonPattern.exec(html)) !== null) {
+              const id = match[1];
+              const name = match[2];
+              const type = match[3] === "video" ? "video" : "photo";
+              if (id !== folderId && !seenIds.has(id)) {
+                seenIds.add(id);
+                files.push({ id, name, type });
+              }
+            }
+
+            // Pattern 3: Search for data chunks in the drive-viewer format
+            const viewerPattern = /\[\s*["']([a-zA-Z0-9_-]{25,45})["']\s*,\s*(?:null|\[)\s*,\s*["']([^"']+?)["']/gi;
+            while ((match = viewerPattern.exec(html)) !== null) {
+              const id = match[1];
+              const name = match[2];
+              if (id !== folderId && !seenIds.has(id) && (/\.(jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm)$/i.test(name) || name.includes('IMG_') || name.includes('DSC_'))) {
+                seenIds.add(id);
+                const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
+                files.push({ id, name, type: isVideo ? "video" : "photo" });
+              }
+            }
+
+            // Pattern 4: Bootstrap data format
+            const bootstrapPattern = /\[\s*null\s*,\s*null\s*,\s*null\s*,\s*["']([a-zA-Z0-9_-]{25,45})["']\s*,\s*["']([^"']+?)["']/gi;
+            while ((match = bootstrapPattern.exec(html)) !== null) {
+              const id = match[1];
+              const name = match[2];
+              if (id !== folderId && !seenIds.has(id)) {
+                seenIds.add(id);
+                const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
+                files.push({ id, name, type: isVideo ? "video" : "photo" });
+              }
+            }
+
+            // Pattern 5: Fallback for ID and filename
+            if (files.length < 3) {
+              const fallbackPattern = /["']([a-zA-Z0-9_-]{28,45})["']\s*,\s*["']([^"']+?\.(?:jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm))["']/gi;
+              while ((match = fallbackPattern.exec(html)) !== null) {
+                const id = match[1];
+                const name = match[2];
+                const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
+                if (id !== folderId && !seenIds.has(id)) {
+                  seenIds.add(id);
+                  files.push({ id, name, type: isVideo ? "video" : "photo" });
+                }
+              }
+            }
+
+            // Pattern 6: Deep scan for any strings that look like Drive IDs (33 chars) if still empty
+            if (files.length === 0) {
+              const idPattern = /["']([a-zA-Z0-9_-]{33})["']/g;
+              while ((match = idPattern.exec(html)) !== null) {
+                const id = match[1];
+                if (id !== folderId && !seenIds.has(id) && !id.startsWith('drive') && !id.startsWith('google') && !id.includes('shared')) {
+                  seenIds.add(id);
+                  files.push({ id, name: `Media Item ${files.length + 1}`, type: "photo" });
+                }
+              }
+            }
+
+            // If we found files, stop checking fallback URLs
+            if (files.length > 0) {
+              break;
+            }
           } catch (e) {
-            console.error(`Fetch attempt failed for ${url}`);
-          }
-        }
-
-        if (!success) {
-          return res.status(500).json({ error: "Could not reach Google Drive folders. Ensure the folder is public." });
-        }
-
-        const files: Array<{ id: string; name: string; type: "photo" | "video" }> = [];
-        const seenIds = new Set<string>();
-
-        // Pattern 1: Tooltip format (data-id="id" ... data-tooltip="name Image")
-        const tooltipPattern = /data-id=["']([a-zA-Z0-9_-]{33})["'][^>]+?data-tooltip=["']([^"']+?)\s+(?:Image|Video)["']/gi;
-        let match;
-        while ((match = tooltipPattern.exec(html)) !== null) {
-          const id = match[1];
-          const name = match[2];
-          const type = match[0].includes('Video') ? "video" : "photo";
-          if (id !== folderId && !seenIds.has(id)) {
-            seenIds.add(id);
-            files.push({ id, name, type });
-          }
-        }
-
-        // Pattern 2: JSON data in AF_initDataCallback or similar structured blocks
-        // Matches: ["id", "name", ..., "mimeType"]
-        const jsonPattern = /\[\s*["']([a-zA-Z0-9_-]{25,45})["']\s*,\s*["']([^"']+?)["']\s*,\s*["'](image|video)\/([^"']+?)["']/gi;
-        while ((match = jsonPattern.exec(html)) !== null) {
-          const id = match[1];
-          const name = match[2];
-          const type = match[3] === "video" ? "video" : "photo";
-          if (id !== folderId && !seenIds.has(id)) {
-            seenIds.add(id);
-            files.push({ id, name, type });
-          }
-        }
-
-        // Pattern 3: Search for data chunks in the drive-viewer format
-        // Usually matches patterns like ["id",null,"name",...] or ["id", ["name", ...]]
-        const viewerPattern = /\[\s*["']([a-zA-Z0-9_-]{25,45})["']\s*,\s*(?:null|\[)\s*,\s*["']([^"']+?)["']/gi;
-        while ((match = viewerPattern.exec(html)) !== null) {
-          const id = match[1];
-          const name = match[2];
-          if (id !== folderId && !seenIds.has(id) && (/\.(jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm)$/i.test(name) || name.includes('IMG_') || name.includes('DSC_'))) {
-            seenIds.add(id);
-            const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
-            files.push({ id, name, type: isVideo ? "video" : "photo" });
-          }
-        }
-
-        // Pattern 4: Look for the specific "item" array in Drive bootstrap data
-        // Matches: [null, null, null, "id", "name", ...]
-        const bootstrapPattern = /\[\s*null\s*,\s*null\s*,\s*null\s*,\s*["']([a-zA-Z0-9_-]{25,45})["']\s*,\s*["']([^"']+?)["']/gi;
-        while ((match = bootstrapPattern.exec(html)) !== null) {
-          const id = match[1];
-          const name = match[2];
-          if (id !== folderId && !seenIds.has(id)) {
-            seenIds.add(id);
-            const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
-            files.push({ id, name, type: isVideo ? "video" : "photo" });
-          }
-        }
-
-        // Pattern 5: Fallback for different HTML structures (matches ID and filename with extension)
-        if (files.length < 5) {
-          const fallbackPattern = /["']([a-zA-Z0-9_-]{28,45})["']\s*,\s*["']([^"']+?\.(?:jpg|jpeg|png|gif|webp|heic|mp4|mov|avi|webm))["']/gi;
-          while ((match = fallbackPattern.exec(html)) !== null) {
-            const id = match[1];
-            const name = match[2];
-            const isVideo = /\.(mp4|mov|avi|webm)$/i.test(name);
-            if (id !== folderId && !seenIds.has(id)) {
-              seenIds.add(id);
-              files.push({ id, name, type: isVideo ? "video" : "photo" });
-            }
-          }
-        }
-
-        // Pattern 6: Deep scan for any strings that look like Drive IDs (33 chars) if still empty
-        if (files.length === 0) {
-          const idPattern = /["']([a-zA-Z0-9_-]{33})["']/g;
-          while ((match = idPattern.exec(html)) !== null) {
-            const id = match[1];
-            // Exclude known non-file IDs
-            if (id !== folderId && !seenIds.has(id) && !id.includes('drive') && !id.includes('google') && !id.includes('shared')) {
-              seenIds.add(id);
-              files.push({ id, name: `Media Item ${files.length + 1}`, type: "photo" });
-            }
+            console.error(`Fetch attempt failed for ${url}`, e);
           }
         }
 

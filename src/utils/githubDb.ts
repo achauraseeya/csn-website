@@ -159,7 +159,10 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
   // 1. Try local server API endpoint FIRST for instant real-time sync!
   try {
     const serverUrl = `/api/site-data/${cleanKey}?t=${Date.now()}`;
-    const res = await fetch(serverUrl);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
+    const res = await fetch(serverUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
     if (res.ok) {
       const data = await res.json();
       if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0)) {
@@ -173,12 +176,14 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
   // 2. Try fetching static JSON directly from current domain (for static GitHub Pages host)
   const relativeUrls = [
     `./${fileName}?t=${Date.now()}`,
-    `./public/${fileName}?t=${Date.now()}`,
     `/${fileName}?t=${Date.now()}`
   ];
   for (const relUrl of relativeUrls) {
     try {
-      const res = await fetch(relUrl, { cache: 'no-store' });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1500);
+      const res = await fetch(relUrl, { cache: 'no-store', signal: controller.signal });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const contentType = res.headers.get('content-type') || '';
         if (contentType.includes('json') || relUrl.endsWith('.json')) {
@@ -191,9 +196,8 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
     } catch (e) {}
   }
 
-  // 3. Try fetching directly from GitHub repository (Source of Truth)
+  // 3. Try fetching directly from GitHub repository if PAT or custom settings are enabled
   if (settings.enabled && settings.username && settings.repo) {
-    // A) First try GitHub API contents endpoint
     try {
       const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${fileName}?ref=${settings.branch}&t=${Date.now()}`;
       const headers: Record<string, string> = {
@@ -203,8 +207,10 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
       if (pat) {
         headers['Authorization'] = `token ${pat}`;
       }
-      
-      const res = await fetch(url, { headers });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1500);
+      const res = await fetch(url, { headers, signal: controller.signal });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
         if (data && data.content) {
@@ -217,36 +223,14 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
       }
     } catch (e) {}
 
-    // B) Try raw.githubusercontent for public users
     try {
       const rawUrl = `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${fileName}?t=${Date.now()}`;
-      const rawRes = await fetch(rawUrl, { cache: 'no-store' });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1500);
+      const rawRes = await fetch(rawUrl, { cache: 'no-store', signal: controller.signal });
+      clearTimeout(timeoutId);
       if (rawRes.ok) {
         const data = await rawRes.json();
-        if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0)) {
-          return data as T;
-        }
-      }
-    } catch (e) {}
-
-    // C) Try raw.githubusercontent under public/ path
-    try {
-      const rawPublicUrl = `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/public/${fileName}?t=${Date.now()}`;
-      const rawPublicRes = await fetch(rawPublicUrl, { cache: 'no-store' });
-      if (rawPublicRes.ok) {
-        const data = await rawPublicRes.json();
-        if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0)) {
-          return data as T;
-        }
-      }
-    } catch (e) {}
-
-    // D) Fallback to jsDelivr CDN
-    try {
-      const cdnUrl = `https://cdn.jsdelivr.net/gh/${settings.username}/${settings.repo}@${settings.branch}/${fileName}?t=${Date.now()}`;
-      const cdnRes = await fetch(cdnUrl, { cache: 'no-store' });
-      if (cdnRes.ok) {
-        const data = await cdnRes.json();
         if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0)) {
           return data as T;
         }

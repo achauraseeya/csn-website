@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, FileText, Calendar, Link2, Sparkles, CheckCircle2, ShieldCheck, Globe } from 'lucide-react';
+import { X, FileText, Calendar, Link2, Sparkles, CheckCircle2, ShieldCheck, Globe, Plus, Trash2 } from 'lucide-react';
 import { Language, Notice } from '../types';
 import { extractGoogleDriveId } from '../utils/mediaUrl';
+import { getNoticeCategories, saveNoticeCategory, deleteNoticeCategory, NoticeCategory } from '../utils/noticeCategories';
 
 interface AddNoticeModalProps {
   isOpen: boolean;
@@ -20,11 +21,58 @@ export default function AddNoticeModal({
   const [titleNe, setTitleNe] = useState('');
   const [contentEn, setContentEn] = useState('');
   const [contentNe, setContentNe] = useState('');
-  const [category, setCategory] = useState<'notice' | 'work' | 'press'>('notice');
+  const [category, setCategory] = useState<string>('notice');
   const [dateStr, setDateStr] = useState(() => new Date().toISOString().split('T')[0]);
   const [driveFileUrl, setDriveFileUrl] = useState('');
 
+  // Dynamic Notice Categories state
+  const [categories, setCategories] = useState<NoticeCategory[]>(() => getNoticeCategories());
+  const [isAddingNewCat, setIsAddingNewCat] = useState(false);
+  const [newCatEn, setNewCatEn] = useState('');
+  const [newCatNe, setNewCatNe] = useState('');
+
   if (!isOpen) return null;
+
+  const handleSaveCategory = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!newCatEn.trim()) {
+      alert(lang === 'en' ? 'Please enter English category name' : 'कृपया अंग्रेजीमा विधाको नाम राख्नुहोस्');
+      return;
+    }
+    const code = newCatEn.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+    if (categories.some(c => c.code === code)) {
+      alert(lang === 'en' ? 'Category already exists' : 'यो विधा पहिले नै अवस्थित छ');
+      return;
+    }
+
+    const saved = saveNoticeCategory({
+      id: `notice-cat-${Date.now()}`,
+      code,
+      label: {
+        en: newCatEn.trim(),
+        ne: newCatNe.trim() || newCatEn.trim()
+      }
+    });
+
+    setCategories(saved);
+    setCategory(code);
+    setIsAddingNewCat(false);
+    setNewCatEn('');
+    setNewCatNe('');
+  };
+
+  const handleDeleteCategory = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    if (confirm(lang === 'en' ? 'Are you sure you want to delete this category?' : 'के तपाईं निश्चित रूपमा यो विधा हटाउन चाहनुहुन्छ?')) {
+      const remaining = deleteNoticeCategory(id);
+      setCategories(remaining);
+      if (remaining.length > 0) {
+        setCategory(remaining[0].code);
+      } else {
+        setCategory('');
+      }
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +90,7 @@ export default function AddNoticeModal({
       id: `notice-${Date.now()}`,
       title: { en: finalTitleEn, ne: finalTitleNe },
       content: { en: finalContentEn, ne: finalContentNe },
-      category,
+      category: category || 'notice',
       date: dateStr || new Date().toISOString().split('T')[0],
       driveFileUrl: driveFileUrl.trim() || undefined,
     };
@@ -54,7 +102,7 @@ export default function AddNoticeModal({
     setTitleNe('');
     setContentEn('');
     setContentNe('');
-    setCategory('notice');
+    setCategory(categories[0]?.code || 'notice');
     setDriveFileUrl('');
 
     onClose();
@@ -91,18 +139,99 @@ export default function AddNoticeModal({
           {/* Category & Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-teal-950 mb-1">
-                {lang === 'en' ? 'Notice Category' : 'सूचना विधा'}
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as any)}
-                className="w-full px-3.5 py-2.5 bg-teal-50/50 border border-teal-200 rounded-xl text-xs font-bold text-teal-950 focus:outline-none focus:border-teal-600"
-              >
-                <option value="notice">📌 Bulletin / Notice (सूचना)</option>
-                <option value="work">🌱 Current Work (सञ्चालित कार्यहरू)</option>
-                <option value="press">📰 Press Release (प्रेस विज्ञप्ति)</option>
-              </select>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-teal-950">
+                  {lang === 'en' ? 'Notice Category' : 'सूचना विधा'}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsAddingNewCat(!isAddingNewCat)}
+                  className="text-[10px] font-extrabold text-emerald-600 hover:text-emerald-500 uppercase tracking-wide flex items-center gap-0.5"
+                >
+                  {isAddingNewCat 
+                    ? (lang === 'en' ? '✕ Close' : '✕ बन्द गर्नुहोस्')
+                    : (lang === 'en' ? '➕ Manage Categories' : '➕ विधा व्यवस्थापन')}
+                </button>
+              </div>
+
+              {!isAddingNewCat ? (
+                <div className="flex gap-1.5">
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-teal-50/50 border border-teal-200 rounded-xl text-xs font-bold text-teal-950 focus:outline-none focus:border-teal-600"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat.code} value={cat.code}>
+                        📌 {cat.label[lang] || cat.label.en}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="p-3 bg-teal-50/50 rounded-2xl border border-teal-100 space-y-2.5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Category Name (English)"
+                      value={newCatEn}
+                      onChange={(e) => setNewCatEn(e.target.value)}
+                      className="w-full px-2.5 py-2 bg-white border border-teal-200 rounded-lg text-xs font-semibold"
+                    />
+                    <input
+                      type="text"
+                      placeholder="विधा नाम (नेपाली)"
+                      value={newCatNe}
+                      onChange={(e) => setNewCatNe(e.target.value)}
+                      className="w-full px-2.5 py-2 bg-white border border-teal-200 rounded-lg text-xs font-semibold"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingNewCat(false)}
+                      className="px-2.5 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-[10px] font-bold uppercase transition-colors"
+                    >
+                      {lang === 'en' ? 'Cancel' : 'रद्द'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveCategory}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold uppercase transition-colors flex items-center gap-0.5"
+                    >
+                      <Plus className="w-3 h-3" />
+                      {lang === 'en' ? 'Add' : 'थप्नुहोस्'}
+                    </button>
+                  </div>
+
+                  {categories.length > 0 && (
+                    <div className="pt-2 border-t border-teal-100/60">
+                      <p className="text-[10px] font-extrabold text-teal-900 uppercase tracking-wider mb-1">
+                        {lang === 'en' ? 'Active Categories' : 'सक्रिय विधाहरू'}
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {categories.map((cat) => (
+                          <div 
+                            key={cat.id} 
+                            className="inline-flex items-center gap-1 bg-white border border-teal-100 px-2 py-1 rounded-md text-[10px] font-semibold text-teal-950"
+                          >
+                            <span>{cat.label[lang] || cat.label.en}</span>
+                            {!['notice', 'work', 'press'].includes(cat.code) && (
+                              <button
+                                type="button"
+                                onClick={(e) => handleDeleteCategory(cat.id, e)}
+                                className="text-rose-600 hover:text-rose-500 hover:bg-rose-50 p-0.5 rounded transition-all"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>

@@ -3,6 +3,7 @@ import { Landmark, Heart, Award, Users, Mail, Phone, MapPin, Briefcase, FileText
 import { Language } from '../types';
 import { AdminFormFieldEditor } from './AdminFormFieldEditor';
 import { AdminCategoryManagerModal } from './AdminCategoryManagerModal';
+import { CustomFieldRenderer } from './CustomFieldRenderer';
 import { getCustomFormFields, CustomFormField } from '../utils/customFormFields';
 import { getMemberCategories, MemberCategory } from '../utils/memberCategories';
 import { apiFetch, saveFileToGithub } from '../utils/githubDb';
@@ -101,8 +102,67 @@ export default function MembershipDonation({
   const [showEditDonationModal, setShowEditDonationModal] = useState(false);
   const [editDonationForm, setEditDonationForm] = useState(donationInfo);
 
-  // Fetch online GitHub donation settings on mount
+  // Admin editable Membership Info
+  const [membershipInfo, setMembershipInfo] = useState(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_membership_info');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.warn('Local storage access restricted:', e);
+    }
+    return {
+      badgeEn: 'Core Membership',
+      badgeNe: 'आजीवन सदस्यता',
+      titleEn: 'Join Chaurasiya Samaj Nepal as a Core Member',
+      titleNe: 'आजीवन सदस्यको रूपमा चौरसिया समाज नेपालमा आबद्ध हुनुहोस्',
+      descEn: 'Become an official life member to receive your secure digital identity card, direct access to the executive directory, and community benefits.',
+      descNe: 'सुरक्षित डिजिटल परिचय पत्र, कार्यकारी डाइरेक्टरीमा प्रत्यक्ष पहुँच र सामुदायिक लाभहरू प्राप्त गर्न आधिकारिक आजीवन सदस्य बन्नुहोस्।',
+    };
+  });
+
+  const [showEditMembershipModal, setShowEditMembershipModal] = useState(false);
+  const [editMembershipForm, setEditMembershipForm] = useState(membershipInfo);
+
+  // Admin editable Volunteer Info
+  const [volunteerInfo, setVolunteerInfo] = useState(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_volunteer_info');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.warn('Local storage access restricted:', e);
+    }
+    return {
+      badgeEn: 'Volunteer Registry',
+      badgeNe: 'स्वयंसेवक',
+      titleEn: 'Step Forward: Support Our Community Service Campaigns',
+      titleNe: 'अघि बढ्नुहोस्: हाम्रो सामुदायिक सेवा अभियानहरूलाई समर्थन गर्नुहोस्',
+      descEn: 'Register as an official volunteer to participate in rural health camps, youth leadership workshops, and betel farming outreach programs.',
+      descNe: 'ग्रामीण स्वास्थ्य शिविर, युवा नेतृत्व कार्यशाला र पान खेती पहुँच कार्यक्रमहरूमा भाग लिन आधिकारिक स्वयंसेवकको रूपमा दर्ता गर्नुहोस्।',
+    };
+  });
+
+  const [showEditVolunteerModal, setShowEditVolunteerModal] = useState(false);
+  const [editVolunteerForm, setEditVolunteerForm] = useState(volunteerInfo);
+
+  // Standard fields hiding state
+  const [hiddenStandardFields, setHiddenStandardFields] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('csn_hidden_standard_fields');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const isFieldVisible = (fieldKey: string) => !hiddenStandardFields.includes(fieldKey);
+
+  // Fetch online GitHub settings on mount
   useEffect(() => {
+    // 1. Donation Info
     apiFetch<any>('/api/donation-info', 'donation_info.json', null)
       .then((cloudInfo) => {
         if (cloudInfo && typeof cloudInfo === 'object' && cloudInfo.bankName) {
@@ -114,7 +174,58 @@ export default function MembershipDonation({
         }
       })
       .catch(() => {});
+
+    // 2. Membership Info
+    apiFetch<any>('/api/membership-info', 'membership_info.json', null)
+      .then((cloudInfo) => {
+        if (cloudInfo && typeof cloudInfo === 'object' && cloudInfo.titleEn) {
+          setMembershipInfo(cloudInfo);
+          setEditMembershipForm(cloudInfo);
+          try {
+            localStorage.setItem('chaurasiya_membership_info', JSON.stringify(cloudInfo));
+          } catch (e) {}
+        }
+      })
+      .catch(() => {});
+
+    // 3. Volunteer Info
+    apiFetch<any>('/api/volunteer-info', 'volunteer_info.json', null)
+      .then((cloudInfo) => {
+        if (cloudInfo && typeof cloudInfo === 'object' && cloudInfo.titleEn) {
+          setVolunteerInfo(cloudInfo);
+          setEditVolunteerForm(cloudInfo);
+          try {
+            localStorage.setItem('chaurasiya_volunteer_info', JSON.stringify(cloudInfo));
+          } catch (e) {}
+        }
+      })
+      .catch(() => {});
+
+    // 4. Hidden standard fields
+    apiFetch<string[]>('/api/hidden-standard-fields', 'hidden_standard_fields.json', [])
+      .then((fields) => {
+        if (fields && Array.isArray(fields)) {
+          setHiddenStandardFields(fields);
+          try {
+            localStorage.setItem('csn_hidden_standard_fields', JSON.stringify(fields));
+          } catch (e) {}
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  // Update lists from localStorage on changes
+  const handleFieldsUpdated = () => {
+    setMembCustomFields(getCustomFormFields('membership'));
+    setVolCustomFields(getCustomFormFields('volunteer'));
+    setDonateCustomFields(getCustomFormFields('donation'));
+    try {
+      const saved = localStorage.getItem('csn_hidden_standard_fields');
+      if (saved) {
+        setHiddenStandardFields(JSON.parse(saved));
+      }
+    } catch (e) {}
+  };
 
   const handleSaveDonationInfo = (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,28 +236,49 @@ export default function MembershipDonation({
     onTrackAction('Admin updated Welfare Donation info');
   };
 
+  const handleSaveMembershipInfo = (e: React.FormEvent) => {
+    e.preventDefault();
+    setMembershipInfo(editMembershipForm);
+    localStorage.setItem('chaurasiya_membership_info', JSON.stringify(editMembershipForm));
+    saveFileToGithub('membership_info.json', editMembershipForm, 'Update Core Membership settings').catch(() => {});
+    setShowEditMembershipModal(false);
+    onTrackAction('Admin updated Core Membership settings info');
+  };
+
+  const handleSaveVolunteerInfo = (e: React.FormEvent) => {
+    e.preventDefault();
+    setVolunteerInfo(editVolunteerForm);
+    localStorage.setItem('chaurasiya_volunteer_info', JSON.stringify(editVolunteerForm));
+    saveFileToGithub('volunteer_info.json', editVolunteerForm, 'Update Volunteer settings').catch(() => {});
+    setShowEditVolunteerModal(false);
+    onTrackAction('Admin updated Volunteer settings info');
+  };
+
   // Handle Membership Form Submission via direct Email Pipeline
   const handleMembershipSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!membName || !membPhone || !membAddr) return;
+    if ((isFieldVisible('membership-name') && !membName) || 
+        (isFieldVisible('membership-phone') && !membPhone) || 
+        (isFieldVisible('membership-address') && !membAddr)) return;
 
     setMembSubmitting(true);
-    onTrackAction(`Submit Membership Application: ${membName}`);
+    onTrackAction(`Submit Membership Application: ${membName || 'Applicant'}`);
 
     const formData = new FormData();
-    formData.append('_subject', `New Membership Application (${membAppType.toUpperCase()}) - ${membName}`);
+    formData.append('_subject', `New Membership Application (${membAppType.toUpperCase()}) - ${membName || 'Applicant'}`);
     formData.append('_template', 'table');
     formData.append('_captcha', 'false');
     formData.append('Application Type', membAppType === 'renewal' ? `Renewal (Existing ID: ${existingId})` : 'New Application');
-    formData.append('Full Name', membName);
-    formData.append('Email Address', membEmail || 'Not provided');
-    formData.append('Phone Number', membPhone);
-    formData.append('Address / District', membAddr);
-    formData.append('Occupation', membOccupation || 'Not provided');
-    formData.append('Membership Category', membType);
+    
+    if (isFieldVisible('membership-name')) formData.append('Full Name', membName);
+    if (isFieldVisible('membership-email')) formData.append('Email Address', membEmail || 'Not provided');
+    if (isFieldVisible('membership-phone')) formData.append('Phone Number', membPhone);
+    if (isFieldVisible('membership-address')) formData.append('Address / District', membAddr);
+    if (isFieldVisible('membership-occupation')) formData.append('Occupation', membOccupation || 'Not provided');
+    if (isFieldVisible('membership-type')) formData.append('Membership Category', membType);
     formData.append('Duration', membDuration);
-    formData.append('Payment Method', membPaymentMethod);
-    formData.append('Payment Reference / Txn ID', membPaymentRef || 'Pending');
+    if (isFieldVisible('membership-payment-method')) formData.append('Payment Method', membPaymentMethod);
+    if (isFieldVisible('membership-payment-ref')) formData.append('Payment Reference / Txn ID', membPaymentRef || 'Pending');
 
     membCustomFields.forEach(cf => {
       const val = membCustomAnswers[cf.id];
@@ -179,22 +311,25 @@ export default function MembershipDonation({
   // Handle Volunteer Form Submission
   const handleVolunteerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!volName || !volPhone || !volAddr) return;
+    if ((isFieldVisible('volunteer-name') && !volName) || 
+        (isFieldVisible('volunteer-phone') && !volPhone) || 
+        (isFieldVisible('volunteer-address') && !volAddr)) return;
 
     setVolSubmitting(true);
-    onTrackAction(`Submit Volunteer Registration: ${volName}`);
+    onTrackAction(`Submit Volunteer Registration: ${volName || 'Volunteer'}`);
 
     const formData = new FormData();
-    formData.append('_subject', `New Volunteer Registration - ${volName}`);
+    formData.append('_subject', `New Volunteer Registration - ${volName || 'Volunteer'}`);
     formData.append('_template', 'table');
     formData.append('_captcha', 'false');
-    formData.append('Full Name', volName);
-    formData.append('Email Address', volEmail || 'Not provided');
-    formData.append('Phone Number', volPhone);
-    formData.append('Address', volAddr);
-    formData.append('Areas of Interest', volInterests.join(', '));
-    formData.append('Time Availability', volAvailability);
-    formData.append('Motivation / Notes', volNotes || 'None');
+    
+    if (isFieldVisible('volunteer-name')) formData.append('Full Name', volName);
+    if (isFieldVisible('volunteer-email')) formData.append('Email Address', volEmail || 'Not provided');
+    if (isFieldVisible('volunteer-phone')) formData.append('Phone Number', volPhone);
+    if (isFieldVisible('volunteer-address')) formData.append('Address', volAddr);
+    if (isFieldVisible('volunteer-interests')) formData.append('Areas of Interest', volInterests.join(', '));
+    if (isFieldVisible('volunteer-availability')) formData.append('Time Availability', volAvailability);
+    if (isFieldVisible('volunteer-notes')) formData.append('Motivation / Notes', volNotes || 'None');
 
     volCustomFields.forEach(cf => {
       const val = volCustomAnswers[cf.id];
@@ -240,8 +375,8 @@ export default function MembershipDonation({
     formData.append('_subject', `New Welfare Donation Pledge - NPR ${finalAmt.toLocaleString()}`);
     formData.append('_template', 'table');
     formData.append('_captcha', 'false');
-    formData.append('Donor Name', donorName || 'Anonymous / Well-wisher');
-    formData.append('Donor Phone / Mobile', donorPhone || 'Not provided');
+    if (isFieldVisible('donation-name')) formData.append('Donor Name', donorName || 'Anonymous / Well-wisher');
+    if (isFieldVisible('donation-phone')) formData.append('Donor Phone / Mobile', donorPhone || 'Not provided');
     formData.append('Pledged Amount (NPR)', `NPR ${finalAmt.toLocaleString()}`);
     formData.append('Target Fund', 'Welfare & Healthcare Support Fund');
 
@@ -291,18 +426,30 @@ export default function MembershipDonation({
       {/* 1. MEMBERSHIP TAB */}
       {activeSubTab === 'membership' && (
         <div className="bg-white dark:bg-slate-900 p-6 sm:p-10 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-8">
-          <div>
-            <span className="inline-block px-3 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-extrabold uppercase tracking-wider rounded-full border border-emerald-200 dark:border-emerald-800 mb-2">
-              Direct Society Portal
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-              {lang === 'en' ? 'Apply for Lifetime Society Membership' : 'समाजको आजीवन सदस्यताका लागि आवेदन'}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed max-w-3xl">
-              {lang === 'en'
-                ? 'Fill out your official details below. Your application will be sent directly to csnepalwebsite@gmail.com for central verification and record issuance.'
-                : 'तल आफ्नो आधिकारिक विवरणहरू भर्नुहोस्। तपाईंको आवेदन केन्द्रीय प्रमाणीकरण र रेकर्ड जारी गर्नका लागि सीधा csnepalwebsite@gmail.com मा पठाइनेछ।'}
-            </p>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <span className="inline-block px-3 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-extrabold uppercase tracking-wider rounded-full border border-emerald-200 dark:border-emerald-800 mb-2">
+                {lang === 'en' ? membershipInfo.badgeEn : membershipInfo.badgeNe}
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                {lang === 'en' ? membershipInfo.titleEn : membershipInfo.titleNe}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed max-w-3xl">
+                {lang === 'en' ? membershipInfo.descEn : membershipInfo.descNe}
+              </p>
+            </div>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditMembershipForm(membershipInfo);
+                  setShowEditMembershipModal(true);
+                }}
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-teal-950 text-xs font-black uppercase tracking-wider rounded-xl shadow transition-all shrink-0 cursor-pointer"
+              >
+                ✏️ Edit Texts
+              </button>
+            )}
           </div>
 
           {/* Admin Form Customizer & Category Committee Manager */}
@@ -330,7 +477,7 @@ export default function MembershipDonation({
                 formId="membership"
                 lang={lang}
                 isAdmin={isAdmin}
-                onFieldsUpdated={() => setMembCustomFields(getCustomFormFields('membership'))}
+                onFieldsUpdated={handleFieldsUpdated}
               />
             </div>
           )}
@@ -388,187 +535,177 @@ export default function MembershipDonation({
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Full Name (पूरा नाम) *
-                  </label>
-                  <div className="relative">
-                    <Users className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
-                    <input
-                      type="text"
-                      required
-                      value={membName}
-                      onChange={e => setMembName(e.target.value)}
-                      placeholder="e.g. Ramprasad Chaurasiya"
-                      className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                    />
+                {isFieldVisible('membership-name') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Full Name (पूरा नाम) *
+                    </label>
+                    <div className="relative">
+                      <Users className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                      <input
+                        type="text"
+                        required={isFieldVisible('membership-name')}
+                        value={membName}
+                        onChange={e => setMembName(e.target.value)}
+                        placeholder="e.g. Ramprasad Chaurasiya"
+                        className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Phone / Mobile Number *
-                  </label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
-                    <input
-                      type="tel"
-                      required
-                      value={membPhone}
-                      onChange={e => setMembPhone(e.target.value)}
-                      placeholder="e.g. 9845012345"
-                      className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                    />
+                {isFieldVisible('membership-phone') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Phone / Mobile Number *
+                    </label>
+                    <div className="relative">
+                      <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                      <input
+                        type="tel"
+                        required={isFieldVisible('membership-phone')}
+                        value={membPhone}
+                        onChange={e => setMembPhone(e.target.value)}
+                        placeholder="e.g. 9845012345"
+                        className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
-                    <input
-                      type="email"
-                      value={membEmail}
-                      onChange={e => setMembEmail(e.target.value)}
-                      placeholder="name@gmail.com"
-                      className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                    />
+                {isFieldVisible('membership-email') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                      <input
+                        type="email"
+                        value={membEmail}
+                        onChange={e => setMembEmail(e.target.value)}
+                        placeholder="name@gmail.com"
+                        className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Permanent Address / District *
-                  </label>
-                  <div className="relative">
-                    <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
-                    <input
-                      type="text"
-                      required
-                      value={membAddr}
-                      onChange={e => setMembAddr(e.target.value)}
-                      placeholder="e.g. Parsa, Birgunj Ward 8"
-                      className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                    />
+                {isFieldVisible('membership-address') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Permanent Address / District *
+                    </label>
+                    <div className="relative">
+                      <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                      <input
+                        type="text"
+                        required={isFieldVisible('membership-address')}
+                        value={membAddr}
+                        onChange={e => setMembAddr(e.target.value)}
+                        placeholder="e.g. Parsa, Birgunj Ward 8"
+                        className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Occupation / Profession
-                  </label>
-                  <div className="relative">
-                    <Briefcase className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
-                    <input
-                      type="text"
-                      value={membOccupation}
-                      onChange={e => setMembOccupation(e.target.value)}
-                      placeholder="e.g. Business / Agriculture / Service"
-                      className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                    />
+                {isFieldVisible('membership-occupation') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Occupation / Profession
+                    </label>
+                    <div className="relative">
+                      <Briefcase className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                      <input
+                        type="text"
+                        value={membOccupation}
+                        onChange={e => setMembOccupation(e.target.value)}
+                        placeholder="e.g. Business / Agriculture / Service"
+                        className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Membership Tier (सदस्यता प्रकार)
-                  </label>
-                  <select
-                    value={membType}
-                    onChange={e => setMembType(e.target.value)}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                  >
-                    {memberCategories.map(cat => (
-                      <option key={cat.id} value={`${cat.label.en} (${cat.feeInfo || 'Standard'})`}>
-                        {cat.label[lang] || cat.label.en} ({cat.label.en}) - {cat.feeInfo || 'Fee TBD'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {isFieldVisible('membership-type') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Membership Tier (सदस्यता प्रकार)
+                    </label>
+                    <select
+                      value={membType}
+                      onChange={e => setMembType(e.target.value)}
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                    >
+                      {memberCategories.map(cat => (
+                        <option key={cat.id} value={`${cat.label.en} (${cat.feeInfo || 'Standard'})`}>
+                          {cat.label[lang] || cat.label.en} ({cat.label.en}) - {cat.feeInfo || 'Fee TBD'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Payment Method
-                  </label>
-                  <select
-                    value={membPaymentMethod}
-                    onChange={e => setMembPaymentMethod(e.target.value)}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                  >
-                    <option value="Direct Bank Transfer / eSewa">Direct Bank Transfer / eSewa / Khalti</option>
-                    <option value="Cash Payment to Regional Committee">Cash Payment to Regional Executive Committee</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Payment Reference / Bank Transaction ID
-                  </label>
-                  <div className="relative">
-                    <FileText className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
-                    <input
-                      type="text"
-                      value={membPaymentRef}
-                      onChange={e => setMembPaymentRef(e.target.value)}
-                      placeholder="e.g. eSewa Txn #90281"
-                      className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                    />
+                {isFieldVisible('membership-payment-method') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Payment Method
+                    </label>
+                    <select
+                      value={membPaymentMethod}
+                      onChange={e => setMembPaymentMethod(e.target.value)}
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                    >
+                      <option value="Direct Bank Transfer / eSewa">Direct Bank Transfer / eSewa / Khalti</option>
+                      <option value="Cash Payment to Regional Committee">Cash Payment to Regional Executive Committee</option>
+                    </select>
                   </div>
-                </div>
+                )}
+
+                {isFieldVisible('membership-payment-ref') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Payment Reference / Bank Transaction ID
+                    </label>
+                    <div className="relative">
+                      <FileText className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                      <input
+                        type="text"
+                        value={membPaymentRef}
+                        onChange={e => setMembPaymentRef(e.target.value)}
+                        placeholder="e.g. eSewa Txn #90281"
+                        className="w-full pl-9 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Dynamic Custom Fields for Membership */}
               {membCustomFields.length > 0 && (
                 <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-                  <h5 className="font-extrabold text-teal-900 dark:text-teal-100 text-xs uppercase tracking-wide">
-                    {lang === 'en' ? 'Additional Custom Questions' : 'थप प्रश्नहरू'}:
-                  </h5>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {membCustomFields.map(cf => (
-                      <div key={cf.id} className={cf.fieldType === 'textarea' ? 'sm:col-span-2' : ''}>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          {cf.label[lang] || cf.label.en} {cf.required && '*'}
-                        </label>
-                        {cf.fieldType === 'textarea' ? (
-                          <textarea
-                            required={cf.required}
-                            rows={2}
-                            value={membCustomAnswers[cf.id] || ''}
-                            onChange={e => setMembCustomAnswers({ ...membCustomAnswers, [cf.id]: e.target.value })}
-                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                          />
-                        ) : cf.fieldType === 'select' ? (
-                          <select
-                            required={cf.required}
-                            value={membCustomAnswers[cf.id] || ''}
-                            onChange={e => setMembCustomAnswers({ ...membCustomAnswers, [cf.id]: e.target.value })}
-                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white font-bold"
-                          >
-                            <option value="">Select option...</option>
-                            {cf.options?.map(opt => (
-                              <option key={opt} value={opt}>{opt}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            type={cf.fieldType === 'number' ? 'number' : 'text'}
-                            required={cf.required}
-                            value={membCustomAnswers[cf.id] || ''}
-                            onChange={e => setMembCustomAnswers({ ...membCustomAnswers, [cf.id]: e.target.value })}
-                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                   <h5 className="font-extrabold text-teal-900 dark:text-teal-100 text-xs uppercase tracking-wide">
+                     {lang === 'en' ? 'Additional Custom Questions' : 'थप प्रश्नहरू'}:
+                   </h5>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     {membCustomFields.map(cf => (
+                       <div key={cf.id} className={cf.fieldType === 'textarea' ? 'sm:col-span-2' : ''}>
+                         <CustomFieldRenderer
+                           field={cf}
+                           value={membCustomAnswers[cf.id] || ''}
+                           onChange={val => setMembCustomAnswers({ ...membCustomAnswers, [cf.id]: val })}
+                           lang={lang}
+                         />
+                       </div>
+                     ))}
+                   </div>
                 </div>
               )}
 
@@ -597,18 +734,30 @@ export default function MembershipDonation({
       {/* 2. VOLUNTEER TAB */}
       {activeSubTab === 'volunteer' && (
         <div className="bg-white dark:bg-slate-900 p-6 sm:p-10 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-8">
-          <div>
-            <span className="inline-block px-3 py-1 bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 text-xs font-extrabold uppercase tracking-wider rounded-full border border-teal-200 dark:border-teal-800 mb-2">
-              Volunteer Network Portal
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-              {lang === 'en' ? 'Join the Community Volunteer Taskforce' : 'सामुदायिक स्वयंसेवक कार्यदलमा सामेल हुनुहोस्'}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed max-w-2xl">
-              {lang === 'en'
-                ? 'We organize regional healthcare checkups, agricultural awareness camps for betel farmers, and community cleanliness drives. Submissions are delivered straight to csnepalwebsite@gmail.com.'
-                : 'हामी क्षेत्रीय स्वास्थ्य जाँच, पान कृषकहरूको लागि कृषि सचेतना शिविर, र सामुदायिक सरसफाई अभियानहरू आयोजना गर्दछौं। आवेदनहरू csnepalwebsite@gmail.com मा पठाइन्छ।'}
-            </p>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <span className="inline-block px-3 py-1 bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 text-xs font-extrabold uppercase tracking-wider rounded-full border border-teal-200 dark:border-teal-800 mb-2">
+                {lang === 'en' ? volunteerInfo.badgeEn : volunteerInfo.badgeNe}
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                {lang === 'en' ? volunteerInfo.titleEn : volunteerInfo.titleNe}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed max-w-2xl">
+                {lang === 'en' ? volunteerInfo.descEn : volunteerInfo.descNe}
+              </p>
+            </div>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditVolunteerForm(volunteerInfo);
+                  setShowEditVolunteerModal(true);
+                }}
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-teal-950 text-xs font-black uppercase tracking-wider rounded-xl shadow transition-all shrink-0 cursor-pointer"
+              >
+                ✏️ Edit Texts
+              </button>
+            )}
           </div>
 
           {/* Admin Form Customizer */}
@@ -617,7 +766,7 @@ export default function MembershipDonation({
               formId="volunteer"
               lang={lang}
               isAdmin={isAdmin}
-              onFieldsUpdated={() => setVolCustomFields(getCustomFormFields('volunteer'))}
+              onFieldsUpdated={handleFieldsUpdated}
             />
           )}
 
@@ -640,104 +789,118 @@ export default function MembershipDonation({
           ) : (
             <form onSubmit={handleVolunteerSubmit} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={volName}
-                    onChange={e => setVolName(e.target.value)}
-                    placeholder="e.g. Sunita Chaurasiya"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Phone Number *</label>
-                  <input
-                    type="tel"
-                    required
-                    value={volPhone}
-                    onChange={e => setVolPhone(e.target.value)}
-                    placeholder="e.g. 9812345678"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                  />
-                </div>
+                {isFieldVisible('volunteer-name') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Full Name *</label>
+                    <input
+                      type="text"
+                      required={isFieldVisible('volunteer-name')}
+                      value={volName}
+                      onChange={e => setVolName(e.target.value)}
+                      placeholder="e.g. Sunita Chaurasiya"
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                    />
+                  </div>
+                )}
+                {isFieldVisible('volunteer-phone') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Phone Number *</label>
+                    <input
+                      type="tel"
+                      required={isFieldVisible('volunteer-phone')}
+                      value={volPhone}
+                      onChange={e => setVolPhone(e.target.value)}
+                      placeholder="e.g. 9812345678"
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    value={volEmail}
-                    onChange={e => setVolEmail(e.target.value)}
-                    placeholder="name@gmail.com"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Address / Location *</label>
-                  <input
-                    type="text"
-                    required
-                    value={volAddr}
-                    onChange={e => setVolAddr(e.target.value)}
-                    placeholder="e.g. Bara, Kalaiya"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                  />
-                </div>
+                {isFieldVisible('volunteer-email') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      value={volEmail}
+                      onChange={e => setVolEmail(e.target.value)}
+                      placeholder="name@gmail.com"
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                    />
+                  </div>
+                )}
+                {isFieldVisible('volunteer-address') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Address / Location *</label>
+                    <input
+                      type="text"
+                      required={isFieldVisible('volunteer-address')}
+                      value={volAddr}
+                      onChange={e => setVolAddr(e.target.value)}
+                      placeholder="e.g. Bara, Kalaiya"
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                    />
+                  </div>
+                )}
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Areas of Interest</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {[
-                    'Healthcare Checkup Camps',
-                    'Agricultural Outreach for Betel Farmers',
-                    'Youth & Educational Support',
-                    'Event Management & Logistics',
-                  ].map(interest => (
-                    <button
-                      key={interest}
-                      type="button"
-                      onClick={() => toggleInterest(interest)}
-                      className={`p-3 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer flex items-center justify-between ${
-                        volInterests.includes(interest)
-                          ? 'bg-teal-50 dark:bg-teal-950 border-teal-500 text-teal-800 dark:text-teal-300'
-                          : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
-                      }`}
+              {isFieldVisible('volunteer-interests') && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Areas of Interest</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {[
+                      'Healthcare Checkup Camps',
+                      'Agricultural Outreach for Betel Farmers',
+                      'Youth & Educational Support',
+                      'Event Management & Logistics',
+                    ].map(interest => (
+                      <button
+                        key={interest}
+                        type="button"
+                        onClick={() => toggleInterest(interest)}
+                        className={`p-3 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer flex items-center justify-between ${
+                          volInterests.includes(interest)
+                            ? 'bg-teal-50 dark:bg-teal-950 border-teal-500 text-teal-800 dark:text-teal-300'
+                            : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        {interest}
+                        {volInterests.includes(interest) && <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {isFieldVisible('volunteer-availability') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Availability</label>
+                    <select
+                      value={volAvailability}
+                      onChange={e => setVolAvailability(e.target.value)}
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
                     >
-                      {interest}
-                      {volInterests.includes(interest) && <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                      <option value="Weekends Only">Weekends Only (सप्ताहान्त)</option>
+                      <option value="Major Events & Camps">Major Events & Camps Only (विशेष कार्यक्रम)</option>
+                      <option value="Full-Time On Call">Full-Time On-Call (पूर्णकालीन)</option>
+                    </select>
+                  </div>
+                )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Availability</label>
-                  <select
-                    value={volAvailability}
-                    onChange={e => setVolAvailability(e.target.value)}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                  >
-                    <option value="Weekends Only">Weekends Only (सप्ताहान्त)</option>
-                    <option value="Major Events & Camps">Major Events & Camps Only (विशेष कार्यक्रम)</option>
-                    <option value="Full-Time On Call">Full-Time On-Call (पूर्णकालीन)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Notes / Motivation</label>
-                  <input
-                    type="text"
-                    value={volNotes}
-                    onChange={e => setVolNotes(e.target.value)}
-                    placeholder="e.g. Willing to assist in blood donation camps..."
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                  />
-                </div>
+                {isFieldVisible('volunteer-notes') && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Notes / Motivation</label>
+                    <input
+                      type="text"
+                      value={volNotes}
+                      onChange={e => setVolNotes(e.target.value)}
+                      placeholder="e.g. Willing to assist in blood donation camps..."
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Dynamic Custom Fields for Volunteer */}
@@ -749,38 +912,12 @@ export default function MembershipDonation({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {volCustomFields.map(cf => (
                       <div key={cf.id} className={cf.fieldType === 'textarea' ? 'sm:col-span-2' : ''}>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          {cf.label[lang] || cf.label.en} {cf.required && '*'}
-                        </label>
-                        {cf.fieldType === 'textarea' ? (
-                          <textarea
-                            required={cf.required}
-                            rows={2}
-                            value={volCustomAnswers[cf.id] || ''}
-                            onChange={e => setVolCustomAnswers({ ...volCustomAnswers, [cf.id]: e.target.value })}
-                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                          />
-                        ) : cf.fieldType === 'select' ? (
-                          <select
-                            required={cf.required}
-                            value={volCustomAnswers[cf.id] || ''}
-                            onChange={e => setVolCustomAnswers({ ...volCustomAnswers, [cf.id]: e.target.value })}
-                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white font-bold"
-                          >
-                            <option value="">Select option...</option>
-                            {cf.options?.map(opt => (
-                              <option key={opt} value={opt}>{opt}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            type={cf.fieldType === 'number' ? 'number' : 'text'}
-                            required={cf.required}
-                            value={volCustomAnswers[cf.id] || ''}
-                            onChange={e => setVolCustomAnswers({ ...volCustomAnswers, [cf.id]: e.target.value })}
-                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white"
-                          />
-                        )}
+                        <CustomFieldRenderer
+                          field={cf}
+                          value={volCustomAnswers[cf.id] || ''}
+                          onChange={val => setVolCustomAnswers({ ...volCustomAnswers, [cf.id]: val })}
+                          lang={lang}
+                        />
                       </div>
                     ))}
                   </div>
@@ -850,7 +987,7 @@ export default function MembershipDonation({
                 formId="donation"
                 lang={lang}
                 isAdmin={isAdmin}
-                onFieldsUpdated={() => setDonateCustomFields(getCustomFormFields('donation'))}
+                onFieldsUpdated={handleFieldsUpdated}
               />
             </div>
           )}
@@ -874,26 +1011,30 @@ export default function MembershipDonation({
           ) : (
             <form onSubmit={handleDonateSubmit} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">Donor Full Name</label>
-                  <input
-                    type="text"
-                    value={donorName}
-                    onChange={(e) => setDonorName(e.target.value)}
-                    placeholder="e.g. Alok Kumar Chaurasiya"
-                    className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">Donor Phone / Mobile</label>
-                  <input
-                    type="tel"
-                    value={donorPhone}
-                    onChange={(e) => setDonorPhone(e.target.value)}
-                    placeholder="e.g. 9845012345"
-                    className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400"
-                  />
-                </div>
+                {isFieldVisible('donation-name') && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">Donor Full Name</label>
+                    <input
+                      type="text"
+                      value={donorName}
+                      onChange={(e) => setDonorName(e.target.value)}
+                      placeholder="e.g. Alok Kumar Chaurasiya"
+                      className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400"
+                    />
+                  </div>
+                )}
+                {isFieldVisible('donation-phone') && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">Donor Phone / Mobile</label>
+                    <input
+                      type="tel"
+                      value={donorPhone}
+                      onChange={(e) => setDonorPhone(e.target.value)}
+                      placeholder="e.g. 9845012345"
+                      className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -950,38 +1091,13 @@ export default function MembershipDonation({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {donateCustomFields.map(cf => (
                       <div key={cf.id} className={cf.fieldType === 'textarea' ? 'sm:col-span-2' : ''}>
-                        <label className="block text-xs font-bold text-teal-300 mb-1">
-                          {cf.label[lang] || cf.label.en} {cf.required && '*'}
-                        </label>
-                        {cf.fieldType === 'textarea' ? (
-                          <textarea
-                            required={cf.required}
-                            rows={2}
-                            value={donateCustomAnswers[cf.id] || ''}
-                            onChange={e => setDonateCustomAnswers({ ...donateCustomAnswers, [cf.id]: e.target.value })}
-                            className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400"
-                          />
-                        ) : cf.fieldType === 'select' ? (
-                          <select
-                            required={cf.required}
-                            value={donateCustomAnswers[cf.id] || ''}
-                            onChange={e => setDonateCustomAnswers({ ...donateCustomAnswers, [cf.id]: e.target.value })}
-                            className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400 font-bold"
-                          >
-                            <option value="">Select option...</option>
-                            {cf.options?.map(opt => (
-                              <option key={opt} value={opt}>{opt}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            type={cf.fieldType === 'number' ? 'number' : 'text'}
-                            required={cf.required}
-                            value={donateCustomAnswers[cf.id] || ''}
-                            onChange={e => setDonateCustomAnswers({ ...donateCustomAnswers, [cf.id]: e.target.value })}
-                            className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400"
-                          />
-                        )}
+                        <CustomFieldRenderer
+                          field={cf}
+                          value={donateCustomAnswers[cf.id] || ''}
+                          onChange={val => setDonateCustomAnswers({ ...donateCustomAnswers, [cf.id]: val })}
+                          lang={lang}
+                          theme="dark"
+                        />
                       </div>
                     ))}
                   </div>
@@ -1148,6 +1264,182 @@ export default function MembershipDonation({
                   className="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-bold cursor-pointer shadow-md"
                 >
                   Save Donation Settings
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Membership Portal Texts Modal */}
+      {showEditMembershipModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-4">✏️ Edit Membership Portal Texts</h3>
+            <form onSubmit={handleSaveMembershipInfo} className="space-y-4 text-sm font-medium">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-bold">Badge Text (English)</label>
+                  <input
+                    type="text"
+                    required
+                    value={editMembershipForm.badgeEn}
+                    onChange={(e) => setEditMembershipForm({ ...editMembershipForm, badgeEn: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-bold">Badge Text (Nepali)</label>
+                  <input
+                    type="text"
+                    required
+                    value={editMembershipForm.badgeNe}
+                    onChange={(e) => setEditMembershipForm({ ...editMembershipForm, badgeNe: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-bold">Title (English)</label>
+                  <input
+                    type="text"
+                    required
+                    value={editMembershipForm.titleEn}
+                    onChange={(e) => setEditMembershipForm({ ...editMembershipForm, titleEn: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-bold">Title (Nepali)</label>
+                  <input
+                    type="text"
+                    required
+                    value={editMembershipForm.titleNe}
+                    onChange={(e) => setEditMembershipForm({ ...editMembershipForm, titleNe: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-slate-700 dark:text-slate-300 font-bold">Description (English)</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={editMembershipForm.descEn}
+                  onChange={(e) => setEditMembershipForm({ ...editMembershipForm, descEn: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="text-slate-700 dark:text-slate-300 font-bold">Description (Nepali)</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={editMembershipForm.descNe}
+                  onChange={(e) => setEditMembershipForm({ ...editMembershipForm, descNe: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-3 border-t dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowEditMembershipModal(false)}
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg font-bold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-bold cursor-pointer shadow-md"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Volunteer Portal Texts Modal */}
+      {showEditVolunteerModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-4">✏️ Edit Volunteer Portal Texts</h3>
+            <form onSubmit={handleSaveVolunteerInfo} className="space-y-4 text-sm font-medium">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-bold">Badge Text (English)</label>
+                  <input
+                    type="text"
+                    required
+                    value={editVolunteerForm.badgeEn}
+                    onChange={(e) => setEditVolunteerForm({ ...editVolunteerForm, badgeEn: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-bold">Badge Text (Nepali)</label>
+                  <input
+                    type="text"
+                    required
+                    value={editVolunteerForm.badgeNe}
+                    onChange={(e) => setEditVolunteerForm({ ...editVolunteerForm, badgeNe: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-bold">Title (English)</label>
+                  <input
+                    type="text"
+                    required
+                    value={editVolunteerForm.titleEn}
+                    onChange={(e) => setEditVolunteerForm({ ...editVolunteerForm, titleEn: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-700 dark:text-slate-300 font-bold">Title (Nepali)</label>
+                  <input
+                    type="text"
+                    required
+                    value={editVolunteerForm.titleNe}
+                    onChange={(e) => setEditVolunteerForm({ ...editVolunteerForm, titleNe: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-slate-700 dark:text-slate-300 font-bold">Description (English)</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={editVolunteerForm.descEn}
+                  onChange={(e) => setEditVolunteerForm({ ...editVolunteerForm, descEn: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="text-slate-700 dark:text-slate-300 font-bold">Description (Nepali)</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={editVolunteerForm.descNe}
+                  onChange={(e) => setEditVolunteerForm({ ...editVolunteerForm, descNe: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-3 border-t dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowEditVolunteerModal(false)}
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg font-bold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-bold cursor-pointer shadow-md"
+                >
+                  Save Changes
                 </button>
               </div>
             </form>

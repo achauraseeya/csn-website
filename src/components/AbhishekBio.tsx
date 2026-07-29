@@ -9,9 +9,10 @@ interface AbhishekBioProps {
   lang: Language;
   onTrackAction: (actionName: string) => void;
   isAdmin?: boolean;
+  onUpdateAvatar?: (url: string) => void;
 }
 
-export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: AbhishekBioProps) {
+export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUpdateAvatar }: AbhishekBioProps) {
   // Local profile state persisted in localStorage
   const [profile, setProfile] = useState(() => {
     let profileData: any = null;
@@ -87,17 +88,20 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
             quoteEn: cloudProfile.quoteEn || '"Technology holds the power to simplify grassroots community work. By building fast, accessible portals, we elevate traditional agriculture and unite our people under one digital roof."',
             quoteNe: cloudProfile.quoteNe || '"प्रविधिले तल्लो तहका सामुदायिक कार्यहरूलाई सरलीकरण गर्ने शक्ति राख्छ। द्रुत र पहुँचयोग्य पोर्टलहरू निर्माण गरेर, हामी परम्परागत कृषि र हाम्रो समाजलाई एकै थलोमा जोड्छौँ।"',
             portalTextEn: cloudProfile.portalTextEn || 'Discover complete software projects, research papers, and technical blogs at www.achaurasiya.com.np',
-            portalTextNe: cloudProfile.portalTextNe || 'www.achaurasiya.com.np मा सम्पूर्ण सफ्टवेयर परियोजनाहरू, अनुसन्धान पत्रहरू र ब्लगहरू हेर्नुहोस्।',
+            portalTextNe: cloudProfile.portalTextNe || 'www.achaurasiya.com.np मा सम्पूर्ण सफ्टवेयर परियोजनाहरू, अनुसन्धान पत्रहरू र ब्लगहरू हेर्याउनुहोस्।',
             contributions: Array.isArray(cloudProfile.contributions) ? cloudProfile.contributions : []
           };
           setProfile(updatedProfile);
+          if (onUpdateAvatar) {
+            onUpdateAvatar(updatedProfile.avatarUrl);
+          }
           try {
             localStorage.setItem('chaurasiya_abhishek_profile_data', JSON.stringify(updatedProfile));
           } catch (e) {}
         }
       })
       .catch(() => {});
-  }, [isAdmin]);
+  }, [isAdmin, onUpdateAvatar]);
 
   // Admin edit modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -206,6 +210,9 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false }: Ab
     setProfile(updatedProfile);
     localStorage.setItem('chaurasiya_abhishek_profile_data', JSON.stringify(updatedProfile));
     saveFileToGithub('abhishek_profile.json', updatedProfile, 'Update Abhishek profile data').catch(() => {});
+    if (onUpdateAvatar) {
+      onUpdateAvatar(updatedProfile.avatarUrl);
+    }
     setIsEditModalOpen(false);
     onTrackAction('Admin edited Abhishek profile');
   };

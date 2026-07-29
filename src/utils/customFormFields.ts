@@ -2,13 +2,15 @@ import { saveFileToGithub, apiFetch } from './githubDb';
 
 export type FormId = 'membership' | 'volunteer' | 'matrimonial' | 'contact' | 'add-member' | 'donation' | 'event_volunteer';
 
+export type CustomFieldType = 'text' | 'number' | 'textarea' | 'select' | 'checkbox' | 'date' | 'email' | 'phone' | 'radio' | 'file' | 'time' | 'url' | 'password' | 'multiselect';
+
 export interface CustomFormField {
   id: string;
   formId: FormId;
   label: { en: string; ne: string };
-  fieldType: 'text' | 'number' | 'textarea' | 'select';
+  fieldType: CustomFieldType;
   required: boolean;
-  options?: string[]; // for select type
+  options?: string[]; // for select or radio type
 }
 
 const STORAGE_KEY = 'csn_custom_form_fields_v1';
@@ -71,3 +73,44 @@ export function deleteCustomFormField(fieldId: string, formId: FormId): CustomFo
     return [];
   }
 }
+
+export function getHiddenStandardFields(): string[] {
+  try {
+    const raw = localStorage.getItem('csn_hidden_standard_fields');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function toggleHiddenStandardField(fieldKey: string): string[] {
+  try {
+    const raw = localStorage.getItem('csn_hidden_standard_fields');
+    const all: string[] = raw ? JSON.parse(raw) : [];
+    let updated: string[];
+    if (all.includes(fieldKey)) {
+      updated = all.filter(k => k !== fieldKey);
+    } else {
+      updated = [...all, fieldKey];
+    }
+    localStorage.setItem('csn_hidden_standard_fields', JSON.stringify(updated));
+    saveFileToGithub('hidden_standard_fields.json', updated, `Toggle standard field: ${fieldKey}`).catch(() => {});
+    return updated;
+  } catch {
+    return [];
+  }
+}
+
+export async function syncHiddenStandardFieldsFromGithub(): Promise<string[]> {
+  try {
+    const cloud = await apiFetch<string[]>('/api/hidden-standard-fields', 'hidden_standard_fields.json', []);
+    if (cloud && Array.isArray(cloud)) {
+      localStorage.setItem('csn_hidden_standard_fields', JSON.stringify(cloud));
+      return cloud;
+    }
+  } catch (e) {
+    console.warn('Failed to sync hidden standard fields from GitHub:', e);
+  }
+  return [];
+}
+
