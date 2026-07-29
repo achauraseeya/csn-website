@@ -220,7 +220,7 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
                 <h5 className="font-bold text-slate-900">Host App on GitHub Pages</h5>
               </div>
               <ul className="text-sm text-slate-600 space-y-2 pl-11 list-disc">
-                <li>Use the <strong>Export to GitHub</strong> option in AI Studio settings to push this code to your repository.</li>
+                <li>Use the <strong>Export to GitHub</strong> option in your settings menu to push this code to your repository.</li>
                 <li><strong>Magic step:</strong> I have included a <code>.github/workflows/deploy.yml</code> file. This means GitHub will <strong>automatically build the app</strong> for you!</li>
                 <li>Go to your GitHub Repository Settings -&gt; Pages. Under "Build and deployment", set Source to <strong>GitHub Actions</strong>.</li>
                 <li>Wait 2-3 minutes for the Github Action to finish running. (Check the "Actions" tab in your repo).</li>

@@ -1,3 +1,8 @@
+/**
+ * Designed & Engineered by Abhishek Kumar Chaurasiya
+ * Official Chaurasiya Samaj Nepal Website
+ */
+
 import { fetchDriveFolderImagesClient } from './utils/driveClient';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram, ExternalLink, X, Edit, Globe, Phone, MapPin, Sparkles } from 'lucide-react';

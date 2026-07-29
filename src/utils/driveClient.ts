@@ -1,21 +1,26 @@
+/**
+ * Designed & Engineered by Abhishek Kumar Chaurasiya
+ * Official Chaurasiya Samaj Nepal Website Drive Client Utilities
+ */
+
 export async function fetchDriveFolderImagesClient(folderId: string): Promise<{ files: Array<{ id: string; name: string; type: "photo" | "video" }> }> {
   if (!folderId) return { files: [] };
 
   try {
-    // 1. Try relative API first (works when hosted together on AI Studio or a Node server)
+    // 1. Try relative API first (works when hosted together on a Node server or local development)
     try {
       const res = await fetch(`/api/drive-folder-images?folderId=${folderId}`);
       if (res.ok) {
         const data = await res.json();
         if (data && Array.isArray(data.files) && data.files.length > 0) {
           return data;
+          }
         }
-      }
     } catch (e) {
       console.warn("Relative backend fetch failed, trying external proxies...", e);
     }
 
-    // 2. Try fetching via hosted AI Studio Cloud Run backends (with CORS enabled)
+    // 2. Try fetching via hosted production cloud backends (with CORS enabled)
     // This allows static deployments (like GitHub Pages) to fetch drive folder contents reliably!
     const backendUrls = [
       `https://ais-dev-gcntazvnndte5whjvz5kvt-253948748508.asia-southeast1.run.app/api/drive-folder-images?folderId=${folderId}`,
