@@ -308,8 +308,36 @@ export async function apiSave<T>(
   commitMessage: string,
   authHeaders?: Record<string, string>
 ): Promise<T[]> {
-  await saveFileToGithub(fileName, allUpdatedItems, commitMessage);
-  return allUpdatedItems;
+  try {
+    await saveFileToGithub(fileName, allUpdatedItems, commitMessage);
+    return allUpdatedItems;
+  } catch (err) {
+    if (err instanceof Error && err.message === 'QUEUED_FOR_APPROVAL') {
+      let originalData: T[] = [];
+      try {
+        originalData = await apiFetch<T[]>(endpoint, fileName, []);
+      } catch (e) {
+        console.error('Failed to fetch original data after queuing approval:', e);
+      }
+      
+      const storageKeyMap: Record<string, string> = {
+        'community_notices.json': 'chaurasiya_notices',
+        'journey_albums.json': 'chaurasiya_journey_albums',
+        'community_events.json': 'chaurasiya_events',
+        'community_members.json': 'chaurasiya_members',
+        'community_documents.json': 'chaurasiya_documents',
+        'community_networks.json': 'chaurasiya_networks'
+      };
+      
+      const key = storageKeyMap[fileName];
+      if (key) {
+        localStorage.setItem(key, JSON.stringify(originalData));
+      }
+      
+      return originalData;
+    }
+    throw err;
+  }
 }
 
 export async function apiDelete<T extends { id: string }>(
@@ -319,6 +347,34 @@ export async function apiDelete<T extends { id: string }>(
   commitMessage: string,
   authHeaders?: Record<string, string>
 ): Promise<T[]> {
-  await saveFileToGithub(fileName, itemsAfterDeletion, commitMessage);
-  return itemsAfterDeletion;
+  try {
+    await saveFileToGithub(fileName, itemsAfterDeletion, commitMessage);
+    return itemsAfterDeletion;
+  } catch (err) {
+    if (err instanceof Error && err.message === 'QUEUED_FOR_APPROVAL') {
+      let originalData: T[] = [];
+      try {
+        originalData = await apiFetch<T[]>(deleteEndpoint, fileName, []);
+      } catch (e) {
+        console.error('Failed to fetch original data after queuing approval:', e);
+      }
+      
+      const storageKeyMap: Record<string, string> = {
+        'community_notices.json': 'chaurasiya_notices',
+        'journey_albums.json': 'chaurasiya_journey_albums',
+        'community_events.json': 'chaurasiya_events',
+        'community_members.json': 'chaurasiya_members',
+        'community_documents.json': 'chaurasiya_documents',
+        'community_networks.json': 'chaurasiya_networks'
+      };
+      
+      const key = storageKeyMap[fileName];
+      if (key) {
+        localStorage.setItem(key, JSON.stringify(originalData));
+      }
+      
+      return originalData;
+    }
+    throw err;
+  }
 }
