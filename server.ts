@@ -28,6 +28,8 @@ async function startServer() {
 
   app.use('/uploads', express.static(UPLOADS_DIR));
   app.use('/uploads', express.static(path.join(DATA_DIR, 'uploads')));
+  app.use('/assets/uploads', express.static(UPLOADS_DIR));
+  app.use('/assets/uploads', express.static(path.join(DATA_DIR, 'uploads')));
 
   // --- Universal Image Upload Endpoint ---
   app.post("/api/upload-image", (req, res) => {

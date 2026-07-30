@@ -1,4 +1,4 @@
-export async function compressImageToBase64(file: File, maxSizeKB: number = 500): Promise<string> {
+export async function compressImageToBase64(file: File, maxSizeKB: number = 300): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -13,8 +13,8 @@ export async function compressImageToBase64(file: File, maxSizeKB: number = 500)
         // Calculate aspect ratio
         const aspectRatio = width / height;
 
-        // Initial aggressive resize if it's very large
-        const MAX_DIMENSION = 1200;
+        // Adaptive max dimension for compact base64 size
+        const MAX_DIMENSION = maxSizeKB <= 200 ? 600 : (maxSizeKB <= 350 ? 800 : 1000);
         if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
           if (width > height) {
             width = MAX_DIMENSION;
@@ -25,8 +25,8 @@ export async function compressImageToBase64(file: File, maxSizeKB: number = 500)
           }
         }
 
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = Math.round(width);
+        canvas.height = Math.round(height);
         const ctx = canvas.getContext('2d');
         if (!ctx) {
           return reject(new Error('Canvas context not found'));
@@ -34,9 +34,9 @@ export async function compressImageToBase64(file: File, maxSizeKB: number = 500)
         ctx.drawImage(img, 0, 0, width, height);
 
         // Binary search for quality
-        let minQ = 0.1;
-        let maxQ = 0.9;
-        let quality = 0.7;
+        let minQ = 0.2;
+        let maxQ = 0.85;
+        let quality = 0.75;
         let resultBase64 = canvas.toDataURL('image/jpeg', quality);
         
         let attempts = 0;
@@ -45,7 +45,7 @@ export async function compressImageToBase64(file: File, maxSizeKB: number = 500)
         // roughly estimate size of base64
         const getSize = (b64: string) => Math.round((b64.length * 3) / 4);
 
-        while (attempts < 8 && getSize(resultBase64) > targetSize) {
+        while (attempts < 8 && getSize(resultBase64) > targetSize && quality > 0.15) {
           maxQ = quality;
           quality = (minQ + maxQ) / 2;
           resultBase64 = canvas.toDataURL('image/jpeg', quality);

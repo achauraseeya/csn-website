@@ -76,7 +76,7 @@ export async function uploadImageToGithub(fileName: string, base64Data: string, 
       const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${primaryPath}`;
       const sha = await fetchFileSha(primaryPath, settings, pat);
 
-      const res = await fetch(url, {
+      fetch(url, {
         method: 'PUT',
         headers: {
           'Authorization': `token ${pat}`,
@@ -89,19 +89,20 @@ export async function uploadImageToGithub(fileName: string, base64Data: string, 
           branch: settings.branch,
           ...(sha ? { sha } : {})
         })
+      }).then(async (res) => {
+        if (res.ok) {
+          // Also sync to public/assets/uploads/ and public/uploads/ for static build compatibility
+          pushContentToGithubRepo(`public/assets/uploads/${safeName}`, base64Content, commitMessage, settings, pat, true).catch(() => {});
+          pushContentToGithubRepo(`public/uploads/${safeName}`, base64Content, commitMessage, settings, pat, true).catch(() => {});
+        } else {
+          const errTxt = await res.text().catch(() => '');
+          console.error(`GitHub API image upload failed (${res.status}):`, errTxt);
+        }
+      }).catch((err) => {
+        console.warn('GitHub image sync failed:', err);
       });
-
-      if (res.ok) {
-        // Also sync to public/assets/uploads/ for static build compatibility
-        pushContentToGithubRepo(`public/assets/uploads/${safeName}`, base64Content, commitMessage, settings, pat, true).catch(() => {});
-
-        return `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${primaryPath}`;
-      } else {
-        const errTxt = await res.text().catch(() => '');
-        console.error(`GitHub API image upload failed (${res.status}):`, errTxt);
-      }
     } catch (err) {
-      console.warn('GitHub image sync failed:', err);
+      console.warn('GitHub image sync initialization failed:', err);
     }
   }
 
