@@ -282,7 +282,7 @@ export const designerProfile: AbhishekProfile = {
   },
   education: 'Bachelor of Science in Computer Science & Information Technology (B.Sc. CSIT)',
   skills: ['TypeScript / JavaScript', 'React / Next.js', 'Blogger Custom XML Templating', 'Node.js & Cloud Architecture', 'UI/UX Design (Figma)', 'Mobile App Development (Flutter)'],
-  email: 'achauraseeya@gmail.com',
+  email: 'contact@achaurasiya.com.np, abhishek.chaurasiya@nepal.gov.np',
   phone: '+977-9812345678',
 };
 

@@ -73,6 +73,7 @@ export default function Navigation({
     { id: 'matrimonial', label: { en: 'Matrimonial Portal', ne: 'वैवाहिक जोडी' } },
     { id: 'events', label: { en: 'Events & Calendar', ne: 'पात्रो' } },
     { id: 'renowned-people', label: { en: 'Renowned People', ne: 'प्रख्यात व्यक्तित्वहरू' } },
+    { id: 'abhishek-bio', label: { en: 'Architect & CTO Profile', ne: 'इन्जिनियर तथा सीटीओ' } },
   ];
 
   const mediaSubItems = [

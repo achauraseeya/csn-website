@@ -1,0 +1,8 @@
+# Robots.txt for Chaurasiya Samaj Nepal & Search Engine Crawlers
+
+User-agent: *
+Allow: /
+Allow: /?page=abhishek
+Allow: /?tab=*
+
+Sitemap: https://csnepal.org/sitemap.xml

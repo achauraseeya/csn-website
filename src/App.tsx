@@ -1031,6 +1031,8 @@ export default function App() {
   useEffect(() => {
     const parseUrlDeepLink = () => {
       const searchParams = new URLSearchParams(window.location.search);
+      const pageParam = searchParams.get('page') || searchParams.get('profile');
+      const tabParam = searchParams.get('tab');
       const postParam = searchParams.get('post') || searchParams.get('album');
       const noticeParam = searchParams.get('notice');
       const eventParam = searchParams.get('event');
@@ -1038,7 +1040,16 @@ export default function App() {
       const memberParam = searchParams.get('member');
       const networkParam = searchParams.get('network') || searchParams.get('branch');
 
-      if (postParam) {
+      if (
+        pageParam === 'abhishek' ||
+        tabParam === 'abhishek-bio' ||
+        searchParams.has('abhishek') ||
+        window.location.hash.includes('abhishek') ||
+        window.location.pathname.endsWith('/abhishek')
+      ) {
+        setCurrentTab('abhishek-bio');
+        window.history.replaceState({ tab: 'abhishek-bio' }, '', '?page=abhishek');
+      } else if (postParam) {
         setSelectedAlbumId(postParam);
         setCurrentTab('album-detail');
         window.history.replaceState({ tab: 'album-detail', albumId: postParam }, '', window.location.href);
@@ -1058,6 +1069,8 @@ export default function App() {
         setSelectedNetworkId(networkParam);
         setCurrentTab('chapter-detail');
         window.history.replaceState({ tab: 'chapter-detail', networkId: networkParam }, '', window.location.href);
+      } else if (tabParam) {
+        setCurrentTab(tabParam);
       }
     };
 
@@ -1832,7 +1845,7 @@ export default function App() {
     // Standardize initial history state if no state exists and no query string deep link is active
     if (!window.history.state) {
       const searchParams = new URLSearchParams(window.location.search);
-      const hasDeepLink = searchParams.has('post') || searchParams.has('album') || searchParams.has('notice') || searchParams.has('event') || searchParams.has('news') || searchParams.has('blog') || searchParams.has('member') || searchParams.has('network') || searchParams.has('branch');
+      const hasDeepLink = searchParams.has('page') || searchParams.has('tab') || searchParams.has('post') || searchParams.has('album') || searchParams.has('notice') || searchParams.has('event') || searchParams.has('news') || searchParams.has('blog') || searchParams.has('member') || searchParams.has('network') || searchParams.has('branch');
       if (!hasDeepLink) {
         window.history.replaceState({ tab: 'history' }, '', window.location.href);
       }
@@ -1877,7 +1890,13 @@ export default function App() {
   // Switch tab scroll helper
   const handleNavigate = (tabId: string) => {
     if (tabId !== currentTab) {
-      window.history.pushState({ tab: tabId }, '');
+      if (tabId === 'abhishek-bio') {
+        window.history.pushState({ tab: 'abhishek-bio' }, '', '?page=abhishek');
+      } else if (tabId === 'history') {
+        window.history.pushState({ tab: 'history' }, '', '/');
+      } else {
+        window.history.pushState({ tab: tabId }, '', `?tab=${tabId}`);
+      }
     }
     setCurrentTab(tabId);
     if (tabId !== 'single-post') {

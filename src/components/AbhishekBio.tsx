@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Phone, Github, Award, BookOpen, Cpu, ShieldCheck, Heart, Edit, Save, X, ExternalLink, Upload, Globe } from 'lucide-react';
+import { Mail, Phone, Github, Linkedin, Facebook, Instagram, Award, BookOpen, Cpu, ShieldCheck, Heart, Edit, Save, X, ExternalLink, Upload, Globe, Calendar, Share2, Check } from 'lucide-react';
 import { Language } from '../types';
 import { designerProfile as defaultDesignerProfile } from '../data/communityData';
 import { uploadImageToGithub, apiFetch, saveFileToGithub } from '../utils/githubDb';
@@ -13,6 +13,8 @@ interface AbhishekBioProps {
 }
 
 export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUpdateAvatar }: AbhishekBioProps) {
+  const [copiedShare, setCopiedShare] = useState(false);
+
   // Local profile state persisted in localStorage
   const [profile, setProfile] = useState(() => {
     let profileData: any = null;
@@ -33,6 +35,9 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
       email: profileData?.email || defaultDesignerProfile.email,
       phone: profileData?.phone || defaultDesignerProfile.phone || '+977-9800000000',
       github: profileData?.github || 'https://github.com/achauraseeya',
+      linkedin: profileData?.linkedin || 'https://www.linkedin.com/in/achaurasiya',
+      facebook: profileData?.facebook || 'https://www.facebook.com/achaurasiya',
+      instagram: profileData?.instagram || 'https://www.instagram.com/achauraseeya',
       websiteUrl: profileData?.websiteUrl || 'https://www.achaurasiya.com.np',
       avatarUrl: profileData?.avatarUrl || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200',
       skills: profileData?.skills || defaultDesignerProfile.skills,
@@ -42,25 +47,28 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
       portalTextNe: profileData?.portalTextNe || 'www.achaurasiya.com.np मा सम्पूर्ण सफ्टवेयर परियोजनाहरू, अनुसन्धान पत्रहरू र ब्लगहरू हेर्नुहोस्।',
       contributions: profileData?.contributions || [
         {
-          title: { en: 'Centralized Member Database Deployed', ne: 'केन्द्रीकृत सदस्य डाटाबेस' },
+          title: { en: 'Engineer', ne: 'ईन्जिनियर' },
           desc: {
-            en: 'Designed and deployed a responsive cloud directory to organize and verify community members, preventing fraud.',
-            ne: 'समुदायका सदस्यहरूलाई व्यवस्थित र प्रमाणित गर्न एक उत्तरदायी क्लाउड निर्देशिका डिजाइन र तैनात गर्नुभयो।',
+            en: 'Ministry of Infrastructure Development, Nepal',
+            ne: 'पूर्वाधार विकास मन्त्रालय'
           },
+          year: '2022 - Present'
         },
         {
-          title: { en: 'Blogger.com Integration Engine', ne: 'ब्लगर एकीकरण इन्जिन' },
+          title: { en: 'M.Tech (Structural Engineering)', ne: 'M. Tech (स्ट्रक्चरल ईन्जिनियरिङ्ग)' },
           desc: {
-            en: 'Developed custom XML template compiler that generates secure blogger.com layouts for low-budget deployment.',
-            ne: 'कम बजेटको प्रयोगका लागि सुरक्षित ब्लगर ढाँचाहरू उत्पन्न गर्ने अनुकूलन XML टेम्पलेट कम्पाइलर विकास गर्नुभयो।',
+            en: 'IIT Bombay',
+            ne: 'भारतीय प्रौद्योगिकी संस्थान बम्बई'
           },
+          year: '2020 - 2022'
         },
         {
-          title: { en: 'Rural Farmers Mobile Support', ne: 'ग्रामीण किसान मोबाइल सहयोग' },
+          title: { en: 'B.E. (Civil Engineering)', ne: 'B.E. (सिभिल ईन्जिनियरिङ्ग)' },
           desc: {
-            en: 'Engineered notification portals so rural betel leaf (paan) farmers receive instant cold and storm warning bulletins.',
-            ne: 'ग्रामीण पान उत्पादक कृषकहरूले तत्काल चिसो र आँधीबेहरीको चेतावनी बुलेटिनहरू प्राप्त गर्न सक्ने गरी सूचना पोर्टलको निर्माण गर्नुभयो।',
+            en: 'Ramaiah Institute of Technology',
+            ne: 'रमैया इन्स्टिच्युट अफ टेक्नोलोजी'
           },
+          year: '2015 - 2019'
         },
       ]
     };
@@ -82,6 +90,9 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
             email: cloudProfile.email || defaultDesignerProfile.email,
             phone: cloudProfile.phone || defaultDesignerProfile.phone || '+977-9800000000',
             github: cloudProfile.github || 'https://github.com/achauraseeya',
+            linkedin: cloudProfile.linkedin || 'https://www.linkedin.com/in/achaurasiya',
+            facebook: cloudProfile.facebook || 'https://www.facebook.com/achaurasiya',
+            instagram: cloudProfile.instagram || 'https://www.instagram.com/achauraseeya',
             websiteUrl: cloudProfile.websiteUrl || 'https://www.achaurasiya.com.np',
             avatarUrl: cloudProfile.avatarUrl || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200',
             skills: Array.isArray(cloudProfile.skills) ? cloudProfile.skills : defaultDesignerProfile.skills,
@@ -103,6 +114,134 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
       .catch(() => {});
   }, [isAdmin, onUpdateAvatar]);
 
+  // Dynamic Search Engine Meta Tags & JSON-LD Structured Data Injection for SEO Crawlers
+  useEffect(() => {
+    const origTitle = document.title;
+    document.title = "Abhishek Kumar Chaurasiya - Structural Engineer & Public Sector Professional | Chaurasiya Samaj Nepal";
+
+    const shareUrl = `${window.location.origin}${window.location.pathname}?page=abhishek`;
+
+    // Helper to set or create meta tag
+    const setMetaTag = (attr: string, key: string, content: string) => {
+      let element = document.querySelector(`meta[${attr}="${key}"]`);
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attr, key);
+        document.head.appendChild(element);
+      }
+      element.setAttribute('content', content);
+    };
+
+    setMetaTag('name', 'description', 'Official executive biography and professional profile of Er. Abhishek Kumar Chaurasiya - Structural Engineer at Ministry of Infrastructure Development Nepal, M.Tech IIT Bombay.');
+    setMetaTag('name', 'keywords', 'Abhishek Kumar Chaurasiya, Abhishek Chaurasiya, Er. Abhishek Chaurasiya, Structural Engineer Nepal, IIT Bombay, MSRIT, Ministry of Infrastructure Development, Chaurasiya Samaj Nepal');
+    setMetaTag('name', 'author', 'Abhishek Kumar Chaurasiya');
+    setMetaTag('property', 'og:title', 'Abhishek Kumar Chaurasiya - Structural Engineer & Public Sector Professional');
+    setMetaTag('property', 'og:description', 'Official biography of Er. Abhishek Kumar Chaurasiya. Structural Engineer at Ministry of Infrastructure Development, Nepal. M.Tech IIT Bombay.');
+    setMetaTag('property', 'og:image', profile.avatarUrl);
+    setMetaTag('property', 'og:url', shareUrl);
+    setMetaTag('property', 'og:type', 'profile');
+    setMetaTag('name', 'twitter:card', 'summary_large_image');
+    setMetaTag('name', 'twitter:title', 'Abhishek Kumar Chaurasiya - Engineer Profile');
+    setMetaTag('name', 'twitter:description', 'Official executive profile of Er. Abhishek Kumar Chaurasiya, M.Tech IIT Bombay.');
+    setMetaTag('name', 'twitter:image', profile.avatarUrl);
+
+    // Canonical link tag
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', shareUrl);
+
+    // Schema.org JSON-LD Script for Search Engine Crawlers
+    const schemaId = 'abhishek-person-schema';
+    let schemaScript = document.getElementById(schemaId) as HTMLScriptElement | null;
+    if (!schemaScript) {
+      schemaScript = document.createElement('script');
+      schemaScript.id = schemaId;
+      schemaScript.type = 'application/ld+json';
+      document.head.appendChild(schemaScript);
+    }
+
+    const schemaData = {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Abhishek Kumar Chaurasiya",
+      "alternateName": ["Abhishek Chaurasiya", "Er. Abhishek Kumar Chaurasiya"],
+      "jobTitle": "Engineer (Structural Engineering)",
+      "worksFor": {
+        "@type": "GovernmentOrganization",
+        "name": "Ministry of Infrastructure Development, Nepal"
+      },
+      "alumniOf": [
+        {
+          "@type": "EducationalOrganization",
+          "name": "Indian Institute of Technology Bombay (IIT Bombay)"
+        },
+        {
+          "@type": "EducationalOrganization",
+          "name": "Ramaiah Institute of Technology"
+        }
+      ],
+      "url": shareUrl,
+      "sameAs": [
+        "https://www.linkedin.com/in/achaurasiya",
+        "https://www.facebook.com/achaurasiya",
+        "https://www.instagram.com/achauraseeya",
+        "https://github.com/achauraseeya"
+      ],
+      "email": ["contact@achaurasiya.com.np", "abhishek.chaurasiya@nepal.gov.np"],
+      "telephone": "+977-9818471605",
+      "image": profile.avatarUrl,
+      "description": "Er. Abhishek Kumar Chaurasiya is a Structural Engineer and public sector professional specializing in earthquake engineering, structural analysis, resilient infrastructure, and sustainable urban development in Nepal."
+    };
+
+    schemaScript.text = JSON.stringify(schemaData);
+
+    return () => {
+      document.title = origTitle;
+      const scriptToRemove = document.getElementById(schemaId);
+      if (scriptToRemove) scriptToRemove.remove();
+    };
+  }, [profile]);
+
+  const handleShareProfile = async () => {
+    const shareUrl = `${window.location.origin}${window.location.pathname}?page=abhishek`;
+    const shareTitle = 'Abhishek Kumar Chaurasiya - Official Profile';
+    const shareText = 'Official executive profile of Er. Abhishek Kumar Chaurasiya - Structural Engineer, Ministry of Infrastructure Development, Nepal.';
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        onTrackAction('Share Abhishek profile via Web Share API');
+        return;
+      } catch (e) {
+        // Fallback to clipboard
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopiedShare(true);
+      setTimeout(() => setCopiedShare(false), 3000);
+      onTrackAction('Copy Abhishek profile share link');
+    } catch (err) {
+      const input = document.createElement('input');
+      input.value = shareUrl;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      setCopiedShare(true);
+      setTimeout(() => setCopiedShare(false), 3000);
+    }
+  };
+
   // Admin edit modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editName, setEditName] = useState('');
@@ -119,6 +258,9 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editGithub, setEditGithub] = useState('');
+  const [editLinkedin, setEditLinkedin] = useState('');
+  const [editFacebook, setEditFacebook] = useState('');
+  const [editInstagram, setEditInstagram] = useState('');
   const [editWebsiteUrl, setEditWebsiteUrl] = useState('');
   const [editAvatarUrl, setEditAvatarUrl] = useState('');
   const [editSkills, setEditSkills] = useState('');
@@ -128,34 +270,37 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
   const t = {
     title: { en: `Our Architect: ${profile.name}`, ne: `हाम्रो वास्तुकार: ${profile.name}` },
     aboutMe: { en: 'Executive Biography', ne: 'कार्यकारी जीवनी' },
-    skillsTitle: { en: 'Technical Expertise & Craft', ne: 'प्राविधिक विशेषज्ञता र कला' },
+    skillsTitle: { en: 'Technical Expertise', ne: 'प्राविधिक विशेषज्ञता' },
     eduTitle: { en: 'Academic Foundation', ne: 'शैक्षिक पृष्ठभूमि' },
     contactTitle: { en: 'Get In Touch', ne: 'सम्पर्क गर्नुहोस्' },
-    contributions: { en: 'Key Digital Contributions', ne: 'प्रमुख डिजिटल योगदानहरू' },
+    contributions: { en: 'Life Journey', ne: 'जीवन यात्रा' },
     officialWeb: { en: 'Visit Official Personal Website', ne: 'अभिषेकको आधिकारिक वेबसाइट' },
   };
 
   const contributionsList = [
     {
-      title: { en: 'Centralized Member Database', ne: 'केन्द्रीकृत सदस्य डाटाबेस' },
+      title: { en: 'Engineer', ne: 'ईन्जिनियर' },
       desc: {
-        en: 'Designed and deployed a responsive cloud directory to organize and verify community members, preventing fraud.',
-        ne: 'समुदायका सदस्यहरूलाई व्यवस्थित र प्रमाणित गर्न एक उत्तरदायी क्लाउड निर्देशिका डिजाइन र तैनात गर्नुभयो।',
+        en: 'Ministry of Infrastructure Development, Nepal',
+        ne: 'पूर्वाधार विकास मन्त्रालय'
       },
+      year: '2022 - Present'
     },
     {
-      title: { en: 'Blogger.com Integration Engine', ne: 'ब्लगर एकीकरण इन्जिन' },
+      title: { en: 'M.Tech (Structural Engineering)', ne: 'M. Tech (स्ट्रक्चरल ईन्जिनियरिङ्ग)' },
       desc: {
-        en: 'Developed custom XML template compiler that generates secure blogger.com layouts for low-budget deployment.',
-        ne: 'कम बजेटको प्रयोगका लागि सुरक्षित ब्लगर ढाँचाहरू उत्पन्न गर्ने अनुकूलन XML टेम्पलेट कम्पाइलर विकास गर्नुभयो।',
+        en: 'IIT Bombay',
+        ne: 'भारतीय प्रौद्योगिकी संस्थान बम्बई'
       },
+      year: '2020 - 2022'
     },
     {
-      title: { en: 'Rural Farmers Mobile Support', ne: 'ग्रामीण किसान मोबाइल सहयोग' },
+      title: { en: 'B.E. (Civil Engineering)', ne: 'B.E. (सिभिल ईन्जिनियरिङ्ग)' },
       desc: {
-        en: 'Engineered notification portals so rural betel leaf (paan) farmers receive instant cold and storm warning bulletins.',
-        ne: 'ग्रामीण पान उत्पादक कृषकहरूले तत्काल चिसो र आँधीबेहरीको चेतावनी बुलेटिनहरू प्राप्त गर्न सक्ने गरी सूचना पोर्टलको निर्माण गर्नुभयो।',
+        en: 'Ramaiah Institute of Technology',
+        ne: 'रमैया इन्स्टिच्युट अफ टेक्नोलोजी'
       },
+      year: '2015 - 2019'
     },
   ];
 
@@ -174,6 +319,9 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
     setEditEmail(profile.email);
     setEditPhone(profile.phone);
     setEditGithub(profile.github);
+    setEditLinkedin(profile.linkedin || 'https://www.linkedin.com/in/achaurasiya');
+    setEditFacebook(profile.facebook || 'https://www.facebook.com/achaurasiya');
+    setEditInstagram(profile.instagram || 'https://www.instagram.com/achauraseeya');
     setEditWebsiteUrl(profile.websiteUrl || 'https://www.achaurasiya.com.np');
     setEditAvatarUrl(profile.avatarUrl);
     setEditSkills(profile.skills.join(', '));
@@ -201,6 +349,9 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
       email: editEmail,
       phone: editPhone,
       github: editGithub,
+      linkedin: editLinkedin,
+      facebook: editFacebook,
+      instagram: editInstagram,
       websiteUrl: editWebsiteUrl,
       avatarUrl: editAvatarUrl || profile.avatarUrl,
       skills: updatedSkills.length > 0 ? updatedSkills : profile.skills,
@@ -242,7 +393,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
   };
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-300">
+    <article itemScope itemType="https://schema.org/Person" className="space-y-12 animate-in fade-in duration-300">
       {/* Bio Banner */}
       <section className="relative overflow-hidden bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 text-white rounded-3xl py-12 px-6 sm:px-12 shadow-xl border-b-8 border-emerald-500">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.15),transparent_40%)]" />
@@ -253,7 +404,8 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
             <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-teal-400 bg-white shadow-xl shrink-0 relative group">
               <img
                 src={profile.avatarUrl}
-                alt={profile.name}
+                alt="Abhishek Kumar Chaurasiya"
+                itemProp="image"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
               />
@@ -261,27 +413,38 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
 
             <div className="space-y-3 text-center md:text-left">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/20 border border-teal-400/30 text-teal-300 text-xs font-bold uppercase tracking-wider">
-                <Cpu className="w-3.5 h-3.5 text-teal-400" />
-                Lead Architect &amp; CTO
+                <Heart className="w-3.5 h-3.5 text-teal-400 fill-teal-400/20" />
+                Volunteer
               </span>
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-teal-50">
+              <h1 itemProp="name" className="text-3xl sm:text-4xl font-black tracking-tight text-teal-50">
                 {profile.name}
               </h1>
-              <p className="text-sm sm:text-base text-teal-200 font-bold max-w-2xl">
+              <p itemProp="jobTitle" className="text-sm sm:text-base text-teal-200 font-bold max-w-2xl">
                 {lang === 'en' ? profile.title : profile.subtitleNe}
               </p>
             </div>
           </div>
 
-          {isAdmin && (
+          {/* Working Share Profile Link Button */}
+          <div className="flex items-center gap-3 shrink-0">
             <button
-              onClick={openEditModal}
-              className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all shrink-0 cursor-pointer"
+              onClick={handleShareProfile}
+              className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg hover:shadow-emerald-500/20 transition-all cursor-pointer"
+              title="Share Profile Link"
             >
-              <Edit className="w-4 h-4" />
-              <span>{lang === 'en' ? 'Edit Profile' : 'प्रोफाइल सम्पादन'}</span>
+              {copiedShare ? (
+                <>
+                  <Check className="w-4 h-4 text-slate-950" />
+                  <span>{lang === 'en' ? 'Link Copied!' : 'लिङ्क कपी भयो!'}</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4 text-slate-950" />
+                  <span>{lang === 'en' ? 'Share Profile' : 'प्रोफाइल सेयर गर्नुहोस्'}</span>
+                </>
+              )}
             </button>
-          )}
+          </div>
         </div>
       </section>
 
@@ -294,9 +457,17 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
               <BookOpen className="w-5 h-5 text-teal-700 dark:text-emerald-400" />
               {t.aboutMe[lang]}
             </h2>
-            <p className="text-gray-700 dark:text-gray-300 text-sm sm:text-base leading-relaxed font-medium">
-              {lang === 'en' ? profile.bioEn : profile.bioNe}
-            </p>
+            <div className="space-y-4 text-gray-700 dark:text-gray-300 text-sm sm:text-base leading-relaxed font-medium">
+              {(lang === 'en' ? profile.bioEn : profile.bioNe)
+                ? (lang === 'en' ? profile.bioEn : profile.bioNe)
+                    .split('\n')
+                    .map((para: string, idx: number) => {
+                      const trimmed = para.trim();
+                      if (!trimmed) return null;
+                      return <p key={idx}>{trimmed}</p>;
+                    })
+                : null}
+            </div>
 
             <div className="p-4 bg-teal-50/50 dark:bg-slate-800/80 rounded-xl border border-teal-100 dark:border-slate-700 flex gap-3 text-xs text-teal-900 dark:text-teal-200 leading-relaxed font-medium italic">
               <Heart className="w-5 h-5 text-teal-600 dark:text-emerald-400 shrink-0 mt-0.5 fill-teal-600/10" />
@@ -311,21 +482,25 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
               {t.contributions[lang]}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {(profile.contributions || contributionsList).map((contrib: any, i: number) => (
-                <div key={i} className="space-y-2 p-4 bg-teal-50/30 dark:bg-slate-800/50 rounded-xl border border-teal-100/60 dark:border-slate-700 flex flex-col justify-between">
-                  <div className="space-y-1.5">
-                    <h4 className="font-bold text-teal-900 dark:text-teal-100 text-xs sm:text-sm uppercase tracking-wide">
-                      {contrib.title[lang] || contrib.title['en']}
-                    </h4>
-                    <p className="text-gray-600 dark:text-gray-300 text-xs leading-relaxed">
-                      {contrib.desc[lang] || contrib.desc['en']}
-                    </p>
+              {(profile.contributions && profile.contributions.length > 0 ? profile.contributions : contributionsList).map((contrib: any, i: number) => {
+                const yearText = contrib.year || (i === 0 ? '2022 - Present' : i === 1 ? '2020 - 2022' : '2015 - 2019');
+                return (
+                  <div key={i} className="space-y-2 p-4 bg-teal-50/30 dark:bg-slate-800/50 rounded-xl border border-teal-100/60 dark:border-slate-700 flex flex-col justify-between">
+                    <div className="space-y-1.5">
+                      <h4 className="font-bold text-teal-900 dark:text-teal-100 text-xs sm:text-sm uppercase tracking-wide">
+                        {contrib.title[lang] || contrib.title['en']}
+                      </h4>
+                      <p className="text-gray-600 dark:text-gray-300 text-xs leading-relaxed">
+                        {contrib.desc[lang] || contrib.desc['en']}
+                      </p>
+                    </div>
+                    <span className="text-[11px] font-bold text-teal-700 dark:text-emerald-400 tracking-wider flex items-center gap-1.5 pt-3 border-t border-teal-100/50 dark:border-slate-700 mt-4">
+                      <Calendar className="w-3.5 h-3.5 text-teal-600 dark:text-emerald-400" />
+                      {yearText}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-black text-teal-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1 pt-3 border-t border-teal-100/50 dark:border-slate-700 mt-4">
-                    <ShieldCheck className="w-3.5 h-3.5" /> Deployed
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -369,14 +544,21 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
             </h3>
 
             <div className="space-y-3 text-xs text-teal-200">
-              <a
-                href={`mailto:${profile.email}`}
-                onClick={() => onTrackAction('Contact Abhishek via Email')}
-                className="flex items-center gap-2.5 p-2 bg-teal-950/40 rounded-lg hover:bg-teal-950 transition-all cursor-pointer"
-              >
-                <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>{profile.email}</span>
-              </a>
+              {profile.email && profile.email.split(',').map((em: string, idx: number) => {
+                const cleanEmail = em.trim();
+                if (!cleanEmail) return null;
+                return (
+                  <a
+                    key={idx}
+                    href={`mailto:${cleanEmail}`}
+                    onClick={() => onTrackAction(`Contact Abhishek via Email (${cleanEmail})`)}
+                    className="flex items-center gap-2.5 p-2 bg-teal-950/40 rounded-lg hover:bg-teal-950 transition-all cursor-pointer break-all"
+                  >
+                    <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{cleanEmail}</span>
+                  </a>
+                );
+              })}
 
               {profile.phone && (
                 <div className="flex items-center gap-2.5 p-2 bg-teal-950/40 rounded-lg">
@@ -385,16 +567,42 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
                 </div>
               )}
 
-              {profile.github && (
+              {profile.linkedin && (
                 <a
-                  href={profile.github}
+                  href={profile.linkedin}
                   target="_blank"
                   rel="noreferrer"
-                  onClick={() => onTrackAction('Open Abhishek Github')}
+                  onClick={() => onTrackAction('Open Abhishek LinkedIn')}
                   className="flex items-center gap-2.5 p-2 bg-teal-950/40 rounded-lg hover:bg-teal-950 transition-all cursor-pointer"
                 >
-                  <Github className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>{profile.github.replace('https://', '')}</span>
+                  <Linkedin className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{profile.linkedin.replace('https://', '')}</span>
+                </a>
+              )}
+
+              {profile.facebook && (
+                <a
+                  href={profile.facebook}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => onTrackAction('Open Abhishek Facebook')}
+                  className="flex items-center gap-2.5 p-2 bg-teal-950/40 rounded-lg hover:bg-teal-950 transition-all cursor-pointer"
+                >
+                  <Facebook className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{profile.facebook.replace('https://', '')}</span>
+                </a>
+              )}
+
+              {profile.instagram && (
+                <a
+                  href={profile.instagram}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => onTrackAction('Open Abhishek Instagram')}
+                  className="flex items-center gap-2.5 p-2 bg-teal-950/40 rounded-lg hover:bg-teal-950 transition-all cursor-pointer"
+                >
+                  <Instagram className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{profile.instagram.replace('https://', '')}</span>
                 </a>
               )}
             </div>
@@ -549,7 +757,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
               {/* Key Digital Contributions Editing */}
               <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700">
                 <label className="block text-xs font-extrabold text-teal-900 dark:text-teal-100 uppercase tracking-wide">
-                  Key Digital Contributions (3 Items)
+                  Life Journey (3 Items)
                 </label>
                 {editContributions.map((contrib, idx) => (
                   <div key={idx} className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
@@ -599,6 +807,19 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
                         onChange={(e) => {
                           const updated = [...editContributions];
                           updated[idx].desc.ne = e.target.value;
+                          setEditContributions(updated);
+                        }}
+                        className="w-full p-2 bg-gray-50 dark:bg-slate-800 rounded-lg text-xs border border-gray-200 dark:border-slate-700"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Year / Period (e.g. 2022 - Present)"
+                        value={contrib.year || ''}
+                        onChange={(e) => {
+                          const updated = [...editContributions];
+                          updated[idx].year = e.target.value;
                           setEditContributions(updated);
                         }}
                         className="w-full p-2 bg-gray-50 dark:bg-slate-800 rounded-lg text-xs border border-gray-200 dark:border-slate-700"
@@ -661,11 +882,11 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Email(s)</label>
                   <input
-                    type="email"
+                    type="text"
                     value={editEmail}
                     onChange={(e) => setEditEmail(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs"
@@ -680,12 +901,33 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
                     className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">GitHub</label>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">LinkedIn URL</label>
                   <input
                     type="url"
-                    value={editGithub}
-                    onChange={(e) => setEditGithub(e.target.value)}
+                    value={editLinkedin}
+                    onChange={(e) => setEditLinkedin(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Facebook URL</label>
+                  <input
+                    type="url"
+                    value={editFacebook}
+                    onChange={(e) => setEditFacebook(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Instagram URL</label>
+                  <input
+                    type="url"
+                    value={editInstagram}
+                    onChange={(e) => setEditInstagram(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
                   />
                 </div>
@@ -721,6 +963,6 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
           </div>
         </div>
       )}
-    </div>
+    </article>
   );
 }

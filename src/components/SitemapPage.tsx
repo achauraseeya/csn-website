@@ -18,6 +18,7 @@ export default function SitemapPage({ lang, onNavigate }: SitemapPageProps) {
         { id: 'matrimonial', name: lang === 'en' ? 'Matrimonial Portal (Groom & Bride)' : 'वैवाहिक जोडी सेवा पोर्टल', path: '/?tab=matrimonial' },
         { id: 'events', name: lang === 'en' ? 'Community Events & Programs' : 'कार्यक्रम तथा पात्रो', path: '/?tab=events' },
         { id: 'membership-donation', name: lang === 'en' ? 'Join & Support (Membership, Volunteer, Welfare)' : 'सहभागिता (सदस्यता, स्वयंसेवक, कल्याण कोष)', path: '/?tab=membership-donation' },
+        { id: 'abhishek-bio', name: lang === 'en' ? 'Abhishek Kumar Chaurasiya (Executive Profile)' : 'अभिषेक कुमार चौरसिया (कार्यकारी प्रोफाइल)', path: '/?page=abhishek' },
       ],
     },
     {
