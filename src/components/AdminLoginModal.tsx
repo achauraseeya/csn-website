@@ -50,6 +50,11 @@ export default function AdminLoginModal({
       if (res.ok) {
         localStorage.setItem('chaurasiya_admin_password', password);
         localStorage.setItem('chaurasiya_is_admin', 'true');
+        
+        // Ensure standard login clears any lingering super admin session to prevent bypassing queue
+        localStorage.removeItem('chaurasiya_is_super_admin');
+        setIsSuperAdmin(false);
+        
         setIsAdmin(true);
         // Clear password state
         setPassword('');

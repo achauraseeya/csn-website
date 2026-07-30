@@ -388,8 +388,16 @@ export default function App() {
       setLiveToast(msg);
     };
     
+    const handleApplied = (e: any) => {
+      window.location.reload();
+    };
+    
     window.addEventListener('chaurasiya_change_queued', handleQueued);
-    return () => window.removeEventListener('chaurasiya_change_queued', handleQueued);
+    window.addEventListener('chaurasiya_approval_applied', handleApplied);
+    return () => {
+      window.removeEventListener('chaurasiya_change_queued', handleQueued);
+      window.removeEventListener('chaurasiya_approval_applied', handleApplied);
+    };
   }, [lang]);
 
   // Real-time Cloud Database & Broadcast Synchronization Listeners
