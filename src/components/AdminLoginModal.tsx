@@ -8,6 +8,9 @@ interface AdminLoginModalProps {
   lang: Language;
   isAdmin: boolean;
   setIsAdmin: (status: boolean) => void;
+  isSuperAdmin: boolean;
+  setIsSuperAdmin: (status: boolean) => void;
+  onOpenDashboard?: () => void;
 }
 
 export default function AdminLoginModal({
@@ -16,17 +19,15 @@ export default function AdminLoginModal({
   lang,
   isAdmin,
   setIsAdmin,
+  isSuperAdmin,
+  setIsSuperAdmin,
+  onOpenDashboard,
 }: AdminLoginModalProps) {
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  
   const [isAuthenticating, setIsAuthenticating] = useState(false);
-  useEffect(() => {
-    // Basic initialization if needed
-  }, []);
 
   if (!isOpen) return null;
-
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +40,6 @@ export default function AdminLoginModal({
 
     setIsAuthenticating(true);
     try {
-      // Authenticate by hitting the GitHub API
       const res = await fetch('https://api.github.com/user', {
         headers: {
           'Authorization': `token ${password}`,
@@ -51,7 +51,8 @@ export default function AdminLoginModal({
         localStorage.setItem('chaurasiya_admin_password', password);
         localStorage.setItem('chaurasiya_is_admin', 'true');
         setIsAdmin(true);
-        onClose();
+        // Clear password state
+        setPassword('');
       } else {
         setErrorMsg(lang === 'en' ? 'Invalid GitHub PAT or insufficient permissions' : 'अवैध Github PAT वा अपर्याप्त अनुमतिहरू');
       }
@@ -65,7 +66,9 @@ export default function AdminLoginModal({
   const handleLogout = () => {
     localStorage.removeItem('chaurasiya_admin_password');
     localStorage.removeItem('chaurasiya_is_admin');
+    localStorage.removeItem('chaurasiya_is_super_admin');
     setIsAdmin(false);
+    setIsSuperAdmin(false);
     onClose();
   };
 
@@ -76,7 +79,7 @@ export default function AdminLoginModal({
         onClick={onClose}
       />
       
-      <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-xs font-semibold">
         <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-6 text-white flex justify-between items-start">
           <div>
             <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4 backdrop-blur-md border border-white/30">
@@ -85,7 +88,7 @@ export default function AdminLoginModal({
             <h2 className="text-xl font-black tracking-tight">
               {lang === 'en' ? 'Admin Portal' : 'प्रशासक पोर्टल'}
             </h2>
-            <p className="text-teal-50 text-xs font-medium mt-1 opacity-90">
+            <p className="text-teal-50 text-[11px] font-medium mt-1 opacity-90">
               {lang === 'en' ? 'Secure access area' : 'सुरक्षित पहुँच क्षेत्र'}
             </p>
           </div>
@@ -93,24 +96,107 @@ export default function AdminLoginModal({
             onClick={onClose}
             className="p-2 hover:bg-white/20 rounded-full transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-white" />
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 space-y-4">
           {isAdmin ? (
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-100">
-                <ShieldCheck className="w-6 h-6" />
+                <ShieldCheck className="w-6 h-6 shrink-0" />
                 <div>
-                  <p className="text-sm font-bold">Admin Authenticated</p>
-                  <p className="text-xs">Using GitHub PAT</p>
+                  <p className="text-xs font-bold">Admin Authenticated</p>
+                  <p className="text-[10px] font-medium">Using GitHub PAT</p>
                 </div>
+              </div>
+
+              {/* Open Central Admin Operations Dashboard */}
+              {onOpenDashboard && (
+                <button
+                  onClick={() => {
+                    onOpenDashboard();
+                    onClose();
+                  }}
+                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  {lang === 'en' ? 'Open Central Operations' : 'केन्द्रीय नियन्त्रण कक्ष'}
+                </button>
+              )}
+
+              {/* Super Admin Control Subpanel */}
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">👑</span>
+                  <span className="font-extrabold text-amber-950 uppercase tracking-wide">
+                    {lang === 'en' ? 'Super Admin Profile' : 'सुपर एडमिन प्रोफाइल'}
+                  </span>
+                </div>
+
+                {isSuperAdmin ? (
+                  <div className="space-y-2">
+                    <div className="p-2 bg-emerald-100 text-emerald-800 rounded-lg text-[10px] font-black border border-emerald-200">
+                      ✨ Super Admin Mode: Active
+                    </div>
+                    <button
+                      onClick={() => {
+                        localStorage.removeItem('chaurasiya_is_super_admin');
+                        setIsSuperAdmin(false);
+                      }}
+                      className="w-full py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition-colors cursor-pointer text-center text-[11px]"
+                    >
+                      Deactivate Super Admin
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    <p className="text-[10px] text-amber-900 leading-normal">
+                      {lang === 'en' 
+                        ? 'To approve changes made by standard administrators, activate Super Admin access.' 
+                        : 'सामान्य प्रशासकका परिवर्तनहरू स्वीकृत गर्न सुपर एडमिन नियन्त्रण सक्रिय गर्नुहोस्।'}
+                    </p>
+                    <input
+                      type="password"
+                      placeholder={lang === 'en' ? 'Super Admin Password' : 'सुपर एडमिन पासवर्ड'}
+                      className="w-full p-2.5 bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono text-xs"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const val = (e.target as HTMLInputElement).value;
+                          if (val === 'SuperAdmin@Chaurasiya') {
+                            localStorage.setItem('chaurasiya_is_super_admin', 'true');
+                            setIsSuperAdmin(true);
+                            (e.target as HTMLInputElement).value = '';
+                          } else {
+                            alert(lang === 'en' ? 'Incorrect Super Admin password' : 'गलत सुपर एडमिन पासवर्ड');
+                          }
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        const input = (e.currentTarget.previousSibling as HTMLInputElement);
+                        if (input && input.value === 'SuperAdmin@Chaurasiya') {
+                          localStorage.setItem('chaurasiya_is_super_admin', 'true');
+                          setIsSuperAdmin(true);
+                          input.value = '';
+                        } else {
+                          alert(lang === 'en' ? 'Incorrect Super Admin password' : 'गलत सुपर एडमिन पासवर्ड');
+                        }
+                      }}
+                      className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl transition-colors cursor-pointer text-[11px] uppercase tracking-wider"
+                    >
+                      Elevate To Super Admin
+                    </button>
+                  </div>
+                )}
               </div>
               
               <button
                 onClick={handleLogout}
-                className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 {lang === 'en' ? 'Sign Out' : 'बाहिर निस्कनुहोस्'}
@@ -125,7 +211,7 @@ export default function AdminLoginModal({
               </p>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">
+                <label className="block text-[11px] font-bold text-gray-700 mb-2 uppercase tracking-wide">
                   {lang === 'en' ? 'GitHub PAT' : 'GitHub PAT'}
                 </label>
                 <input

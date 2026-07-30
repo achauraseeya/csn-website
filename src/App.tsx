@@ -33,6 +33,7 @@ import ContactSection from './components/ContactSection';
 import UploadJourneyPostModal from './components/UploadJourneyPostModal';
 import AdminLoginModal from './components/AdminLoginModal';
 import AddNoticeModal from './components/AddNoticeModal';
+import RenownedPeople from './components/RenownedPeople';
 import PrivacySection from './components/PrivacySection';
 import TermsSection from './components/TermsSection';
 import AboutSectionPage from './components/AboutSectionPage';
@@ -196,6 +197,13 @@ export default function App() {
   });
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('chaurasiya_is_super_admin') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
   const [isAddNoticeModalOpen, setIsAddNoticeModalOpen] = useState(false);
 
   // Initial Matrimonial Data
@@ -2208,8 +2216,16 @@ export default function App() {
           <AbhishekBio
             lang={lang}
             onTrackAction={handleTrackAction}
-            isAdmin={isAdmin}
+            isAdmin={isSuperAdmin}
             onUpdateAvatar={(url) => setAbhishekAvatar(url)}
+          />
+        )}
+
+        {currentTab === 'renowned-people' && (
+          <RenownedPeople
+            lang={lang}
+            onTrackAction={handleTrackAction}
+            isAdmin={isAdmin}
           />
         )}
 
@@ -2394,6 +2410,31 @@ export default function App() {
         lang={lang}
         isAdmin={isAdmin}
         setIsAdmin={setIsAdmin}
+        isSuperAdmin={isSuperAdmin}
+        setIsSuperAdmin={setIsSuperAdmin}
+        onOpenDashboard={() => setIsAdminDashboardOpen(true)}
+      />
+
+      {/* Central Admin Operations Dashboard */}
+      <AdminCentralDashboardModal
+        isOpen={isAdminDashboardOpen}
+        onClose={() => setIsAdminDashboardOpen(false)}
+        lang={lang}
+        matrimonialProfiles={matrimonialProfiles}
+        onUpdateMatrimonialStatus={handleUpdateMatrimonialStatus}
+        onDeleteMatrimonialProfile={handleDeleteMatrimonialProfile}
+        onAddMatrimonialProfile={handleAddMatrimonialProfile}
+        volunteerApps={volunteerApps}
+        onUpdateVolunteerStatus={handleUpdateVolunteerStatus}
+        onDeleteVolunteerApp={handleDeleteVolunteerApp}
+        onAddVolunteerApp={handleAddVolunteerApp}
+        membershipApps={membershipApps}
+        onApproveMembershipApp={handleApproveMembershipApp}
+        onRejectMembershipApp={handleRejectMembershipApp}
+        onAddMembershipApp={handleAddMembershipApp}
+        subscribers={subscribers}
+        onDeleteSubscriber={handleDeleteSubscriber}
+        members={members}
       />
 
       {/* Add Community Notice Modal */}

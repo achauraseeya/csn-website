@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { X, ShieldCheck, Heart, UserPlus, Award, Mail, Download, CheckCircle2, Trash2, Edit, Phone, Eye, ExternalLink, Send, Sparkles, RefreshCw, Plus, Printer, FileText } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, ShieldCheck, Heart, UserPlus, Award, Mail, Download, CheckCircle2, Trash2, Edit, Phone, Eye, ExternalLink, Send, Sparkles, RefreshCw, Plus, Printer, FileText, Clock, ShieldAlert } from 'lucide-react';
 import { Language, MatrimonialProfile, VolunteerApplication, MembershipApplication, NewsletterSubscriber, Member } from '../types';
 import PrintableApplicationModal from './PrintableApplicationModal';
+import { isSuperAdminUser, apiFetch, directSaveFileToGithub, PendingApproval } from '../utils/githubDb';
 
 interface AdminCentralDashboardModalProps {
   isOpen: boolean;
@@ -48,7 +49,47 @@ export default function AdminCentralDashboardModal({
   onDeleteSubscriber,
   members,
 }: AdminCentralDashboardModalProps) {
-  const [activeTab, setActiveTab] = useState<'matrimony' | 'volunteers' | 'memberships' | 'newsletter'>('matrimony');
+  const [activeTab, setActiveTab] = useState<'matrimony' | 'volunteers' | 'memberships' | 'newsletter' | 'approvals'>('matrimony');
+  const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      apiFetch<PendingApproval[]>('/api/site-data/pending_approvals', 'pending_approvals.json', [])
+        .then(data => {
+          if (Array.isArray(data)) {
+            setPendingApprovals(data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen]);
+
+  const handleApprovePending = async (approval: PendingApproval) => {
+    if (!confirm(lang === 'en' ? `Are you sure you want to approve and apply changes to ${approval.path}?` : `के तपाईं यस परिवर्तनलाई स्वीकृत गरी लागू गर्न चाहनुहुन्छ?`)) return;
+
+    try {
+      await directSaveFileToGithub(approval.path, approval.content, approval.commitMessage);
+      const nextApprovals = pendingApprovals.filter(a => a.id !== approval.id);
+      await directSaveFileToGithub('pending_approvals.json', nextApprovals, `Approve & Apply: ${approval.commitMessage}`);
+      setPendingApprovals(nextApprovals);
+      alert(lang === 'en' ? 'Changes successfully applied & published live!' : 'परिवर्तनहरू स्वीकृत र प्रकाशित भएका छन्!');
+    } catch (err: any) {
+      alert(err.message || 'Failed to apply changes.');
+    }
+  };
+
+  const handleRejectPending = async (id: string) => {
+    if (!confirm(lang === 'en' ? 'Are you sure you want to reject and delete this proposed change?' : 'के तपाईं यस प्रस्तावित परिवर्तनलाई अस्वीकार गर्न चाहनुहुन्छ?')) return;
+
+    try {
+      const nextApprovals = pendingApprovals.filter(a => a.id !== id);
+      await directSaveFileToGithub('pending_approvals.json', nextApprovals, `Reject proposed change`);
+      setPendingApprovals(nextApprovals);
+      alert(lang === 'en' ? 'Changes successfully discarded.' : 'प्रस्तावित परिवर्तन हटाइएको छ।');
+    } catch (err: any) {
+      alert(err.message || 'Failed to reject changes.');
+    }
+  };
 
   // Printable PDF modal state
   const [printableModalData, setPrintableModalData] = useState<{
@@ -323,6 +364,16 @@ export default function AdminCentralDashboardModal({
               >
                 <Mail className="w-4 h-4" />
                 {lang === 'en' ? 'Newsletter Subscribers' : 'न्यूजलेटर'} ({subscribers.length})
+              </button>
+
+              <button
+                onClick={() => setActiveTab('approvals')}
+                className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+                  activeTab === 'approvals' ? 'bg-amber-600 text-white shadow-sm' : 'text-gray-700 dark:text-gray-300 hover:bg-white'
+                }`}
+              >
+                <ShieldAlert className="w-4 h-4 text-amber-300" />
+                {lang === 'en' ? 'Super Admin Approvals' : 'सुपर एडमिन अनुमति'} ({pendingApprovals.length})
               </button>
             </div>
 
@@ -839,6 +890,97 @@ export default function AdminCentralDashboardModal({
                   Publish Profile Live To Website Catalog
                 </button>
               </form>
+            )}
+
+            {activeTab === 'approvals' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-3 dark:border-slate-800">
+                  <div>
+                    <h3 className="text-base font-black text-gray-900 dark:text-white flex items-center gap-2">
+                      <ShieldAlert className="w-5 h-5 text-amber-500" />
+                      {lang === 'en' ? 'Super Admin Approval Queue' : 'सुपर एडमिन अनुमति लाम'}
+                    </h3>
+                    <p className="text-gray-400 text-[11px] font-medium">
+                      {lang === 'en' 
+                        ? 'Modifications made by standard admins are queued here. A Super Admin must approve them to publish live.' 
+                        : 'सामान्य प्रशासकहरूले गरेका परिमार्जनहरू यहाँ क्युमा रहन्छन्। तिनीहरूलाई प्रत्यक्ष प्रसारण गर्न सुपर एडमिनले स्वीकृत गर्नुपर्छ।'}
+                    </p>
+                  </div>
+                </div>
+
+                {!isSuperAdminUser() && (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-200 rounded-xl font-bold flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-amber-500" />
+                    <span>
+                      {lang === 'en' 
+                        ? 'View-Only Mode: You are logged in as a standard administrator. Only elevated Super Admin accounts can approve or reject these changes.'
+                        : 'अवलोकन मात्र: तपाईं सामान्य प्रशासकको रूप रूपमा लगइन हुनुहुन्छ। केवल उच्च सुपर एडमिनले यी परिवर्तनहरू स्वीकृत वा अस्वीकार गर्न सक्दछन्।'}
+                    </span>
+                  </div>
+                )}
+
+                {pendingApprovals.length === 0 ? (
+                  <div className="text-center py-12 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-dashed dark:border-slate-800">
+                    <CheckCircle2 className="w-10 h-10 text-teal-500 mx-auto mb-2" />
+                    <p className="text-gray-400 italic text-sm">
+                      {lang === 'en' ? 'No pending updates awaiting approval.' : 'स्वीकृतिको प्रतीक्षामा कुनै पनि परिवर्तनहरू छैनन्।'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingApprovals.map((app) => (
+                      <div 
+                        key={app.id}
+                        className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-teal-50/55 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between gap-4"
+                      >
+                        <div className="space-y-2 max-w-xl">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 font-extrabold text-[10px] uppercase tracking-wider">
+                              {app.path}
+                            </span>
+                            <span className="text-[10px] text-gray-400 font-mono">
+                              {new Date(app.timestamp).toLocaleString()}
+                            </span>
+                          </div>
+                          <h4 className="text-sm font-black text-slate-800 dark:text-white">
+                            {app.commitMessage}
+                          </h4>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                            Requested By: <strong className="text-gray-700 dark:text-gray-300">{app.requestedBy}</strong>
+                          </p>
+                          <details className="text-[10px] bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border dark:border-slate-800 cursor-pointer">
+                            <summary className="font-extrabold text-teal-600 hover:underline text-[11px]">
+                              {lang === 'en' ? 'View Proposed JSON Content' : 'प्रस्तावित JSON सामाग्री हेर्नुहोस्'}
+                            </summary>
+                            <pre className="mt-2 font-mono overflow-x-auto text-[10px] max-h-40 p-2 bg-gray-900 text-green-400 rounded">
+                              {JSON.stringify(app.content, null, 2)}
+                            </pre>
+                          </details>
+                        </div>
+
+                        {isSuperAdminUser() && (
+                          <div className="flex md:flex-col items-stretch justify-center gap-2 shrink-0">
+                            <button
+                              onClick={() => handleApprovePending(app)}
+                              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span>{lang === 'en' ? 'Approve & Publish' : 'स्वीकृत गर्नुहोस्'}</span>
+                            </button>
+                            <button
+                              onClick={() => handleRejectPending(app.id)}
+                              className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span>{lang === 'en' ? 'Reject & Discard' : 'अस्वीकार गर्नुहोस्'}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
