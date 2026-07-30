@@ -219,12 +219,12 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
   try {
     const serverUrl = `/api/site-data/${cleanKey}?t=${Date.now()}`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1500);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(serverUrl, { signal: controller.signal });
     clearTimeout(timeoutId);
     if (res.ok) {
       const data = await res.json();
-      if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0)) {
+      if (data !== null && data !== undefined) {
         return data as T;
       }
     }
@@ -240,14 +240,14 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
   for (const relUrl of relativeUrls) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1500);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(relUrl, { cache: 'no-store', signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) {
         const contentType = res.headers.get('content-type') || '';
         if (contentType.includes('json') || relUrl.endsWith('.json')) {
           const data = await res.json();
-          if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0)) {
+          if (data !== null && data !== undefined) {
             return data as T;
           }
         }
@@ -267,7 +267,7 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
         headers['Authorization'] = `token ${pat}`;
       }
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1500);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(url, { headers, signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) {
@@ -285,12 +285,12 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
     try {
       const rawUrl = `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${fileName}?t=${Date.now()}`;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1500);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const rawRes = await fetch(rawUrl, { cache: 'no-store', signal: controller.signal });
       clearTimeout(timeoutId);
       if (rawRes.ok) {
         const data = await rawRes.json();
-        if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0)) {
+        if (data !== null && data !== undefined) {
           return data as T;
         }
       }

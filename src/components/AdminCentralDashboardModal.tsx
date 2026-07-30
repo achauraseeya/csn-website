@@ -1078,8 +1078,8 @@ export default function AdminCentralDashboardModal({
                               {lang === 'en' ? 'View Proposed JSON Content' : 'प्रस्तावित JSON सामाग्री हेर्नुहोस्'}
                             </summary>
                             <pre className="mt-2 font-mono overflow-x-auto text-[10px] max-h-40 p-2 bg-gray-900 text-green-400 rounded">
-                              {JSON.stringify(app.content, null, 2).substring(0, 1500)}
-                              {JSON.stringify(app.content).length > 1500 && '\n... (truncated for preview)'}
+                              {(JSON.stringify(app.content, null, 2) || '').substring(0, 1500)}
+                              {(JSON.stringify(app.content) || '').length > 1500 && '\n... (truncated for preview)'}
                             </pre>
                           </details>
                         </div>
