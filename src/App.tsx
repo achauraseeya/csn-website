@@ -1542,7 +1542,7 @@ export default function App() {
       pathname.endsWith('/dist/index.html');
 
     const searchParams = new URLSearchParams(window.location.search);
-    const hasDeepLink = searchParams.has('post') || searchParams.has('album') || searchParams.has('notice') || searchParams.has('event') || searchParams.has('news') || searchParams.has('blog') || searchParams.has('member') || searchParams.has('network') || searchParams.has('branch');
+    const hasDeepLink = searchParams.has('page') || searchParams.has('tab') || searchParams.has('profile') || searchParams.has('abhishek') || searchParams.has('post') || searchParams.has('album') || searchParams.has('notice') || searchParams.has('event') || searchParams.has('news') || searchParams.has('blog') || searchParams.has('member') || searchParams.has('network') || searchParams.has('branch');
 
     if (isHomepagePath && !hasDeepLink) {
       setCurrentTab('history');
