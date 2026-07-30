@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Building, MapPin, Plus, Edit, Trash2, Search, Sparkles, User, Image, ArrowLeft, ShieldAlert } from 'lucide-react';
 import { Language } from '../types';
-import { apiFetch, saveFileToGithub, isSuperAdminUser } from '../utils/githubDb';
+import { apiFetch, saveFileToGithub } from '../utils/githubDb';
 import { compressImageToBase64 } from '../utils/imageUtils';
 
 export interface RenownedPerson {
@@ -59,7 +59,6 @@ export default function RenownedPeople({ lang, onTrackAction, isAdmin }: Renowne
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<RenownedPerson | null>(null);
-  const [queuedMessage, setQueuedMessage] = useState<string | null>(null);
 
   // Form states
   const [nameEn, setNameEn] = useState('');
@@ -83,19 +82,6 @@ export default function RenownedPeople({ lang, onTrackAction, isAdmin }: Renowne
       })
       .catch(() => setPeople(fallbackPeople));
 
-    // Listen for custom change queue event to show feedback
-    const handleQueuedEvent = (e: any) => {
-      if (e.detail?.path === 'renowned_people.json') {
-        setQueuedMessage(lang === 'en' 
-          ? 'Submission Received! Since you are a standard administrator, your changes have been queued and are awaiting Super Admin approval.'
-          : 'अनुरोध प्राप्त भयो! तपाईं सामान्य प्रशासक भएकोले, यो परिवर्तन सुरक्षित गरिएको छ र सुपर एडमिनको स्वीकृतिको प्रतीक्षामा छ।'
-        );
-        setTimeout(() => setQueuedMessage(null), 6000);
-      }
-    };
-
-    window.addEventListener('chaurasiya_change_queued', handleQueuedEvent);
-    return () => window.removeEventListener('chaurasiya_change_queued', handleQueuedEvent);
   }, [lang]);
 
   const handleOpenAddModal = () => {
@@ -148,12 +134,8 @@ export default function RenownedPeople({ lang, onTrackAction, isAdmin }: Renowne
     }
 
     try {
-      const isSuper = isSuperAdminUser();
       await saveFileToGithub('renowned_people.json', nextPeople, editingPerson ? `Update renowned person: ${nameEn}` : `Add renowned person: ${nameEn}`);
-      
-      if (isSuper) {
-        setPeople(nextPeople);
-      }
+      setPeople(nextPeople);
       setIsModalOpen(false);
       onTrackAction(editingPerson ? 'Edit Renowned Person' : 'Add Renowned Person');
     } catch (err: any) {
@@ -166,11 +148,8 @@ export default function RenownedPeople({ lang, onTrackAction, isAdmin }: Renowne
 
     const nextPeople = people.filter(p => p.id !== id);
     try {
-      const isSuper = isSuperAdminUser();
       await saveFileToGithub('renowned_people.json', nextPeople, `Delete renowned person: ${name}`);
-      if (isSuper) {
-        setPeople(nextPeople);
-      }
+      setPeople(nextPeople);
       onTrackAction('Delete Renowned Person');
     } catch (err: any) {
       alert(err.message || 'Failed to delete.');
@@ -236,12 +215,6 @@ export default function RenownedPeople({ lang, onTrackAction, isAdmin }: Renowne
         </div>
       </div>
 
-      {queuedMessage && (
-        <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 rounded-2xl font-semibold flex items-start gap-3 text-xs leading-relaxed animate-in slide-in-from-top duration-300">
-          <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-          <span>{queuedMessage}</span>
-        </div>
-      )}
 
       {/* Filter and Search Bar */}
       <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-teal-50 dark:border-slate-800 shadow-sm flex items-center gap-3">

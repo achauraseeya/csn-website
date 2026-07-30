@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ShieldCheck, Heart, UserPlus, Award, Mail, Download, CheckCircle2, Trash2, Edit, Phone, Eye, ExternalLink, Send, Sparkles, RefreshCw, Plus, Printer, FileText, Clock, ShieldAlert } from 'lucide-react';
 import { Language, MatrimonialProfile, VolunteerApplication, MembershipApplication, NewsletterSubscriber, Member } from '../types';
 import PrintableApplicationModal from './PrintableApplicationModal';
-import { isSuperAdminUser, apiFetch, directSaveFileToGithub, PendingApproval } from '../utils/githubDb';
+import { apiFetch } from '../utils/githubDb';
 
 interface AdminCentralDashboardModalProps {
   isOpen: boolean;
@@ -49,78 +49,7 @@ export default function AdminCentralDashboardModal({
   onDeleteSubscriber,
   members,
 }: AdminCentralDashboardModalProps) {
-  const [activeTab, setActiveTab] = useState<'matrimony' | 'volunteers' | 'memberships' | 'newsletter' | 'approvals'>('matrimony');
-  const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
-  const [approvalSubTab, setApprovalSubTab] = useState<'all' | 'notices' | 'journey' | 'renowned' | 'members' | 'events' | 'others'>('all');
-
-  useEffect(() => {
-    if (isOpen) {
-      apiFetch<PendingApproval[]>('/api/site-data/pending_approvals', 'pending_approvals.json', [])
-        .then(data => {
-          if (Array.isArray(data)) {
-            setPendingApprovals(data);
-          }
-        })
-        .catch(() => {});
-    }
-  }, [isOpen]);
-
-  const noticesApprovals = pendingApprovals.filter(a => a.path === 'community_notices.json');
-  const journeyApprovals = pendingApprovals.filter(a => a.path === 'journey_albums.json');
-  const renownedApprovals = pendingApprovals.filter(a => a.path === 'renowned_people.json');
-  const membersApprovals = pendingApprovals.filter(a => a.path === 'community_members.json');
-  const eventsApprovals = pendingApprovals.filter(a => a.path === 'community_events.json');
-  const otherApprovals = pendingApprovals.filter(a => 
-    a.path !== 'community_notices.json' && 
-    a.path !== 'journey_albums.json' && 
-    a.path !== 'renowned_people.json' && 
-    a.path !== 'community_members.json' && 
-    a.path !== 'community_events.json'
-  );
-
-  const getFilteredApprovals = () => {
-    switch (approvalSubTab) {
-      case 'notices': return noticesApprovals;
-      case 'journey': return journeyApprovals;
-      case 'renowned': return renownedApprovals;
-      case 'members': return membersApprovals;
-      case 'events': return eventsApprovals;
-      case 'others': return otherApprovals;
-      default: return pendingApprovals;
-    }
-  };
-  const filteredApprovals = getFilteredApprovals();
-
-  const handleApprovePending = async (approval: PendingApproval) => {
-    if (!confirm(lang === 'en' ? `Are you sure you want to approve and apply changes to ${approval.path}?` : `के तपाईं यस परिवर्तनलाई स्वीकृत गरी लागू गर्न चाहनुहुन्छ?`)) return;
-
-    try {
-      await directSaveFileToGithub(approval.path, approval.content, approval.commitMessage);
-      const nextApprovals = pendingApprovals.filter(a => a.id !== approval.id);
-      await directSaveFileToGithub('pending_approvals.json', nextApprovals, `Approve & Apply: ${approval.commitMessage}`);
-      setPendingApprovals(nextApprovals);
-      
-      // Dispatch event to force App.tsx to reload the data live
-      window.dispatchEvent(new CustomEvent('chaurasiya_approval_applied', { detail: { path: approval.path } }));
-      
-      alert(lang === 'en' ? 'Changes successfully applied & published live!' : 'परिवर्तनहरू स्वीकृत र प्रकाशित भएका छन्!');
-    } catch (err: any) {
-      alert(err.message || 'Failed to apply changes.');
-    }
-  };
-
-  const handleRejectPending = async (id: string) => {
-    if (!confirm(lang === 'en' ? 'Are you sure you want to reject and delete this proposed change?' : 'के तपाईं यस प्रस्तावित परिवर्तनलाई अस्वीकार गर्न चाहनुहुन्छ?')) return;
-
-    try {
-      const nextApprovals = pendingApprovals.filter(a => a.id !== id);
-      await directSaveFileToGithub('pending_approvals.json', nextApprovals, `Reject proposed change`);
-      setPendingApprovals(nextApprovals);
-      alert(lang === 'en' ? 'Changes successfully discarded.' : 'प्रस्तावित परिवर्तन हटाइएको छ।');
-    } catch (err: any) {
-      alert(err.message || 'Failed to reject changes.');
-    }
-  };
+  const [activeTab, setActiveTab] = useState<'matrimony' | 'volunteers' | 'memberships' | 'newsletter'>('matrimony');
 
   // Printable PDF modal state
   const [printableModalData, setPrintableModalData] = useState<{
@@ -397,15 +326,6 @@ export default function AdminCentralDashboardModal({
                 {lang === 'en' ? 'Newsletter Subscribers' : 'न्यूजलेटर'} ({subscribers.length})
               </button>
 
-              <button
-                onClick={() => setActiveTab('approvals')}
-                className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-                  activeTab === 'approvals' ? 'bg-amber-600 text-white shadow-sm' : 'text-gray-700 dark:text-gray-300 hover:bg-white'
-                }`}
-              >
-                <ShieldAlert className="w-4 h-4 text-amber-300" />
-                {lang === 'en' ? 'Super Admin Approvals' : 'सुपर एडमिन अनुमति'} ({pendingApprovals.length})
-              </button>
             </div>
 
             <button
@@ -913,7 +833,6 @@ export default function AdminCentralDashboardModal({
                     </div>
                   </div>
                 </div>
-
                 <button
                   type="submit"
                   className="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md cursor-pointer transition-all"
@@ -921,193 +840,6 @@ export default function AdminCentralDashboardModal({
                   Publish Profile Live To Website Catalog
                 </button>
               </form>
-            )}
-
-            {activeTab === 'approvals' && (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center border-b pb-3 dark:border-slate-800">
-                  <div>
-                    <h3 className="text-base font-black text-gray-900 dark:text-white flex items-center gap-2">
-                      <ShieldAlert className="w-5 h-5 text-amber-500" />
-                      {lang === 'en' ? 'Super Admin Approval Queue' : 'सुपर एडमिन अनुमति लाम'}
-                    </h3>
-                    <p className="text-gray-400 text-[11px] font-medium">
-                      {lang === 'en' 
-                        ? 'Modifications made by standard admins are queued here. A Super Admin must approve them to publish live.' 
-                        : 'सामान्य प्रशासकहरूले गरेका परिमार्जनहरू यहाँ क्युमा रहन्छन्। तिनीहरूलाई प्रत्यक्ष प्रसारण गर्न सुपर एडमिनले स्वीकृत गर्नुपर्छ।'}
-                    </p>
-                  </div>
-                </div>
-
-                {!isSuperAdminUser() && (
-                  <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-200 rounded-xl font-bold flex items-center gap-2">
-                    <ShieldCheck className="w-5 h-5 text-amber-500" />
-                    <span>
-                      {lang === 'en' 
-                        ? 'View-Only Mode: You are logged in as a standard administrator. Only elevated Super Admin accounts can approve or reject these changes.'
-                        : 'अवलोकन मात्र: तपाईं सामान्य प्रशासकको रूप रूपमा लगइन हुनुहुन्छ। केवल उच्च सुपर एडमिनले यी परिवर्तनहरू स्वीकृत वा अस्वीकार गर्न सक्दछन्।'}
-                    </span>
-                  </div>
-                )}
-
-                {pendingApprovals.length > 0 && (
-                  <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-150 dark:border-slate-800">
-                    <button
-                      type="button"
-                      onClick={() => setApprovalSubTab('all')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                        approvalSubTab === 'all'
-                          ? 'bg-amber-600 text-white shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      {lang === 'en' ? 'All Sections' : 'सबै खण्डहरू'} ({pendingApprovals.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setApprovalSubTab('notices')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                        approvalSubTab === 'notices'
-                          ? 'bg-amber-600 text-white shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      {lang === 'en' ? 'Notices' : 'सूचनाहरू'} ({noticesApprovals.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setApprovalSubTab('journey')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                        approvalSubTab === 'journey'
-                          ? 'bg-amber-600 text-white shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      {lang === 'en' ? 'Journey Posts' : 'यात्रा पोस्टहरू'} ({journeyApprovals.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setApprovalSubTab('renowned')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                        approvalSubTab === 'renowned'
-                          ? 'bg-amber-600 text-white shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      {lang === 'en' ? 'Renowned People' : 'प्रतिष्ठित व्यक्तिहरू'} ({renownedApprovals.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setApprovalSubTab('members')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                        approvalSubTab === 'members'
-                          ? 'bg-amber-600 text-white shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      {lang === 'en' ? 'Directory Members' : 'निर्देशिका सदस्यहरू'} ({membersApprovals.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setApprovalSubTab('events')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                        approvalSubTab === 'events'
-                          ? 'bg-amber-600 text-white shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      {lang === 'en' ? 'Events' : 'कार्यक्रमहरू'} ({eventsApprovals.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setApprovalSubTab('others')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                        approvalSubTab === 'others'
-                          ? 'bg-amber-600 text-white shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      {lang === 'en' ? 'Other Site Data' : 'अन्य विवरणहरू'} ({otherApprovals.length})
-                    </button>
-                  </div>
-                )}
-
-                {pendingApprovals.length === 0 ? (
-                  <div className="text-center py-12 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-dashed dark:border-slate-800">
-                    <CheckCircle2 className="w-10 h-10 text-teal-500 mx-auto mb-2" />
-                    <p className="text-gray-400 italic text-sm">
-                      {lang === 'en' ? 'No pending updates awaiting approval.' : 'स्वीकृतिको प्रतीक्षामा कुनै पनि परिवर्तनहरू छैनन्।'}
-                    </p>
-                  </div>
-                ) : filteredApprovals.length === 0 ? (
-                  <div className="text-center py-12 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-dashed dark:border-slate-800">
-                    <CheckCircle2 className="w-10 h-10 text-amber-500 mx-auto mb-2" />
-                    <p className="text-gray-400 italic text-sm">
-                      {lang === 'en' ? 'No pending updates in this section.' : 'यस खण्डमा स्वीकृतिको प्रतीक्षामा कुनै परिवर्तनहरू छैनन्।'}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {filteredApprovals.map((app) => (
-                      <div 
-                        key={app.id}
-                        className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-teal-50/55 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between gap-4"
-                      >
-                        <div className="space-y-2 max-w-xl">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 font-extrabold text-[10px] uppercase tracking-wider">
-                              {app.path === 'community_notices.json' ? (lang === 'en' ? 'Community Notice' : 'सामुदायिक सूचना')
-                               : app.path === 'journey_albums.json' ? (lang === 'en' ? 'Journey Post' : 'ग्यालरी यात्रा पोस्ट')
-                               : app.path === 'renowned_people.json' ? (lang === 'en' ? 'Renowned Person' : 'प्रतिष्ठित व्यक्ति')
-                               : app.path === 'community_members.json' ? (lang === 'en' ? 'Members Directory' : 'सदस्य निर्देशिका')
-                               : app.path === 'community_events.json' ? (lang === 'en' ? 'Event' : 'कार्यक्रम')
-                               : app.path}
-                            </span>
-                            <span className="text-[10px] text-gray-400 font-mono">
-                              {new Date(app.timestamp).toLocaleString()}
-                            </span>
-                          </div>
-                          <h4 className="text-sm font-black text-slate-800 dark:text-white">
-                            {app.commitMessage}
-                          </h4>
-                          <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                            Requested By: <strong className="text-gray-700 dark:text-gray-300">{app.requestedBy}</strong>
-                          </p>
-                          <details className="text-[10px] bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border dark:border-slate-800 cursor-pointer">
-                            <summary className="font-extrabold text-teal-600 hover:underline text-[11px]">
-                              {lang === 'en' ? 'View Proposed JSON Content' : 'प्रस्तावित JSON सामाग्री हेर्नुहोस्'}
-                            </summary>
-                            <pre className="mt-2 font-mono overflow-x-auto text-[10px] max-h-40 p-2 bg-gray-900 text-green-400 rounded">
-                              {(JSON.stringify(app.content, null, 2) || '').substring(0, 1500)}
-                              {(JSON.stringify(app.content) || '').length > 1500 && '\n... (truncated for preview)'}
-                            </pre>
-                          </details>
-                        </div>
-
-                        {isSuperAdminUser() && (
-                          <div className="flex md:flex-col items-stretch justify-center gap-2 shrink-0">
-                            <button
-                              onClick={() => handleApprovePending(app)}
-                              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                              <span>{lang === 'en' ? 'Approve & Publish' : 'स्वीकृत गर्नुहोस्'}</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRejectPending(app.id)}
-                              className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              <span>{lang === 'en' ? 'Reject & Discard' : 'अस्वीकार गर्नुहोस्'}</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             )}
           </div>
         </div>

@@ -93,20 +93,7 @@ function base64ToUtf8(base64Str: string): string {
   return new TextDecoder('utf-8').decode(bytes);
 }
 
-export interface PendingApproval {
-  id: string;
-  path: string;
-  content: any;
-  commitMessage: string;
-  timestamp: string;
-  requestedBy: string;
-}
-
-export function isSuperAdminUser(): boolean {
-  return localStorage.getItem('chaurasiya_is_super_admin') === 'true';
-}
-
-export async function directSaveFileToGithub(path: string, content: any, commitMessage: string) {
+export async function saveFileToGithub(path: string, content: any, commitMessage: string) {
   const cleanKey = path.replace(/\.json$/, '');
 
   // 1. Always save to server API first so all devices/visitors see updates instantly!
@@ -135,52 +122,6 @@ export async function directSaveFileToGithub(path: string, content: any, commitM
     }
   } catch (err) {
     console.warn(`GitHub push failed for ${path}:`, err);
-  }
-}
-
-export async function saveFileToGithub(path: string, content: any, commitMessage: string) {
-  // If user is super admin, save directly!
-  if (isSuperAdminUser()) {
-    return directSaveFileToGithub(path, content, commitMessage);
-  }
-
-  // If path is pending_approvals.json itself, allow writing directly
-  if (path === 'pending_approvals.json') {
-    return directSaveFileToGithub(path, content, commitMessage);
-  }
-
-  // Otherwise, queue for approval!
-  try {
-    // Read current pending approvals
-    let currentApprovals: PendingApproval[] = [];
-    try {
-      currentApprovals = await apiFetch<PendingApproval[]>('/api/site-data/pending_approvals', 'pending_approvals.json', []);
-      if (!Array.isArray(currentApprovals)) currentApprovals = [];
-    } catch (e) {
-      currentApprovals = [];
-    }
-
-    const newApproval: PendingApproval = {
-      id: `approval-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-      path,
-      content,
-      commitMessage,
-      timestamp: new Date().toISOString(),
-      requestedBy: 'Admin (PAT)'
-    };
-
-    const nextApprovals = [...currentApprovals, newApproval];
-    await directSaveFileToGithub('pending_approvals.json', nextApprovals, `Queue approval for ${path}: ${commitMessage}`);
-
-    // Dispatch custom event to notify React components that change was queued
-    window.dispatchEvent(new CustomEvent('chaurasiya_change_queued', { detail: { path } }));
-    
-    // Throw special error so UI knows not to update local state optimistically
-    throw new Error('QUEUED_FOR_APPROVAL');
-  } catch (err) {
-    if (err instanceof Error && err.message === 'QUEUED_FOR_APPROVAL') throw err;
-    console.error('Failed to queue change for approval:', err);
-    throw new Error('Approval queueing failed. Please make sure you have internet connection.');
   }
 }
 
@@ -308,36 +249,8 @@ export async function apiSave<T>(
   commitMessage: string,
   authHeaders?: Record<string, string>
 ): Promise<T[]> {
-  try {
-    await saveFileToGithub(fileName, allUpdatedItems, commitMessage);
-    return allUpdatedItems;
-  } catch (err) {
-    if (err instanceof Error && err.message === 'QUEUED_FOR_APPROVAL') {
-      let originalData: T[] = [];
-      try {
-        originalData = await apiFetch<T[]>(endpoint, fileName, []);
-      } catch (e) {
-        console.error('Failed to fetch original data after queuing approval:', e);
-      }
-      
-      const storageKeyMap: Record<string, string> = {
-        'community_notices.json': 'chaurasiya_notices',
-        'journey_albums.json': 'chaurasiya_journey_albums',
-        'community_events.json': 'chaurasiya_events',
-        'community_members.json': 'chaurasiya_members',
-        'community_documents.json': 'chaurasiya_documents',
-        'community_networks.json': 'chaurasiya_networks'
-      };
-      
-      const key = storageKeyMap[fileName];
-      if (key) {
-        localStorage.setItem(key, JSON.stringify(originalData));
-      }
-      
-      return originalData;
-    }
-    throw err;
-  }
+  await saveFileToGithub(fileName, allUpdatedItems, commitMessage);
+  return allUpdatedItems;
 }
 
 export async function apiDelete<T extends { id: string }>(
@@ -347,34 +260,6 @@ export async function apiDelete<T extends { id: string }>(
   commitMessage: string,
   authHeaders?: Record<string, string>
 ): Promise<T[]> {
-  try {
-    await saveFileToGithub(fileName, itemsAfterDeletion, commitMessage);
-    return itemsAfterDeletion;
-  } catch (err) {
-    if (err instanceof Error && err.message === 'QUEUED_FOR_APPROVAL') {
-      let originalData: T[] = [];
-      try {
-        originalData = await apiFetch<T[]>(deleteEndpoint, fileName, []);
-      } catch (e) {
-        console.error('Failed to fetch original data after queuing approval:', e);
-      }
-      
-      const storageKeyMap: Record<string, string> = {
-        'community_notices.json': 'chaurasiya_notices',
-        'journey_albums.json': 'chaurasiya_journey_albums',
-        'community_events.json': 'chaurasiya_events',
-        'community_members.json': 'chaurasiya_members',
-        'community_documents.json': 'chaurasiya_documents',
-        'community_networks.json': 'chaurasiya_networks'
-      };
-      
-      const key = storageKeyMap[fileName];
-      if (key) {
-        localStorage.setItem(key, JSON.stringify(originalData));
-      }
-      
-      return originalData;
-    }
-    throw err;
-  }
+  await saveFileToGithub(fileName, itemsAfterDeletion, commitMessage);
+  return itemsAfterDeletion;
 }

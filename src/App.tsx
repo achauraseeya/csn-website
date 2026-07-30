@@ -366,39 +366,6 @@ export default function App() {
     }
   }, [liveToast]);
 
-  // Listen for changes queued for super admin approval
-  useEffect(() => {
-    const handleQueued = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      const path = customEvent.detail?.path;
-      
-      const sectionMap: Record<string, string> = {
-        'community_notices.json': lang === 'en' ? 'Community Notice' : 'सामुदायिक सूचना',
-        'journey_albums.json': lang === 'en' ? 'Journey Post' : 'ग्यालरी यात्रा पोस्ट',
-        'renowned_people.json': lang === 'en' ? 'Renowned Person' : 'प्रतिष्ठित व्यक्ति',
-        'community_members.json': lang === 'en' ? 'Members Directory' : 'सदस्य निर्देशिका',
-        'community_events.json': lang === 'en' ? 'Event' : 'कार्यक्रम'
-      };
-      
-      const sectionName = sectionMap[path] || path;
-      const msg = lang === 'en' 
-        ? `✅ Submitted to Super Admin for approval (${sectionName}).`
-        : `✅ सुपर प्रशासक स्वीकृतिको लागि पठाइयो (${sectionName})।`;
-        
-      setLiveToast(msg);
-    };
-    
-    const handleApplied = (e: any) => {
-      window.location.reload();
-    };
-    
-    window.addEventListener('chaurasiya_change_queued', handleQueued);
-    window.addEventListener('chaurasiya_approval_applied', handleApplied);
-    return () => {
-      window.removeEventListener('chaurasiya_change_queued', handleQueued);
-      window.removeEventListener('chaurasiya_approval_applied', handleApplied);
-    };
-  }, [lang]);
 
   // Real-time Cloud Database & Broadcast Synchronization Listeners
   useEffect(() => {
@@ -2250,7 +2217,7 @@ export default function App() {
           <AbhishekBio
             lang={lang}
             onTrackAction={handleTrackAction}
-            isAdmin={isSuperAdmin}
+            isAdmin={isAdmin}
             onUpdateAvatar={(url) => setAbhishekAvatar(url)}
           />
         )}
@@ -2444,8 +2411,6 @@ export default function App() {
         lang={lang}
         isAdmin={isAdmin}
         setIsAdmin={setIsAdmin}
-        isSuperAdmin={isSuperAdmin}
-        setIsSuperAdmin={setIsSuperAdmin}
         onOpenDashboard={() => setIsAdminDashboardOpen(true)}
       />
 

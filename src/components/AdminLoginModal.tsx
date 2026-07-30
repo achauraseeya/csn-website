@@ -8,8 +8,6 @@ interface AdminLoginModalProps {
   lang: Language;
   isAdmin: boolean;
   setIsAdmin: (status: boolean) => void;
-  isSuperAdmin: boolean;
-  setIsSuperAdmin: (status: boolean) => void;
   onOpenDashboard?: () => void;
 }
 
@@ -19,9 +17,6 @@ export default function AdminLoginModal({
   lang,
   isAdmin,
   setIsAdmin,
-  isSuperAdmin,
-  setIsSuperAdmin,
-  onOpenDashboard,
 }: AdminLoginModalProps) {
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -52,9 +47,7 @@ export default function AdminLoginModal({
         localStorage.setItem('chaurasiya_is_admin', 'true');
         
         // Ensure standard login clears any lingering super admin session to prevent bypassing queue
-        localStorage.removeItem('chaurasiya_is_super_admin');
-        setIsSuperAdmin(false);
-        
+                
         setIsAdmin(true);
         // Clear password state
         setPassword('');
@@ -71,9 +64,7 @@ export default function AdminLoginModal({
   const handleLogout = () => {
     localStorage.removeItem('chaurasiya_admin_password');
     localStorage.removeItem('chaurasiya_is_admin');
-    localStorage.removeItem('chaurasiya_is_super_admin');
     setIsAdmin(false);
-    setIsSuperAdmin(false);
     onClose();
   };
 
@@ -116,89 +107,6 @@ export default function AdminLoginModal({
                 </div>
               </div>
 
-              {/* Open Central Admin Operations Dashboard */}
-              {isSuperAdmin && onOpenDashboard && (
-                <button
-                  onClick={() => {
-                    onOpenDashboard();
-                    onClose();
-                  }}
-                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  {lang === 'en' ? 'Open Central Operations' : 'केन्द्रीय नियन्त्रण कक्ष'}
-                </button>
-              )}
-
-              {/* Super Admin Control Subpanel */}
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">👑</span>
-                  <span className="font-extrabold text-amber-950 uppercase tracking-wide">
-                    {lang === 'en' ? 'Super Admin Profile' : 'सुपर एडमिन प्रोफाइल'}
-                  </span>
-                </div>
-
-                {isSuperAdmin ? (
-                  <div className="space-y-2">
-                    <div className="p-2 bg-emerald-100 text-emerald-800 rounded-lg text-[10px] font-black border border-emerald-200">
-                      ✨ Super Admin Mode: Active
-                    </div>
-                    <button
-                      onClick={() => {
-                        localStorage.removeItem('chaurasiya_is_super_admin');
-                        setIsSuperAdmin(false);
-                      }}
-                      className="w-full py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition-colors cursor-pointer text-center text-[11px]"
-                    >
-                      Deactivate Super Admin
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    <p className="text-[10px] text-amber-900 leading-normal">
-                      {lang === 'en' 
-                        ? 'To approve changes made by standard administrators, activate Super Admin access.' 
-                        : 'सामान्य प्रशासकका परिवर्तनहरू स्वीकृत गर्न सुपर एडमिन नियन्त्रण सक्रिय गर्नुहोस्।'}
-                    </p>
-                    <input
-                      type="password"
-                      placeholder={lang === 'en' ? 'Super Admin Password' : 'सुपर एडमिन पासवर्ड'}
-                      className="w-full p-2.5 bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono text-xs"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const val = (e.target as HTMLInputElement).value;
-                          if (val === 'SuperAdmin@Chaurasiya') {
-                            localStorage.setItem('chaurasiya_is_super_admin', 'true');
-                            setIsSuperAdmin(true);
-                            (e.target as HTMLInputElement).value = '';
-                          } else {
-                            alert(lang === 'en' ? 'Incorrect Super Admin password' : 'गलत सुपर एडमिन पासवर्ड');
-                          }
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        const input = (e.currentTarget.previousSibling as HTMLInputElement);
-                        if (input && input.value === 'SuperAdmin@Chaurasiya') {
-                          localStorage.setItem('chaurasiya_is_super_admin', 'true');
-                          setIsSuperAdmin(true);
-                          input.value = '';
-                        } else {
-                          alert(lang === 'en' ? 'Incorrect Super Admin password' : 'गलत सुपर एडमिन पासवर्ड');
-                        }
-                      }}
-                      className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl transition-colors cursor-pointer text-[11px] uppercase tracking-wider"
-                    >
-                      Elevate To Super Admin
-                    </button>
-                  </div>
-                )}
-              </div>
-              
               <button
                 onClick={handleLogout}
                 className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
