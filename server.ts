@@ -25,9 +25,9 @@ async function startServer() {
     try {
       const key = req.params.key.replace(/[^a-zA-Z0-9_-]/g, '');
       const possiblePaths = [
-        path.join(DATA_DIR, `${key}.json`),
         path.join(process.cwd(), 'public', `${key}.json`),
-        path.join(process.cwd(), `${key}.json`)
+        path.join(process.cwd(), `${key}.json`),
+        path.join(DATA_DIR, `${key}.json`)
       ];
       for (const filePath of possiblePaths) {
         if (fs.existsSync(filePath)) {

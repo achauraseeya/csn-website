@@ -90,7 +90,7 @@ const defaultSiteTexts: SiteTexts = {
   logoTextNe: 'चौरसिया समाज',
   logoSubEn: 'Nepal',
   logoSubNe: 'चौरसिया समाज नेपाल',
-  logoUrl: '',
+  logoUrl: 'https://raw.githubusercontent.com/achauraseeya/csn-website/main/assets/uploads/1785420190802_square_image_11zon.jpg',
   taglineEn: 'A dedicated social platform preserving betel leaf culture & serving humanity',
   taglineNe: 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था',
   impactHeaderEn: 'Empowering & Transforming Lives',
@@ -138,7 +138,30 @@ const defaultSiteTexts: SiteTexts = {
 export default function App() {
   // Default language turned to 'en' (English) as requested
   const [lang, setLang] = useState<Language>('en');
-  const [currentTab, setCurrentTab] = useState<string>('history');
+  const [currentTab, setCurrentTab] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const pageParam = searchParams.get('page') || searchParams.get('profile');
+      const tabParam = searchParams.get('tab');
+      if (
+        pageParam === 'abhishek' ||
+        tabParam === 'abhishek-bio' ||
+        searchParams.has('abhishek') ||
+        window.location.hash.includes('abhishek') ||
+        window.location.pathname.endsWith('/abhishek')
+      ) {
+        return 'abhishek-bio';
+      }
+      if (tabParam) return tabParam;
+      if (searchParams.get('post') || searchParams.get('album')) return 'album-detail';
+      if (searchParams.get('notice')) return 'notices-gallery';
+      if (searchParams.get('event')) return 'events';
+      if (searchParams.get('news') || searchParams.get('blog')) return 'single-post';
+      if (searchParams.get('member')) return 'directory';
+      if (searchParams.get('network') || searchParams.get('branch')) return 'chapter-detail';
+    }
+    return 'history';
+  });
   const [selectedLeaderId, setSelectedLeaderId] = useState<string | null>(null);
   const [selectedBlogPost, setSelectedBlogPost] = useState<SinglePostData | null>(null);
   
@@ -148,7 +171,7 @@ export default function App() {
 
   // Dynamic Site Texts State
   const [siteTexts, setSiteTexts] = useState<SiteTexts>(defaultSiteTexts);
-  const [abhishekAvatar, setAbhishekAvatar] = useState('https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200');
+  const [abhishekAvatar, setAbhishekAvatar] = useState('https://raw.githubusercontent.com/achauraseeya/csn-website/main/assets/uploads/abhishek_profile_1785421119798.jpg');
   const [isEditingFooterSocials, setIsEditingFooterSocials] = useState(false);
   
   // Dynamic Member Directory list
@@ -1866,6 +1889,12 @@ export default function App() {
         if (!state.postId) {
           setSelectedBlogPost(null);
         }
+      } else if (
+        searchParams.get('page') === 'abhishek' ||
+        searchParams.get('tab') === 'abhishek-bio' ||
+        searchParams.has('abhishek')
+      ) {
+        setCurrentTab('abhishek-bio');
       } else if (postParam) {
         setSelectedAlbumId(postParam);
         setCurrentTab('album-detail');
