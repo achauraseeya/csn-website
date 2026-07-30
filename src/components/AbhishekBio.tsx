@@ -373,21 +373,34 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
     if (!file) return;
     try {
       setIsUploading(true);
-      const base64 = await compressImageToBase64(file, 500);
-      try {
-        // Upload photo to GitHub Repo
-        const githubUrl = await uploadImageToGithub(
-          `abhishek_profile_${Date.now()}.jpg`,
-          base64,
-          'Update Abhishek Chaurasiya profile photo'
-        );
-        setEditAvatarUrl(githubUrl);
-      } catch (err) {
-        setEditAvatarUrl(base64);
-      } finally {
-        setIsUploading(false);
+      const base64 = await compressImageToBase64(file, 300);
+      const fileName = `abhishek_profile_${Date.now()}.jpg`;
+      
+      const githubUrl = await uploadImageToGithub(
+        fileName,
+        base64,
+        'Update Abhishek Chaurasiya profile photo'
+      );
+      
+      setEditAvatarUrl(githubUrl);
+
+      // Auto-save immediately so picture updates instantly across the site
+      const updatedProfile = {
+        ...profile,
+        avatarUrl: githubUrl
+      };
+      setProfile(updatedProfile);
+      localStorage.setItem('chaurasiya_abhishek_profile_data', JSON.stringify(updatedProfile));
+      saveFileToGithub('abhishek_profile.json', updatedProfile, 'Update Abhishek Chaurasiya profile photo').catch(() => {});
+      
+      if (onUpdateAvatar) {
+        onUpdateAvatar(githubUrl);
       }
-    } catch (err) {
+      onTrackAction('Updated Abhishek profile photo');
+    } catch (err: any) {
+      console.error('Avatar upload error:', err);
+      alert(lang === 'en' ? 'Failed to upload image' : 'तस्विर अपलोड गर्न असफल भयो');
+    } finally {
       setIsUploading(false);
     }
   };
@@ -412,14 +425,20 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
                 className="w-full h-full object-cover"
               />
               {canEdit && (
-                <button
-                  onClick={openEditModal}
+                <label
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer text-xs font-bold gap-1"
-                  title="Change Photo / Edit Profile"
+                  title="Upload New Photo"
                 >
                   <Edit className="w-5 h-5 text-amber-300" />
-                  <span>{lang === 'en' ? 'Edit Photo' : 'फोटो फेर्नुहोस्'}</span>
-                </button>
+                  <span>{isUploading ? (lang === 'en' ? 'Uploading...' : 'अपलोड गर्दै...') : (lang === 'en' ? 'Edit Photo' : 'फोटो फेर्नुहोस्')}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarFileUpload}
+                    className="hidden"
+                    disabled={isUploading}
+                  />
+                </label>
               )}
             </div>
 

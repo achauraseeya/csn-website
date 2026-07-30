@@ -22,7 +22,11 @@ export function saveGithubSettings(settings: GithubSettings) {
   localStorage.setItem('chaurasiya_github_settings', JSON.stringify(settings));
 }
 
-const getPat = () => localStorage.getItem('chaurasiya_admin_password') || '';
+const getPat = () => 
+  localStorage.getItem('chaurasiya_admin_password') || 
+  localStorage.getItem('csn_github_pat') || 
+  localStorage.getItem('github_pat') || 
+  '';
 
 async function fetchFileSha(path: string, settings: GithubSettings, pat: string): Promise<string | undefined> {
   const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${path}?ref=${settings.branch}`;
@@ -68,9 +72,9 @@ export async function uploadImageToGithub(fileName: string, base64Data: string, 
   if (settings.enabled && pat) {
     try {
       const base64Content = base64Data.split(',')[1] || base64Data;
-      const path = `assets/uploads/${safeName}`;
-      const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${path}`;
-      const sha = await fetchFileSha(path, settings, pat);
+      const primaryPath = `assets/uploads/${safeName}`;
+      const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${primaryPath}`;
+      const sha = await fetchFileSha(primaryPath, settings, pat);
 
       const res = await fetch(url, {
         method: 'PUT',
@@ -88,7 +92,13 @@ export async function uploadImageToGithub(fileName: string, base64Data: string, 
       });
 
       if (res.ok) {
-        return `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${path}`;
+        // Also sync to public/assets/uploads/ for static build compatibility
+        pushContentToGithubRepo(`public/assets/uploads/${safeName}`, base64Content, commitMessage, settings, pat, true).catch(() => {});
+
+        return `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${primaryPath}`;
+      } else {
+        const errTxt = await res.text().catch(() => '');
+        console.error(`GitHub API image upload failed (${res.status}):`, errTxt);
       }
     } catch (err) {
       console.warn('GitHub image sync failed:', err);
@@ -137,23 +147,24 @@ export async function saveFileToGithub(path: string, content: any, commitMessage
   if (!settings.enabled || !pat) return;
 
   try {
-    // A) Push to primary path in GitHub repo (e.g. journey_albums.json)
-    await pushContentToGithubRepo(path, content, commitMessage, settings, pat);
+    const jsonStr = JSON.stringify(content, null, 2);
+    const base64Content = utf8ToBase64(jsonStr);
 
-    // B) If path is a json file not in public/, also push to public/ path so GitHub Pages builds automatically include it!
+    // A) Push to primary path in GitHub repo (e.g. abhishek_profile.json)
+    await pushContentToGithubRepo(path, base64Content, commitMessage, settings, pat, true);
+
+    // B) If path is a json file not in public/, also push to public/ path so static builds get it!
     if (path.endsWith('.json') && !path.startsWith('public/')) {
-      await pushContentToGithubRepo(`public/${path}`, content, commitMessage, settings, pat).catch(() => {});
+      await pushContentToGithubRepo(`public/${path}`, base64Content, commitMessage, settings, pat, true).catch(() => {});
     }
   } catch (err) {
     console.warn(`GitHub push failed for ${path}:`, err);
   }
 }
 
-async function pushContentToGithubRepo(path: string, content: any, commitMessage: string, settings: GithubSettings, pat: string) {
+async function pushContentToGithubRepo(path: string, base64Content: string, commitMessage: string, settings: GithubSettings, pat: string, isRawBase64 = false) {
   const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${path}`;
   const sha = await fetchFileSha(path, settings, pat);
-
-  const base64Content = utf8ToBase64(JSON.stringify(content, null, 2));
 
   const res = await fetch(url, {
     method: 'PUT',
@@ -180,48 +191,47 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
   const settings = getGithubSettings();
   const pat = getPat();
 
-  // 1. Try local server API endpoint FIRST for instant real-time sync!
+  // 1. Try local server API endpoint FIRST for instant real-time sync when hosted fullstack!
   try {
     const serverUrl = `/api/site-data/${cleanKey}?t=${Date.now()}`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
     const res = await fetch(serverUrl, { signal: controller.signal });
     clearTimeout(timeoutId);
     if (res.ok) {
       const data = await res.json();
-      if (data !== null && data !== undefined) {
+      if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0 || Array.isArray(fallbackData))) {
         return data as T;
       }
     }
   } catch (err) {
-    // Ignore server fallback error
+    // Server unavailable or static deployment
   }
 
-  // 2. Try fetching static JSON directly from current domain (for static GitHub Pages host)
-  const relativeUrls = [
-    `./${fileName}?t=${Date.now()}`,
-    `/${fileName}?t=${Date.now()}`
-  ];
-  for (const relUrl of relativeUrls) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-      const res = await fetch(relUrl, { cache: 'no-store', signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        const contentType = res.headers.get('content-type') || '';
-        if (contentType.includes('json') || relUrl.endsWith('.json')) {
-          const data = await res.json();
+  // 2. Check fresh GitHub raw repository contents FIRST for live static sites!
+  // Since GitHub repo has the latest JSON committed by saveFileToGithub, checking raw.githubusercontent.com gives the freshest data!
+  if (settings.enabled && settings.username && settings.repo) {
+    const rawUrls = [
+      `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${fileName}?t=${Date.now()}`,
+      `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/public/${fileName}?t=${Date.now()}`
+    ];
+
+    for (const rawUrl of rawUrls) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const rawRes = await fetch(rawUrl, { cache: 'no-store', signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (rawRes.ok) {
+          const data = await rawRes.json();
           if (data !== null && data !== undefined) {
             return data as T;
           }
         }
-      }
-    } catch (e) {}
-  }
+      } catch (e) {}
+    }
 
-  // 3. Try fetching directly from GitHub repository if PAT or custom settings are enabled
-  if (settings.enabled && settings.username && settings.repo) {
+    // Try GitHub Contents API with PAT if raw fetch was blocked
     try {
       const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${fileName}?ref=${settings.branch}&t=${Date.now()}`;
       const headers: Record<string, string> = {
@@ -232,7 +242,7 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
         headers['Authorization'] = `token ${pat}`;
       }
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       const res = await fetch(url, { headers, signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) {
@@ -240,23 +250,32 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
         if (data && data.content) {
           const contentStr = base64ToUtf8(data.content);
           const parsed = JSON.parse(contentStr);
-          if (parsed !== null && parsed !== undefined && (!Array.isArray(parsed) || parsed.length > 0)) {
+          if (parsed !== null && parsed !== undefined) {
             return parsed as T;
           }
         }
       }
     } catch (e) {}
+  }
 
+  // 3. Fallback to static relative URL from current domain (e.g., ./fileName.json)
+  const relativeUrls = [
+    `./${fileName}?t=${Date.now()}`,
+    `/${fileName}?t=${Date.now()}`
+  ];
+  for (const relUrl of relativeUrls) {
     try {
-      const rawUrl = `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${fileName}?t=${Date.now()}`;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-      const rawRes = await fetch(rawUrl, { cache: 'no-store', signal: controller.signal });
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(relUrl, { cache: 'no-store', signal: controller.signal });
       clearTimeout(timeoutId);
-      if (rawRes.ok) {
-        const data = await rawRes.json();
-        if (data !== null && data !== undefined) {
-          return data as T;
+      if (res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('json') || relUrl.endsWith('.json')) {
+          const data = await res.json();
+          if (data !== null && data !== undefined) {
+            return data as T;
+          }
         }
       }
     } catch (e) {}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Building, MapPin, Plus, Edit, Trash2, Search, Sparkles, User, Image, ArrowLeft, ShieldAlert } from 'lucide-react';
 import { Language } from '../types';
-import { apiFetch, saveFileToGithub } from '../utils/githubDb';
+import { apiFetch, saveFileToGithub, uploadImageToGithub } from '../utils/githubDb';
 import { compressImageToBase64 } from '../utils/imageUtils';
 
 export interface RenownedPerson {
@@ -162,9 +162,12 @@ export default function RenownedPeople({ lang, onTrackAction, isAdmin }: Renowne
     try {
       setIsUploading(true);
       const base64 = await compressImageToBase64(file, 400);
-      setPhotoUrl(base64);
-      setIsUploading(false);
+      const fileName = `renowned_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const url = await uploadImageToGithub(fileName, base64, `Upload renowned person photo ${file.name}`);
+      setPhotoUrl(url);
     } catch (err) {
+      console.error('Renowned photo upload failed:', err);
+    } finally {
       setIsUploading(false);
     }
   };
