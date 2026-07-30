@@ -1468,10 +1468,7 @@ export default function App() {
     const nextTexts = { ...siteTexts, ...updatedTexts };
     setSiteTexts(nextTexts);
     try {
-      const { enabled } = getGithubSettings();
-      if (enabled) {
-        await saveFileToGithub('site_texts.json', nextTexts, 'Update site global texts');
-      }
+      await saveFileToGithub('site_texts.json', nextTexts, 'Update site global texts');
     } catch (err) {
       console.error('Failed to update site texts:', err);
     }

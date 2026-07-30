@@ -41,38 +41,62 @@ async function fetchFileSha(path: string, settings: GithubSettings, pat: string)
 
 
 export async function uploadImageToGithub(fileName: string, base64Data: string, commitMessage: string): Promise<string> {
-  const settings = getGithubSettings();
-  const pat = getPat();
-  if (!settings.enabled || !pat) throw new Error("GitHub sync is disabled or PAT is missing");
-  
-  // Extract pure base64 without data URL prefix (e.g., "data:image/jpeg;base64,...")
-  const base64Content = base64Data.split(',')[1] || base64Data;
-  
-  const path = `assets/uploads/${fileName}`;
-  const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${path}`;
-  const sha = await fetchFileSha(path, settings, pat);
+  const safeName = fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
+  let localUrl = '';
 
-  const res = await fetch(url, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `token ${pat}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      message: commitMessage,
-      content: base64Content,
-      branch: settings.branch,
-      ...(sha ? { sha } : {})
-    })
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to upload ${path} to GitHub: ${res.statusText}`);
+  // 1. Upload to local server image storage first
+  try {
+    const serverRes = await fetch('/api/upload-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileName: safeName, base64Data })
+    });
+    if (serverRes.ok) {
+      const data = await serverRes.json();
+      if (data.url) {
+        localUrl = data.url;
+      }
+    }
+  } catch (err) {
+    console.warn('Server image upload endpoint unavailable, falling back:', err);
   }
 
-  // Use raw.githubusercontent for immediate viewing
-  return `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${path}`;
+  // 2. Also push to GitHub if PAT is provided and enabled
+  const settings = getGithubSettings();
+  const pat = getPat();
+
+  if (settings.enabled && pat) {
+    try {
+      const base64Content = base64Data.split(',')[1] || base64Data;
+      const path = `assets/uploads/${safeName}`;
+      const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${path}`;
+      const sha = await fetchFileSha(path, settings, pat);
+
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${pat}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: commitMessage,
+          content: base64Content,
+          branch: settings.branch,
+          ...(sha ? { sha } : {})
+        })
+      });
+
+      if (res.ok) {
+        return `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${path}`;
+      }
+    } catch (err) {
+      console.warn('GitHub image sync failed:', err);
+    }
+  }
+
+  // Return localUrl if available, otherwise return base64 string as fallback
+  return localUrl || base64Data;
 }
 
 function utf8ToBase64(str: string): string {

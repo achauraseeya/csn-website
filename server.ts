@@ -12,13 +12,57 @@ async function startServer() {
   app.use(cors());
   const PORT = 3000;
 
-  app.use(express.json({ limit: '10mb' }));
+  app.use(express.json({ limit: '50mb' }));
 
   // Ensure data_store directory exists for local filesystem cache
   const DATA_DIR = path.join(process.cwd(), 'data_store');
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
+
+  // Ensure uploads directory exists
+  const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+
+  app.use('/uploads', express.static(UPLOADS_DIR));
+  app.use('/uploads', express.static(path.join(DATA_DIR, 'uploads')));
+
+  // --- Universal Image Upload Endpoint ---
+  app.post("/api/upload-image", (req, res) => {
+    try {
+      const { fileName, base64Data } = req.body;
+      if (!fileName || !base64Data) {
+        return res.status(400).json({ error: "fileName and base64Data are required" });
+      }
+
+      const safeName = fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
+      const cleanBase64 = base64Data.split(',')[1] || base64Data;
+      const buffer = Buffer.from(cleanBase64, 'base64');
+
+      const uploadDirs = [
+        path.join(process.cwd(), 'public', 'uploads'),
+        path.join(DATA_DIR, 'uploads'),
+        path.join(process.cwd(), 'dist', 'public', 'uploads'),
+        path.join(process.cwd(), 'dist', 'uploads')
+      ];
+
+      for (const dirPath of uploadDirs) {
+        try {
+          if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: true });
+          }
+          fs.writeFileSync(path.join(dirPath, safeName), buffer);
+        } catch (e) {}
+      }
+
+      return res.json({ success: true, url: `/uploads/${safeName}`, fileName: safeName });
+    } catch (err) {
+      console.error("Image upload failed:", err);
+      return res.status(500).json({ error: "Failed to upload image" });
+    }
+  });
 
   // --- Universal Pure JSON Site Data Persistence Endpoints (GitHub-backed) ---
   app.get("/api/site-data/:key", (req, res) => {
