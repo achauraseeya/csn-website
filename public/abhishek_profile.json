@@ -25,32 +25,32 @@
   "contributions": [
     {
       "title": {
-        "en": "Centralized Member Database Deployed",
-        "ne": "केन्द्रीकृत सदस्य डाटाबेस"
+        "en": "Engineer",
+        "ne": "ईन्जिनियर"
       },
       "desc": {
-        "en": "Designed and deployed a responsive cloud directory to organize and verify community members, preventing fraud.",
-        "ne": "समुदायका सदस्यहरूलाई व्यवस्थित र प्रमाणित गर्न एक उत्तरदायी क्लाउड निर्देशिका डिजाइन र तैनात गर्नुभयो।"
+        "en": "Ministry of Infrastructure Development, Nepal",
+        "ne": "पूर्वाधार विकास मन्त्रालय"
       }
     },
     {
       "title": {
-        "en": "Blogger.com Integration Engine",
-        "ne": "ब्लगर एकीकरण इन्जिन"
+        "en": "M.Tech (Structural Engineering)",
+        "ne": "M. Tech (स्ट्रक्चरल ईन्जिनियरिङ्ग)"
       },
       "desc": {
-        "en": "Developed custom XML template compiler that generates secure blogger.com layouts for low-budget deployment.",
-        "ne": "कम बजेटको प्रयोगका लागि सुरक्षित ब्लगर ढाँचाहरू उत्पन्न गर्ने अनुकूलन XML टेम्पलेट कम्पाइलर विकास गर्नुभयो।"
+        "en": "IIT Bombay",
+        "ne": "भारतीय प्रौद्योगिकी संस्थान बम्बई"
       }
     },
     {
       "title": {
-        "en": "Rural Farmers Mobile Support",
-        "ne": "ग्रामीण किसान मोबाइल सहयोग"
+        "en": "B.E. (Civil Engineering)",
+        "ne": "B.E. (सिभिल ईन्जिनियरिङ्ग)"
       },
       "desc": {
-        "en": "Engineered notification portals so rural betel leaf (paan) farmers receive instant cold and storm warning bulletins.",
-        "ne": "ग्रामीण पान उत्पादक कृषकहरूले तत्काल चिसो र आँधीबेहरीको चेतावनी बुलेटिनहरू प्राप्त गर्न सक्ने गरी सूचना पोर्टलको निर्माण गर्नुभयो।"
+        "en": "Ramaiah Institute of Technology",
+        "ne": "रमैया इन्स्टिच्युट अफ टेक्नोलोजी"
       }
     }
   ]
