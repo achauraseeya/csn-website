@@ -171,7 +171,7 @@ export default function App() {
 
   // Dynamic Site Texts State
   const [siteTexts, setSiteTexts] = useState<SiteTexts>(defaultSiteTexts);
-  const [abhishekAvatar, setAbhishekAvatar] = useState('https://raw.githubusercontent.com/achauraseeya/csn-website/main/assets/uploads/abhishek_profile_1785421119798.jpg');
+  const [abhishekAvatar, setAbhishekAvatar] = useState('/abhishek_profile.jpg');
   const [isEditingFooterSocials, setIsEditingFooterSocials] = useState(false);
   
   // Dynamic Member Directory list

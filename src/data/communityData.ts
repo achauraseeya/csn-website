@@ -68,7 +68,7 @@ export const boardMembers: Member[] = [
       en: 'A visionary software engineer and designer dedicated to digitizing our community services and building modern web portals.',
       ne: 'हाम्रो सामुदायिक सेवाहरूलाई डिजिटाइज गर्न र आधुनिक वेब पोर्टलहरू निर्माण गर्न समर्पित एक दूरदर्शी सफ्टवेयर इन्जिनियर र डिजाइनर।',
     },
-    avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200',
+    avatarUrl: '/abhishek_profile.jpg',
   },
   {
     id: '3',

@@ -39,7 +39,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
       facebook: profileData?.facebook || 'https://www.facebook.com/achaurasiya',
       instagram: profileData?.instagram || 'https://www.instagram.com/achauraseeya',
       websiteUrl: profileData?.websiteUrl || 'https://www.achaurasiya.com.np',
-      avatarUrl: profileData?.avatarUrl || 'https://raw.githubusercontent.com/achauraseeya/csn-website/main/assets/uploads/abhishek_profile_1785421119798.jpg',
+      avatarUrl: profileData?.avatarUrl || '/abhishek_profile.jpg',
       skills: profileData?.skills || defaultDesignerProfile.skills,
       quoteEn: profileData?.quoteEn || '"Technology holds the power to simplify grassroots community work. By building fast, accessible portals, we elevate traditional agriculture and unite our people under one digital roof."',
       quoteNe: profileData?.quoteNe || '"प्रविधिले तल्लो तहका सामुदायिक कार्यहरूलाई सरलीकरण गर्ने शक्ति राख्छ। द्रुत र पहुँचयोग्य पोर्टलहरू निर्माण गरेर, हामी परम्परागत कृषि र हाम्रो समाजलाई एकै थलोमा जोड्छौँ।"',
@@ -94,7 +94,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
             facebook: cloudProfile.facebook || 'https://www.facebook.com/achaurasiya',
             instagram: cloudProfile.instagram || 'https://www.instagram.com/achauraseeya',
             websiteUrl: cloudProfile.websiteUrl || 'https://www.achaurasiya.com.np',
-            avatarUrl: cloudProfile.avatarUrl || 'https://raw.githubusercontent.com/achauraseeya/csn-website/main/assets/uploads/abhishek_profile_1785421119798.jpg',
+            avatarUrl: cloudProfile.avatarUrl || '/abhishek_profile.jpg',
             skills: Array.isArray(cloudProfile.skills) ? cloudProfile.skills : defaultDesignerProfile.skills,
             quoteEn: cloudProfile.quoteEn || '"Technology holds the power to simplify grassroots community work. By building fast, accessible portals, we elevate traditional agriculture and unite our people under one digital roof."',
             quoteNe: cloudProfile.quoteNe || '"प्रविधिले तल्लो तहका सामुदायिक कार्यहरूलाई सरलीकरण गर्ने शक्ति राख्छ। द्रुत र पहुँचयोग्य पोर्टलहरू निर्माण गरेर, हामी परम्परागत कृषि र हाम्रो समाजलाई एकै थलोमा जोड्छौँ।"',
@@ -392,6 +392,8 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
     }
   };
 
+  const canEdit = isAdmin || (typeof window !== 'undefined' && localStorage.getItem('csn_admin_authenticated') === 'true');
+
   return (
     <article itemScope itemType="https://schema.org/Person" className="space-y-12 animate-in fade-in duration-300">
       {/* Bio Banner */}
@@ -409,6 +411,16 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
               />
+              {canEdit && (
+                <button
+                  onClick={openEditModal}
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer text-xs font-bold gap-1"
+                  title="Change Photo / Edit Profile"
+                >
+                  <Edit className="w-5 h-5 text-amber-300" />
+                  <span>{lang === 'en' ? 'Edit Photo' : 'फोटो फेर्नुहोस्'}</span>
+                </button>
+              )}
             </div>
 
             <div className="space-y-3 text-center md:text-left">
@@ -425,8 +437,18 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
             </div>
           </div>
 
-          {/* Working Share Profile Link Button */}
-          <div className="flex items-center gap-3 shrink-0">
+          {/* Action Buttons: Edit Profile (Admin) & Share Profile */}
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {canEdit && (
+              <button
+                onClick={openEditModal}
+                className="flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer"
+                title="Edit Executive Profile (Admin)"
+              >
+                <Edit className="w-4 h-4 text-slate-950" />
+                <span>{lang === 'en' ? 'Edit Profile' : 'प्रोफाइल सम्पादन'}</span>
+              </button>
+            )}
             <button
               onClick={handleShareProfile}
               className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg hover:shadow-emerald-500/20 transition-all cursor-pointer"
