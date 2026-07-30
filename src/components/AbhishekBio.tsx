@@ -119,7 +119,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
     const origTitle = document.title;
     document.title = "Abhishek Kumar Chaurasiya - Structural Engineer & Public Sector Professional | Chaurasiya Samaj Nepal";
 
-    const shareUrl = `${window.location.origin}${window.location.pathname}?page=abhishek`;
+    const shareUrl = `${window.location.origin}/?page=abhishek`;
 
     // Helper to set or create meta tag
     const setMetaTag = (attr: string, key: string, content: string) => {
@@ -207,7 +207,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
   }, [profile]);
 
   const handleShareProfile = async () => {
-    const shareUrl = `${window.location.origin}${window.location.pathname}?page=abhishek`;
+    const shareUrl = `${window.location.origin}/?page=abhishek`;
     const shareTitle = 'Abhishek Kumar Chaurasiya - Official Profile';
     const shareText = 'Official executive profile of Er. Abhishek Kumar Chaurasiya - Structural Engineer, Ministry of Infrastructure Development, Nepal.';
 

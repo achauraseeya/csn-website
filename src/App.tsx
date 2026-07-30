@@ -147,8 +147,8 @@ export default function App() {
         pageParam === 'abhishek' ||
         tabParam === 'abhishek-bio' ||
         searchParams.has('abhishek') ||
-        window.location.hash.includes('abhishek') ||
-        window.location.pathname.endsWith('/abhishek')
+        window.location.hash.toLowerCase().includes('abhishek') ||
+        window.location.pathname.toLowerCase().includes('abhishek')
       ) {
         return 'abhishek-bio';
       }
@@ -1067,11 +1067,13 @@ export default function App() {
         pageParam === 'abhishek' ||
         tabParam === 'abhishek-bio' ||
         searchParams.has('abhishek') ||
-        window.location.hash.includes('abhishek') ||
-        window.location.pathname.endsWith('/abhishek')
+        window.location.hash.toLowerCase().includes('abhishek') ||
+        window.location.pathname.toLowerCase().includes('abhishek')
       ) {
         setCurrentTab('abhishek-bio');
-        window.history.replaceState({ tab: 'abhishek-bio' }, '', '?page=abhishek');
+        if (window.location.search !== '?page=abhishek') {
+          window.history.replaceState({ tab: 'abhishek-bio' }, '', '?page=abhishek');
+        }
       } else if (postParam) {
         setSelectedAlbumId(postParam);
         setCurrentTab('album-detail');
@@ -1533,6 +1535,20 @@ export default function App() {
 
   // Single Blog Post Detection (Blogger XML & URL path routing)
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const isAbhishek =
+      searchParams.get('page') === 'abhishek' ||
+      searchParams.get('tab') === 'abhishek-bio' ||
+      searchParams.has('abhishek') ||
+      window.location.hash.toLowerCase().includes('abhishek') ||
+      window.location.pathname.toLowerCase().includes('abhishek');
+
+    if (isAbhishek) {
+      setCurrentTab('abhishek-bio');
+      setSelectedBlogPost(null);
+      return;
+    }
+
     const pathname = window.location.pathname;
     const isHomepagePath = 
       pathname === '/' || 
@@ -1541,11 +1557,12 @@ export default function App() {
       pathname.endsWith('/dist/') || 
       pathname.endsWith('/dist/index.html');
 
-    const searchParams = new URLSearchParams(window.location.search);
     const hasDeepLink = searchParams.has('page') || searchParams.has('tab') || searchParams.has('profile') || searchParams.has('abhishek') || searchParams.has('post') || searchParams.has('album') || searchParams.has('notice') || searchParams.has('event') || searchParams.has('news') || searchParams.has('blog') || searchParams.has('member') || searchParams.has('network') || searchParams.has('branch');
 
     if (isHomepagePath && !hasDeepLink) {
-      setCurrentTab('history');
+      if (currentTab === 'single-post') {
+        setCurrentTab('history');
+      }
       setSelectedBlogPost(null);
       return;
     }
@@ -1892,7 +1909,9 @@ export default function App() {
       } else if (
         searchParams.get('page') === 'abhishek' ||
         searchParams.get('tab') === 'abhishek-bio' ||
-        searchParams.has('abhishek')
+        searchParams.has('abhishek') ||
+        window.location.hash.toLowerCase().includes('abhishek') ||
+        window.location.pathname.toLowerCase().includes('abhishek')
       ) {
         setCurrentTab('abhishek-bio');
       } else if (postParam) {
