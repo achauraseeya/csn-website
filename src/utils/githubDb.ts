@@ -174,7 +174,11 @@ export async function saveFileToGithub(path: string, content: any, commitMessage
 
     // Dispatch custom event to notify React components that change was queued
     window.dispatchEvent(new CustomEvent('chaurasiya_change_queued', { detail: { path } }));
+    
+    // Throw special error so UI knows not to update local state optimistically
+    throw new Error('QUEUED_FOR_APPROVAL');
   } catch (err) {
+    if (err instanceof Error && err.message === 'QUEUED_FOR_APPROVAL') throw err;
     console.error('Failed to queue change for approval:', err);
     throw new Error('Approval queueing failed. Please make sure you have internet connection.');
   }

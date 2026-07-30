@@ -112,7 +112,7 @@ export default function AdminLoginModal({
               </div>
 
               {/* Open Central Admin Operations Dashboard */}
-              {onOpenDashboard && (
+              {isSuperAdmin && onOpenDashboard && (
                 <button
                   onClick={() => {
                     onOpenDashboard();

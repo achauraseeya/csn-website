@@ -51,6 +51,7 @@ export default function AdminCentralDashboardModal({
 }: AdminCentralDashboardModalProps) {
   const [activeTab, setActiveTab] = useState<'matrimony' | 'volunteers' | 'memberships' | 'newsletter' | 'approvals'>('matrimony');
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
+  const [approvalSubTab, setApprovalSubTab] = useState<'all' | 'notices' | 'journey' | 'renowned' | 'members' | 'events' | 'others'>('all');
 
   useEffect(() => {
     if (isOpen) {
@@ -63,6 +64,32 @@ export default function AdminCentralDashboardModal({
         .catch(() => {});
     }
   }, [isOpen]);
+
+  const noticesApprovals = pendingApprovals.filter(a => a.path === 'community_notices.json');
+  const journeyApprovals = pendingApprovals.filter(a => a.path === 'journey_albums.json');
+  const renownedApprovals = pendingApprovals.filter(a => a.path === 'renowned_people.json');
+  const membersApprovals = pendingApprovals.filter(a => a.path === 'community_members.json');
+  const eventsApprovals = pendingApprovals.filter(a => a.path === 'community_events.json');
+  const otherApprovals = pendingApprovals.filter(a => 
+    a.path !== 'community_notices.json' && 
+    a.path !== 'journey_albums.json' && 
+    a.path !== 'renowned_people.json' && 
+    a.path !== 'community_members.json' && 
+    a.path !== 'community_events.json'
+  );
+
+  const getFilteredApprovals = () => {
+    switch (approvalSubTab) {
+      case 'notices': return noticesApprovals;
+      case 'journey': return journeyApprovals;
+      case 'renowned': return renownedApprovals;
+      case 'members': return membersApprovals;
+      case 'events': return eventsApprovals;
+      case 'others': return otherApprovals;
+      default: return pendingApprovals;
+    }
+  };
+  const filteredApprovals = getFilteredApprovals();
 
   const handleApprovePending = async (approval: PendingApproval) => {
     if (!confirm(lang === 'en' ? `Are you sure you want to approve and apply changes to ${approval.path}?` : `के तपाईं यस परिवर्तनलाई स्वीकृत गरी लागू गर्न चाहनुहुन्छ?`)) return;
@@ -919,6 +946,88 @@ export default function AdminCentralDashboardModal({
                   </div>
                 )}
 
+                {pendingApprovals.length > 0 && (
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-150 dark:border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setApprovalSubTab('all')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        approvalSubTab === 'all'
+                          ? 'bg-amber-600 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {lang === 'en' ? 'All Sections' : 'सबै खण्डहरू'} ({pendingApprovals.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setApprovalSubTab('notices')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        approvalSubTab === 'notices'
+                          ? 'bg-amber-600 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {lang === 'en' ? 'Notices' : 'सूचनाहरू'} ({noticesApprovals.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setApprovalSubTab('journey')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        approvalSubTab === 'journey'
+                          ? 'bg-amber-600 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {lang === 'en' ? 'Journey Posts' : 'यात्रा पोस्टहरू'} ({journeyApprovals.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setApprovalSubTab('renowned')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        approvalSubTab === 'renowned'
+                          ? 'bg-amber-600 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {lang === 'en' ? 'Renowned People' : 'प्रतिष्ठित व्यक्तिहरू'} ({renownedApprovals.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setApprovalSubTab('members')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        approvalSubTab === 'members'
+                          ? 'bg-amber-600 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {lang === 'en' ? 'Directory Members' : 'निर्देशिका सदस्यहरू'} ({membersApprovals.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setApprovalSubTab('events')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        approvalSubTab === 'events'
+                          ? 'bg-amber-600 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {lang === 'en' ? 'Events' : 'कार्यक्रमहरू'} ({eventsApprovals.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setApprovalSubTab('others')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        approvalSubTab === 'others'
+                          ? 'bg-amber-600 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {lang === 'en' ? 'Other Site Data' : 'अन्य विवरणहरू'} ({otherApprovals.length})
+                    </button>
+                  </div>
+                )}
+
                 {pendingApprovals.length === 0 ? (
                   <div className="text-center py-12 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-dashed dark:border-slate-800">
                     <CheckCircle2 className="w-10 h-10 text-teal-500 mx-auto mb-2" />
@@ -926,9 +1035,16 @@ export default function AdminCentralDashboardModal({
                       {lang === 'en' ? 'No pending updates awaiting approval.' : 'स्वीकृतिको प्रतीक्षामा कुनै पनि परिवर्तनहरू छैनन्।'}
                     </p>
                   </div>
+                ) : filteredApprovals.length === 0 ? (
+                  <div className="text-center py-12 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-dashed dark:border-slate-800">
+                    <CheckCircle2 className="w-10 h-10 text-amber-500 mx-auto mb-2" />
+                    <p className="text-gray-400 italic text-sm">
+                      {lang === 'en' ? 'No pending updates in this section.' : 'यस खण्डमा स्वीकृतिको प्रतीक्षामा कुनै परिवर्तनहरू छैनन्।'}
+                    </p>
+                  </div>
                 ) : (
                   <div className="space-y-4">
-                    {pendingApprovals.map((app) => (
+                    {filteredApprovals.map((app) => (
                       <div 
                         key={app.id}
                         className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-teal-50/55 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between gap-4"
@@ -936,7 +1052,12 @@ export default function AdminCentralDashboardModal({
                         <div className="space-y-2 max-w-xl">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 font-extrabold text-[10px] uppercase tracking-wider">
-                              {app.path}
+                              {app.path === 'community_notices.json' ? (lang === 'en' ? 'Community Notice' : 'सामुदायिक सूचना')
+                               : app.path === 'journey_albums.json' ? (lang === 'en' ? 'Journey Post' : 'ग्यालरी यात्रा पोस्ट')
+                               : app.path === 'renowned_people.json' ? (lang === 'en' ? 'Renowned Person' : 'प्रतिष्ठित व्यक्ति')
+                               : app.path === 'community_members.json' ? (lang === 'en' ? 'Members Directory' : 'सदस्य निर्देशिका')
+                               : app.path === 'community_events.json' ? (lang === 'en' ? 'Event' : 'कार्यक्रम')
+                               : app.path}
                             </span>
                             <span className="text-[10px] text-gray-400 font-mono">
                               {new Date(app.timestamp).toLocaleString()}
@@ -968,6 +1089,7 @@ export default function AdminCentralDashboardModal({
                               <span>{lang === 'en' ? 'Approve & Publish' : 'स्वीकृत गर्नुहोस्'}</span>
                             </button>
                             <button
+                              type="button"
                               onClick={() => handleRejectPending(app.id)}
                               className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                             >
