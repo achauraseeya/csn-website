@@ -18,6 +18,7 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
   const [githubUsername, setGithubUsername] = useState('achauraseeya');
   const [githubRepo, setGithubRepo] = useState('csn-website');
   const [useDistFolder, setUseDistFolder] = useState(false);
+  const [useBase64Encoding, setUseBase64Encoding] = useState(true);
   
   // Theme Color Presets
   const presets = [
@@ -31,7 +32,7 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
   const [secondaryColor, setSecondaryColor] = useState('#22c55e');
   const [copied, setCopied] = useState(false);
 
-  const finalXml = generateBloggerXml(blogTitle, blogDesc, contactEmail, primaryColor, secondaryColor, githubUsername, githubRepo, useDistFolder);
+  const finalXml = generateBloggerXml(blogTitle, blogDesc, contactEmail, primaryColor, secondaryColor, githubUsername, githubRepo, useDistFolder, useBase64Encoding);
 
   const t = {
     title: { en: 'Blogger + GitHub Pages Headless Setup', ne: 'Blogger + GitHub Pages सेटअप' },
@@ -134,6 +135,20 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
               </label>
             </div>
 
+            <div className="flex items-center gap-2 p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl">
+              <input 
+                type="checkbox" 
+                id="useBase64"
+                checked={useBase64Encoding}
+                onChange={(e) => setUseBase64Encoding(e.target.checked)}
+                className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+              />
+              <label htmlFor="useBase64" className="text-xs font-medium text-slate-800 leading-tight">
+                <strong className="text-emerald-900">🔒 Anonymize & Obfuscate URLs with Base64</strong><br/>
+                Encodes GitHub links in Base64 at runtime so your repository name and architecture stay hidden in Blogger source view.
+              </label>
+            </div>
+
             {/* Title */}
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-700">{t.blogTitleLabel[lang]}</label>
@@ -198,9 +213,9 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
 
             {/* Quick Preview block */}
             <div className="bg-slate-950 p-4 border border-slate-800 rounded-xl space-y-2">
-              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider block">Source Preview (Top Lines)</span>
-              <pre className="text-[10px] text-slate-300 font-mono leading-relaxed bg-black/50 p-2.5 rounded border border-slate-800 overflow-x-auto">
-                {`<?xml version="1.0" encoding="UTF-8" ?>\n<!DOCTYPE html>\n<html b:layoutsVersion='2' b:responsive='true' xmlns:b='http://www.google.com/schemas/2005/b'>\n<head>\n  <title><data:blog.pageTitle/></title>\n  <link rel="stylesheet" href="https://${githubUsername}.github.io/${githubRepo}/${useDistFolder ? 'dist/assets' : 'assets'}/index.css" />`}
+              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider block">Source Preview (Top 25 Lines)</span>
+              <pre className="text-[10px] text-slate-300 font-mono leading-relaxed bg-black/50 p-2.5 rounded border border-slate-800 overflow-x-auto max-h-48">
+                {finalXml.split('\n').slice(0, 25).join('\n')}
               </pre>
             </div>
           </div>

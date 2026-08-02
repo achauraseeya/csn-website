@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import fs from "fs";
+import { exec } from "child_process";
 import { createServer as createViteServer } from "vite";
 import { db } from "./src/db/index.js";
 import { matrimonialProfiles, volunteerApplications, membershipApplications, newsletterSubscribers } from "./src/db/schema.js";
@@ -24,6 +25,23 @@ async function startServer() {
   const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
   if (!fs.existsSync(UPLOADS_DIR)) {
     fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+
+  // Run GitHub sync in background on server startup to get the freshest live-site data & images
+  try {
+    const syncScriptPath = path.join(process.cwd(), 'sync_github_data.cjs');
+    if (fs.existsSync(syncScriptPath)) {
+      console.log('Spawning startup GitHub Sync...');
+      exec(`node "${syncScriptPath}"`, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Startup GitHub Sync Error: ${error.message}`);
+          return;
+        }
+        console.log(`Startup GitHub Sync completed successfully.\n${stdout}`);
+      });
+    }
+  } catch (err) {
+    console.warn('Could not launch startup GitHub Sync:', err);
   }
 
   app.use('/uploads', express.static(UPLOADS_DIR));
@@ -66,23 +84,184 @@ async function startServer() {
     }
   });
 
+  // --- Secure Anonymous GitHub Repository Proxy ---
+  // Masks the raw GitHub source, preventing public XML code or users from discovering the architecture,
+  // username, repository, or PAT, while serving correct Content-Type headers for XML, JSON, JS, CSS, and images.
+  app.get("/api/proxy/*all", async (req, res) => {
+    try {
+      const pathParam = req.params.all;
+      const filePath = Array.isArray(pathParam) ? pathParam.join('/') : (pathParam || "");
+      if (!filePath) {
+        return res.status(400).json({ error: "Missing file path" });
+      }
+
+      // Block path traversal/security attempts
+      if (filePath.includes('..') || filePath.startsWith('/') || filePath.includes('//')) {
+        return res.status(400).json({ error: "Invalid path format" });
+      }
+
+      const username = "achauraseeya";
+      const repo = "csn-website";
+      const branch = "main";
+      
+      const gitUrl = `https://raw.githubusercontent.com/${username}/${repo}/${branch}/${filePath}`;
+
+      // Set headers for CORS and anonymity
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+      res.setHeader("Cache-Control", "public, max-age=1800"); // Cache for 30 minutes
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8-second timeout
+
+      let gitRes;
+      try {
+        gitRes = await fetch(gitUrl, { signal: controller.signal });
+      } catch (fetchErr) {
+        console.warn(`Secure Proxy fetch error for ${filePath}, attempting local fallback:`, fetchErr);
+      }
+      clearTimeout(timeoutId);
+
+      if (!gitRes || !gitRes.ok) {
+        // Fallback to local files if available
+        const localPossiblePaths = [
+          path.join(DATA_DIR, filePath),
+          path.join(process.cwd(), 'public', filePath),
+          path.join(process.cwd(), filePath)
+        ];
+
+        for (const localPath of localPossiblePaths) {
+          if (fs.existsSync(localPath)) {
+            const ext = path.extname(localPath).toLowerCase();
+            let contentType = "application/octet-stream";
+            if (ext === ".json") contentType = "application/json; charset=utf-8";
+            else if (ext === ".js") contentType = "application/javascript; charset=utf-8";
+            else if (ext === ".css") contentType = "text/css; charset=utf-8";
+            else if (ext === ".xml") contentType = "application/xml; charset=utf-8";
+            else if (ext === ".jpg" || ext === ".jpeg") contentType = "image/jpeg";
+            else if (ext === ".png") contentType = "image/png";
+            else if (ext === ".svg") contentType = "image/svg+xml";
+
+            res.setHeader("Content-Type", contentType);
+            const fileStream = fs.createReadStream(localPath);
+            return fileStream.pipe(res);
+          }
+        }
+        return res.status(gitRes ? gitRes.status : 404).send(`Failed to load proxied asset`);
+      }
+
+      // Map appropriate Content-Type depending on file extension
+      const ext = path.extname(filePath).toLowerCase();
+      let contentType = gitRes.headers.get("content-type") || "application/octet-stream";
+      
+      if (ext === ".json") contentType = "application/json; charset=utf-8";
+      else if (ext === ".js") contentType = "application/javascript; charset=utf-8";
+      else if (ext === ".css") contentType = "text/css; charset=utf-8";
+      else if (ext === ".xml") contentType = "application/xml; charset=utf-8";
+      else if (ext === ".jpg" || ext === ".jpeg") contentType = "image/jpeg";
+      else if (ext === ".png") contentType = "image/png";
+      else if (ext === ".svg") contentType = "image/svg+xml";
+
+      res.setHeader("Content-Type", contentType);
+
+      const arrayBuffer = await gitRes.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      return res.send(buffer);
+
+    } catch (err) {
+      console.error("Secure Proxy Error:", err);
+      return res.status(500).send("Error fetching or parsing the proxied asset");
+    }
+  });
+
   // --- Universal Pure JSON Site Data Persistence Endpoints (GitHub-backed) ---
-  app.get("/api/site-data/:key", (req, res) => {
+  app.get("/api/site-data/:key", async (req, res) => {
     try {
       const key = req.params.key.replace(/[^a-zA-Z0-9_-]/g, '');
+      const fileName = `${key}.json`;
       const possiblePaths = [
-        path.join(process.cwd(), 'public', `${key}.json`),
-        path.join(process.cwd(), `${key}.json`),
-        path.join(DATA_DIR, `${key}.json`)
+        path.join(DATA_DIR, fileName),
+        path.join(process.cwd(), 'public', fileName),
+        path.join(process.cwd(), fileName)
       ];
+
+      // Check if we have a very recently saved local file (within 5 minutes)
+      let isRecentlyModified = false;
+      let localContent: string | null = null;
+
       for (const filePath of possiblePaths) {
         if (fs.existsSync(filePath)) {
-          const content = fs.readFileSync(filePath, 'utf-8');
-          return res.json(JSON.parse(content));
+          try {
+            const stats = fs.statSync(filePath);
+            const content = fs.readFileSync(filePath, 'utf-8');
+            // Parse to verify it's valid JSON
+            JSON.parse(content); 
+            localContent = content;
+
+            if (Date.now() - stats.mtimeMs < 5 * 60 * 1000) {
+              isRecentlyModified = true;
+            }
+            break;
+          } catch (e) {
+            // Bad JSON or stats error, continue searching
+          }
         }
       }
+
+      // If local file was saved recently, serve it directly to prevent race conditions with GitHub CDN caching
+      if (isRecentlyModified && localContent) {
+        return res.json(JSON.parse(localContent));
+      }
+
+      // Otherwise, try to fetch the freshest copy from the live GitHub repository
+      try {
+        const username = "achauraseeya";
+        const repo = "csn-website";
+        const branch = "main";
+        const gitUrl = `https://raw.githubusercontent.com/${username}/${repo}/${branch}/${fileName}?t=${Date.now()}`;
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 seconds timeout
+        const gitRes = await fetch(gitUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (gitRes.ok) {
+          const freshText = await gitRes.text();
+          const parsed = JSON.parse(freshText);
+
+          // Save the freshly fetched data from GitHub back to the local paths so they are in sync
+          const pathsToUpdate = [
+            path.join(DATA_DIR, fileName),
+            path.join(process.cwd(), 'public', fileName),
+            path.join(process.cwd(), fileName),
+            path.join(process.cwd(), 'dist', fileName),
+            path.join(process.cwd(), 'dist', 'public', fileName)
+          ];
+
+          for (const filePath of pathsToUpdate) {
+            try {
+              const dir = path.dirname(filePath);
+              if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+              }
+              fs.writeFileSync(filePath, JSON.stringify(parsed, null, 2), 'utf-8');
+            } catch (e) {}
+          }
+
+          return res.json(parsed);
+        }
+      } catch (gitErr) {
+        console.warn(`GitHub fresh fetch failed for ${fileName}, falling back to local storage:`, gitErr);
+      }
+
+      // If GitHub is down/rate-limited or doesn't have the file, fall back to local file
+      if (localContent) {
+        return res.json(JSON.parse(localContent));
+      }
+
       return res.status(404).json({ error: "Site data key not found" });
     } catch (err) {
+      console.error("Failed to read site data:", err);
       return res.status(500).json({ error: "Failed to read site data" });
     }
   });
@@ -471,7 +650,7 @@ ${pages
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
+    app.get('*all', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

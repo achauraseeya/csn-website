@@ -1,60 +1,4 @@
-export function generateBloggerXml(
-  blogTitle: string,
-  blogDesc: string,
-  contactEmail: string,
-  primaryColor: string,
-  secondaryColor: string,
-  githubUsername: string = "yourusername",
-  githubRepo: string = "yourrepo",
-  useDistFolder: boolean = false,
-  useBase64Encoding: boolean = true
-): string {
-  // Let me create a minimal headless Blogger XML template.
-  // It provides the required layoutVersion='2' and b:skin tags.
-  // This shell delegates all rendering to the React app hosted on GitHub Pages.
-
-  const versionTag = `?v=${Date.now()}`;
-  const basePath = useDistFolder 
-    ? `https://${githubUsername}.github.io/${githubRepo}/dist/assets`
-    : `https://${githubUsername}.github.io/${githubRepo}/assets`;
-
-  const cssUrl = `${basePath}/index.css${versionTag}`;
-  const jsUrl = `${basePath}/index.js${versionTag}`;
-
-  const b64CssUrl = typeof btoa === 'function' ? btoa(cssUrl) : Buffer.from(cssUrl).toString('base64');
-  const b64JsUrl = typeof btoa === 'function' ? btoa(jsUrl) : Buffer.from(jsUrl).toString('base64');
-
-  const cssTag = useBase64Encoding 
-    ? `<script>
-    /*<![CDATA[*/
-    (function() {
-      var _c = atob("${b64CssUrl}");
-      var l = document.createElement('link');
-      l.rel = 'stylesheet';
-      l.crossOrigin = 'anonymous';
-      l.href = _c;
-      document.head.appendChild(l);
-    })();
-    /*]]>*/
-  </script>`
-    : `<link rel="stylesheet" crossorigin="anonymous" href="${cssUrl}" />`;
-
-  const jsTag = useBase64Encoding
-    ? `<script>
-    /*<![CDATA[*/
-    (function() {
-      var _j = atob("${b64JsUrl}");
-      var s = document.createElement('script');
-      s.type = 'module';
-      s.crossOrigin = 'anonymous';
-      s.src = _j;
-      document.body.appendChild(s);
-    })();
-    /*]]>*/
-  </script>`
-    : `<script type="module" crossorigin="anonymous" src="${jsUrl}"></script>`;
-
-  return `<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE html>
 <html b:css='false' b:defaultmessages='false' b:layoutsVersion='2' b:responsive='true' xmlns='http://www.w3.org/1999/xhtml' xmlns:b='http://www.google.com/schemas/2005/b' xmlns:data='http://www.google.com/schemas/2005/data' xmlns:expr='http://www.google.com/schemas/2005/gml'>
 <head>
@@ -63,7 +7,7 @@ export function generateBloggerXml(
   <title><data:blog.pageTitle/></title>
   
   <!-- SEO & Description -->
-  <meta name="description" content="${blogDesc}" />
+  <meta name="description" content="Official Blogger Portal for Chaurasiya Samaj Nepal. Dedicated to unity, culture, and progress." />
 
   <!-- Blogger Core XML Configuration (Required) -->
   <b:skin><![CDATA[
@@ -76,7 +20,18 @@ export function generateBloggerXml(
   ]]></b:skin>
 
   <!-- Anonymous/Obfuscated CSS Asset Loader -->
-  ${cssTag}
+  <script>
+    /*<![CDATA[*/
+    (function() {
+      var _c = atob("aHR0cHM6Ly9hY2hhdXJhc2VleWEuZ2l0aHViLmlvL2Nzbi13ZWJzaXRlL2Fzc2V0cy9pbmRleC5jc3M=");
+      var l = document.createElement('link');
+      l.rel = 'stylesheet';
+      l.crossOrigin = 'anonymous';
+      l.href = _c;
+      document.head.appendChild(l);
+    })();
+    /*]]>*/
+  </script>
 </head>
 <body>
 
@@ -111,8 +66,18 @@ export function generateBloggerXml(
   </div>
 
   <!-- Anonymous/Obfuscated JS Bundle Loader -->
-  ${jsTag}
+  <script>
+    /*<![CDATA[*/
+    (function() {
+      var _j = atob("aHR0cHM6Ly9hY2hhdXJhc2VleWEuZ2l0aHViLmlvL2Nzbi13ZWJzaXRlL2Fzc2V0cy9pbmRleC5qcw==");
+      var s = document.createElement('script');
+      s.type = 'module';
+      s.crossOrigin = 'anonymous';
+      s.src = _j;
+      document.body.appendChild(s);
+    })();
+    /*]]>*/
+  </script>
 
 </body>
-</html>`;
-}
+</html>

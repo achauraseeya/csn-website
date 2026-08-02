@@ -545,7 +545,7 @@
       "en": "SADFASF",
       "ne": "SAFASF"
     },
-    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
+    "coverUrl": "",
     "date": "2026-07-21",
     "location": {
       "en": "ASF",
@@ -555,39 +555,8 @@
       "chapter-kathmandu",
       "chapter"
     ],
-    "mediaItems": [
-      {
-        "id": "alb_1784824616565-media-default-1",
-        "title": {
-          "en": "Community Gathering Photo 1",
-          "ne": "सामुदायिक भेला फोटो १"
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM"
-      },
-      {
-        "id": "alb_1784824616565-media-default-2",
-        "title": {
-          "en": "Community Gathering Photo 2",
-          "ne": "सामुदायिक भेला फोटो २"
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM"
-      },
-      {
-        "id": "alb_1784824616565-media-default-3",
-        "title": {
-          "en": "Community Event Photo 3",
-          "ne": "सामुदायिक कार्यक्रम फोटो ३"
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9"
-      }
-    ],
-    "chapterId": "chapter-kathmandu",
-    "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "driveFolderUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "isDriveFetched": true
+    "mediaItems": [],
+    "chapterId": "chapter-kathmandu"
   },
   {
     "id": "alb_1784811138303",
@@ -599,7 +568,7 @@
       "en": "sdfsdf",
       "ne": "sdfsdf"
     },
-    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
+    "coverUrl": "",
     "date": "2026-07-23",
     "location": {
       "en": "Banke District",
@@ -609,39 +578,8 @@
       "nepalgunj",
       "chapter"
     ],
-    "mediaItems": [
-      {
-        "id": "alb_1784811138303-media-default-1",
-        "title": {
-          "en": "Community Gathering Photo 1",
-          "ne": "सामुदायिक भेला फोटो १"
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM"
-      },
-      {
-        "id": "alb_1784811138303-media-default-2",
-        "title": {
-          "en": "Community Gathering Photo 2",
-          "ne": "सामुदायिक भेला फोटो २"
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM"
-      },
-      {
-        "id": "alb_1784811138303-media-default-3",
-        "title": {
-          "en": "Community Event Photo 3",
-          "ne": "सामुदायिक कार्यक्रम फोटो ३"
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9"
-      }
-    ],
-    "chapterId": "nepalgunj",
-    "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "driveFolderUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "isDriveFetched": true
+    "mediaItems": [],
+    "chapterId": "nepalgunj"
   },
   {
     "id": "alb_1784810985542",
@@ -653,7 +591,7 @@
       "en": "dfdf",
       "ne": "sdfsdf"
     },
-    "coverUrl": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM",
+    "coverUrl": "",
     "date": "2026-07-22",
     "location": {
       "en": "sdfsdf",
@@ -663,39 +601,8 @@
       "nepalgunj",
       "chapter"
     ],
-    "mediaItems": [
-      {
-        "id": "alb_1784810985542-media-default-1",
-        "title": {
-          "en": "Community Gathering Photo 1",
-          "ne": "सामुदायिक भेला फोटो १"
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/1yDPEzqK3cH8kowzJ_b3yZDV09hK8w7QM"
-      },
-      {
-        "id": "alb_1784810985542-media-default-2",
-        "title": {
-          "en": "Community Gathering Photo 2",
-          "ne": "सामुदायिक भेला फोटो २"
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/1juz0VTJarB9Gxtcsw0cXUbekSFfsOtpM"
-      },
-      {
-        "id": "alb_1784810985542-media-default-3",
-        "title": {
-          "en": "Community Event Photo 3",
-          "ne": "सामुदायिक कार्यक्रम फोटो ३"
-        },
-        "type": "photo",
-        "url": "https://lh3.googleusercontent.com/d/19R8gNhIElWc9qu9GrMKvXyy85CCaB9G9"
-      }
-    ],
-    "chapterId": "nepalgunj",
-    "driveFolderId": "1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "driveFolderUrl": "https://drive.google.com/drive/folders/1ttMPCthjxnK6RB4-apZoHO-UioLdz62d",
-    "isDriveFetched": true
+    "mediaItems": [],
+    "chapterId": "nepalgunj"
   },
   {
     "id": "journey-post-1785154120625",
