@@ -1,7 +1,72 @@
-import { useState, useRef, useEffect } from 'react';
-import { Menu, X, Globe, ShieldCheck, Lock, Sun, Moon, ChevronDown, Home } from 'lucide-react';
-import { Language, SiteTexts } from '../types';
+import React, { useState, useRef, useEffect } from 'react';
+import { Menu, X, Globe, ShieldCheck, Lock, Sun, Moon, ChevronDown, Home, Heart, UserPlus, Camera, Compass, ExternalLink, Link2 } from 'lucide-react';
+import { Language, SiteTexts, NavMenuItem, NavSubMenuItem } from '../types';
 import logoImg from '../assets/images/chaurasiya_logo_1784519579895.jpg';
+
+export const DEFAULT_NAV_MENUS: NavMenuItem[] = [
+  {
+    id: 'home',
+    label: { en: 'Home', ne: 'गृहपृष्ठ' },
+    linkType: 'tab',
+    target: 'home',
+  },
+  {
+    id: 'about',
+    label: { en: 'About Us', ne: 'हाम्रो बारेमा' },
+    linkType: 'dropdown',
+    subItems: [
+      { id: 'about-vision', label: { en: 'Vision & Goals', ne: 'दूरदृष्टि तथा लक्ष्य' }, linkType: 'tab', target: 'about-vision' },
+      { id: 'about-mission', label: { en: 'Mission', ne: 'लक्ष्य तथा उद्देश्य' }, linkType: 'tab', target: 'about-mission' },
+      { id: 'about-objectives', label: { en: 'Objectives', ne: 'प्रमुख उद्देश्यहरू' }, linkType: 'tab', target: 'about-objectives' },
+      { id: 'about-history', label: { en: 'History & Leadership', ne: 'इतिहास र नेतृत्व' }, linkType: 'tab', target: 'about-history' },
+      { id: 'our-heritage', label: { en: 'Our Heritage', ne: 'हाम्रो सम्पदा' }, linkType: 'tab', target: 'our-heritage' },
+      { id: 'directory', label: { en: 'Member Directory', ne: 'सदस्य निर्देशिका' }, linkType: 'tab', target: 'directory' },
+    ],
+  },
+  {
+    id: 'news-events',
+    label: { en: 'News & Events', ne: 'समाचार तथा कार्यक्रम' },
+    linkType: 'dropdown',
+    subItems: [
+      { id: 'notices-gallery', label: { en: 'News & Notices', ne: 'समाचार तथा सूचनाहरू' }, linkType: 'tab', target: 'notices-gallery' },
+      { id: 'events', label: { en: 'Events & Campaigns', ne: 'कार्यक्रम तथा अभियान' }, linkType: 'tab', target: 'events' },
+      { id: 'family-connectivity', label: { en: 'Family Connectivity', ne: 'परिवार सम्बन्ध र वंशावली' }, linkType: 'tab', target: 'family-connectivity' },
+    ],
+  },
+  {
+    id: 'get-connected',
+    label: { en: 'Get Connected', ne: 'जोडिनुहोस्' },
+    linkType: 'dropdown',
+    subItems: [
+      { id: 'membership-form', label: { en: 'Membership Registration', ne: 'सदस्यता फारम' }, linkType: 'tab', target: 'membership-form' },
+      { id: 'volunteer-form', label: { en: 'Volunteer Registration', ne: 'स्वयंसेवक फारम' }, linkType: 'tab', target: 'volunteer-form' },
+    ],
+  },
+  {
+    id: 'donate-us',
+    label: { en: 'Donate Us', ne: 'दान गर्नुहोस्' },
+    linkType: 'dropdown',
+    subItems: [
+      { id: 'donate-guesthouse', label: { en: 'Guest House Construction', ne: 'अतिथि गृह निर्माण दान' }, linkType: 'tab', target: 'donate-guesthouse' },
+      { id: 'donate-events', label: { en: 'Events Donation', ne: 'कार्यक्रम सहयोग दान' }, linkType: 'tab', target: 'donate-events' },
+    ],
+  },
+  {
+    id: 'photo-gallery',
+    label: { en: 'Photo Gallery', ne: 'फोटो ग्यालरी' },
+    linkType: 'tab',
+    target: 'albums-gallery',
+  },
+  {
+    id: 'portals',
+    label: { en: 'Portals', ne: 'पोर्टलहरू' },
+    linkType: 'dropdown',
+    subItems: [
+      { id: 'matrimonial', label: { en: 'Matrimonial Portal', ne: 'वैवाहिक पोर्टल' }, linkType: 'tab', target: 'matrimonial' },
+      { id: 'renowned-people', label: { en: 'Renowned People', ne: 'प्रख्यात व्यक्तित्वहरू' }, linkType: 'tab', target: 'renowned-people' },
+    ],
+  },
+];
 
 interface NavigationProps {
   currentTab: string;
@@ -11,10 +76,12 @@ interface NavigationProps {
   onTrackAction: (actionName: string) => void;
   isAdmin: boolean;
   onOpenAdminModal: () => void;
+  onOpenMenuManager?: () => void;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
   siteTexts: SiteTexts;
   pendingNotificationsCount?: number;
+  navMenus?: NavMenuItem[];
 }
 
 export default function Navigation({
@@ -25,73 +92,53 @@ export default function Navigation({
   onTrackAction,
   isAdmin,
   onOpenAdminModal,
+  onOpenMenuManager,
   theme,
   toggleTheme,
   siteTexts,
   pendingNotificationsCount = 0,
+  navMenus = DEFAULT_NAV_MENUS,
 }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isAboutDropdownOpen, setIsAboutDropdownOpen] = useState(false);
-  const [isPortalsDropdownOpen, setIsPortalsDropdownOpen] = useState(false);
-  const [isMediaDropdownOpen, setIsMediaDropdownOpen] = useState(false);
-  
-  const [isMobileAboutExpanded, setIsMobileAboutExpanded] = useState(false);
-  const [isMobilePortalsExpanded, setIsMobilePortalsExpanded] = useState(false);
-  const [isMobileMediaExpanded, setIsMobileMediaExpanded] = useState(false);
+  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+  const [mobileExpandedId, setMobileExpandedId] = useState<string | null>(null);
 
-  const aboutDropdownRef = useRef<HTMLDivElement>(null);
-  const portalsDropdownRef = useRef<HTMLDivElement>(null);
-  const mediaDropdownRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
+
+  const closeAllDropdowns = () => {
+    setActiveDropdownId(null);
+  };
 
   // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (aboutDropdownRef.current && !aboutDropdownRef.current.contains(event.target as Node)) {
-        setIsAboutDropdownOpen(false);
-      }
-      if (portalsDropdownRef.current && !portalsDropdownRef.current.contains(event.target as Node)) {
-        setIsPortalsDropdownOpen(false);
-      }
-      if (mediaDropdownRef.current && !mediaDropdownRef.current.contains(event.target as Node)) {
-        setIsMediaDropdownOpen(false);
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setActiveDropdownId(null);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const aboutSubItems = [
-    { id: 'about-vision', label: { en: 'Vision & Goals', ne: 'दूरदृष्टि तथा लक्ष्य' } },
-    { id: 'about-mission', label: { en: 'Mission', ne: 'लक्ष्य तथा उद्देश्य' } },
-    { id: 'about-objectives', label: { en: 'Objectives', ne: 'प्रमुख उद्देश्यहरू' } },
-    { id: 'about-history', label: { en: 'History & Leadership', ne: 'इतिहास र नेतृत्व' } },
-    { id: 'our-heritage', label: { en: 'Our Heritage', ne: 'हाम्रो सम्पदा' } },
-  ];
-
-  const portalsSubItems = [
-    { id: 'directory', label: { en: 'Members Directory', ne: 'सदस्य निर्देशिका' } },
-    { id: 'matrimonial', label: { en: 'Matrimonial Portal', ne: 'वैवाहिक जोडी' } },
-    { id: 'events', label: { en: 'Events & Calendar', ne: 'पात्रो' } },
-    { id: 'renowned-people', label: { en: 'Renowned People', ne: 'प्रख्यात व्यक्तित्वहरू' } },
-    { id: 'abhishek-bio', label: { en: 'Architect & CTO Profile', ne: 'इन्जिनियर तथा सीटीओ' } },
-  ];
-
-  const mediaSubItems = [
-    { id: 'albums-gallery', label: { en: 'Journey Albums', ne: 'यात्रा एल्बमहरू' } },
-    { id: 'notices-gallery', label: { en: 'Notices & Updates', ne: 'सूचना र ग्यालरी' } },
-    ...(isAdmin ? [
-      { id: 'analytics', label: { en: 'Analytics', ne: 'एनालिटिक्स' } },
-      { id: 'blogger-exporter', label: { en: 'Blogger XML Setup', ne: 'ब्लगर XML सेटअप' } }
-    ] : []),
-  ];
-
   const handleTabChange = (tabId: string) => {
     setCurrentTab(tabId);
     setIsOpen(false);
-    setIsAboutDropdownOpen(false);
-    setIsPortalsDropdownOpen(false);
-    setIsMediaDropdownOpen(false);
+    closeAllDropdowns();
     onTrackAction(`Navigate to ${tabId}`);
+  };
+
+  const handleSubItemClick = (sub: NavSubMenuItem) => {
+    if (sub.linkType === 'url') {
+      if (sub.target.startsWith('http://') || sub.target.startsWith('https://')) {
+        window.open(sub.target, sub.openInNewTab ? '_blank' : '_self');
+      } else {
+        window.location.href = sub.target;
+      }
+    } else {
+      handleTabChange(sub.target);
+    }
+    setIsOpen(false);
+    closeAllDropdowns();
   };
 
   const toggleLanguage = () => {
@@ -104,249 +151,179 @@ export default function Navigation({
   const logoText = lang === 'en' ? siteTexts.logoTextEn : siteTexts.logoTextNe;
   const logoSub = lang === 'en' ? siteTexts.logoSubEn : siteTexts.logoSubNe;
 
-  const isAboutActive = aboutSubItems.some(sub => currentTab === sub.id);
-  const isPortalsActive = portalsSubItems.some(sub => currentTab === sub.id);
-  const isMediaActive = mediaSubItems.some(sub => currentTab === sub.id);
-
   return (
-    <nav className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-teal-100 dark:border-slate-800 shadow-sm transition-colors duration-200" id="nav-bar">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20">
-          {/* Logo & Brand */}
-          <div className="flex items-center shrink-0 mr-4 lg:mr-8">
+    <nav className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-teal-100 dark:border-slate-800 shadow-xs transition-colors duration-200" id="nav-bar" ref={navRef}>
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+        <div className="flex items-center justify-between h-16 sm:h-20">
+          {/* Logo & Brand pushed to far left */}
+          <div className="flex items-center shrink-0 mr-1 sm:mr-2 lg:mr-3">
             <div
-              className="flex items-center gap-3 cursor-pointer group"
+              className="flex items-center gap-1.5 sm:gap-2 cursor-pointer group py-1"
               onClick={() => handleTabChange('home')}
             >
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-white dark:bg-slate-800 flex items-center justify-center border border-teal-100 dark:border-slate-800 shadow-sm transition-all group-hover:scale-105 shrink-0">
-                <img src={logoUrl} alt="Chaurasiya Samaj Logo" className="w-full h-full object-cover" />
+              <div className="w-8 h-8 sm:w-11 sm:h-9 md:w-12 md:h-10 overflow-hidden flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+                <img src={logoUrl} alt="Chaurasiya Samaj Logo" className="w-full h-full object-contain" />
               </div>
               <div className="shrink-0 min-w-0">
-                <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-teal-900 dark:text-teal-100 leading-tight whitespace-nowrap">
+                <h1 className="text-xs xs:text-sm sm:text-base lg:text-lg font-black tracking-tight text-teal-950 dark:text-teal-50 leading-tight whitespace-nowrap">
                   {logoText}
                 </h1>
-                <p className="text-[10px] sm:text-[11px] font-bold text-teal-600 dark:text-emerald-400 tracking-wider whitespace-nowrap">
+                <p className="text-[9px] sm:text-[10px] font-extrabold text-teal-600 dark:text-emerald-400 tracking-wider whitespace-nowrap">
                   {logoSub}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden lg:flex items-center space-x-1 flex-1 justify-end">
-            {/* Home Item */}
-            <button
-              onClick={() => handleTabChange('home')}
-              className={`px-3 py-2 text-xs font-bold tracking-wide rounded-lg uppercase transition-all duration-150 cursor-pointer flex items-center gap-1 shrink-0 ${
-                currentTab === 'home' || currentTab === 'history'
-                  ? 'bg-teal-700 text-white shadow-sm'
-                  : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-emerald-400'
-              }`}
-            >
-              <Home className="w-3.5 h-3.5" />
-              <span>{lang === 'en' ? 'Home' : 'गृहपृष्ठ'}</span>
-            </button>
+          {/* Desktop Navigation Links (Compact text & spacing) */}
+          <div className="hidden lg:flex items-center space-x-0.5 xl:space-x-1 flex-1 justify-end">
+            {navMenus.map((menu) => {
+              const isDropdown = menu.linkType === 'dropdown' && menu.subItems && menu.subItems.length > 0;
+              const isMenuDropdownOpen = activeDropdownId === menu.id;
 
-            {/* About Us Dropdown */}
-            <div className="relative shrink-0" ref={aboutDropdownRef}>
-              <button
-                onClick={() => {
-                  setIsAboutDropdownOpen(!isAboutDropdownOpen);
-                  setIsPortalsDropdownOpen(false);
-                  setIsMediaDropdownOpen(false);
-                }}
-                onMouseEnter={() => {
-                  setIsAboutDropdownOpen(true);
-                  setIsPortalsDropdownOpen(false);
-                  setIsMediaDropdownOpen(false);
-                }}
-                className={`px-3 py-2 text-xs font-bold tracking-wide rounded-lg uppercase transition-all duration-150 cursor-pointer flex items-center gap-1 ${
-                  isAboutActive
-                    ? 'bg-teal-700 text-white shadow-sm'
-                    : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-emerald-400'
-                }`}
-              >
-                <span>{lang === 'en' ? 'About Us' : 'हाम्रो बारेमा'}</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isAboutDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
+              const isSubActive = menu.subItems?.some(s => s.target === currentTab);
+              const isMainActive = menu.target === currentTab || isSubActive;
 
-              {isAboutDropdownOpen && (
-                <div
-                  onMouseLeave={() => setIsAboutDropdownOpen(false)}
-                  className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-slate-900 rounded-xl border border-teal-100 dark:border-slate-800 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
-                >
-                  <div className="px-3 py-1.5 text-[10px] font-black text-teal-600 dark:text-emerald-400 uppercase tracking-wider border-b border-teal-50 dark:border-slate-800 mb-1">
-                    {lang === 'en' ? 'About Samaj' : 'हाम्रो बारेमा'}
-                  </div>
-                  {aboutSubItems.map((sub) => {
-                    const isSubActive = currentTab === sub.id;
-                    return (
-                      <button
-                        key={sub.id}
-                        onClick={() => handleTabChange(sub.id)}
-                        className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors cursor-pointer flex items-center justify-between ${
-                          isSubActive
-                            ? 'bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-emerald-400 font-extrabold'
-                            : 'text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-emerald-400'
-                        }`}
-                      >
-                        <span>{sub.label[lang]}</span>
-                      </button>
-                    );
-                  })}
+              if (!isDropdown) {
+                return (
+                  <button
+                    key={menu.id}
+                    onClick={() => {
+                      if (menu.linkType === 'url' && menu.target) {
+                        window.open(menu.target, menu.openInNewTab ? '_blank' : '_self');
+                      } else if (menu.target) {
+                        handleTabChange(menu.target);
+                      }
+                    }}
+                    className={`px-1.5 xl:px-2.5 py-1.5 text-[11px] xl:text-xs font-bold tracking-tight rounded-lg uppercase transition-all duration-150 cursor-pointer flex items-center gap-0.5 shrink-0 ${
+                      isMainActive
+                        ? 'bg-teal-700 text-white shadow-xs'
+                        : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-emerald-400'
+                    }`}
+                  >
+                    {menu.id === 'home' && <Home className="w-3.5 h-3.5 shrink-0" />}
+                    {menu.id === 'photo-gallery' && <Camera className="w-3.5 h-3.5 text-teal-600 dark:text-emerald-400 shrink-0" />}
+                    <span className="whitespace-nowrap">{menu.label[lang] || menu.label.en}</span>
+                  </button>
+                );
+              }
+
+              return (
+                <div key={menu.id} className="relative shrink-0">
+                  <button
+                    onClick={() => {
+                      if (isMenuDropdownOpen) {
+                        setActiveDropdownId(null);
+                      } else {
+                        setActiveDropdownId(menu.id);
+                      }
+                    }}
+                    onMouseEnter={() => setActiveDropdownId(menu.id)}
+                    className={`px-1.5 xl:px-2.5 py-1.5 text-[11px] xl:text-xs font-bold tracking-tight rounded-lg uppercase transition-all duration-150 cursor-pointer flex items-center gap-0.5 ${
+                      isMainActive
+                        ? 'bg-teal-700 text-white shadow-xs'
+                        : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-emerald-400'
+                    }`}
+                  >
+                    {menu.id === 'get-connected' && <UserPlus className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
+                    {menu.id === 'donate-us' && <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/20 shrink-0" />}
+                    <span className="whitespace-nowrap">{menu.label[lang] || menu.label.en}</span>
+                    <ChevronDown className={`w-3 h-3 transition-transform duration-200 shrink-0 ${isMenuDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isMenuDropdownOpen && (
+                    <div
+                      onMouseLeave={() => setActiveDropdownId(null)}
+                      className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-slate-900 rounded-xl border border-teal-100 dark:border-slate-800 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                    >
+                      <div className="px-3 py-1.5 text-[10px] font-black text-teal-600 dark:text-emerald-400 uppercase tracking-wider border-b border-teal-50 dark:border-slate-800 mb-1">
+                        {menu.label[lang] || menu.label.en}
+                      </div>
+                      {menu.subItems?.map((sub) => {
+                        const isCurrentSubActive = currentTab === sub.target;
+                        return (
+                          <button
+                            key={sub.id}
+                            onClick={() => handleSubItemClick(sub)}
+                            className={`w-full text-left px-3.5 py-2 text-xs font-bold transition-colors cursor-pointer flex items-center justify-between ${
+                              isCurrentSubActive
+                                ? 'bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-emerald-400 font-extrabold'
+                                : 'text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-emerald-400'
+                            }`}
+                          >
+                            <span className="truncate">{sub.label[lang] || sub.label.en}</span>
+                            {sub.linkType === 'url' && <ExternalLink className="w-3 h-3 text-rose-500 shrink-0 ml-1" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })}
 
-            {/* Central Portals Dropdown */}
-            <div className="relative shrink-0" ref={portalsDropdownRef}>
-              <button
-                onClick={() => {
-                  setIsPortalsDropdownOpen(!isPortalsDropdownOpen);
-                  setIsAboutDropdownOpen(false);
-                  setIsMediaDropdownOpen(false);
-                }}
-                onMouseEnter={() => {
-                  setIsPortalsDropdownOpen(true);
-                  setIsAboutDropdownOpen(false);
-                  setIsMediaDropdownOpen(false);
-                }}
-                className={`px-3 py-2 text-xs font-bold tracking-wide rounded-lg uppercase transition-all duration-150 cursor-pointer flex items-center gap-1 ${
-                  isPortalsActive
-                    ? 'bg-teal-700 text-white shadow-sm'
-                    : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-emerald-400'
-                }`}
+            {/* Top Action Buttons Right: 3D Nepal Flag (Right after Portals) -> Language Switcher -> Dark Mode -> Admin Buttons */}
+            <div className="flex items-center shrink-0 space-x-1 xl:space-x-1.5 ml-1.5 border-l border-teal-100 dark:border-slate-800 pl-1.5">
+              {/* Big 3D Wavering Nepal Flag (Desktop Only, placed immediately after the menu buttons) */}
+              <div
+                className="hidden lg:flex items-center justify-center px-1 py-0.5 shrink-0 group cursor-pointer select-none"
+                title="National Flag of Nepal / नेपालको राष्ट्रिय झण्डा"
               >
-                <span>{lang === 'en' ? 'Portals' : 'पोर्टलहरू'}</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isPortalsDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isPortalsDropdownOpen && (
-                <div
-                  onMouseLeave={() => setIsPortalsDropdownOpen(false)}
-                  className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-slate-900 rounded-xl border border-teal-100 dark:border-slate-800 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
-                >
-                  <div className="px-3 py-1.5 text-[10px] font-black text-teal-600 dark:text-emerald-400 uppercase tracking-wider border-b border-teal-50 dark:border-slate-800 mb-1">
-                    {lang === 'en' ? 'Samaj Directory & Events' : 'निर्देशिका र गतिविधिहरू'}
-                  </div>
-                  {portalsSubItems.map((sub) => {
-                    const isSubActive = currentTab === sub.id;
-                    return (
-                      <button
-                        key={sub.id}
-                        onClick={() => handleTabChange(sub.id)}
-                        className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors cursor-pointer flex items-center justify-between ${
-                          isSubActive
-                            ? 'bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-emerald-400 font-extrabold'
-                            : 'text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-emerald-400'
-                        }`}
-                      >
-                        <span>{sub.label[lang]}</span>
-                      </button>
-                    );
-                  })}
+                {/* Gold Flagpole */}
+                <div className="w-1 h-8 bg-gradient-to-b from-amber-300 via-amber-500 to-amber-700 rounded-t-full shadow-xs mr-0.5 z-10 shrink-0" />
+                {/* 3D Wavering Flag */}
+                <div className="relative">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/9/9b/Flag_of_Nepal.svg"
+                    alt="Flag of Nepal"
+                    className="h-7 w-auto max-w-none object-contain animate-wave-flag origin-left filter drop-shadow-md transition-transform duration-300 group-hover:scale-105"
+                  />
                 </div>
-              )}
-            </div>
+              </div>
 
-            {/* Media & Gallery Dropdown */}
-            <div className="relative shrink-0" ref={mediaDropdownRef}>
-              <button
-                onClick={() => {
-                  setIsMediaDropdownOpen(!isMediaDropdownOpen);
-                  setIsAboutDropdownOpen(false);
-                  setIsPortalsDropdownOpen(false);
-                }}
-                onMouseEnter={() => {
-                  setIsMediaDropdownOpen(true);
-                  setIsAboutDropdownOpen(false);
-                  setIsPortalsDropdownOpen(false);
-                }}
-                className={`px-3 py-2 text-xs font-bold tracking-wide rounded-lg uppercase transition-all duration-150 cursor-pointer flex items-center gap-1 ${
-                  isMediaActive
-                    ? 'bg-teal-700 text-white shadow-sm'
-                    : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-emerald-400'
-                }`}
-              >
-                <span>{lang === 'en' ? 'Media' : 'मिडिया'}</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isMediaDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isMediaDropdownOpen && (
-                <div
-                  onMouseLeave={() => setIsMediaDropdownOpen(false)}
-                  className="absolute top-full right-0 mt-1 w-56 bg-white dark:bg-slate-900 rounded-xl border border-teal-100 dark:border-slate-800 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
-                >
-                  <div className="px-3 py-1.5 text-[10px] font-black text-teal-600 dark:text-emerald-400 uppercase tracking-wider border-b border-teal-50 dark:border-slate-800 mb-1">
-                    {lang === 'en' ? 'Gallery & Notices' : 'ग्यालरी र सूचनाहरू'}
-                  </div>
-                  {mediaSubItems.map((sub) => {
-                    const isSubActive = currentTab === sub.id;
-                    return (
-                      <button
-                        key={sub.id}
-                        onClick={() => handleTabChange(sub.id)}
-                        className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors cursor-pointer flex items-center justify-between ${
-                          isSubActive
-                            ? 'bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-emerald-400 font-extrabold'
-                            : 'text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-emerald-400'
-                        }`}
-                      >
-                        <span>{sub.label[lang]}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Direct CTA link: Join & Support */}
-            <button
-              onClick={() => handleTabChange('membership-donation')}
-              className={`px-3.5 py-2 text-xs font-extrabold tracking-wider rounded-lg uppercase transition-all duration-150 cursor-pointer shrink-0 ${
-                currentTab === 'membership-donation'
-                  ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-400/20'
-                  : 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500 hover:text-slate-950 hover:border-emerald-500'
-              }`}
-            >
-              {lang === 'en' ? 'Join & Support' : 'सहभागिता'}
-            </button>
-
-            {/* Pinned Action Buttons: Language, Theme & Central Admin */}
-            <div className="flex items-center shrink-0 space-x-1.5 ml-2 border-l border-teal-100 dark:border-slate-800 pl-2">
-              {/* Language Switcher */}
+              {/* Language Switcher (Placed after Nepal Flag) */}
               <button
                 onClick={toggleLanguage}
-                className="flex items-center gap-1 px-2.5 py-2 text-xs font-bold bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 rounded-lg border border-teal-200 dark:border-slate-700 hover:bg-teal-100 dark:hover:bg-slate-700 transition-all uppercase cursor-pointer shrink-0"
+                className="flex items-center gap-1 px-2 py-1.5 text-[11px] font-bold bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 rounded-lg border border-teal-200 dark:border-slate-700 hover:bg-teal-100 dark:hover:bg-slate-700 transition-all uppercase cursor-pointer shrink-0"
                 title="Switch Language / भाषा परिवर्तन गर्नुहोस्"
               >
                 <Globe className="w-3.5 h-3.5 text-teal-600 dark:text-emerald-400" />
                 <span>{lang === 'en' ? 'नेपाली' : 'English'}</span>
               </button>
 
-              {/* Theme Switcher */}
+              {/* Theme Switcher (Dark / Night mode button, placed after Nepali/Language button) */}
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 border border-teal-200 dark:border-slate-700 hover:bg-teal-100 dark:hover:bg-slate-700 transition-all cursor-pointer shrink-0"
+                className="p-1.5 rounded-lg bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 border border-teal-200 dark:border-slate-700 hover:bg-teal-100 dark:hover:bg-slate-700 transition-all cursor-pointer shrink-0"
                 title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               >
                 {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-teal-600" />}
               </button>
 
-              {/* Central Admin Login Button - Always Highlighted & Pinned */}
+              {/* Menu Manager Button (Admin direct shortcut) */}
+              {isAdmin && onOpenMenuManager && (
+                <button
+                  onClick={onOpenMenuManager}
+                  className="p-1.5 rounded-xl bg-teal-800 dark:bg-slate-800 text-emerald-300 hover:text-white border border-teal-700 dark:border-slate-700 transition-all cursor-pointer shrink-0"
+                  title={lang === 'en' ? 'Manage Navigation Menus & Submenus' : 'मेनु व्यवस्थापन'}
+                >
+                  <Compass className="w-4 h-4 text-emerald-400 animate-pulse" />
+                </button>
+              )}
+
+              {/* Central Admin Login Button - Reduced Size (Icon only / text not required) */}
               <button
                 onClick={onOpenAdminModal}
-                className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-black rounded-xl border transition-all uppercase shadow-md cursor-pointer shrink-0 ${
+                className={`relative p-1.5 rounded-xl border transition-all shadow-md cursor-pointer shrink-0 ${
                   isAdmin
                     ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white border-emerald-400 hover:from-emerald-700 hover:to-teal-800 ring-2 ring-emerald-400/30'
                     : 'bg-teal-900 dark:bg-slate-950 text-emerald-300 border-teal-700 dark:border-slate-800 hover:bg-teal-950 dark:hover:bg-black hover:text-white'
                 }`}
-                title={isAdmin ? 'Central Admin Operations' : 'Admin Login'}
+                title={isAdmin ? (lang === 'en' ? 'Central Admin Operations' : 'केन्द्रीय प्रशासन') : (lang === 'en' ? 'Admin Portal Login' : 'प्रशासक लगइन')}
               >
-                {isAdmin ? <ShieldCheck className="w-4 h-4 text-emerald-300 animate-pulse" /> : <Lock className="w-3.5 h-3.5 text-emerald-400" />}
-                <span className="whitespace-nowrap">{isAdmin ? (lang === 'en' ? 'Central Admin' : 'केन्द्रीय प्रशासन') : (lang === 'en' ? 'Admin Portal' : 'प्रशासक पोर्टल')}</span>
+                {isAdmin ? <ShieldCheck className="w-4 h-4 text-emerald-300 animate-pulse" /> : <Lock className="w-4 h-4 text-emerald-400" />}
                 {pendingNotificationsCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-[10px] font-black text-white shadow-md animate-pulse border-2 border-white dark:border-slate-900">
+                  <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-[9px] font-black text-white shadow-md animate-pulse border-2 border-white dark:border-slate-900">
                     {pendingNotificationsCount > 9 ? '9+' : pendingNotificationsCount}
                   </span>
                 )}
@@ -354,27 +331,24 @@ export default function Navigation({
             </div>
           </div>
 
-          {/* Mobile menu header controls */}
+          {/* Mobile Menu Toggle Button */}
           <div className="flex items-center lg:hidden gap-1.5">
-            {/* Theme Toggle in Mobile Header */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 border border-teal-200 dark:border-slate-700 transition-all cursor-pointer"
+              className="p-1.5 rounded-lg bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 border border-teal-200 dark:border-slate-700 transition-all cursor-pointer"
               title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
             >
               {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-teal-600" />}
             </button>
 
-            {/* Language Switcher in Mobile Header */}
             <button
               onClick={toggleLanguage}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 rounded-lg border border-teal-200 dark:border-slate-700 cursor-pointer"
+              className="flex items-center gap-1 px-2 py-1 text-xs font-bold bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 rounded-lg border border-teal-200 dark:border-slate-700 cursor-pointer"
             >
               <Globe className="w-3.5 h-3.5 text-teal-600 dark:text-emerald-400" />
               <span>{lang === 'en' ? 'ने' : 'EN'}</span>
             </button>
 
-            {/* Hamburger Button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="inline-flex items-center justify-center p-2 rounded-lg text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800 focus:outline-none cursor-pointer"
@@ -385,180 +359,101 @@ export default function Navigation({
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Drawer Navigation */}
       {isOpen && (
         <div className="lg:hidden bg-white dark:bg-slate-900 border-t border-teal-100 dark:border-slate-800 py-3 px-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-150 max-h-[85vh] overflow-y-auto">
           <div className="space-y-1">
-            {/* Home Item in Mobile */}
-            <button
-              onClick={() => handleTabChange('home')}
-              className={`flex items-center gap-2 w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
-                currentTab === 'home' || currentTab === 'history'
-                  ? 'bg-teal-700 text-white shadow-sm'
-                  : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800'
-              }`}
-            >
-              <Home className="w-4 h-4" />
-              <span>{lang === 'en' ? 'Home' : 'गृहपृष्ठ'}</span>
-            </button>
+            {navMenus.map((menu) => {
+              const isDropdown = menu.linkType === 'dropdown' && menu.subItems && menu.subItems.length > 0;
+              const isExpanded = mobileExpandedId === menu.id;
 
-            {/* About Us Collapsible Section in Mobile */}
-            <div className="border-y border-teal-50 dark:border-slate-800/80 my-1 py-1">
-              <button
-                onClick={() => setIsMobileAboutExpanded(!isMobileAboutExpanded)}
-                className={`flex items-center justify-between w-full text-left px-4 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
-                  isAboutActive
-                    ? 'bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-emerald-400'
-                    : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <span>{lang === 'en' ? 'About Us' : 'हाम्रो बारेमा'}</span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isMobileAboutExpanded ? 'rotate-180' : ''}`} />
-              </button>
+              if (!isDropdown) {
+                return (
+                  <button
+                    key={menu.id}
+                    onClick={() => {
+                      if (menu.linkType === 'url' && menu.target) {
+                        window.open(menu.target, menu.openInNewTab ? '_blank' : '_self');
+                      } else if (menu.target) {
+                        handleTabChange(menu.target);
+                      }
+                    }}
+                    className={`flex items-center gap-2 w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+                      currentTab === menu.target
+                        ? 'bg-teal-700 text-white shadow-xs'
+                        : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {menu.id === 'home' && <Home className="w-4 h-4" />}
+                    <span>{menu.label[lang] || menu.label.en}</span>
+                  </button>
+                );
+              }
 
-              {isMobileAboutExpanded && (
-                <div className="ml-4 pl-2 border-l-2 border-teal-200 dark:border-slate-700 space-y-1 mt-1">
-                  {aboutSubItems.map((sub) => {
-                    const isSubActive = currentTab === sub.id;
-                    return (
-                      <button
-                        key={sub.id}
-                        onClick={() => handleTabChange(sub.id)}
-                        className={`block w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                          isSubActive
-                            ? 'bg-teal-700 text-white font-bold'
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-teal-50 dark:hover:bg-slate-800'
-                        }`}
-                      >
-                        {sub.label[lang]}
-                      </button>
-                    );
-                  })}
+              return (
+                <div key={menu.id} className="border-b border-teal-50 dark:border-slate-800/80 pb-1 mb-1">
+                  <button
+                    onClick={() => setMobileExpandedId(isExpanded ? null : menu.id)}
+                    className="flex items-center justify-between w-full text-left px-4 py-2.5 rounded-lg text-sm font-bold text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                  >
+                    <span>{menu.label[lang] || menu.label.en}</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isExpanded && (
+                    <div className="ml-4 pl-2 border-l-2 border-teal-200 dark:border-slate-700 space-y-1 mt-1">
+                      {menu.subItems?.map((sub) => (
+                        <button
+                          key={sub.id}
+                          onClick={() => handleSubItemClick(sub)}
+                          className={`block w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                            currentTab === sub.target
+                              ? 'bg-teal-700 text-white font-bold'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-teal-50 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          <span className="flex items-center justify-between">
+                            <span>{sub.label[lang] || sub.label.en}</span>
+                            {sub.linkType === 'url' && <ExternalLink className="w-3 h-3 text-rose-500 ml-1" />}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
+              );
+            })}
+
+            {/* Admin Controls in Mobile Menu */}
+            <div className="pt-2 border-t border-teal-100 dark:border-slate-800 space-y-1">
+              {isAdmin && onOpenMenuManager && (
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    onOpenMenuManager();
+                  }}
+                  className="flex items-center gap-2 w-full text-left px-4 py-2.5 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-slate-800 border border-emerald-200 dark:border-slate-700 cursor-pointer"
+                >
+                  <Compass className="w-4 h-4 text-emerald-600" />
+                  <span>{lang === 'en' ? 'Manage Navigation Menus & Submenus' : 'मेनु र उप-मेनु व्यवस्थापन'}</span>
+                </button>
               )}
-            </div>
 
-            {/* Portals Collapsible Section in Mobile */}
-            <div className="border-b border-teal-50 dark:border-slate-800/80 pb-1 mb-1">
               <button
-                onClick={() => setIsMobilePortalsExpanded(!isMobilePortalsExpanded)}
-                className={`flex items-center justify-between w-full text-left px-4 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
-                  isPortalsActive
-                    ? 'bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-emerald-400'
-                    : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800'
+                onClick={() => {
+                  setIsOpen(false);
+                  onOpenAdminModal();
+                }}
+                className={`flex items-center gap-2 w-full text-left px-4 py-2.5 rounded-lg text-sm font-black transition-all cursor-pointer ${
+                  isAdmin
+                    ? 'bg-emerald-50 dark:bg-slate-950 text-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-900/50'
+                    : 'bg-teal-50 dark:bg-slate-950 text-teal-950 dark:text-teal-200 border border-teal-100 dark:border-slate-800'
                 }`}
               >
-                <span>{lang === 'en' ? 'Portals' : 'पोर्टलहरू'}</span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isMobilePortalsExpanded ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isMobilePortalsExpanded && (
-                <div className="ml-4 pl-2 border-l-2 border-teal-200 dark:border-slate-700 space-y-1 mt-1">
-                  {portalsSubItems.map((sub) => {
-                    const isSubActive = currentTab === sub.id;
-                    return (
-                      <button
-                        key={sub.id}
-                        onClick={() => handleTabChange(sub.id)}
-                        className={`block w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                          isSubActive
-                            ? 'bg-teal-700 text-white font-bold'
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-teal-50 dark:hover:bg-slate-800'
-                        }`}
-                      >
-                        {sub.label[lang]}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Media Collapsible Section in Mobile */}
-            <div className="border-b border-teal-50 dark:border-slate-800/80 pb-1 mb-1">
-              <button
-                onClick={() => setIsMobileMediaExpanded(!isMobileMediaExpanded)}
-                className={`flex items-center justify-between w-full text-left px-4 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
-                  isMediaActive
-                    ? 'bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-emerald-400'
-                    : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <span>{lang === 'en' ? 'Media' : 'मिडिया'}</span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isMobileMediaExpanded ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isMobileMediaExpanded && (
-                <div className="ml-4 pl-2 border-l-2 border-teal-200 dark:border-slate-700 space-y-1 mt-1">
-                  {mediaSubItems.map((sub) => {
-                    const isSubActive = currentTab === sub.id;
-                    return (
-                      <button
-                        key={sub.id}
-                        onClick={() => handleTabChange(sub.id)}
-                        className={`block w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                          isSubActive
-                            ? 'bg-teal-700 text-white font-bold'
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-teal-50 dark:hover:bg-slate-800'
-                        }`}
-                      >
-                        {sub.label[lang]}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Direct CTA link: Join & Support */}
-            <button
-              onClick={() => handleTabChange('membership-donation')}
-              className={`block w-full text-left px-4 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
-                currentTab === 'membership-donation'
-                  ? 'bg-teal-700 text-white shadow-sm'
-                  : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800 font-bold text-emerald-600 dark:text-emerald-400'
-              }`}
-            >
-              {lang === 'en' ? 'Join & Support' : 'सहभागिता'}
-            </button>
-
-            {/* Separators & Mobile Legal Links */}
-            <div className="border-t border-teal-50 dark:border-slate-800/80 my-2 pt-2">
-              <button
-                onClick={() => handleTabChange('privacy')}
-                className={`block w-full text-left px-4 py-2 rounded-lg text-xs font-bold cursor-pointer ${
-                  currentTab === 'privacy' ? 'text-teal-700 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400 hover:bg-teal-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                {lang === 'en' ? 'Privacy Policy' : 'गोपनीयता नीति'}
-              </button>
-              <button
-                onClick={() => handleTabChange('terms')}
-                className={`block w-full text-left px-4 py-2 rounded-lg text-xs font-bold cursor-pointer ${
-                  currentTab === 'terms' ? 'text-teal-700 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400 hover:bg-teal-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                {lang === 'en' ? 'Terms of Service' : 'सेवाका सर्तहरू'}
-              </button>
-            </div>
-
-            {/* Admin Login option directly in mobile menu list */}
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                onOpenAdminModal();
-              }}
-              className={`block w-full text-left px-4 py-2.5 rounded-lg text-sm font-black border-t border-teal-100 dark:border-slate-800 mt-2 transition-all cursor-pointer ${
-                isAdmin
-                  ? 'bg-emerald-50 dark:bg-slate-950 text-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-900/50'
-                  : 'bg-teal-50 dark:bg-slate-950 text-teal-950 dark:text-teal-200 border border-teal-100 dark:border-slate-800'
-              }`}
-            >
-              <span className="flex items-center gap-2">
                 {isAdmin ? <ShieldCheck className="w-4 h-4 text-emerald-600" /> : <Lock className="w-4 h-4 text-teal-700 dark:text-teal-400" />}
-                {isAdmin ? (lang === 'en' ? 'Admin Panel: Active' : 'प्रशासक प्यानल: सक्रिय') : (lang === 'en' ? 'Admin Portal Login' : 'प्रशासक पोर्टल लगइन')}
-              </span>
-            </button>
+                <span>{isAdmin ? (lang === 'en' ? 'Admin Panel: Active' : 'प्रशासक प्यानल: सक्रिय') : (lang === 'en' ? 'Admin Portal Login' : 'प्रशासक लगइन')}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

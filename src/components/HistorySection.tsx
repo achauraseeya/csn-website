@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin, ShieldCheck, Lock, Trash2, Plus, ExternalLink, Edit, Save } from 'lucide-react';
+import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin, ShieldCheck, Lock, Trash2, Plus, ExternalLink, Edit, Edit3, Save, Phone, Mail } from 'lucide-react';
 import { Album, Language, Notice, SiteTexts, NetworkBranch, Member } from '../types';
 import { uploadImageToGithub } from '../utils/githubDb';
 import { compressImageToBase64 } from '../utils/imageUtils';
@@ -123,6 +123,10 @@ export default function HistorySection({
   const [editSocialFb, setEditSocialFb] = useState(siteTexts.socialFb || 'https://facebook.com');
   const [editSocialTw, setEditSocialTw] = useState(siteTexts.socialTw || 'https://twitter.com');
   const [editSocialIg, setEditSocialIg] = useState(siteTexts.socialIg || 'https://instagram.com');
+  const [editPresidentTitleEn, setEditPresidentTitleEn] = useState(siteTexts.presidentMessageTitleEn || "Chief President's Message");
+  const [editPresidentTitleNe, setEditPresidentTitleNe] = useState(siteTexts.presidentMessageTitleNe || 'मुख्य अध्यक्षको सन्देश');
+  const [editPresidentMsgEn, setEditPresidentMsgEn] = useState(siteTexts.presidentMessageEn || '');
+  const [editPresidentMsgNe, setEditPresidentMsgNe] = useState(siteTexts.presidentMessageNe || '');
 
   const [editHeroImages, setEditHeroImages] = useState<any[]>(() => {
     try {
@@ -236,6 +240,10 @@ export default function HistorySection({
     setEditSocialFb(siteTexts.socialFb || 'https://facebook.com');
     setEditSocialTw(siteTexts.socialTw || 'https://twitter.com');
     setEditSocialIg(siteTexts.socialIg || 'https://instagram.com');
+    setEditPresidentTitleEn(siteTexts.presidentMessageTitleEn || "Chief President's Message");
+    setEditPresidentTitleNe(siteTexts.presidentMessageTitleNe || 'मुख्य अध्यक्षको सन्देश');
+    setEditPresidentMsgEn(siteTexts.presidentMessageEn || '');
+    setEditPresidentMsgNe(siteTexts.presidentMessageNe || '');
 
     try {
       if (siteTexts.heroImagesJson) {
@@ -322,6 +330,10 @@ export default function HistorySection({
         socialFb: editSocialFb,
         socialTw: editSocialTw,
         socialIg: editSocialIg,
+        presidentMessageTitleEn: editPresidentTitleEn,
+        presidentMessageTitleNe: editPresidentTitleNe,
+        presidentMessageEn: editPresidentMsgEn,
+        presidentMessageNe: editPresidentMsgNe,
         heroImagesJson: JSON.stringify(editHeroImages),
         secondaryImagesJson: JSON.stringify(editSecondaryImages),
         impactStatsJson: JSON.stringify(editImpactStats),
@@ -442,6 +454,24 @@ export default function HistorySection({
     } catch (e) {}
     return boardMembers.filter(m => m.id === '1' || m.id === 'vc1');
   };
+
+  const getChiefPresident = (): Member => {
+    if (membersList && membersList.length > 0) {
+      const chief = membersList.find(m => 
+        m.category === 'chief' || 
+        m.id === '1' || 
+        (m.role?.en && (
+          m.role.en.toLowerCase().includes('chief president') ||
+          m.role.en.toLowerCase().includes('chairperson') ||
+          m.role.en.toLowerCase().includes('president')
+        ))
+      );
+      if (chief) return chief;
+    }
+    return boardMembers.find(m => m.category === 'chief' || m.id === '1') || boardMembers[0];
+  };
+
+  const chiefPresident = getChiefPresident();
 
   const getActiveSecondaryImages = (): any[] => {
     try {
@@ -771,23 +801,85 @@ export default function HistorySection({
 
               {/* Tagline Top text */}
               <div className="space-y-1 md:col-span-2 border-t border-teal-200 pt-4">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Header Top Tagline (English)</label>
-                <input
-                  type="text"
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
+                  Top Ribbon Scrolling Texts (English)
+                  <span className="text-[11px] font-normal text-teal-700 block text-transform-none">
+                    Separate two or more scrolling messages with <code className="bg-teal-100 px-1 py-0.5 rounded text-teal-900 font-mono">|</code> or line breaks.
+                  </span>
+                </label>
+                <textarea
+                  rows={2}
                   required
                   value={editTaglineEn}
                   onChange={(e) => setEditTaglineEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500 font-sans"
+                  placeholder="e.g. Preserving betel leaf culture | SWC Registered Portal | Unifying Chaurasiya Samaj"
                 />
               </div>
               <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Header Top Tagline (Nepali)</label>
-                <input
-                  type="text"
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
+                  Top Ribbon Scrolling Texts (Nepali)
+                  <span className="text-[11px] font-normal text-teal-700 block text-transform-none">
+                    दुई वा बढी सन्देशहरूलाई स्क्रोल गराउन <code className="bg-teal-100 px-1 py-0.5 rounded text-teal-900 font-mono">|</code> प्रयोग गर्नुहोस्।
+                  </span>
+                </label>
+                <textarea
+                  rows={2}
                   required
                   value={editTaglineNe}
                   onChange={(e) => setEditTaglineNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500 font-sans"
+                  placeholder="उदा. पान संस्कृतिको संरक्षण र मानव सेवा | समाज कल्याण परिषद्मा दर्ता | चौरसिया समाज नेपाल"
+                />
+              </div>
+
+              {/* Chief President's Message Settings */}
+              <div className="space-y-1 border-t border-teal-200 pt-4 md:col-span-2">
+                <h4 className="text-sm font-black text-teal-950 uppercase tracking-wider mb-2">Chief President's Message Settings</h4>
+                <p className="text-xs text-teal-700">Photo, name, and contact details are automatically loaded from the Member Directory.</p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Message Section Title (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={editPresidentTitleEn}
+                  onChange={(e) => setEditPresidentTitleEn(e.target.value)}
                   className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                  placeholder="e.g. Chief President's Message"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Message Section Title (Nepali)</label>
+                <input
+                  type="text"
+                  required
+                  value={editPresidentTitleNe}
+                  onChange={(e) => setEditPresidentTitleNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                  placeholder="उदा. मुख्य अध्यक्षको सन्देश"
+                />
+              </div>
+
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Message Quote Text (English)</label>
+                <textarea
+                  rows={3}
+                  value={editPresidentMsgEn}
+                  onChange={(e) => setEditPresidentMsgEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                  placeholder="Enter custom message in English (or leave blank to use Leader's vision from directory)"
+                />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Message Quote Text (Nepali)</label>
+                <textarea
+                  rows={3}
+                  value={editPresidentMsgNe}
+                  onChange={(e) => setEditPresidentMsgNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                  placeholder="नेपालीमा मुख्य अध्यक्षको सन्देश राख्नुहोस् (वा खाली छाडेर डाइरेक्टरीबाट लिनुहोस्)"
                 />
               </div>
 
@@ -1529,6 +1621,114 @@ export default function HistorySection({
             >
               {t.ctaButton[lang]} <ArrowRight className="w-4 h-4" />
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Chief President's Message Section (Clickable to open chairperson's dedicated page) */}
+      <section
+        onClick={() => {
+          onSelectLeader(chiefPresident.id);
+          onTrackAction('Click Chief President Message Section');
+        }}
+        className="bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-2xl p-4 sm:p-6 text-white shadow-lg border border-teal-800/80 hover:border-emerald-400/90 relative overflow-hidden transition-all duration-300 cursor-pointer group"
+      >
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 space-y-4">
+          {/* Header Badge & Admin Edit Button */}
+          <div className="flex items-center justify-between border-b border-teal-800/60 pb-2.5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-black uppercase tracking-wider border border-emerald-500/30">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              {lang === 'en'
+                ? (siteTexts.presidentMessageTitleEn || "Chief President's Message")
+                : (siteTexts.presidentMessageTitleNe || 'मुख्य अध्यक्षको सन्देश')}
+            </span>
+
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditingTexts(true);
+                  }}
+                  className="px-2.5 py-1 bg-emerald-500/30 hover:bg-emerald-500/50 text-emerald-200 text-xs font-bold rounded-lg border border-emerald-400/40 flex items-center gap-1 transition-colors"
+                >
+                  <Edit3 className="w-3 h-3" />
+                  <span>{lang === 'en' ? 'Edit Message' : 'सन्देश सम्पादन'}</span>
+                </button>
+              )}
+              <ChevronRight className="w-4 h-4 text-teal-300/80 group-hover:text-emerald-300 group-hover:translate-x-1 transition-all" />
+            </div>
+          </div>
+
+          {/* Photo & Message Body */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-5 text-center sm:text-left">
+            {/* Centrally aligned photo on mobile */}
+            <div className="shrink-0 flex flex-col items-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-emerald-400 shadow-md bg-teal-900 p-0.5">
+                <img
+                  src={chiefPresident.photoBase64 || chiefPresident.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300'}
+                  alt={chiefPresident.name?.[lang] || chiefPresident.name?.en}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </div>
+            </div>
+
+            {/* Full-Height Desktop Vertical Spacer Divider Line */}
+            <div className="hidden sm:block w-[2px] bg-gradient-to-b from-emerald-400 via-teal-400/60 to-emerald-500/20 rounded-full self-stretch shrink-0" />
+
+            {/* Message Quote Text */}
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
+              <p className="text-xs sm:text-sm text-teal-100 font-medium leading-relaxed italic border-l-2 sm:border-l-0 border-emerald-400 pl-3 sm:pl-0">
+                "{lang === 'en'
+                  ? (siteTexts.presidentMessageEn || chiefPresident.vision?.en || chiefPresident.bio?.en || 'Welcome to Chaurasiya Samaj Nepal. Our mission is to integrate, unify, and elevate the Chaurasiya community across Nepal, preserving our sacred betel leaf cultural heritage while empowering every member with equal educational, healthcare, and economic opportunities.')
+                  : (siteTexts.presidentMessageNe || chiefPresident.vision?.ne || chiefPresident.bio?.ne || 'चौरसिया समाज नेपालमा हार्दिक स्वागत छ। हाम्रो मुख्य उद्देश्य नेपालभर छरिएर रहेका चौरसिया समुदायलाई एकीकृत गर्दै, परम्परागत पान खेतीको संरक्षण र विकाससँगै प्रत्येक सदस्यलाई शिक्षा, स्वास्थ्य र आर्थिक अवसरहरू प्रदान गर्नु हो।')}"
+              </p>
+            </div>
+          </div>
+
+          {/* Leader Info & Live Contact Details from Member Directory */}
+          <div className="pt-3 border-t border-teal-800/60 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs">
+            <div className="text-center sm:text-left">
+              <h4 className="font-extrabold text-white text-sm sm:text-base group-hover:text-emerald-300 transition-colors inline-block mr-2">
+                {chiefPresident.name?.[lang] || chiefPresident.name?.en}
+              </h4>
+              <span className="text-[11px] font-bold text-emerald-300 uppercase tracking-wider bg-teal-900/90 px-2 py-0.5 rounded border border-teal-700/80 inline-block mt-0.5 sm:mt-0">
+                {chiefPresident.role?.[lang] || chiefPresident.role?.en || (lang === 'en' ? 'Chief President' : 'मुख्य अध्यक्ष')}
+              </span>
+            </div>
+
+            <div
+              className="flex flex-wrap items-center justify-center sm:justify-end gap-2 text-[11px] text-teal-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {chiefPresident.address && (
+                <span className="inline-flex items-center gap-1 bg-teal-900/80 px-2.5 py-1 rounded-md border border-teal-800/80">
+                  <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
+                  <span>{chiefPresident.address?.[lang] || chiefPresident.address?.en}</span>
+                </span>
+              )}
+              {chiefPresident.phone && (
+                <a
+                  href={`tel:${chiefPresident.phone}`}
+                  className="inline-flex items-center gap-1 bg-teal-900/80 hover:bg-teal-800 px-2.5 py-1 rounded-md border border-teal-800/80 hover:text-emerald-300 transition-colors"
+                >
+                  <Phone className="w-3 h-3 text-emerald-400 shrink-0" />
+                  <span>{chiefPresident.phone}</span>
+                </a>
+              )}
+              {chiefPresident.email && (
+                <a
+                  href={`mailto:${chiefPresident.email}`}
+                  className="inline-flex items-center gap-1 bg-teal-900/80 hover:bg-teal-800 px-2.5 py-1 rounded-md border border-teal-800/80 hover:text-emerald-300 transition-colors"
+                >
+                  <Mail className="w-3 h-3 text-emerald-400 shrink-0" />
+                  <span>{chiefPresident.email}</span>
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </section>

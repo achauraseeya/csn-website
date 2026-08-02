@@ -14,15 +14,25 @@ interface MembershipDonationProps {
   onAddDonation?: (amount: number) => void;
   isAdmin?: boolean;
   onTrackAction: (actionName: string) => void;
+  initialSubTab?: 'membership' | 'volunteer' | 'donation';
+  initialDonationCause?: string;
 }
 
 export default function MembershipDonation({
   lang,
   isAdmin = false,
   onTrackAction,
+  initialSubTab = 'membership',
+  initialDonationCause = '',
 }: MembershipDonationProps) {
   // Portal Tab State
-  const [activeSubTab, setActiveSubTab] = useState<'membership' | 'volunteer' | 'donation'>('membership');
+  const [activeSubTab, setActiveSubTab] = useState<'membership' | 'volunteer' | 'donation'>(initialSubTab);
+
+  useEffect(() => {
+    if (initialSubTab) {
+      setActiveSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
 
   // Dynamic Member Categories
   const [memberCategories, setMemberCategories] = useState<MemberCategory[]>(() => getMemberCategories());

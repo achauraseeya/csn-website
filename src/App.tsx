@@ -6,13 +6,14 @@
 import { fetchDriveFolderImagesClient } from './utils/driveClient';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram, ExternalLink, X, Edit, Globe, Phone, MapPin, Sparkles } from 'lucide-react';
-import { Language, AnalyticsMetric, Member, Album, AlbumMediaItem, Notice, Document, CommunityEvent, NetworkBranch, MatrimonialProfile, VolunteerApplication, MembershipApplication, NewsletterSubscriber } from './types';
+import { Language, AnalyticsMetric, Member, Album, AlbumMediaItem, Notice, Document, CommunityEvent, NetworkBranch, MatrimonialProfile, VolunteerApplication, MembershipApplication, NewsletterSubscriber, NavMenuItem } from './types';
 import { initialNetworks } from './data/networkData';
 import { notices as initialNotices, boardMembers as initialMembers, upcomingEvents as initialEvents, documents as initialDocuments } from './data/communityData';
 import { journeyAlbums as initialJourneyAlbums } from './data/albumsData';
 import logoImg from './assets/images/chaurasiya_logo_1784519579895.jpg';
 
-import Navigation from './components/Navigation';
+import Navigation, { DEFAULT_NAV_MENUS } from './components/Navigation';
+import AdminMenuManagerModal from './components/AdminMenuManagerModal';
 import HistorySection from './components/HistorySection';
 import AlbumGallery from './components/AlbumGallery';
 import AlbumDetail from './components/AlbumDetail';
@@ -22,6 +23,7 @@ import NoticeGallery from './components/NoticeGallery';
 import DirectorySection from './components/DirectorySection';
 import EventsSection from './components/EventsSection';
 import MembershipDonation from './components/MembershipDonation';
+import FamilyConnectivitySection from './components/FamilyConnectivitySection';
 import AbhishekBio from './components/AbhishekBio';
 import LeaderBio from './components/LeaderBio';
 import MatrimonialSection from './components/MatrimonialSection';
@@ -104,6 +106,10 @@ const defaultSiteTexts: SiteTexts = {
   socialFb: 'https://facebook.com',
   socialTw: 'https://twitter.com',
   socialIg: 'https://instagram.com',
+  presidentMessageTitleEn: "Chief President's Message",
+  presidentMessageTitleNe: 'मुख्य अध्यक्षको सन्देश',
+  presidentMessageEn: 'Welcome to Chaurasiya Samaj Nepal. Our mission is to integrate, unify, and elevate the Chaurasiya community across Nepal, preserving our sacred betel leaf cultural heritage while empowering every member with equal educational, healthcare, and economic opportunities.',
+  presidentMessageNe: 'चौरसिया समाज नेपालमा हार्दिक स्वागत छ। हाम्रो मुख्य उद्देश्य नेपालभर छरिएर रहेका चौरसिया समुदायलाई एकीकृत गर्दै, परम्परागत पान खेतीको संरक्षण र विकाससँगै प्रत्येक सदस्यलाई शिक्षा, स्वास्थ्य र आर्थिक अवसरहरू प्रदान गर्नु हो।',
   heroImagesJson: JSON.stringify([
     {
       id: "g1",
@@ -164,6 +170,8 @@ export default function App() {
   });
   const [selectedLeaderId, setSelectedLeaderId] = useState<string | null>(null);
   const [selectedBlogPost, setSelectedBlogPost] = useState<SinglePostData | null>(null);
+  const [membershipSubTab, setMembershipSubTab] = useState<'membership' | 'volunteer' | 'donation'>('membership');
+  const [donationCause, setDonationCause] = useState<string>('');
   
   // Dynamic Network/Chapters State
   const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null);
@@ -220,6 +228,33 @@ export default function App() {
   });
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
+  const [isMenuManagerOpen, setIsMenuManagerOpen] = useState(false);
+
+  // Dynamic Navigation Menus State
+  const [navMenus, setNavMenus] = useState<NavMenuItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_nav_menus');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return DEFAULT_NAV_MENUS;
+  });
+
+  const handleSaveNavMenus = (updatedMenus: NavMenuItem[]) => {
+    setNavMenus(updatedMenus);
+    try {
+      localStorage.setItem('chaurasiya_nav_menus', JSON.stringify(updatedMenus));
+    } catch (e) {}
+  };
+
+  const handleResetDefaultMenus = () => {
+    setNavMenus(DEFAULT_NAV_MENUS);
+    try {
+      localStorage.removeItem('chaurasiya_nav_menus');
+    } catch (e) {}
+  };
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(() => {
     try {
       return localStorage.getItem('chaurasiya_is_super_admin') === 'true';
@@ -1934,33 +1969,50 @@ export default function App() {
 
   // Switch tab scroll helper
   const handleNavigate = (tabId: string) => {
-    if (tabId !== currentTab) {
-      if (tabId === 'abhishek-bio') {
+    let targetTab = tabId;
+    if (tabId === 'membership-form') {
+      setMembershipSubTab('membership');
+      targetTab = 'membership-donation';
+    } else if (tabId === 'volunteer-form') {
+      setMembershipSubTab('volunteer');
+      targetTab = 'membership-donation';
+    } else if (tabId === 'donate-guesthouse') {
+      setMembershipSubTab('donation');
+      setDonationCause('Guest House Construction');
+      targetTab = 'membership-donation';
+    } else if (tabId === 'donate-events') {
+      setMembershipSubTab('donation');
+      setDonationCause('Events Donation');
+      targetTab = 'membership-donation';
+    }
+
+    if (targetTab !== currentTab) {
+      if (targetTab === 'abhishek-bio') {
         window.history.pushState({ tab: 'abhishek-bio' }, '', '?page=abhishek');
-      } else if (tabId === 'history') {
+      } else if (targetTab === 'history' || targetTab === 'home') {
         window.history.pushState({ tab: 'history' }, '', '/');
       } else {
-        window.history.pushState({ tab: tabId }, '', `?tab=${tabId}`);
+        window.history.pushState({ tab: targetTab }, '', `?tab=${targetTab}`);
       }
     }
-    setCurrentTab(tabId);
-    if (tabId !== 'single-post') {
+    setCurrentTab(targetTab);
+    if (targetTab !== 'single-post') {
       setSelectedBlogPost(null);
     }
-    if (tabId !== 'leader-detail' && tabId !== 'leader-bio') {
+    if (targetTab !== 'leader-detail' && targetTab !== 'leader-bio') {
       setSelectedLeaderId(null);
     }
-    if (tabId !== 'chapter-detail') {
+    if (targetTab !== 'chapter-detail') {
       setSelectedNetworkId(null);
     }
-    if (tabId !== 'album-detail') {
+    if (targetTab !== 'album-detail') {
       setSelectedAlbumId(null);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // If currently on a Blogger single post URL and user clicks Home / Navigation
     if (window.location.pathname.includes('.html') || window.location.pathname.includes('/20')) {
-      if (tabId === 'history') {
+      if (targetTab === 'history' || targetTab === 'home') {
         window.location.href = '/';
       }
     }
@@ -1969,7 +2021,8 @@ export default function App() {
   const handleSelectLeader = (id: string | null) => {
     setSelectedLeaderId(id);
     if (id) {
-      window.history.pushState({ tab: 'history', leaderId: id }, '');
+      setCurrentTab('leader-bio');
+      window.history.pushState({ tab: 'leader-bio', leaderId: id }, '');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -2005,19 +2058,34 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-teal-200 selection:text-teal-950 transition-colors duration-200 overflow-x-clip">
-      {/* Top Ribbon with SWC Registered (Scrolls with page body) */}
+      {/* Top Ribbon with Scrolling Taglines Ticker */}
       <div className="bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-teal-50 text-[11px] sm:text-xs py-2 px-4 sm:px-6 lg:px-8 border-b border-teal-800/40">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
-          <span className="font-bold flex items-center gap-2 tracking-wide uppercase">
-            <div className="w-5 h-5 rounded-full bg-white overflow-hidden flex items-center justify-center p-0.5 shadow-sm">
+        <div className="max-w-7xl mx-auto flex items-center gap-3">
+          <div className="flex items-center gap-2.5 min-w-0 w-full overflow-hidden">
+            {/* Small circular logo for top bar */}
+            <div className="w-5 h-5 rounded-full bg-white overflow-hidden flex items-center justify-center p-0.5 shadow-sm shrink-0">
               <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-cover rounded-full" />
             </div>
-            {lang === 'en' ? siteTexts.taglineEn : siteTexts.taglineNe}
-          </span>
-          <div className="flex items-center gap-4 text-emerald-200 font-medium">
-            <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5" /> SWC Registered</span>
-            <span className="hidden sm:inline opacity-50">|</span>
-            <span className="hidden sm:inline hover:text-white transition-colors cursor-pointer">✉️ {siteTexts.footerEmail}</span>
+
+            {/* Scrolling Texts Ticker Container */}
+            <div className="flex-1 overflow-hidden relative min-w-0">
+              <div className="inline-flex whitespace-nowrap items-center gap-6 animate-[marquee_25s_linear_infinite] hover:[animation-play-state:paused] cursor-default font-bold tracking-wide uppercase text-teal-100 text-[11px] sm:text-xs">
+                {(() => {
+                  const rawTexts = (lang === 'en' ? siteTexts.taglineEn : siteTexts.taglineNe)
+                    .split(/[\n|;]+/)
+                    .map(s => s.trim())
+                    .filter(Boolean);
+                  const list = rawTexts.length > 0 ? rawTexts : ['A dedicated social platform preserving betel leaf culture & serving humanity'];
+                  // Duplicate array to create seamless loop
+                  return [...list, ...list, ...list].map((item, idx) => (
+                    <span key={idx} className="inline-flex items-center gap-2">
+                      <span className="text-emerald-400 text-[10px]">✦</span>
+                      <span>{item}</span>
+                    </span>
+                  ));
+                })()}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -2033,9 +2101,11 @@ export default function App() {
           onTrackAction={handleTrackAction}
           isAdmin={isAdmin}
           onOpenAdminModal={() => setIsAdminModalOpen(true)}
+          onOpenMenuManager={() => setIsMenuManagerOpen(true)}
           theme={theme}
           toggleTheme={toggleTheme}
           siteTexts={siteTexts}
+          navMenus={navMenus}
           pendingNotificationsCount={matrimonialProfiles.filter(p => p.status === 'pending').length + volunteerApps.filter(v => v.status === 'pending').length + membershipApps.filter(m => m.status === 'pending').length}
         />
       </header>
@@ -2274,6 +2344,16 @@ export default function App() {
             onAddDonation={handleAddDonation}
             onTrackAction={handleTrackAction}
             isAdmin={isAdmin}
+            initialSubTab={membershipSubTab}
+            initialDonationCause={donationCause}
+          />
+        )}
+
+        {currentTab === 'family-connectivity' && (
+          <FamilyConnectivitySection
+            lang={lang}
+            onTrackAction={handleTrackAction}
+            isAdmin={isAdmin}
           />
         )}
 
@@ -2344,8 +2424,8 @@ export default function App() {
           
           <div className="md:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-white overflow-hidden flex items-center justify-center shrink-0">
-                <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-cover" />
+              <div className="w-16 h-10 sm:w-20 sm:h-11 rounded-xl bg-white overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-sm border border-slate-700">
+                <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-contain rounded-lg" />
               </div>
               <span className="font-black text-xl sm:text-2xl tracking-tight text-white">
                 {lang === 'en' ? siteTexts.logoTextEn : siteTexts.logoTextNe}
@@ -2523,6 +2603,16 @@ export default function App() {
         lang={lang}
         siteTexts={siteTexts}
         onUpdateSiteTexts={handleUpdateSiteTexts}
+      />
+
+      {/* Dedicated Admin Menu & Submenu Manager Modal */}
+      <AdminMenuManagerModal
+        isOpen={isMenuManagerOpen}
+        onClose={() => setIsMenuManagerOpen(false)}
+        lang={lang}
+        navMenus={navMenus}
+        onSaveNavMenus={handleSaveNavMenus}
+        onResetDefaultMenus={handleResetDefaultMenus}
       />
     </div>
   );

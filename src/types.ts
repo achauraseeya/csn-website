@@ -172,6 +172,10 @@ export interface SiteTexts {
   socialFb: string;
   socialTw: string;
   socialIg: string;
+  presidentMessageTitleEn?: string;
+  presidentMessageTitleNe?: string;
+  presidentMessageEn?: string;
+  presidentMessageNe?: string;
   heroImagesJson: string;
   secondaryImagesJson?: string;
   impactStatsJson?: string;
@@ -256,6 +260,24 @@ export interface NewsletterSubscriber {
   email: string;
   subscribedAt: string;
   source?: string;
+}
+
+export interface NavSubMenuItem {
+  id: string;
+  label: LocalizedString;
+  linkType: 'tab' | 'url';
+  target: string; // tab ID or full URL (e.g. https://...)
+  openInNewTab?: boolean;
+}
+
+export interface NavMenuItem {
+  id: string;
+  label: LocalizedString;
+  linkType: 'tab' | 'url' | 'dropdown';
+  target?: string;
+  openInNewTab?: boolean;
+  subItems?: NavSubMenuItem[];
+  isCustom?: boolean;
 }
 
 

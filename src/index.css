@@ -17,3 +17,41 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
 }
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-33.333%); }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+@keyframes wave3dFlag {
+  0% {
+    transform: perspective(500px) rotateY(-12deg) rotateX(3deg) skewY(-3deg) scale(1);
+    filter: drop-shadow(3px 5px 8px rgba(0,0,0,0.35));
+  }
+  25% {
+    transform: perspective(500px) rotateY(10deg) rotateX(-3deg) skewY(3deg) scale(1.04);
+    filter: drop-shadow(5px 8px 12px rgba(0,0,0,0.4));
+  }
+  50% {
+    transform: perspective(500px) rotateY(-8deg) rotateX(4deg) skewY(-2deg) scale(1);
+    filter: drop-shadow(2px 6px 9px rgba(0,0,0,0.35));
+  }
+  75% {
+    transform: perspective(500px) rotateY(12deg) rotateX(-2deg) skewY(2deg) scale(1.03);
+    filter: drop-shadow(6px 9px 14px rgba(0,0,0,0.42));
+  }
+  100% {
+    transform: perspective(500px) rotateY(-12deg) rotateX(3deg) skewY(-3deg) scale(1);
+    filter: drop-shadow(3px 5px 8px rgba(0,0,0,0.35));
+  }
+}
+
+.animate-wave-flag {
+  animation: wave3dFlag 4s ease-in-out infinite;
+  transform-style: preserve-3d;
+  transform-origin: left center;
+}
