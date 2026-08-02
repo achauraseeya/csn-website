@@ -405,7 +405,8 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
     }
   };
 
-  const canEdit = isAdmin || (typeof window !== 'undefined' && localStorage.getItem('csn_admin_authenticated') === 'true');
+  // Profile editing option temporarily disabled for time being
+  const canEdit = false;
 
   return (
     <article itemScope itemType="https://schema.org/Person" className="space-y-12 animate-in fade-in duration-300">

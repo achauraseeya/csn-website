@@ -546,34 +546,130 @@ export default function App() {
     };
   }, []);
 
-  // Sync custom form fields and member categories from GitHub on app mount
+  // Live GitHub Auto-Sync & Real-Time Polling: Instantly reflects edits committed to GitHub repo!
   useEffect(() => {
-    syncCustomFormFieldsFromGithub().catch(() => {});
-    syncMemberCategoriesFromGithub().catch(() => {});
-  }, []);
+    const fetchAllGithubData = () => {
+      syncCustomFormFieldsFromGithub().catch(() => {});
+      syncMemberCategoriesFromGithub().catch(() => {});
 
-  // Fetch online server notices on mount so ALL visitors see new notices automatically!
-  useEffect(() => {
-    apiFetch<Notice[]>('/api/notices', 'community_notices.json', [])
-      .then((serverNotices) => {
-        if (Array.isArray(serverNotices) && serverNotices.length > 0) {
-          setNotices((prev) => {
-            const mergedMap = new Map<string, Notice>();
-            serverNotices.forEach(n => mergedMap.set(n.id, n));
-            initialNotices.forEach(n => {
-              if (!mergedMap.has(n.id)) {
-                mergedMap.set(n.id, n);
-              }
+      // Notices
+      apiFetch<Notice[]>('/api/notices', 'community_notices.json', [])
+        .then((serverNotices) => {
+          if (Array.isArray(serverNotices) && serverNotices.length > 0) {
+            setNotices((prev) => {
+              const mergedMap = new Map<string, Notice>();
+              serverNotices.forEach(n => mergedMap.set(n.id, n));
+              initialNotices.forEach(n => {
+                if (!mergedMap.has(n.id)) {
+                  mergedMap.set(n.id, n);
+                }
+              });
+              const finalNotices = Array.from(mergedMap.values());
+              try { localStorage.setItem('chaurasiya_notices', JSON.stringify(finalNotices)); } catch (e) {}
+              return finalNotices;
             });
-            const finalNotices = Array.from(mergedMap.values());
-            try { localStorage.setItem('chaurasiya_notices', JSON.stringify(finalNotices)); } catch (e) {}
-            return finalNotices;
-          });
-        }
-      })
-      .catch((err) => {
-        console.warn('Backend server notices fetch failed or serverless DB not reachable:', err);
-      });
+          }
+        })
+        .catch(() => {});
+
+      // Events
+      apiFetch<CommunityEvent[]>('/api/events', 'community_events.json', [])
+        .then((serverEvents) => {
+          if (Array.isArray(serverEvents) && serverEvents.length > 0) {
+            setEvents(serverEvents);
+            try { localStorage.setItem('chaurasiya_events', JSON.stringify(serverEvents)); } catch (e) {}
+          }
+        })
+        .catch(() => {});
+
+      // Members
+      apiFetch<Member[]>('/api/members', 'community_members.json', [])
+        .then((serverMembers) => {
+          if (Array.isArray(serverMembers) && serverMembers.length > 0) {
+            setMembers(serverMembers);
+            try { localStorage.setItem('chaurasiya_members', JSON.stringify(serverMembers)); } catch (e) {}
+          }
+        })
+        .catch(() => {});
+
+      // Documents
+      apiFetch<Document[]>('/api/documents', 'community_documents.json', [])
+        .then((serverDocs) => {
+          if (Array.isArray(serverDocs) && serverDocs.length > 0) {
+            setDocumentsList(serverDocs);
+            try { localStorage.setItem('chaurasiya_documents', JSON.stringify(serverDocs)); } catch (e) {}
+          }
+        })
+        .catch(() => {});
+
+      // Site Texts
+      apiFetch<SiteTexts>('/api/site-texts', 'site_texts.json', defaultSiteTexts)
+        .then((data) => {
+          if (data && typeof data === 'object') {
+            setSiteTexts((prev) => ({ ...prev, ...data }));
+          }
+        })
+        .catch(() => {});
+
+      // Networks
+      apiFetch<NetworkBranch[]>('/api/networks', 'community_networks.json', initialNetworks)
+        .then((serverNetworks) => {
+          if (Array.isArray(serverNetworks) && serverNetworks.length > 0) {
+            setNetworks(serverNetworks);
+          }
+        })
+        .catch(() => {});
+
+      // Journey Albums
+      apiFetch<Album[]>('/api/albums', 'journey_albums.json', [])
+        .then((serverAlbums) => {
+          if (Array.isArray(serverAlbums) && serverAlbums.length > 0) {
+            setAlbums((prev) => {
+              const mergedMap = new Map<string, Album>();
+              initialJourneyAlbums.forEach(a => mergedMap.set(a.id, a));
+              serverAlbums.forEach((a) => mergedMap.set(a.id, a));
+              return Array.from(mergedMap.values());
+            });
+          }
+        })
+        .catch(() => {});
+
+      // Abhishek Profile
+      apiFetch<any>('/api/abhishek-profile', 'abhishek_profile.json', null)
+        .then((cloudProfile) => {
+          if (cloudProfile && typeof cloudProfile === 'object' && cloudProfile.avatarUrl) {
+            setAbhishekAvatar(cloudProfile.avatarUrl);
+            try {
+              const saved = localStorage.getItem('chaurasiya_abhishek_profile_data');
+              const parsed = saved ? JSON.parse(saved) : {};
+              parsed.avatarUrl = cloudProfile.avatarUrl;
+              localStorage.setItem('chaurasiya_abhishek_profile_data', JSON.stringify(parsed));
+            } catch (e) {}
+          }
+        })
+        .catch(() => {});
+    };
+
+    // Initial fetch
+    fetchAllGithubData();
+
+    // Re-fetch instantly on window focus & tab visibility change
+    const handleFocus = () => fetchAllGithubData();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') fetchAllGithubData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Continuous background sync polling every 20s
+    const timer = setInterval(fetchAllGithubData, 20000);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      clearInterval(timer);
+    };
   }, []);
 
   // Matrimonial handlers

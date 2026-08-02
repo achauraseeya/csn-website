@@ -209,9 +209,38 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
     // Server unavailable or static deployment
   }
 
-  // 2. Check fresh GitHub raw repository contents FIRST for live static sites!
-  // Since GitHub repo has the latest JSON committed by saveFileToGithub, checking raw.githubusercontent.com gives the freshest data!
+  // 2. Query GitHub REST API directly with raw media header FIRST for INSTANT live commit data (bypasses raw.githubusercontent.com 5-minute Fastly CDN cache!)
   if (settings.enabled && settings.username && settings.repo) {
+    const candidatePaths = [fileName, `public/${fileName}`];
+    
+    for (const path of candidatePaths) {
+      try {
+        const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${path}?ref=${settings.branch}&_cb=${Date.now()}`;
+        const headers: Record<string, string> = {
+          'Accept': 'application/vnd.github.v3.raw',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        };
+        if (pat) {
+          headers['Authorization'] = `token ${pat}`;
+        }
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+        const res = await fetch(url, { headers, cache: 'no-store', signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const rawText = await res.text();
+          const parsed = JSON.parse(rawText);
+          if (parsed !== null && parsed !== undefined) {
+            return parsed as T;
+          }
+        }
+      } catch (e) {
+        // Fall back to next path or raw url
+      }
+    }
+
+    // 3. Secondary fallback to raw.githubusercontent.com
     const rawUrls = [
       `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${fileName}?t=${Date.now()}`,
       `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/public/${fileName}?t=${Date.now()}`
@@ -220,7 +249,7 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
     for (const rawUrl of rawUrls) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
         const rawRes = await fetch(rawUrl, { cache: 'no-store', signal: controller.signal });
         clearTimeout(timeoutId);
         if (rawRes.ok) {
@@ -231,32 +260,6 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
         }
       } catch (e) {}
     }
-
-    // Try GitHub Contents API with PAT if raw fetch was blocked
-    try {
-      const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${fileName}?ref=${settings.branch}&t=${Date.now()}`;
-      const headers: Record<string, string> = {
-        'Accept': 'application/vnd.github.v3+json',
-        'Cache-Control': 'no-cache'
-      };
-      if (pat) {
-        headers['Authorization'] = `token ${pat}`;
-      }
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      const res = await fetch(url, { headers, signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.content) {
-          const contentStr = base64ToUtf8(data.content);
-          const parsed = JSON.parse(contentStr);
-          if (parsed !== null && parsed !== undefined) {
-            return parsed as T;
-          }
-        }
-      }
-    } catch (e) {}
   }
 
   // 3. Fallback to static relative URL from current domain (e.g., ./fileName.json)
