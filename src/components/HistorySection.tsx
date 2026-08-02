@@ -1625,115 +1625,238 @@ export default function HistorySection({
         </div>
       </section>
 
-      {/* Chief President's Message Section (Clickable to open chairperson's dedicated page) */}
-      <section
-        onClick={() => {
-          onSelectLeader(chiefPresident.id);
-          onTrackAction('Click Chief President Message Section');
-        }}
-        className="bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-2xl p-4 sm:p-6 text-white shadow-lg border border-teal-800/80 hover:border-emerald-400/90 relative overflow-hidden transition-all duration-300 cursor-pointer group"
-      >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+      {/* 2-Column Desktop View Layout Below Hero Slider */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* =========================================================================
+            COLUMN 1: LEFT COLUMN (25% Width on Desktop: lg:col-span-3)
+            - On Mobile (lg:hidden): Reverted to exact original full-width horizontal presentation
+            - On Desktop (hidden lg:block): Vertical sidebar card
+           ========================================================================= */}
+        <aside className="lg:col-span-3 space-y-6 lg:sticky lg:top-24">
+          
+          {/* MOBILE VIEW PRESENTATION (lg:hidden): Original Horizontal Format */}
+          <section
+            onClick={() => {
+              onSelectLeader(chiefPresident.id);
+              onTrackAction('Click Chief President Message Section');
+            }}
+            className="lg:hidden bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-2xl p-4 sm:p-6 text-white shadow-lg border border-teal-800/80 hover:border-emerald-400/90 relative overflow-hidden transition-all duration-300 cursor-pointer group"
+          >
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 space-y-4">
-          {/* Header Badge & Admin Edit Button */}
-          <div className="flex items-center justify-between border-b border-teal-800/60 pb-2.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-black uppercase tracking-wider border border-emerald-500/30">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              {lang === 'en'
-                ? (siteTexts.presidentMessageTitleEn || "Chief President's Message")
-                : (siteTexts.presidentMessageTitleNe || 'मुख्य अध्यक्षको सन्देश')}
-            </span>
+            <div className="relative z-10 space-y-4">
+              {/* Header Badge & Admin Edit Button */}
+              <div className="flex items-center justify-between border-b border-teal-800/60 pb-2.5">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-black uppercase tracking-wider border border-emerald-500/30">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  {lang === 'en'
+                    ? (siteTexts.presidentMessageTitleEn || "Chief President's Message")
+                    : (siteTexts.presidentMessageTitleNe || 'मुख्य अध्यक्षको सन्देश')}
+                </span>
 
-            <div className="flex items-center gap-2">
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditingTexts(true);
-                  }}
-                  className="px-2.5 py-1 bg-emerald-500/30 hover:bg-emerald-500/50 text-emerald-200 text-xs font-bold rounded-lg border border-emerald-400/40 flex items-center gap-1 transition-colors"
+                <div className="flex items-center gap-2">
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsEditingTexts(true);
+                      }}
+                      className="px-2.5 py-1 bg-emerald-500/30 hover:bg-emerald-500/50 text-emerald-200 text-xs font-bold rounded-lg border border-emerald-400/40 flex items-center gap-1 transition-colors"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      <span>{lang === 'en' ? 'Edit Message' : 'सन्देश सम्पादन'}</span>
+                    </button>
+                  )}
+                  <ChevronRight className="w-4 h-4 text-teal-300/80 group-hover:text-emerald-300 group-hover:translate-x-1 transition-all" />
+                </div>
+              </div>
+
+              {/* Photo & Message Body in Horizontal Row on Mobile/Tablet */}
+              <div className="flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-5 text-center sm:text-left">
+                {/* Centrally aligned photo on mobile */}
+                <div className="shrink-0 flex flex-col items-center">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-emerald-400 shadow-md bg-teal-900 p-0.5">
+                    <img
+                      src={chiefPresident.photoBase64 || chiefPresident.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300'}
+                      alt={chiefPresident.name?.[lang] || chiefPresident.name?.en}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Full-Height Desktop Vertical Spacer Divider Line */}
+                <div className="hidden sm:block w-[2px] bg-gradient-to-b from-emerald-400 via-teal-400/60 to-emerald-500/20 rounded-full self-stretch shrink-0" />
+
+                {/* Message Quote Text */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <p className="text-xs sm:text-sm text-teal-100 font-medium leading-relaxed italic border-l-2 sm:border-l-0 border-emerald-400 pl-3 sm:pl-0">
+                    "{lang === 'en'
+                      ? (siteTexts.presidentMessageEn || chiefPresident.vision?.en || chiefPresident.bio?.en || 'Welcome to Chaurasiya Samaj Nepal. Our mission is to integrate, unify, and elevate the Chaurasiya community across Nepal, preserving our sacred betel leaf cultural heritage while empowering every member with equal educational, healthcare, and economic opportunities.')
+                      : (siteTexts.presidentMessageNe || chiefPresident.vision?.ne || chiefPresident.bio?.ne || 'चौरसिया समाज नेपालमा हार्दिक स्वागत छ। हाम्रो मुख्य उद्देश्य नेपालभर छरिएर रहेका चौरसिया समुदायलाई एकीकृत गर्दै, परम्परागत पान खेतीको संरक्षण र विकाससँगै प्रत्येक सदस्यलाई शिक्षा, स्वास्थ्य र आर्थिक अवसरहरू प्रदान गर्नु हो।')}"
+                  </p>
+                </div>
+              </div>
+
+              {/* Leader Info & Live Contact Details from Member Directory */}
+              <div className="pt-3 border-t border-teal-800/60 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs">
+                <div className="text-center sm:text-left">
+                  <h4 className="font-extrabold text-white text-sm sm:text-base group-hover:text-emerald-300 transition-colors inline-block mr-2">
+                    {chiefPresident.name?.[lang] || chiefPresident.name?.en}
+                  </h4>
+                  <span className="text-[11px] font-bold text-emerald-300 uppercase tracking-wider bg-teal-900/90 px-2 py-0.5 rounded border border-teal-700/80 inline-block mt-0.5 sm:mt-0">
+                    {chiefPresident.role?.[lang] || chiefPresident.role?.en || (lang === 'en' ? 'Chief President' : 'मुख्य अध्यक्ष')}
+                  </span>
+                </div>
+
+                <div
+                  className="flex flex-wrap items-center justify-center sm:justify-end gap-2 text-[11px] text-teal-200"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <Edit3 className="w-3 h-3" />
-                  <span>{lang === 'en' ? 'Edit Message' : 'सन्देश सम्पादन'}</span>
-                </button>
-              )}
-              <ChevronRight className="w-4 h-4 text-teal-300/80 group-hover:text-emerald-300 group-hover:translate-x-1 transition-all" />
-            </div>
-          </div>
-
-          {/* Photo & Message Body */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-5 text-center sm:text-left">
-            {/* Centrally aligned photo on mobile */}
-            <div className="shrink-0 flex flex-col items-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-emerald-400 shadow-md bg-teal-900 p-0.5">
-                <img
-                  src={chiefPresident.photoBase64 || chiefPresident.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300'}
-                  alt={chiefPresident.name?.[lang] || chiefPresident.name?.en}
-                  className="w-full h-full object-cover rounded-full"
-                />
+                  {chiefPresident.address && (
+                    <span className="inline-flex items-center gap-1 bg-teal-900/80 px-2.5 py-1 rounded-md border border-teal-800/80">
+                      <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
+                      <span>{chiefPresident.address?.[lang] || chiefPresident.address?.en}</span>
+                    </span>
+                  )}
+                  {chiefPresident.phone && (
+                    <a
+                      href={`tel:${chiefPresident.phone}`}
+                      className="inline-flex items-center gap-1 bg-teal-900/80 hover:bg-teal-800 px-2.5 py-1 rounded-md border border-teal-800/80 hover:text-emerald-300 transition-colors"
+                    >
+                      <Phone className="w-3 h-3 text-emerald-400 shrink-0" />
+                      <span>{chiefPresident.phone}</span>
+                    </a>
+                  )}
+                  {chiefPresident.email && (
+                    <a
+                      href={`mailto:${chiefPresident.email}`}
+                      className="inline-flex items-center gap-1 bg-teal-900/80 hover:bg-teal-800 px-2.5 py-1 rounded-md border border-teal-800/80 hover:text-emerald-300 transition-colors"
+                    >
+                      <Mail className="w-3 h-3 text-emerald-400 shrink-0" />
+                      <span>{chiefPresident.email}</span>
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
+          </section>
 
-            {/* Full-Height Desktop Vertical Spacer Divider Line */}
-            <div className="hidden sm:block w-[2px] bg-gradient-to-b from-emerald-400 via-teal-400/60 to-emerald-500/20 rounded-full self-stretch shrink-0" />
+          {/* DESKTOP VIEW PRESENTATION (hidden lg:flex): Vertical Sidebar Column */}
+          <section
+            onClick={() => {
+              onSelectLeader(chiefPresident.id);
+              onTrackAction('Click Chief President Message Section');
+            }}
+            className="hidden lg:flex bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-2xl p-5 text-white shadow-xl border border-teal-800/80 hover:border-emerald-400/90 relative overflow-hidden transition-all duration-300 cursor-pointer group flex-col justify-between"
+          >
+            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 
-            {/* Message Quote Text */}
-            <div className="flex-1 min-w-0 flex flex-col justify-center">
-              <p className="text-xs sm:text-sm text-teal-100 font-medium leading-relaxed italic border-l-2 sm:border-l-0 border-emerald-400 pl-3 sm:pl-0">
-                "{lang === 'en'
-                  ? (siteTexts.presidentMessageEn || chiefPresident.vision?.en || chiefPresident.bio?.en || 'Welcome to Chaurasiya Samaj Nepal. Our mission is to integrate, unify, and elevate the Chaurasiya community across Nepal, preserving our sacred betel leaf cultural heritage while empowering every member with equal educational, healthcare, and economic opportunities.')
-                  : (siteTexts.presidentMessageNe || chiefPresident.vision?.ne || chiefPresident.bio?.ne || 'चौरसिया समाज नेपालमा हार्दिक स्वागत छ। हाम्रो मुख्य उद्देश्य नेपालभर छरिएर रहेका चौरसिया समुदायलाई एकीकृत गर्दै, परम्परागत पान खेतीको संरक्षण र विकाससँगै प्रत्येक सदस्यलाई शिक्षा, स्वास्थ्य र आर्थिक अवसरहरू प्रदान गर्नु हो।')}"
-              </p>
-            </div>
-          </div>
-
-          {/* Leader Info & Live Contact Details from Member Directory */}
-          <div className="pt-3 border-t border-teal-800/60 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs">
-            <div className="text-center sm:text-left">
-              <h4 className="font-extrabold text-white text-sm sm:text-base group-hover:text-emerald-300 transition-colors inline-block mr-2">
-                {chiefPresident.name?.[lang] || chiefPresident.name?.en}
-              </h4>
-              <span className="text-[11px] font-bold text-emerald-300 uppercase tracking-wider bg-teal-900/90 px-2 py-0.5 rounded border border-teal-700/80 inline-block mt-0.5 sm:mt-0">
-                {chiefPresident.role?.[lang] || chiefPresident.role?.en || (lang === 'en' ? 'Chief President' : 'मुख्य अध्यक्ष')}
-              </span>
-            </div>
-
-            <div
-              className="flex flex-wrap items-center justify-center sm:justify-end gap-2 text-[11px] text-teal-200"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {chiefPresident.address && (
-                <span className="inline-flex items-center gap-1 bg-teal-900/80 px-2.5 py-1 rounded-md border border-teal-800/80">
-                  <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
-                  <span>{chiefPresident.address?.[lang] || chiefPresident.address?.en}</span>
+            <div className="relative z-10 space-y-4">
+              {/* Header Badge & Admin Edit Button */}
+              <div className="flex items-center justify-between border-b border-teal-800/60 pb-2.5">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-black uppercase tracking-wider border border-emerald-500/30">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="truncate">
+                    {lang === 'en'
+                      ? (siteTexts.presidentMessageTitleEn || "Chief President's Message")
+                      : (siteTexts.presidentMessageTitleNe || 'मुख्य अध्यक्षको सन्देश')}
+                  </span>
                 </span>
-              )}
-              {chiefPresident.phone && (
-                <a
-                  href={`tel:${chiefPresident.phone}`}
-                  className="inline-flex items-center gap-1 bg-teal-900/80 hover:bg-teal-800 px-2.5 py-1 rounded-md border border-teal-800/80 hover:text-emerald-300 transition-colors"
-                >
-                  <Phone className="w-3 h-3 text-emerald-400 shrink-0" />
-                  <span>{chiefPresident.phone}</span>
-                </a>
-              )}
-              {chiefPresident.email && (
-                <a
-                  href={`mailto:${chiefPresident.email}`}
-                  className="inline-flex items-center gap-1 bg-teal-900/80 hover:bg-teal-800 px-2.5 py-1 rounded-md border border-teal-800/80 hover:text-emerald-300 transition-colors"
-                >
-                  <Mail className="w-3 h-3 text-emerald-400 shrink-0" />
-                  <span>{chiefPresident.email}</span>
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Image Carousel */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsEditingTexts(true);
+                      }}
+                      className="p-1.5 bg-emerald-500/30 hover:bg-emerald-500/50 text-emerald-200 text-xs font-bold rounded-lg border border-emerald-400/40 flex items-center gap-1 transition-colors"
+                      title="Edit Message"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  <ChevronRight className="w-4 h-4 text-teal-300/80 group-hover:text-emerald-300 group-hover:translate-x-1 transition-all" />
+                </div>
+              </div>
+
+              {/* Photo & Profile Header */}
+              <div className="flex flex-col items-center text-center space-y-2.5 pt-1">
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-emerald-400 shadow-md bg-teal-900 p-0.5 shrink-0 group-hover:scale-105 transition-transform duration-300">
+                  <img
+                    src={chiefPresident.photoBase64 || chiefPresident.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300'}
+                    alt={chiefPresident.name?.[lang] || chiefPresident.name?.en}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <h4 className="font-extrabold text-white text-base sm:text-lg group-hover:text-emerald-300 transition-colors">
+                    {chiefPresident.name?.[lang] || chiefPresident.name?.en}
+                  </h4>
+                  <span className="inline-block text-[11px] font-bold text-emerald-300 uppercase tracking-wider bg-teal-900/90 px-2.5 py-0.5 rounded border border-teal-700/80">
+                    {chiefPresident.role?.[lang] || chiefPresident.role?.en || (lang === 'en' ? 'Chief President' : 'मुख्य अध्यक्ष')}
+                  </span>
+                </div>
+              </div>
+
+              {/* Message Quote Text */}
+              <div className="pt-2 border-t border-teal-800/60">
+                <p className="text-xs sm:text-sm text-teal-100 font-medium leading-relaxed italic relative pl-3 border-l-2 border-emerald-400">
+                  "{lang === 'en'
+                    ? (siteTexts.presidentMessageEn || chiefPresident.vision?.en || chiefPresident.bio?.en || 'Welcome to Chaurasiya Samaj Nepal. Our mission is to integrate, unify, and elevate the Chaurasiya community across Nepal, preserving our sacred betel leaf cultural heritage while empowering every member with equal educational, healthcare, and economic opportunities.')
+                    : (siteTexts.presidentMessageNe || chiefPresident.vision?.ne || chiefPresident.bio?.ne || 'चौरसिया समाज नेपालमा हार्दिक स्वागत छ। हाम्रो मुख्य उद्देश्य नेपालभर छरिएर रहेका चौरसिया समुदायलाई एकीकृत गर्दै, परम्परागत पान खेतीको संरक्षण र विकाससँगै प्रत्येक सदस्यलाई शिक्षा, स्वास्थ्य र आर्थिक अवसरहरू प्रदान गर्नु हो।')}"
+                </p>
+              </div>
+
+              {/* Leader Info & Live Contact Details */}
+              <div
+                className="pt-3 border-t border-teal-800/60 flex flex-col gap-2 text-xs text-teal-200"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {chiefPresident.address && (
+                  <div className="inline-flex items-center gap-1.5 bg-teal-900/80 px-2.5 py-1.5 rounded-lg border border-teal-800/80 text-[11px]">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="truncate">{chiefPresident.address?.[lang] || chiefPresident.address?.en}</span>
+                  </div>
+                )}
+                {chiefPresident.phone && (
+                  <a
+                    href={`tel:${chiefPresident.phone}`}
+                    className="inline-flex items-center gap-1.5 bg-teal-900/80 hover:bg-teal-800 px-2.5 py-1.5 rounded-lg border border-teal-800/80 hover:text-emerald-300 transition-colors text-[11px]"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>{chiefPresident.phone}</span>
+                  </a>
+                )}
+                {chiefPresident.email && (
+                  <a
+                    href={`mailto:${chiefPresident.email}`}
+                    className="inline-flex items-center gap-1.5 bg-teal-900/80 hover:bg-teal-800 px-2.5 py-1.5 rounded-lg border border-teal-800/80 hover:text-emerald-300 transition-colors text-[11px] truncate"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="truncate">{chiefPresident.email}</span>
+                  </a>
+                )}
+              </div>
+
+              <div className="pt-2 text-center">
+                <span className="text-[11px] font-bold text-emerald-400 group-hover:underline inline-flex items-center gap-1">
+                  {lang === 'en' ? 'View Leader Profile' : 'अध्यक्षको प्रोफाइल हेर्नुहोस्'} <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </div>
+            </div>
+          </section>
+        </aside>
+
+        {/* =========================================================================
+            COLUMN 2: RIGHT COLUMN (75% Width on Desktop: lg:col-span-9)
+            All remaining homepage sections
+           ========================================================================= */}
+        <div className="lg:col-span-9 space-y-10">
+          {/* Image Carousel */}
       <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 shadow-md border border-teal-100 dark:border-slate-800 transition-colors">
         <h2 className="text-2xl sm:text-3xl font-extrabold text-teal-950 dark:text-teal-50 mb-8 flex items-center gap-3">
           <PlayCircle className="w-7 h-7 text-emerald-500" />
@@ -2654,6 +2777,9 @@ export default function HistorySection({
           </button>
         </div>
       </section>
+
+        </div> {/* End of Column 2 (lg:col-span-9) */}
+      </div> {/* End of 2-Column Grid (grid-cols-1 lg:grid-cols-12) */}
 
     </div>
   );

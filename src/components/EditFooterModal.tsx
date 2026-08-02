@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Sparkles, Facebook, Twitter, Instagram, Mail, Phone, MapPin, Globe } from 'lucide-react';
+import { X, Sparkles, Facebook, Twitter, Instagram, Mail, Phone, MapPin, Globe, Upload, Wand2, Image as ImageIcon } from 'lucide-react';
 import { Language, SiteTexts } from '../types';
+import { removeImageWhiteBackground } from '../utils/imageUtils';
 
 interface EditFooterModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export default function EditFooterModal({
   const [activeTab, setActiveTab] = useState<'branding' | 'socials' | 'contact'>('branding');
 
   // Input States
+  const [logoUrl, setLogoUrl] = useState('');
   const [taglineEn, setTaglineEn] = useState('');
   const [taglineNe, setTaglineNe] = useState('');
   const [footerAboutEn, setFooterAboutEn] = useState('');
@@ -32,10 +34,12 @@ export default function EditFooterModal({
   const [footerPhone, setFooterPhone] = useState('');
   const [footerEmail, setFooterEmail] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isProcessingTransparent, setIsProcessingTransparent] = useState(false);
 
   // Sync state when opened
   useEffect(() => {
     if (isOpen) {
+      setLogoUrl(siteTexts.logoUrl || '');
       setTaglineEn(siteTexts.taglineEn || '');
       setTaglineNe(siteTexts.taglineNe || '');
       setFooterAboutEn(siteTexts.footerAboutEn || '');
@@ -52,11 +56,43 @@ export default function EditFooterModal({
 
   if (!isOpen) return null;
 
+  const handleMakeLogoTransparent = async (srcToProcess?: string) => {
+    const target = srcToProcess || logoUrl;
+    if (!target) return;
+    setIsProcessingTransparent(true);
+    try {
+      const transparentDataUrl = await removeImageWhiteBackground(target, 225);
+      setLogoUrl(transparentDataUrl);
+    } catch (e) {
+      console.error('Error removing image background:', e);
+    } finally {
+      setIsProcessingTransparent(false);
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const rawDataUrl = evt.target?.result as string;
+      if (rawDataUrl) {
+        setIsProcessingTransparent(true);
+        // Automatically make white background transparent on upload!
+        const transparentDataUrl = await removeImageWhiteBackground(rawDataUrl, 225);
+        setLogoUrl(transparentDataUrl);
+        setIsProcessingTransparent(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
       await onUpdateSiteTexts({
+        logoUrl: logoUrl.trim(),
         taglineEn: taglineEn.trim(),
         taglineNe: taglineNe.trim(),
         footerAboutEn: footerAboutEn.trim(),
@@ -145,6 +181,62 @@ export default function EditFooterModal({
         <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto p-6 space-y-5">
           {activeTab === 'branding' && (
             <div className="space-y-4">
+              {/* Logo Manager Box with Transparent PNG Generator */}
+              <div className="p-4 bg-teal-50/70 dark:bg-slate-800/60 rounded-2xl border border-teal-100 dark:border-slate-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-1.5 text-xs font-black text-teal-950 dark:text-teal-100 uppercase tracking-wider">
+                    <ImageIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    {lang === 'en' ? 'Official Logo Image & Transparency' : 'लोगो छवि र पारदर्शी पृष्ठभूमि'}
+                  </label>
+                  {isProcessingTransparent && (
+                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 animate-pulse flex items-center gap-1">
+                      <Wand2 className="w-3 h-3 animate-spin" />
+                      Processing Transparency...
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  {/* Logo Preview box */}
+                  <div className="w-20 h-20 shrink-0 rounded-2xl border-2 border-teal-300 dark:border-slate-600 flex items-center justify-center p-2 bg-white dark:bg-slate-900 shadow-inner overflow-hidden">
+                    {logoUrl ? (
+                      <img src={logoUrl} alt="Logo Preview" className="max-h-full max-w-full object-contain" />
+                    ) : (
+                      <span className="text-[10px] font-bold text-gray-400 text-center">No Logo</span>
+                    )}
+                  </div>
+
+                  <div className="flex-1 space-y-2 w-full">
+                    <input
+                      type="text"
+                      value={logoUrl}
+                      onChange={(e) => setLogoUrl(e.target.value)}
+                      placeholder="https://... or Upload file below"
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-700 rounded-xl text-xs font-mono text-teal-950 dark:text-white"
+                    />
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="px-3 py-1.5 bg-teal-800 hover:bg-teal-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm transition-all">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{lang === 'en' ? 'Upload New Logo' : 'नयाँ लोगो अपलोड'}</span>
+                        <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => handleMakeLogoTransparent()}
+                        disabled={!logoUrl || isProcessingTransparent}
+                        className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 transition-all"
+                        title="Removes white/light background from logo and turns it 100% transparent PNG!"
+                      >
+                        <Wand2 className="w-3.5 h-3.5 text-amber-300" />
+                        <span>{lang === 'en' ? 'Make Background Transparent' : 'पृष्ठभूमि पारदर्शी बनाउनुहोस्'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-teal-950 dark:text-teal-200 mb-1">
