@@ -1,28 +1,5 @@
 [
   {
-    "id": "vc1",
-    "name": {
-      "en": "Sita Ram Chaurasiya",
-      "ne": "सीता राम चौरसिया"
-    },
-    "role": {
-      "en": "Vice Chairperson",
-      "ne": "उपाध्यक्ष"
-    },
-    "category": "chief",
-    "phone": "+977-9851000002",
-    "email": "vicepresident@chaurasiyasamaaj.org.np",
-    "address": {
-      "en": "Birgunj, Nepal",
-      "ne": "वीरगन्ज, नेपाल"
-    },
-    "bio": {
-      "en": "Dedicated to community upliftment and strategic planning for Chaurasiya Samaj.",
-      "ne": "चौरसिया समाजको सामुदायिक उत्थान र रणनीतिक योजनाको लागि समर्पित।"
-    },
-    "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200"
-  },
-  {
     "id": "2",
     "name": {
       "en": "Abhishek Kumar Chaurasiya",
@@ -67,50 +44,6 @@
       "ne": "महिलाहरूको नेतृत्वमा शैक्षिक योजनाहरू, सशक्तिकरण कार्यशालाहरू र स्वास्थ्य सचेतना अभियानहरूको सक्रिय समन्वय गर्नुहुन्छ।"
     },
     "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200"
-  },
-  {
-    "id": "5",
-    "name": {
-      "en": "Krishna Kant Chaurasiya",
-      "ne": "कृष्ण कान्त चौरसिया"
-    },
-    "role": {
-      "en": "Senior Advisor",
-      "ne": "वरिष्ठ सल्लाहकार"
-    },
-    "category": "board",
-    "phone": "+977-9801098765",
-    "address": {
-      "en": "Biratnagar, Nepal",
-      "ne": "विराटनगर, नेपाल"
-    },
-    "bio": {
-      "en": "Guiding the community’s social and legal frameworks with a lifelong dedication to public welfare.",
-      "ne": "जनताको कल्याणका लागि आजीवन समर्पणका साथ समुदायको सामाजिक र कानुनी संरचनालाई मार्गदर्शन गर्दै।"
-    },
-    "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200"
-  },
-  {
-    "id": "6",
-    "name": {
-      "en": "Anil Kumar Chaurasiya",
-      "ne": "अनिल कुमार चौरसिया"
-    },
-    "role": {
-      "en": "Executive Youth Member",
-      "ne": "कार्यकारी युवा सदस्य"
-    },
-    "category": "general",
-    "phone": "+977-9818812345",
-    "address": {
-      "en": "Bara, Nepal",
-      "ne": "बारा, नेपाल"
-    },
-    "bio": {
-      "en": "Coordinating youth blood donation networks and emergency relief activities in Madhesh Province.",
-      "ne": "मधेश प्रदेशमा युवा रक्तदान सञ्जाल र आपतकालीन राहत गतिविधिको समन्वय गर्दै।"
-    },
-    "avatarUrl": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=200"
   },
   {
     "id": "1",
