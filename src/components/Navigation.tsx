@@ -156,19 +156,19 @@ export default function Navigation({
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo & Brand pushed to far left */}
-          <div className="flex items-center shrink-0 mr-1 sm:mr-2 lg:mr-3">
+          <div className="flex items-center shrink-0 mr-1 sm:mr-3 lg:mr-4">
             <div
-              className="flex items-center gap-1.5 sm:gap-2 cursor-pointer group py-1"
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer group py-0.5"
               onClick={() => handleTabChange('home')}
             >
-              <div className="w-8 h-8 sm:w-11 sm:h-9 md:w-12 md:h-10 overflow-hidden flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-                <img src={logoUrl} alt="Chaurasiya Samaj Logo" className="w-full h-full object-contain" />
+              <div className="h-13 xs:h-14 sm:h-17 md:h-[70px] w-auto flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+                <img src={logoUrl} alt="Chaurasiya Samaj Logo" className="h-full w-auto object-contain max-h-full" />
               </div>
-              <div className="shrink-0 min-w-0">
+              <div className="shrink-0 min-w-0 ml-0.5 sm:ml-1">
                 <h1 className="text-xs xs:text-sm sm:text-base lg:text-lg font-black tracking-tight text-teal-950 dark:text-teal-50 leading-tight whitespace-nowrap">
                   {logoText}
                 </h1>
-                <p className="text-[9px] sm:text-[10px] font-extrabold text-teal-600 dark:text-emerald-400 tracking-wider whitespace-nowrap">
+                <p className="text-[9.5px] sm:text-[10.5px] font-extrabold text-teal-600 dark:text-emerald-400 tracking-wider whitespace-nowrap">
                   {logoSub}
                 </p>
               </div>
