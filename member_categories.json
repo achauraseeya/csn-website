@@ -12,10 +12,10 @@
     "id": "cat-secretary",
     "code": "secretary",
     "label": {
-      "en": "Secretariat",
-      "ne": "सचिवालय"
+      "en": "Secretary",
+      "ne": "सचिव"
     },
-    "feeInfo": "NPR 55,00"
+    "feeInfo": "NPR 5500"
   },
   {
     "id": "cat-board",
