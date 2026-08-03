@@ -175,7 +175,7 @@ export default function Navigation({
   }, [logoUrl]);
 
   return (
-    <nav className="bg-white dark:bg-slate-900 transition-colors duration-200" id="nav-bar" ref={navRef}>
+    <>
       {/* =========================================================================
           DESKTOP & TABLET VIEW (lg:block): 2-ROW INSTITUTIONAL BANNER & MENU BAR
           - Light Institutional Banner Canvas
@@ -297,8 +297,13 @@ export default function Navigation({
         </div>
       </div>
 
-      {/* DESKTOP MAIN NAVIGATION MENU BAR */}
-      <div className="hidden lg:block bg-teal-900 dark:bg-slate-950 text-white shadow-md border-y border-teal-800 dark:border-slate-800 py-1">
+      {/* =========================================================================
+          STICKY HEADER CONTAINER (Sticks to top-0 when scrolling down)
+          - Contains Desktop Menu Ribbon, Mobile Header, and Mobile Drawer
+         ========================================================================= */}
+      <header className="sticky top-0 z-50 w-full bg-teal-900 dark:bg-slate-950 shadow-md border-y border-teal-800 dark:border-slate-800 backdrop-blur-md text-white" id="nav-bar" ref={navRef}>
+        {/* DESKTOP MAIN NAVIGATION MENU BAR */}
+        <div className="hidden lg:block py-1.5">
         <div className="max-w-7xl mx-auto px-4 lg:px-6">
           <div className="flex items-center justify-center space-x-1 xl:space-x-2">
             {navMenus.map((menu) => {
@@ -391,62 +396,54 @@ export default function Navigation({
       </div>
 
       {/* =========================================================================
-          MOBILE VIEW (lg:hidden): REVERTED EXACT ORIGINAL MOBILE HEADER BAR
-          - Single clean compact bar
-          - Left: Logo + Title
-          - Right: Language Toggle, Theme Toggle, Admin & Hamburger Toggle
+          MOBILE VIEW (lg:hidden): COMPACT STICKY HEADER BAR FOR MAXIMUM LOGO SPACE
+          - Left: Logo + Title (Expanded flexible space)
+          - Right: Compact Language Toggle, Theme Toggle & Hamburger Toggle
          ========================================================================= */}
-      <div className="lg:hidden px-3 py-2 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-teal-100 dark:border-slate-800 text-teal-950 dark:text-white">
-        {/* Mobile Left: Logo & Brand */}
+      <div className="lg:hidden sticky top-0 z-50 px-2 py-1.5 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-teal-100 dark:border-slate-800 text-teal-950 dark:text-white shadow-sm">
+        {/* Mobile Left: Logo & Brand (Maximized Width) */}
         <div
-          className="flex items-center gap-2 cursor-pointer group py-0.5"
+          className="flex items-center gap-1.5 cursor-pointer group py-0.5 flex-1 min-w-0 mr-1"
           onClick={() => handleTabChange('home')}
         >
-          <div className="h-12 w-auto flex items-center justify-center shrink-0">
+          <div className="h-10 sm:h-12 w-auto flex items-center justify-center shrink-0">
             <img src={cleanLogoUrl || logoUrl} alt="Chaurasiya Samaj Logo" className="h-full w-auto object-contain max-h-full" />
           </div>
-          <div className="shrink-0 min-w-0">
-            <h1 className="text-base xs:text-lg sm:text-xl font-black tracking-tight text-teal-950 dark:text-teal-50 leading-tight whitespace-nowrap">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xs xs:text-sm sm:text-base font-black tracking-tight text-teal-950 dark:text-teal-50 leading-tight truncate">
               {logoText}
             </h1>
-            <p className="text-xs font-extrabold text-teal-600 dark:text-emerald-400 tracking-wider whitespace-nowrap mt-0.5">
+            <p className="text-[10px] sm:text-xs font-extrabold text-teal-600 dark:text-emerald-400 tracking-wider truncate mt-0.5">
               {logoSub}
             </p>
           </div>
         </div>
 
-        {/* Mobile Right: Utilities & Hamburger */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* Mobile Right: Compact Utilities & Hamburger (Admin Lock moved to Mobile Drawer) */}
+        <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={toggleTheme}
-            className="p-1.5 rounded-lg bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 border border-teal-200 dark:border-slate-700 transition-all cursor-pointer"
+            className="p-1 sm:p-1.5 rounded-md bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 border border-teal-200 dark:border-slate-700 transition-all cursor-pointer"
             title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
           >
-            {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-teal-600" />}
+            {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-teal-600" />}
           </button>
 
           <button
             onClick={toggleLanguage}
-            className="flex items-center gap-1 px-2 py-1 text-xs font-bold bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 rounded-lg border border-teal-200 dark:border-slate-700 cursor-pointer"
+            className="flex items-center gap-0.5 px-1.5 py-1 text-[11px] font-bold bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 rounded-md border border-teal-200 dark:border-slate-700 cursor-pointer"
+            title="Switch Language / भाषा"
           >
-            <Globe className="w-3.5 h-3.5 text-teal-600 dark:text-emerald-400" />
+            <Globe className="w-3 h-3 text-teal-600 dark:text-emerald-400" />
             <span>{lang === 'en' ? 'ने' : 'EN'}</span>
           </button>
 
           <button
-            onClick={onOpenAdminModal}
-            className="p-1.5 rounded-lg bg-teal-900 text-emerald-300 border border-teal-700 transition-all cursor-pointer"
-            title="Admin Login"
-          >
-            <Lock className="w-4 h-4 text-emerald-400" />
-          </button>
-
-          <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-lg bg-teal-800 text-white hover:bg-teal-900 focus:outline-none cursor-pointer shadow-xs ml-0.5"
+            className="p-1.5 rounded-md bg-teal-800 text-white hover:bg-teal-900 focus:outline-none cursor-pointer shadow-xs ml-0.5"
             title="Toggle Menu"
           >
-            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -551,6 +548,7 @@ export default function Navigation({
           </div>
         </div>
       )}
-    </nav>
+      </header>
+    </>
   );
 }

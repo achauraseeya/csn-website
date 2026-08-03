@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ShieldCheck, Heart, UserPlus, Award, Mail, Download, CheckCircle2, Trash2, Edit, Phone, Eye, ExternalLink, Send, Sparkles, RefreshCw, Plus, Printer, FileText, Clock, ShieldAlert } from 'lucide-react';
 import { Language, MatrimonialProfile, VolunteerApplication, MembershipApplication, NewsletterSubscriber, Member } from '../types';
 import PrintableApplicationModal from './PrintableApplicationModal';
-import { apiFetch } from '../utils/githubDb';
+import { apiFetch, triggerEntireRepoSync } from '../utils/githubDb';
 
 interface AdminCentralDashboardModalProps {
   isOpen: boolean;
@@ -82,6 +82,30 @@ export default function AdminCentralDashboardModal({
   const [newsSubject, setNewsSubject] = useState('New Updates from Chaurasiya Samaj Nepal');
   const [newsContent, setNewsContent] = useState('Dear Member,\n\nWe have published new notices, community health camp updates, and photo albums on our portal.\n\nVisit: https://csn-website.org.np\n\nWarm regards,\nChaurasiya Samaj Executive Committee');
   const [newsSentAlert, setNewsSentAlert] = useState(false);
+
+  // Repo full sync state
+  const [isSyncingRepo, setIsSyncingRepo] = useState(false);
+  const [repoSyncStatus, setRepoSyncStatus] = useState<string | null>(null);
+
+  const handleSyncEntireRepo = async () => {
+    setIsSyncingRepo(true);
+    setRepoSyncStatus('Syncing entire repository (all JSON files, folders, and photo assets)...');
+    try {
+      const res = await triggerEntireRepoSync();
+      if (res.success) {
+        setRepoSyncStatus('✅ ' + res.message);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        setRepoSyncStatus('⚠️ ' + res.message);
+      }
+    } catch (e: any) {
+      setRepoSyncStatus('❌ Sync failed: ' + (e.message || 'Unknown error'));
+    } finally {
+      setIsSyncingRepo(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -255,7 +279,16 @@ export default function AdminCentralDashboardModal({
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <button
+                onClick={handleSyncEntireRepo}
+                disabled={isSyncingRepo}
+                title="Sync all JSON files, folders, and photos from GitHub repo"
+                className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer"
+              >
+                <RefreshCw className={`w-4 h-4 ${isSyncingRepo ? 'animate-spin' : ''}`} />
+                {isSyncingRepo ? 'Syncing Repo...' : 'Sync Entire Repo'}
+              </button>
               <button
                 onClick={exportMasterAllSubmissionsCSV}
                 title="Download complete combined database CSV"
@@ -335,6 +368,27 @@ export default function AdminCentralDashboardModal({
               Master CSV
             </button>
           </div>
+
+          {/* Repo Sync Status Banner */}
+          {repoSyncStatus && (
+            <div className={`mx-6 mt-4 p-3 rounded-xl font-bold text-xs flex items-center justify-between ${
+              repoSyncStatus.startsWith('✅') 
+                ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
+                : repoSyncStatus.startsWith('❌') || repoSyncStatus.startsWith('⚠️')
+                ? 'bg-rose-100 text-rose-900 border border-rose-300'
+                : 'bg-indigo-100 text-indigo-900 border border-indigo-300 animate-pulse'
+            }`}>
+              <div className="flex items-center gap-2">
+                <RefreshCw className={`w-4 h-4 ${isSyncingRepo ? 'animate-spin' : ''}`} />
+                <span>{repoSyncStatus}</span>
+              </div>
+              {!isSyncingRepo && (
+                <button onClick={() => setRepoSyncStatus(null)} className="text-slate-500 hover:text-slate-800 p-1">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Tab Content Body */}
           <div className="p-6 max-h-[65vh] overflow-y-auto space-y-6 text-xs">

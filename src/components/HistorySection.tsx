@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin, ShieldCheck, Lock, Trash2, Plus, ExternalLink, Edit, Edit3, Save, Phone, Mail } from 'lucide-react';
+import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin, ShieldCheck, Lock, Trash2, Plus, ExternalLink, Edit, Edit3, Save, Phone, Mail, HeartHandshake, GraduationCap, ShieldAlert, LifeBuoy, Building2 } from 'lucide-react';
 import { Album, Language, Notice, SiteTexts, NetworkBranch, Member } from '../types';
 import { uploadImageToGithub } from '../utils/githubDb';
 import { compressImageToBase64 } from '../utils/imageUtils';
@@ -452,7 +452,10 @@ export default function HistorySection({
         }
       }
     } catch (e) {}
-    return boardMembers.filter(m => m.id === '1' || m.id === 'vc1');
+    return boardMembers.filter(m => m.id === '1' || m.id === 'vc1').map(bm => {
+      const latestMember = membersList?.find(m => m.id === bm.id);
+      return latestMember ? { ...bm, ...latestMember } : bm;
+    });
   };
 
   const getChiefPresident = (): Member => {
@@ -1524,7 +1527,7 @@ export default function HistorySection({
                       <div className="flex flex-col gap-3 pt-2">
                         <div className="flex items-center gap-3">
                           <div className="relative w-12 h-12 rounded-full overflow-hidden border border-teal-200 shrink-0 bg-teal-50 flex items-center justify-center">
-                            <img src={member.avatarUrl} alt="" className="w-full h-full object-cover" />
+                            <img src={member.photoBase64 || member.avatarUrl} alt="" className="w-full h-full object-cover" />
                           </div>
                           <div className="space-y-1 w-full">
                             <h5 className="text-xs font-bold text-teal-950">{member.name?.en || ''}</h5>
@@ -1632,25 +1635,25 @@ export default function HistorySection({
             - On Mobile (lg:hidden): Reverted to exact original full-width horizontal presentation
             - On Desktop (hidden lg:block): Vertical sidebar card
            ========================================================================= */}
-        <aside className="lg:col-span-3 space-y-6 lg:sticky lg:top-24">
+        <aside className="lg:col-span-3 space-y-6 self-start">
           
-          {/* MOBILE VIEW PRESENTATION (lg:hidden): Original Horizontal Format */}
+          {/* MOBILE VIEW PRESENTATION (lg:hidden): Elegant Horizontal & Prominent Photo Format */}
           <section
             onClick={() => {
               onSelectLeader(chiefPresident.id);
               onTrackAction('Click Chief President Message Section');
             }}
-            className="lg:hidden bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-2xl p-4 sm:p-6 text-white shadow-lg border border-teal-800/80 hover:border-emerald-400/90 relative overflow-hidden transition-all duration-300 cursor-pointer group"
+            className="lg:hidden bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-2xl p-4 sm:p-5 text-white shadow-xl border border-teal-800/80 hover:border-emerald-400/90 relative overflow-hidden transition-all duration-300 cursor-pointer group"
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 
-            <div className="relative z-10 space-y-4">
+            <div className="relative z-10 space-y-3.5">
               {/* Header Badge & Admin Edit Button */}
               <div className="flex items-center justify-between border-b border-teal-800/60 pb-2.5">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-black uppercase tracking-wider border border-emerald-500/30">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                   {lang === 'en'
-                    ? (siteTexts.presidentMessageTitleEn || "Chief President's Message")
+                    ? (siteTexts.presidentMessageTitleEn || "Chairperson's Message")
                     : (siteTexts.presidentMessageTitleNe || 'मुख्य अध्यक्षको सन्देश')}
                 </span>
 
@@ -1665,79 +1668,58 @@ export default function HistorySection({
                       className="px-2.5 py-1 bg-emerald-500/30 hover:bg-emerald-500/50 text-emerald-200 text-xs font-bold rounded-lg border border-emerald-400/40 flex items-center gap-1 transition-colors"
                     >
                       <Edit3 className="w-3 h-3" />
-                      <span>{lang === 'en' ? 'Edit Message' : 'सन्देश सम्पादन'}</span>
+                      <span>{lang === 'en' ? 'Edit' : 'सम्पादन'}</span>
                     </button>
                   )}
                   <ChevronRight className="w-4 h-4 text-teal-300/80 group-hover:text-emerald-300 group-hover:translate-x-1 transition-all" />
                 </div>
               </div>
 
-              {/* Photo & Message Body in Horizontal Row on Mobile/Tablet */}
-              <div className="flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-5 text-center sm:text-left">
-                {/* Centrally aligned photo on mobile */}
-                <div className="shrink-0 flex flex-col items-center">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-emerald-400 shadow-md bg-teal-900 p-0.5">
-                    <img
-                      src={chiefPresident.photoBase64 || chiefPresident.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300'}
-                      alt={chiefPresident.name?.[lang] || chiefPresident.name?.en}
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  </div>
+              {/* Prominent Photo & Leader Title Row on Mobile */}
+              <div className="flex items-center gap-3.5 sm:gap-4">
+                {/* Noticeable, Elegant Large Photo with Ring */}
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-emerald-400 shadow-xl bg-teal-900 p-0.5 shrink-0 ring-2 ring-emerald-500/30 ring-offset-2 ring-offset-teal-950 group-hover:scale-105 transition-transform duration-300">
+                  <img
+                    src={chiefPresident.photoBase64 || chiefPresident.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300'}
+                    alt={chiefPresident.name?.[lang] || chiefPresident.name?.en}
+                    className="w-full h-full object-cover rounded-full"
+                  />
                 </div>
 
-                {/* Full-Height Desktop Vertical Spacer Divider Line */}
-                <div className="hidden sm:block w-[2px] bg-gradient-to-b from-emerald-400 via-teal-400/60 to-emerald-500/20 rounded-full self-stretch shrink-0" />
-
-                {/* Message Quote Text */}
-                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <p className="text-xs sm:text-sm text-teal-100 font-medium leading-relaxed italic border-l-2 sm:border-l-0 border-emerald-400 pl-3 sm:pl-0">
-                    "{lang === 'en'
-                      ? (siteTexts.presidentMessageEn || chiefPresident.vision?.en || chiefPresident.bio?.en || 'Welcome to Chaurasiya Samaj Nepal. Our mission is to integrate, unify, and elevate the Chaurasiya community across Nepal, preserving our sacred betel leaf cultural heritage while empowering every member with equal educational, healthcare, and economic opportunities.')
-                      : (siteTexts.presidentMessageNe || chiefPresident.vision?.ne || chiefPresident.bio?.ne || 'चौरसिया समाज नेपालमा हार्दिक स्वागत छ। हाम्रो मुख्य उद्देश्य नेपालभर छरिएर रहेका चौरसिया समुदायलाई एकीकृत गर्दै, परम्परागत पान खेतीको संरक्षण र विकाससँगै प्रत्येक सदस्यलाई शिक्षा, स्वास्थ्य र आर्थिक अवसरहरू प्रदान गर्नु हो।')}"
+                {/* Leader Name, Role & Badges */}
+                <div className="flex-1 min-w-0 space-y-1">
+                  <h4 className="font-extrabold text-white text-base sm:text-lg group-hover:text-emerald-300 transition-colors leading-tight truncate">
+                    {chiefPresident.name?.[lang] || chiefPresident.name?.en}
+                  </h4>
+                  <p className="text-[11px] font-bold text-emerald-300 uppercase tracking-wider bg-teal-900/90 px-2.5 py-0.5 rounded border border-teal-700/80 inline-block">
+                    {chiefPresident.role?.[lang] || chiefPresident.role?.en || (lang === 'en' ? 'Chief President' : 'मुख्य अध्यक्ष')}
                   </p>
+                  
+                  {/* Quick contact icons */}
+                  <div className="flex items-center gap-2 pt-0.5 text-[10px] text-teal-200">
+                    {chiefPresident.phone && (
+                      <span className="inline-flex items-center gap-1 bg-teal-900/60 px-2 py-0.5 rounded border border-teal-800/80">
+                        <Phone className="w-2.5 h-2.5 text-emerald-400" />
+                        <span>{chiefPresident.phone}</span>
+                      </span>
+                    )}
+                    {chiefPresident.address && (
+                      <span className="hidden xs:inline-flex items-center gap-1 bg-teal-900/60 px-2 py-0.5 rounded border border-teal-800/80 truncate max-w-[120px]">
+                        <MapPin className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
+                        <span className="truncate">{chiefPresident.address?.[lang] || chiefPresident.address?.en}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Leader Info & Live Contact Details from Member Directory */}
-              <div className="pt-3 border-t border-teal-800/60 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs">
-                <div className="text-center sm:text-left">
-                  <h4 className="font-extrabold text-white text-sm sm:text-base group-hover:text-emerald-300 transition-colors inline-block mr-2">
-                    {chiefPresident.name?.[lang] || chiefPresident.name?.en}
-                  </h4>
-                  <span className="text-[11px] font-bold text-emerald-300 uppercase tracking-wider bg-teal-900/90 px-2 py-0.5 rounded border border-teal-700/80 inline-block mt-0.5 sm:mt-0">
-                    {chiefPresident.role?.[lang] || chiefPresident.role?.en || (lang === 'en' ? 'Chief President' : 'मुख्य अध्यक्ष')}
-                  </span>
-                </div>
-
-                <div
-                  className="flex flex-wrap items-center justify-center sm:justify-end gap-2 text-[11px] text-teal-200"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {chiefPresident.address && (
-                    <span className="inline-flex items-center gap-1 bg-teal-900/80 px-2.5 py-1 rounded-md border border-teal-800/80">
-                      <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
-                      <span>{chiefPresident.address?.[lang] || chiefPresident.address?.en}</span>
-                    </span>
-                  )}
-                  {chiefPresident.phone && (
-                    <a
-                      href={`tel:${chiefPresident.phone}`}
-                      className="inline-flex items-center gap-1 bg-teal-900/80 hover:bg-teal-800 px-2.5 py-1 rounded-md border border-teal-800/80 hover:text-emerald-300 transition-colors"
-                    >
-                      <Phone className="w-3 h-3 text-emerald-400 shrink-0" />
-                      <span>{chiefPresident.phone}</span>
-                    </a>
-                  )}
-                  {chiefPresident.email && (
-                    <a
-                      href={`mailto:${chiefPresident.email}`}
-                      className="inline-flex items-center gap-1 bg-teal-900/80 hover:bg-teal-800 px-2.5 py-1 rounded-md border border-teal-800/80 hover:text-emerald-300 transition-colors"
-                    >
-                      <Mail className="w-3 h-3 text-emerald-400 shrink-0" />
-                      <span>{chiefPresident.email}</span>
-                    </a>
-                  )}
-                </div>
+              {/* Message Quote Text */}
+              <div className="pt-1">
+                <p className="text-xs sm:text-sm text-teal-100 font-medium leading-relaxed italic border-l-2 border-emerald-400 pl-3">
+                  "{lang === 'en'
+                    ? (siteTexts.presidentMessageEn || chiefPresident.vision?.en || chiefPresident.bio?.en || 'Welcome to Chaurasiya Samaj Nepal. Our mission is to integrate, unify, and elevate the Chaurasiya community across Nepal, preserving our sacred betel leaf cultural heritage while empowering every member with equal educational, healthcare, and economic opportunities.')
+                    : (siteTexts.presidentMessageNe || chiefPresident.vision?.ne || chiefPresident.bio?.ne || 'चौरसिया समाज नेपालमा हार्दिक स्वागत छ। हाम्रो मुख्य उद्देश्य नेपालभर छरिएर रहेका चौरसिया समुदायलाई एकीकृत गर्दै, परम्परागत पान खेतीको संरक्षण र विकाससँगै प्रत्येक सदस्यलाई शिक्षा, स्वास्थ्य र आर्थिक अवसरहरू प्रदान गर्नु हो।')}"
+                </p>
               </div>
             </div>
           </section>
@@ -1748,40 +1730,41 @@ export default function HistorySection({
               onSelectLeader(chiefPresident.id);
               onTrackAction('Click Chief President Message Section');
             }}
-            className="hidden lg:flex bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-2xl p-5 text-white shadow-xl border border-teal-800/80 hover:border-emerald-400/90 relative overflow-hidden transition-all duration-300 cursor-pointer group flex-col justify-between"
+            className="hidden lg:flex bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-2xl text-white shadow-xl border border-teal-800/80 hover:border-emerald-400/90 relative transition-all duration-300 cursor-pointer group flex-col"
           >
-            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none rounded-2xl" />
 
-            <div className="relative z-10 space-y-4">
-              {/* Header Badge & Admin Edit Button */}
-              <div className="flex items-center justify-between border-b border-teal-800/60 pb-2.5">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-black uppercase tracking-wider border border-emerald-500/30">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span className="truncate">
-                    {lang === 'en'
-                      ? (siteTexts.presidentMessageTitleEn || "Chief President's Message")
-                      : (siteTexts.presidentMessageTitleNe || 'मुख्य अध्यक्षको सन्देश')}
-                  </span>
+            {/* Sticky Header Bar for Chairperson's Message */}
+            <div className="lg:sticky lg:top-[48px] z-20 bg-teal-950/95 backdrop-blur-md px-5 py-3.5 rounded-t-2xl border-b border-teal-800/80 flex items-center justify-between shadow-md">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-black uppercase tracking-wider border border-emerald-500/30">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="truncate">
+                  {lang === 'en'
+                    ? (siteTexts.presidentMessageTitleEn || "Chairperson's Message")
+                    : (siteTexts.presidentMessageTitleNe || 'मुख्य अध्यक्षको सन्देश')}
                 </span>
+              </span>
 
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsEditingTexts(true);
-                      }}
-                      className="p-1.5 bg-emerald-500/30 hover:bg-emerald-500/50 text-emerald-200 text-xs font-bold rounded-lg border border-emerald-400/40 flex items-center gap-1 transition-colors"
-                      title="Edit Message"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                  <ChevronRight className="w-4 h-4 text-teal-300/80 group-hover:text-emerald-300 group-hover:translate-x-1 transition-all" />
-                </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsEditingTexts(true);
+                    }}
+                    className="p-1.5 bg-emerald-500/30 hover:bg-emerald-500/50 text-emerald-200 text-xs font-bold rounded-lg border border-emerald-400/40 flex items-center gap-1 transition-colors"
+                    title="Edit Message"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <ChevronRight className="w-4 h-4 text-teal-300/80 group-hover:text-emerald-300 group-hover:translate-x-1 transition-all" />
               </div>
+            </div>
 
+            {/* Card Body Content Scrolling Under Sticky Header */}
+            <div className="p-5 space-y-4 relative z-10">
               {/* Photo & Profile Header */}
               <div className="flex flex-col items-center text-center space-y-2.5 pt-1">
                 <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-emerald-400 shadow-md bg-teal-900 p-0.5 shrink-0 group-hover:scale-105 transition-transform duration-300">
@@ -1849,6 +1832,111 @@ export default function HistorySection({
               </div>
             </div>
           </section>
+
+          {/* DESKTOP SIDEBAR WIDGET 1: Emergency & Helpline Contacts Card */}
+          <div className="hidden lg:block bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-teal-100 dark:border-slate-800 transition-all relative">
+            {/* Sticky Header Bar for Emergency & Helpline */}
+            <div className="lg:sticky lg:top-[48px] z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 rounded-t-2xl border-b border-teal-100 dark:border-slate-800 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-2 text-teal-900 dark:text-teal-100 font-extrabold text-xs">
+                <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>{lang === 'en' ? 'Emergency & Helpline' : 'आकस्मिक तथा हेल्पलाइन'}</span>
+              </div>
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            </div>
+
+            <div className="p-4 space-y-3">
+              <div className="space-y-2 text-[11px]">
+                <a 
+                  href={`tel:${siteTexts.footerPhone || '+977-9812345678'}`}
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-teal-50/70 hover:bg-teal-100/80 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-teal-100 dark:border-slate-700 text-teal-950 dark:text-teal-100 font-bold transition-all group"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0 group-hover:scale-110 transition-transform" />
+                    <span className="truncate">{lang === 'en' ? 'Central Helpline' : 'केन्द्रीय हेल्पलाइन'}</span>
+                  </div>
+                  <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-md shrink-0 font-mono">
+                    {siteTexts.footerPhone || '+977-9812345678'}
+                  </span>
+                </a>
+
+                <a 
+                  href={`mailto:${siteTexts.footerEmail || 'info@csn.org.np'}`}
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 hover:bg-emerald-100/80 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-emerald-100 dark:border-slate-700 text-emerald-950 dark:text-emerald-100 font-bold transition-all group"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <Mail className="w-3.5 h-3.5 text-teal-600 shrink-0 group-hover:scale-110 transition-transform" />
+                    <span className="truncate">{lang === 'en' ? 'Secretariat' : 'केन्द्रीय सचिवाल'}</span>
+                  </div>
+                  <span className="text-[10px] bg-teal-700 text-white px-2 py-0.5 rounded-md shrink-0 truncate max-w-[110px]">
+                    {siteTexts.footerEmail || 'info@csn.org.np'}
+                  </span>
+                </a>
+              </div>
+
+              <button
+                onClick={() => {
+                  onNavigate('directory');
+                  onTrackAction('Click Helpline Committee Directory');
+                }}
+                className="w-full py-2 bg-gradient-to-r from-teal-800 to-emerald-800 hover:from-teal-700 hover:to-emerald-700 text-white text-[11px] font-extrabold rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Users className="w-3.5 h-3.5 text-emerald-300" />
+                <span>{lang === 'en' ? 'Committee Directory & Contacts' : 'कार्यसमिति र सम्पर्क सूची'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* DESKTOP SIDEBAR WIDGET 2: Core Pillars & Community Services Badge */}
+          <div className="hidden lg:block bg-gradient-to-br from-teal-900 to-emerald-900 rounded-2xl text-white shadow-md border border-teal-700/80 transition-all relative">
+            {/* Sticky Header Bar for Community Pillars */}
+            <div className="lg:sticky lg:top-[48px] z-20 bg-teal-900/95 backdrop-blur-md px-4 py-3 rounded-t-2xl border-b border-teal-700/60 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-2 text-emerald-200 font-extrabold text-xs">
+                <HeartHandshake className="w-4 h-4 text-emerald-300 shrink-0" />
+                <span>{lang === 'en' ? 'Community Pillars' : 'समुदायका आधारहरू'}</span>
+              </div>
+              <span className="text-[10px] font-bold text-teal-200 bg-teal-950/60 px-2 py-0.5 rounded border border-teal-700/60">CSN Nepal</span>
+            </div>
+
+            <div className="p-4 space-y-3">
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                <button
+                  onClick={() => onNavigate('our-heritage')}
+                  className="p-2.5 rounded-xl bg-teal-950/50 hover:bg-teal-950/80 border border-teal-700/50 text-left transition-all hover:scale-[1.02] cursor-pointer group"
+                >
+                  <Leaf className="w-4 h-4 text-emerald-400 mb-1 group-hover:rotate-12 transition-transform" />
+                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? 'Paan Heritage' : 'पान सम्पदा'}</h5>
+                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? 'Culture & Farming' : 'संस्कृति र खेती'}</p>
+                </button>
+
+                <button
+                  onClick={() => onNavigate('about-vision')}
+                  className="p-2.5 rounded-xl bg-teal-950/50 hover:bg-teal-950/80 border border-teal-700/50 text-left transition-all hover:scale-[1.02] cursor-pointer group"
+                >
+                  <GraduationCap className="w-4 h-4 text-amber-400 mb-1 group-hover:rotate-12 transition-transform" />
+                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? 'Youth & Career' : 'युवा तथा शिक्षा'}</h5>
+                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? 'Grants & Support' : 'छात्रवृत्ति र मार्गदर्शन'}</p>
+                </button>
+
+                <button
+                  onClick={() => onNavigate('directory')}
+                  className="p-2.5 rounded-xl bg-teal-950/50 hover:bg-teal-950/80 border border-teal-700/50 text-left transition-all hover:scale-[1.02] cursor-pointer group"
+                >
+                  <Building2 className="w-4 h-4 text-teal-300 mb-1 group-hover:rotate-12 transition-transform" />
+                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? 'District Branches' : 'जिल्ला शाखाहरू'}</h5>
+                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? '77 Districts' : '७७ वटै जिल्ला'}</p>
+                </button>
+
+                <button
+                  onClick={() => onNavigate('transparency')}
+                  className="p-2.5 rounded-xl bg-teal-950/50 hover:bg-teal-950/80 border border-teal-700/50 text-left transition-all hover:scale-[1.02] cursor-pointer group"
+                >
+                  <ShieldCheck className="w-4 h-4 text-emerald-300 mb-1 group-hover:rotate-12 transition-transform" />
+                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? 'Transparency' : 'सुशासन र कोष'}</h5>
+                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? 'Audited Reports' : 'पारदर्शी विवरण'}</p>
+                </button>
+              </div>
+            </div>
+          </div>
         </aside>
 
         {/* =========================================================================
@@ -2743,7 +2831,7 @@ export default function HistorySection({
             return (
               <div key={member.id || idx} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-teal-100 dark:border-slate-800 flex flex-col items-center text-center gap-2 hover:shadow-md transition-all group relative">
                 <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-emerald-100 dark:border-emerald-900/50 group-hover:border-emerald-400 transition-colors shrink-0 shadow-inner">
-                  <img src={member.avatarUrl} alt={member.name?.[lang] || ''} className="w-full h-full object-cover" />
+                  <img src={member.photoBase64 || member.avatarUrl} alt={member.name?.[lang] || ''} className="w-full h-full object-cover" />
                 </div>
                 <div className="space-y-0.5 min-w-0 w-full">
                   <h4 className="font-extrabold text-teal-950 dark:text-teal-50 text-[13px] leading-tight break-words text-center">{member.name?.[lang] || ''}</h4>

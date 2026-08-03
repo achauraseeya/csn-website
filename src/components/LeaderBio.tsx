@@ -25,10 +25,24 @@ export default function LeaderBio({
   isAdmin = false,
   onUpdateMember
 }: LeaderBioProps) {
-  // Combine custom members list and board members
+  // Combine custom members list and board members, ensuring directory updates take precedence
   const effectiveMembers = members.length > 0 ? members : membersList;
-  const allMembers = [...effectiveMembers, ...boardMembers];
-  const foundMember = allMembers.find(m => m.id === leaderId) || membersList[0] || boardMembers[0];
+  const mergedBoardMembers = boardMembers.map(bm => {
+    const override = effectiveMembers.find(em => em.id === bm.id);
+    return override ? { ...bm, ...override } : bm;
+  });
+
+  const allMembers = [
+    ...effectiveMembers,
+    ...mergedBoardMembers.filter(bm => !effectiveMembers.some(em => em.id === bm.id))
+  ];
+
+  const targetId = leaderId || (typeof localStorage !== 'undefined' ? localStorage.getItem('csn_selected_leader_id') : null);
+
+  const foundMember = allMembers.find(m => m.id === targetId) ||
+                      effectiveMembers.find(m => m.category === 'chief' || m.id === '1') ||
+                      effectiveMembers[0] ||
+                      boardMembers[0];
 
   const [leader, setLeader] = useState<Member>(foundMember);
   const [isEditing, setIsEditing] = useState(false);
@@ -53,7 +67,6 @@ export default function LeaderBio({
   const [editPhone, setEditPhone] = useState(leader?.phone || '');
   const [editAddressEn, setEditAddressEn] = useState(leader?.address?.en || '');
   const [editAddressNe, setEditAddressNe] = useState(leader?.address?.ne || '');
-  const [editAvatarUrl, setEditAvatarUrl] = useState(leader?.avatarUrl || '');
   const [editTermPeriod, setEditTermPeriod] = useState(leader?.termPeriod || '2025 - 2028');
   const [editOrgNameEn, setEditOrgNameEn] = useState(leader?.orgName?.en || 'Chaurasiya Samaj Nepal Central Executive');
   const [editOrgNameNe, setEditOrgNameNe] = useState(leader?.orgName?.ne || 'चौरसिया समाज नेपाल केन्द्रीय कार्यसमिति');
@@ -75,7 +88,6 @@ export default function LeaderBio({
       setEditPhone(foundMember.phone || '+977-9812345678');
       setEditAddressEn(foundMember.address?.en || 'Parsa, Madhesh Pradesh, Nepal');
       setEditAddressNe(foundMember.address?.ne || 'पर्सा, मधेश प्रदेश, नेपाल');
-      setEditAvatarUrl(foundMember.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400');
       setEditTermPeriod(foundMember.termPeriod || '2025 - 2028');
       setEditOrgNameEn(foundMember.orgName?.en || 'Chaurasiya Samaj Nepal Central Executive');
       setEditOrgNameNe(foundMember.orgName?.ne || 'चौरसिया समाज नेपाल केन्द्रीय कार्यसमिति');
@@ -112,7 +124,6 @@ export default function LeaderBio({
       email: editEmail,
       phone: editPhone,
       address: { en: editAddressEn, ne: editAddressNe },
-      avatarUrl: editAvatarUrl,
       termPeriod: editTermPeriod,
       orgName: { en: editOrgNameEn, ne: editOrgNameNe },
     };
@@ -200,7 +211,7 @@ export default function LeaderBio({
         <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="flex flex-col md:flex-row gap-8 items-center md:items-start text-center md:text-left relative z-10">
           <div className="w-44 h-44 sm:w-52 sm:h-52 rounded-3xl overflow-hidden border-4 border-emerald-400/40 shadow-2xl shrink-0 bg-teal-900">
-            <img src={leader.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400'} alt={leader.name[lang]} className="w-full h-full object-cover" />
+            <img src={leader.photoBase64 || leader.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400'} alt={leader.name[lang]} className="w-full h-full object-cover" />
           </div>
 
           <div className="space-y-4 flex-grow">
@@ -420,42 +431,24 @@ export default function LeaderBio({
                   />
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-gray-700 dark:text-gray-300 mb-1">Avatar / Photo URL</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={editAvatarUrl}
-                      onChange={e => setEditAvatarUrl(e.target.value)}
-                      className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white flex-grow"
-                    />
-                    <label className="px-4 py-2.5 bg-teal-700 hover:bg-teal-800 text-white rounded-xl font-bold cursor-pointer flex items-center justify-center shadow-sm whitespace-nowrap">
-                      Upload
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          if (file.size > 2 * 1024 * 1024) {
-                            alert(lang === 'en' ? 'File too large (Max 2MB)' : 'फाइल धेरै ठूलो छ (अधिकतम २MB)');
-                            return;
-                          }
-                          try {
-                            const { compressImageToBase64 } = await import('../utils/imageUtils');
-                            const { uploadImageToGithub } = await import('../utils/githubDb');
-                            const base64 = await compressImageToBase64(file, 500);
-                            const fileName = `leader_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-                            const url = await uploadImageToGithub(fileName, base64, `Upload leader photo ${file.name}`);
-                            setEditAvatarUrl(url);
-                          } catch (err) {
-                            alert('Upload failed');
-                          }
-                        }}
-                      />
-                    </label>
-                  </div>
+                <div className="md:col-span-2 p-3 bg-teal-50/80 dark:bg-slate-800/80 border border-teal-200 dark:border-slate-700 rounded-xl text-xs text-teal-900 dark:text-teal-200 font-semibold flex items-center justify-between">
+                  <span>
+                    {lang === 'en'
+                      ? "📷 Member profile photo and primary contact details are updated centrally in the Member Directory."
+                      : "📷 सदस्य प्रोफाइल फोटो र प्राथमिक सम्पर्क विवरणहरू सदस्य निर्देशिकाबाट केन्द्रीय रूपमा अद्यावधिक हुन्छन्।"}
+                  </span>
+                  {onNavigate && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditing(false);
+                        onNavigate('directory');
+                      }}
+                      className="ml-2 px-3 py-1 bg-teal-700 hover:bg-teal-800 text-white rounded-lg text-xs font-bold shrink-0 transition-colors"
+                    >
+                      {lang === 'en' ? "Go to Directory" : "निर्देशिकामा जानुहोस्"}
+                    </button>
+                  )}
                 </div>
               </div>
 

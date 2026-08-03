@@ -310,3 +310,21 @@ export async function apiDelete<T extends { id: string }>(
   await saveFileToGithub(fileName, itemsAfterDeletion, commitMessage);
   return itemsAfterDeletion;
 }
+
+export async function triggerEntireRepoSync(): Promise<{ success: boolean; message: string; output?: string }> {
+  try {
+    const res = await fetch('/api/sync-github-repo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { success: true, message: data.message || 'Entire repository synced successfully!', output: data.output };
+    } else {
+      const err = await res.json().catch(() => ({ error: 'Sync failed' }));
+      return { success: false, message: err.error || 'Server repo sync returned an error' };
+    }
+  } catch (e: any) {
+    return { success: false, message: e.message || 'Failed to connect to repo sync service' };
+  }
+}

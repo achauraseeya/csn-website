@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html>
+<html b:css='false' b:defaultmessages='false' b:layoutsVersion='2' b:responsive='true' xmlns='http://www.w3.org/1999/xhtml' xmlns:b='http://www.google.com/schemas/2005/b' xmlns:data='http://www.google.com/schemas/2005/data' xmlns:expr='http://www.google.com/schemas/2005/gml'>
+<head>
+  <meta charset='utf-8'/>
+  <meta content='width=device-width, initial-scale=1, shrink-to-fit=no' name='viewport'/>
+  <title><data:blog.pageTitle/></title>
+  
+  <!-- SEO & Description -->
+  <meta name="description" content="Official Blogger Portal for Chaurasiya Samaj Nepal. Dedicated to unity, culture, and progress." />
+
+  <!-- Blogger Core XML Configuration (Required) -->
+  <b:skin><![CDATA[
+    /* Custom Theme Skin */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+  ]]></b:skin>
+
+  <!-- Anonymous/Obfuscated CSS Asset Loader -->
+  <script>
+    /*<![CDATA[*/
+    (function() {
+      var _c = atob("aHR0cHM6Ly9hY2hhdXJhc2VleWEuZ2l0aHViLmlvL2Nzbi13ZWJzaXRlL2Fzc2V0cy9pbmRleC5jc3M=");
+      var l = document.createElement('link');
+      l.rel = 'stylesheet';
+      l.crossOrigin = 'anonymous';
+      l.href = _c;
+      document.head.appendChild(l);
+    })();
+    /*]]>*/
+  </script>
+</head>
+<body>
+
+  <!-- The React App Mounting Point -->
+  <div id="root">
+    <div style="padding: 40px; text-align: center; font-family: sans-serif;">
+      <h2>Loading Community Portal...</h2>
+      <p style="color: #666;">If this screen remains for more than a few seconds, there is an issue loading the GitHub Pages assets. Please check your browser's Developer Console (F12) for errors.</p>
+    </div>
+  </div>
+
+  <!-- Blogger Required Structural Section -->
+  <!-- Renders post data into DOM so React can display individual published articles cleanly -->
+  <div style="display: none;">
+    <b:section id='main' showaddelement='yes'>
+      <b:widget id='Blog1' locked='true' title='Blog Posts' type='Blog' visible='true'>
+        <b:includable id='main' var='top'>
+          <b:if cond='data:blog.pageType in {"item", "static_page"}'>
+            <b:loop values='data:posts' var='post'>
+              <div id='blogger-post-data' class='blogger-post-container'>
+                <div id='blogger-post-title'><data:post.title/></div>
+                <div id='blogger-post-author'><data:post.author/></div>
+                <div id='blogger-post-date'><data:post.dateHeader/></div>
+                <div id='blogger-post-url'><data:post.url/></div>
+                <div id='blogger-post-content'><data:post.body/></div>
+              </div>
+            </b:loop>
+          </b:if>
+        </b:includable>
+      </b:widget>
+    </b:section>
+  </div>
+
+  <!-- Anonymous/Obfuscated JS Bundle Loader -->
+  <script>
+    /*<![CDATA[*/
+    (function() {
+      var _j = atob("aHR0cHM6Ly9hY2hhdXJhc2VleWEuZ2l0aHViLmlvL2Nzbi13ZWJzaXRlL2Fzc2V0cy9pbmRleC5qcw==");
+      var s = document.createElement('script');
+      s.type = 'module';
+      s.crossOrigin = 'anonymous';
+      s.src = _j;
+      document.body.appendChild(s);
+    })();
+    /*]]>*/
+  </script>
+
+</body>
+</html>

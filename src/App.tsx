@@ -165,10 +165,23 @@ export default function App() {
       if (searchParams.get('news') || searchParams.get('blog')) return 'single-post';
       if (searchParams.get('member')) return 'directory';
       if (searchParams.get('network') || searchParams.get('branch')) return 'chapter-detail';
+      if (searchParams.get('leader') || searchParams.get('leaderId')) return 'leader-bio';
     }
     return 'history';
   });
-  const [selectedLeaderId, setSelectedLeaderId] = useState<string | null>(null);
+  const [selectedLeaderId, setSelectedLeaderId] = useState<string | null>(() => {
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      return (
+        searchParams.get('leader') ||
+        searchParams.get('leaderId') ||
+        searchParams.get('id') ||
+        localStorage.getItem('csn_selected_leader_id')
+      );
+    } catch (e) {
+      return null;
+    }
+  });
   const [selectedBlogPost, setSelectedBlogPost] = useState<SinglePostData | null>(null);
   const [membershipSubTab, setMembershipSubTab] = useState<'membership' | 'volunteer' | 'donation'>('membership');
   const [donationCause, setDonationCause] = useState<string>('');
@@ -1901,13 +1914,12 @@ export default function App() {
 
     let displayMember = { ...memberWithId };
 
-    if (displayMember.photoBase64 && displayMember.photoName) {
+    if (displayMember.photoBase64) {
       try {
-        const fileName = `${Date.now()}_${displayMember.photoName.replace(/[^a-z0-9.]/gi, '_')}`;
+        const photoNameRaw = displayMember.photoName || `member_${displayMember.id}_${Date.now()}.jpg`;
+        const fileName = `${Date.now()}_${photoNameRaw.replace(/[^a-z0-9.]/gi, '_')}`;
         const uploadedUrl = await uploadImageToGithub(fileName, displayMember.photoBase64, `Upload photo for member ${displayMember.name.en}`);
         displayMember.avatarUrl = uploadedUrl;
-        displayMember.photoBase64 = undefined;
-        displayMember.photoName = undefined;
       } catch (err) {
         console.error("Failed to upload image to Github", err);
         if (!displayMember.avatarUrl) {
@@ -1926,6 +1938,7 @@ export default function App() {
       try {
         localStorage.setItem('chaurasiya_members', JSON.stringify(updated));
       } catch (e) {}
+      saveFileToGithub('community_members.json', updated, `Update member profile ${displayMember.id}`).catch(() => {});
       return updated;
     });
 
@@ -2118,7 +2131,13 @@ export default function App() {
     setSelectedLeaderId(id);
     if (id) {
       setCurrentTab('leader-bio');
-      window.history.pushState({ tab: 'leader-bio', leaderId: id }, '');
+      try {
+        localStorage.setItem('csn_selected_leader_id', id);
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', 'leader-bio');
+        url.searchParams.set('leader', id);
+        window.history.pushState({ tab: 'leader-bio', leaderId: id }, '', url.toString());
+      } catch (e) {}
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -2186,25 +2205,22 @@ export default function App() {
         </div>
       </div>
 
-      {/* Fixed Sticky Header Wrapper containing navigation menu */}
-      <header className="sticky top-0 z-50 shadow-md bg-white dark:bg-slate-900 transition-all">
-        {/* Navigation header */}
-        <Navigation
-          currentTab={currentTab}
-          setCurrentTab={handleNavigate}
-          lang={lang}
-          setLang={setLang}
-          onTrackAction={handleTrackAction}
-          isAdmin={isAdmin}
-          onOpenAdminModal={() => setIsAdminModalOpen(true)}
-          onOpenMenuManager={() => setIsMenuManagerOpen(true)}
-          theme={theme}
-          toggleTheme={toggleTheme}
-          siteTexts={siteTexts}
-          navMenus={navMenus}
-          pendingNotificationsCount={matrimonialProfiles.filter(p => p.status === 'pending').length + volunteerApps.filter(v => v.status === 'pending').length + membershipApps.filter(m => m.status === 'pending').length}
-        />
-      </header>
+      {/* Navigation header */}
+      <Navigation
+        currentTab={currentTab}
+        setCurrentTab={handleNavigate}
+        lang={lang}
+        setLang={setLang}
+        onTrackAction={handleTrackAction}
+        isAdmin={isAdmin}
+        onOpenAdminModal={() => setIsAdminModalOpen(true)}
+        onOpenMenuManager={() => setIsMenuManagerOpen(true)}
+        theme={theme}
+        toggleTheme={toggleTheme}
+        siteTexts={siteTexts}
+        navMenus={navMenus}
+        pendingNotificationsCount={matrimonialProfiles.filter(p => p.status === 'pending').length + volunteerApps.filter(v => v.status === 'pending').length + membershipApps.filter(m => m.status === 'pending').length}
+      />
 
       {/* Main body viewport container */}
       <main className="flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -2559,22 +2575,22 @@ export default function App() {
           </div>
 
           <div className="md:col-span-3 space-y-3">
-            <h4 className="font-bold text-white mb-2">Quick Links</h4>
+            <h4 className="font-bold text-white mb-2">{lang === 'en' ? 'Quick Links' : 'त्वरित लिङ्कहरू'}</h4>
             <div className="flex flex-col gap-2.5 text-sm text-gray-400 font-medium">
-              <button onClick={() => handleNavigate('home')} className="hover:text-emerald-400 text-left transition-colors">Home</button>
-              <button onClick={() => handleNavigate('about-vision')} className="hover:text-emerald-400 text-left transition-colors">About Us</button>
-              <button onClick={() => handleNavigate('our-heritage')} className="hover:text-emerald-400 text-left transition-colors">Our Heritage</button>
-              <button onClick={() => handleNavigate('events')} className="hover:text-emerald-400 text-left transition-colors">Projects & Programs</button>
-              <button onClick={() => handleNavigate('directory')} className="hover:text-emerald-400 text-left transition-colors">Committee Members</button>
+              <button onClick={() => handleNavigate('home')} className="hover:text-emerald-400 text-left transition-colors">{lang === 'en' ? 'Home' : 'गृहपृष्ठ'}</button>
+              <button onClick={() => handleNavigate('about-vision')} className="hover:text-emerald-400 text-left transition-colors">{lang === 'en' ? 'About Us' : 'हाम्रो बारेमा'}</button>
+              <button onClick={() => handleNavigate('our-heritage')} className="hover:text-emerald-400 text-left transition-colors">{lang === 'en' ? 'Our Heritage' : 'हाम्रो सम्पदा'}</button>
+              <button onClick={() => handleNavigate('events')} className="hover:text-emerald-400 text-left transition-colors">{lang === 'en' ? 'Projects & Programs' : 'परियोजना तथा कार्यक्रमहरू'}</button>
+              <button onClick={() => handleNavigate('directory')} className="hover:text-emerald-400 text-left transition-colors">{lang === 'en' ? 'Committee Members' : 'कार्यसमिति सदस्यहरू'}</button>
               <button onClick={() => handleNavigate('sitemap')} className="hover:text-emerald-400 text-left transition-colors cursor-pointer">
-                <span>{lang === 'en' ? 'Sitemap' : 'सामाग्री नक्सा'}</span>
+                <span>{lang === 'en' ? 'Sitemap' : 'सामग्री नक्सा'}</span>
               </button>
-              <button onClick={() => handleNavigate('transparency')} className="hover:text-emerald-400 text-left transition-colors">Transparency</button>
+              <button onClick={() => handleNavigate('transparency')} className="hover:text-emerald-400 text-left transition-colors">{lang === 'en' ? 'Transparency' : 'पारदर्शिता'}</button>
             </div>
           </div>
 
           <div className="md:col-span-4 space-y-3">
-            <h4 className="font-bold text-white mb-2">Headquarters</h4>
+            <h4 className="font-bold text-white mb-2">{lang === 'en' ? 'Headquarters' : 'केन्द्रीय कार्यालय'}</h4>
             <div className="text-sm text-gray-400 space-y-2.5 font-medium">
               <p className="flex items-start gap-2">
                 <span className="text-emerald-500 mt-0.5">📍</span> 

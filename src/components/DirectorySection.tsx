@@ -157,9 +157,9 @@ export default function DirectorySection({
       email: editEmail,
       address: { en: editAddrEn || 'Nepal', ne: editAddrNe || 'नेपाल' },
       bio: { en: editBioEn || 'Community Member', ne: editBioNe || 'सामुदायिक सदस्य' },
-      avatarUrl: editPhotoBase64 ? '' : editingMember.avatarUrl,
-      photoBase64: editPhotoBase64 || undefined,
-      photoName: editPhotoName || undefined,
+      avatarUrl: editPhotoBase64 || editingMember.avatarUrl || '',
+      photoBase64: editPhotoBase64 || editingMember.photoBase64 || undefined,
+      photoName: editPhotoName || editingMember.photoName || undefined,
     };
 
     await onAddMember(updatedMember);
@@ -451,10 +451,10 @@ export default function DirectorySection({
                       </div>
                     ) : (
                       <>
-                        {editingMember.avatarUrl && (
+                        {(editingMember.photoBase64 || editingMember.avatarUrl) && (
                           <div className="flex flex-col items-center space-y-2 mb-2">
                             <img
-                              src={editingMember.avatarUrl}
+                              src={editingMember.photoBase64 || editingMember.avatarUrl}
                               alt="Current"
                               className="w-16 h-16 rounded-full object-cover border border-teal-100 dark:border-slate-700 shadow-inner"
                               referrerPolicy="no-referrer"
@@ -791,9 +791,9 @@ export default function DirectorySection({
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
                   <div className="w-16 h-16 rounded-full overflow-hidden bg-teal-50 dark:bg-slate-800 border-2 border-teal-200 dark:border-slate-700 shrink-0">
-                    {member.avatarUrl ? (
+                    {member.photoBase64 || member.avatarUrl ? (
                       <img
-                        src={member.avatarUrl}
+                        src={member.photoBase64 || member.avatarUrl}
                         alt={member.name[lang]}
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover"

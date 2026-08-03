@@ -44,6 +44,37 @@ async function startServer() {
     console.warn('Could not launch startup GitHub Sync:', err);
   }
 
+  // --- Entire Repository GitHub Sync Endpoint ---
+  const handleRepoSync = (req: express.Request, res: express.Response) => {
+    try {
+      const syncScriptPath = path.join(process.cwd(), 'sync_github_data.cjs');
+      if (!fs.existsSync(syncScriptPath)) {
+        return res.status(404).json({ error: "Sync script sync_github_data.cjs not found" });
+      }
+
+      console.log('Manual Trigger: Syncing Entire GitHub Repository (Files, Folders & Photos)...');
+      exec(`node "${syncScriptPath}"`, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Manual GitHub Sync Error: ${error.message}`);
+          return res.status(500).json({ error: "Failed to sync repository", details: error.message });
+        }
+        console.log(`Manual GitHub Sync completed:\n${stdout}`);
+        return res.json({
+          success: true,
+          message: "Entire repository synced successfully! All files, folders, and photos up to date.",
+          output: stdout,
+          timestamp: new Date().toISOString()
+        });
+      });
+    } catch (err: any) {
+      console.error("Repository Sync Endpoint Failed:", err);
+      return res.status(500).json({ error: "Server error during repository sync" });
+    }
+  };
+
+  app.get("/api/sync-github-repo", handleRepoSync);
+  app.post("/api/sync-github-repo", handleRepoSync);
+
   app.use('/uploads', express.static(UPLOADS_DIR));
   app.use('/uploads', express.static(path.join(DATA_DIR, 'uploads')));
   app.use('/assets/uploads', express.static(UPLOADS_DIR));

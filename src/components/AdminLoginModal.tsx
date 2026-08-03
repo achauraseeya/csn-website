@@ -29,7 +29,7 @@ export default function AdminLoginModal({
     setErrorMsg('');
     
     if (!password.trim()) {
-      setErrorMsg(lang === 'en' ? 'Please enter a valid PAT' : 'कृपया मान्य PAT प्रविष्ट गर्नुहोस्');
+      setErrorMsg(lang === 'en' ? 'Please enter password' : 'कृपया पासवर्ड प्रविष्ट गर्नुहोस्');
       return;
     }
 
@@ -52,7 +52,7 @@ export default function AdminLoginModal({
         // Clear password state
         setPassword('');
       } else {
-        setErrorMsg(lang === 'en' ? 'Invalid GitHub PAT or insufficient permissions' : 'अवैध Github PAT वा अपर्याप्त अनुमतिहरू');
+        setErrorMsg(lang === 'en' ? 'Invalid admin password' : 'अवैध पासवर्ड वा अपर्याप्त अनुमतिहरू');
       }
     } catch (err) {
       setErrorMsg(lang === 'en' ? 'Authentication failed. Check your internet connection.' : 'प्रमाणीकरण असफल भयो। आफ्नो इन्टरनेट जडान जाँच गर्नुहोस्।');
@@ -102,8 +102,8 @@ export default function AdminLoginModal({
               <div className="flex items-center gap-3 p-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-100">
                 <ShieldCheck className="w-6 h-6 shrink-0" />
                 <div>
-                  <p className="text-xs font-bold">Admin Authenticated</p>
-                  <p className="text-[10px] font-medium">Using GitHub PAT</p>
+                  <p className="text-xs font-bold">{lang === 'en' ? 'Admin Authenticated' : 'प्रशासक प्रमाणित भयो'}</p>
+                  <p className="text-[10px] font-medium">{lang === 'en' ? 'Admin session active' : 'प्रशासक सत्र सक्रिय छ'}</p>
                 </div>
               </div>
 
@@ -118,21 +118,21 @@ export default function AdminLoginModal({
           ) : (
             <form onSubmit={handleLogin} className="space-y-5">
               <p className="text-xs text-gray-600 leading-relaxed font-medium bg-teal-50/60 p-3.5 rounded-2xl border border-teal-100">
-                💡 {lang === 'en' 
-                    ? 'Enter your GitHub Personal Access Token (PAT) to manage the community.' 
-                    : 'समुदाय व्यवस्थापन गर्न आफ्नो GitHub Personal Access Token (PAT) प्रविष्ट गर्नुहोस्।'}
+                🔐 {lang === 'en' 
+                    ? 'Enter your administrator password to log in and manage the community portal.' 
+                    : 'समुदाय पोर्टल व्यवस्थापन गर्न आफ्नो प्रशासक पासवर्ड प्रविष्ट गर्नुहोस्।'}
               </p>
 
               <div>
                 <label className="block text-[11px] font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                  {lang === 'en' ? 'GitHub PAT' : 'GitHub PAT'}
+                  {lang === 'en' ? 'Password' : 'पासवर्ड'}
                 </label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono text-sm"
-                  placeholder="ghp_... or github_pat_..."
+                  placeholder={lang === 'en' ? 'Enter password...' : 'पासवर्ड प्रविष्ट गर्नुहोस्...'}
                   required
                 />
               </div>
