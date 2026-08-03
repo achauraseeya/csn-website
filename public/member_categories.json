@@ -3,19 +3,19 @@
     "id": "cat-chief",
     "code": "chief",
     "label": {
-      "en": "Chief Leaders",
-      "ne": "मुख्य नेतृत्व"
+      "en": "Chairperson",
+      "ne": "अध्यक्ष"
     },
-    "feeInfo": "NPR 25,000"
+    "feeInfo": "NPR 6,500"
   },
   {
     "id": "cat-secretary",
     "code": "secretary",
     "label": {
-      "en": "Secretary",
-      "ne": "सचिव"
+      "en": "Secretariat",
+      "ne": "सचिवालय"
     },
-    "feeInfo": "NPR 5500"
+    "feeInfo": "NPR 55,00"
   },
   {
     "id": "cat-board",
