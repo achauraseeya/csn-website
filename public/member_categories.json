@@ -24,7 +24,7 @@
       "en": "Board Advisers",
       "ne": "सल्लाहकार बोर्ड"
     },
-    "feeInfo": "NPR 20,000"
+    "feeInfo": "NPR 6,500"
   },
   {
     "id": "cat-general",
@@ -52,13 +52,5 @@
       "ne": "संरक्षक सदस्यहरू"
     },
     "feeInfo": "NPR 51,000"
-  },
-  {
-    "id": "cat-1785729981490",
-    "code": "honorary_membership",
-    "label": {
-      "en": "Honorary Membership",
-      "ne": "मानार्थ सदस्यता"
-    }
   }
 ]
