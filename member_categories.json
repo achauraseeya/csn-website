@@ -1,0 +1,56 @@
+[
+  {
+    "id": "cat-chief",
+    "code": "chief",
+    "label": {
+      "en": "chairperson",
+      "ne": "अध्यक्ष"
+    },
+    "feeInfo": "NPR  6500.0"
+  },
+  {
+    "id": "cat-secretary",
+    "code": "secretary",
+    "label": {
+      "en": "Secretariat",
+      "ne": "सचिवालय"
+    },
+    "feeInfo": "NPR 15,000"
+  },
+  {
+    "id": "cat-board",
+    "code": "board",
+    "label": {
+      "en": "Board Advisers",
+      "ne": "सल्लाहकार बोर्ड"
+    },
+    "feeInfo": "NPR 20,000"
+  },
+  {
+    "id": "cat-general",
+    "code": "general",
+    "label": {
+      "en": "General Members",
+      "ne": "साधारण सदस्यहरू"
+    },
+    "feeInfo": "NPR 1,000"
+  },
+  {
+    "id": "cat-life",
+    "code": "life",
+    "label": {
+      "en": "Life Members",
+      "ne": "आजीवन सदस्यहरू"
+    },
+    "feeInfo": "NPR 11,000"
+  },
+  {
+    "id": "cat-patron",
+    "code": "patron",
+    "label": {
+      "en": "Patron / Donor Members",
+      "ne": "संरक्षक सदस्यहरू"
+    },
+    "feeInfo": "NPR 51,000"
+  }
+]
