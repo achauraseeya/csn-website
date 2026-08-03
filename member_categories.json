@@ -48,8 +48,8 @@
     "id": "cat-patron",
     "code": "patron",
     "label": {
-      "en": "Patron / Donor Members",
-      "ne": "संरक्षक सदस्यहरू"
+      "en": "Honorary or Donor Members",
+      "ne": "मानार्थ वा स‌रक्षक वा दाता"
     },
     "feeInfo": "NPR 51,000"
   }
