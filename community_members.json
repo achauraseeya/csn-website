@@ -1,28 +1,5 @@
 [
   {
-    "id": "2",
-    "name": {
-      "en": "Abhishek Kumar Chaurasiya",
-      "ne": "अभिषेक कुमार चौरसिया"
-    },
-    "role": {
-      "en": "Chief Technology Officer & General Secretary",
-      "ne": "मुख्य प्रविधि अधिकारी र महासचिव"
-    },
-    "category": "secretary",
-    "phone": "+977-9812345678",
-    "email": "abhishek@chaurasiyasamaaj.org.np",
-    "address": {
-      "en": "Birgunj, Parsa, Nepal",
-      "ne": "वीरगन्ज, पर्सा, नेपाल"
-    },
-    "bio": {
-      "en": "A visionary software engineer and designer dedicated to digitizing our community services and building modern web portals.",
-      "ne": "हाम्रो सामुदायिक सेवाहरूलाई डिजिटाइज गर्न र आधुनिक वेब पोर्टलहरू निर्माण गर्न समर्पित एक दूरदर्शी सफ्टवेयर इन्जिनियर र डिजाइनर।"
-    },
-    "avatarUrl": "/abhishek_profile.jpg"
-  },
-  {
     "id": "6",
     "name": {
       "en": "Anil Kumar Chaurasiya",
