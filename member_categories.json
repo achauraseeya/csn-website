@@ -3,10 +3,10 @@
     "id": "cat-chief",
     "code": "chief",
     "label": {
-      "en": "chairperson",
-      "ne": "अध्यक्ष"
+      "en": "Chief Leaders",
+      "ne": "मुख्य नेतृत्व"
     },
-    "feeInfo": "NPR  6500.0"
+    "feeInfo": "NPR 25,000"
   },
   {
     "id": "cat-secretary",
@@ -15,7 +15,7 @@
       "en": "Secretariat",
       "ne": "सचिवालय"
     },
-    "feeInfo": "NPR 15,000"
+    "feeInfo": "NPR 55,00"
   },
   {
     "id": "cat-board",
