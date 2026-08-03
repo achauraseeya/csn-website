@@ -207,7 +207,7 @@ export default function Navigation({
             onClick={() => handleTabChange('home')}
           >
             {/* Main Institution Name (Same as Mobile: text-teal-950 dark:text-teal-50) */}
-            <h1 className="text-2xl lg:text-3.5xl font-black tracking-tight text-teal-950 dark:text-teal-50 leading-tight uppercase font-display">
+            <h1 className={`${siteTexts.logoFontSizeDesktop || 'text-2xl lg:text-3.5xl'} font-black tracking-tight text-teal-950 dark:text-teal-50 leading-tight uppercase font-display`}>
               {logoText}
             </h1>
 
@@ -410,7 +410,7 @@ export default function Navigation({
             <img src={cleanLogoUrl || logoUrl} alt="Chaurasiya Samaj Logo" className="h-full w-auto object-contain max-h-full" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xs xs:text-sm sm:text-base font-black tracking-tight text-teal-950 dark:text-teal-50 leading-tight truncate">
+            <h1 className={`${siteTexts.logoFontSizeMobile || 'text-sm xs:text-base sm:text-lg'} font-black tracking-tight text-teal-950 dark:text-teal-50 leading-tight truncate`}>
               {logoText}
             </h1>
             <p className="text-[10px] sm:text-xs font-extrabold text-teal-600 dark:text-emerald-400 tracking-wider truncate mt-0.5">

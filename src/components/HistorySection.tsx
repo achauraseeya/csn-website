@@ -107,6 +107,8 @@ export default function HistorySection({
   const [editSliderBadgeNe, setEditSliderBadgeNe] = useState(siteTexts.sliderBadgeNe || 'जय पान देव');
   const [editLogoTextEn, setEditLogoTextEn] = useState(siteTexts.logoTextEn || 'Chaurasiya Samaj');
   const [editLogoTextNe, setEditLogoTextNe] = useState(siteTexts.logoTextNe || 'चौरसिया समाज');
+  const [editLogoFontSizeMobile, setEditLogoFontSizeMobile] = useState(siteTexts.logoFontSizeMobile || 'text-sm xs:text-base sm:text-lg');
+  const [editLogoFontSizeDesktop, setEditLogoFontSizeDesktop] = useState(siteTexts.logoFontSizeDesktop || 'text-2xl lg:text-3.5xl');
   const [editLogoSubEn, setEditLogoSubEn] = useState(siteTexts.logoSubEn || 'Nepal');
   const [editLogoSubNe, setEditLogoSubNe] = useState(siteTexts.logoSubNe || 'चौरसिया समाज नेपाल');
   const [editLogoUrl, setEditLogoUrl] = useState(siteTexts.logoUrl || '');
@@ -224,6 +226,8 @@ export default function HistorySection({
     setEditSliderBadgeNe(siteTexts.sliderBadgeNe || 'जय पान देव');
     setEditLogoTextEn(siteTexts.logoTextEn || 'Chaurasiya Samaj');
     setEditLogoTextNe(siteTexts.logoTextNe || 'चौरसिया समाज');
+    setEditLogoFontSizeMobile(siteTexts.logoFontSizeMobile || 'text-sm xs:text-base sm:text-lg');
+    setEditLogoFontSizeDesktop(siteTexts.logoFontSizeDesktop || 'text-2xl lg:text-3.5xl');
     setEditLogoSubEn(siteTexts.logoSubEn || 'Nepal');
     setEditLogoSubNe(siteTexts.logoSubNe || 'चौरसिया समाज नेपाल');
     setEditLogoUrl(siteTexts.logoUrl || '');
@@ -314,6 +318,8 @@ export default function HistorySection({
         sliderBadgeNe: editSliderBadgeNe,
         logoTextEn: editLogoTextEn,
         logoTextNe: editLogoTextNe,
+        logoFontSizeMobile: editLogoFontSizeMobile,
+        logoFontSizeDesktop: editLogoFontSizeDesktop,
         logoSubEn: editLogoSubEn,
         logoSubNe: editLogoSubNe,
         logoUrl: editLogoUrl,
@@ -778,6 +784,39 @@ export default function HistorySection({
                   onChange={(e) => setEditLogoTextNe(e.target.value)}
                   className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
                 />
+              </div>
+
+              {/* Logo Text Font Sizes (Mobile & Desktop) */}
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
+                  Logo Text Font Size (Mobile View)
+                </label>
+                <select
+                  value={editLogoFontSizeMobile}
+                  onChange={(e) => setEditLogoFontSizeMobile(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                >
+                  <option value="text-xs xs:text-sm">Compact (text-xs)</option>
+                  <option value="text-xs xs:text-sm sm:text-base">Small (text-xs to text-sm)</option>
+                  <option value="text-sm xs:text-base sm:text-lg">Medium / Enhanced (text-sm to text-lg)</option>
+                  <option value="text-base xs:text-lg sm:text-xl">Large (text-base to text-xl)</option>
+                  <option value="text-lg xs:text-xl sm:text-2xl">Extra Large (text-lg to text-2xl)</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
+                  Logo Text Font Size (Desktop View)
+                </label>
+                <select
+                  value={editLogoFontSizeDesktop}
+                  onChange={(e) => setEditLogoFontSizeDesktop(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                >
+                  <option value="text-xl lg:text-2xl">Compact (text-xl to text-2xl)</option>
+                  <option value="text-2xl lg:text-3.5xl">Standard / Default (text-2xl to text-3.5xl)</option>
+                  <option value="text-3xl lg:text-4xl">Large (text-3xl to text-4xl)</option>
+                  <option value="text-4xl lg:text-5xl">Extra Large (text-4xl to text-5xl)</option>
+                </select>
               </div>
 
               {/* Logo Subtexts */}

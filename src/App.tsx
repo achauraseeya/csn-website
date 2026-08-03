@@ -90,6 +90,8 @@ const defaultSiteTexts: SiteTexts = {
   sliderBadgeNe: 'जय पान देव',
   logoTextEn: 'Chaurasiya Samaj',
   logoTextNe: 'चौरसिया समाज',
+  logoFontSizeMobile: 'text-sm xs:text-base sm:text-lg',
+  logoFontSizeDesktop: 'text-2xl lg:text-3.5xl',
   logoSubEn: 'Nepal',
   logoSubNe: 'चौरसिया समाज नेपाल',
   logoUrl: 'https://raw.githubusercontent.com/achauraseeya/csn-website/main/assets/uploads/1785420190802_square_image_11zon.jpg',

@@ -156,6 +156,8 @@ export interface SiteTexts {
   sliderBadgeNe: string;
   logoTextEn: string;
   logoTextNe: string;
+  logoFontSizeMobile?: string;
+  logoFontSizeDesktop?: string;
   logoSubEn: string;
   logoSubNe: string;
   logoUrl: string;
