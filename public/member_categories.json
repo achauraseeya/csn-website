@@ -33,7 +33,7 @@
       "en": "General Members",
       "ne": "साधारण सदस्यहरू"
     },
-    "feeInfo": "NPR 650"
+    "feeInfo": "NPR 1,000"
   },
   {
     "id": "cat-life",
@@ -52,5 +52,13 @@
       "ne": "संरक्षक सदस्यहरू"
     },
     "feeInfo": "NPR 51,000"
+  },
+  {
+    "id": "cat-1785729981490",
+    "code": "honorary_membership",
+    "label": {
+      "en": "Honorary Membership",
+      "ne": "मानार्थ सदस्यता"
+    }
   }
 ]
