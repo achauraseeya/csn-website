@@ -162,6 +162,9 @@ export default function Navigation({
       setCleanLogoUrl(cached);
       return;
     }
+    // Set immediate raw logo while background removal processes in background
+    setCleanLogoUrl(logoUrl);
+
     let isMounted = true;
     removeImageWhiteBackground(logoUrl, 195, 300)
       .then((processed) => {

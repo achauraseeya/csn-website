@@ -1658,6 +1658,9 @@ export default function App() {
     const nextTexts = { ...siteTexts, ...updatedTexts };
     setSiteTexts(nextTexts);
     try {
+      localStorage.setItem('chaurasiya_site_texts', JSON.stringify(nextTexts));
+    } catch (e) {}
+    try {
       await saveFileToGithub('site_texts.json', nextTexts, 'Update site global texts');
     } catch (err) {
       console.error('Failed to update site texts:', err);
