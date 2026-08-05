@@ -753,7 +753,7 @@ export default function NetworkBranchDetail({
 
                     <div className="w-16 h-16 rounded-full overflow-hidden border border-teal-500/30 shrink-0 mb-3 relative">
                       <img 
-                        src={member.photoBase64 || member.avatarUrl} 
+                        src={member.avatarUrl || member.photoBase64} 
                         alt={member.name[lang]} 
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       />

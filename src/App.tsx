@@ -928,6 +928,9 @@ export default function App() {
     const { nextTexts, updated: leadershipUpdated } = syncMemberToFeaturedLeadership(updatedMember);
     if (leadershipUpdated) {
       setSiteTexts(nextTexts);
+      try {
+        localStorage.setItem('chaurasiya_site_texts', JSON.stringify(nextTexts));
+      } catch (e) {}
     }
 
     // 3. Push to GitHub / server database
@@ -1963,12 +1966,13 @@ export default function App() {
 
     let displayMember = { ...memberWithId };
 
-    if (displayMember.photoBase64) {
+    if (displayMember.photoBase64 && displayMember.photoBase64.startsWith('data:')) {
       try {
         const photoNameRaw = displayMember.photoName || `member_${displayMember.id}_${Date.now()}.jpg`;
         const fileName = `${Date.now()}_${photoNameRaw.replace(/[^a-z0-9.]/gi, '_')}`;
         const uploadedUrl = await uploadImageToGithub(fileName, displayMember.photoBase64, `Upload photo for member ${displayMember.name.en}`);
         displayMember.avatarUrl = uploadedUrl;
+        displayMember.photoBase64 = undefined;
       } catch (err) {
         console.error("Failed to upload image to Github", err);
         if (!displayMember.avatarUrl) {
@@ -1977,6 +1981,7 @@ export default function App() {
       }
     } else if (!displayMember.avatarUrl && displayMember.photoBase64) {
       displayMember.avatarUrl = displayMember.photoBase64;
+      displayMember.photoBase64 = undefined;
     }
 
     setMembers((prev) => {
@@ -1995,6 +2000,10 @@ export default function App() {
     const { nextTexts, updated: leadershipUpdated } = syncMemberToFeaturedLeadership(displayMember);
     if (leadershipUpdated) {
       setSiteTexts(nextTexts);
+      try {
+        localStorage.setItem('chaurasiya_site_texts', JSON.stringify(nextTexts));
+      } catch (e) {}
+      saveFileToGithub('site_texts.json', nextTexts, `Update site texts leadership sync ${displayMember.id}`).catch(() => {});
     }
 
     if (!hasId && !displayMember.chapterId) {

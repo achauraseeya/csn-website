@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Sparkles, Facebook, Twitter, Instagram, Mail, Phone, MapPin, Globe, Upload, Wand2, Image as ImageIcon } from 'lucide-react';
 import { Language, SiteTexts } from '../types';
 import { removeImageWhiteBackground } from '../utils/imageUtils';
+import { uploadImageToGithub } from '../utils/githubDb';
 
 interface EditFooterModalProps {
   isOpen: boolean;
@@ -62,7 +63,8 @@ export default function EditFooterModal({
     setIsProcessingTransparent(true);
     try {
       const transparentDataUrl = await removeImageWhiteBackground(target, 225);
-      setLogoUrl(transparentDataUrl);
+      const uploadedUrl = await uploadImageToGithub(`CSN_logo_${Date.now()}.png`, transparentDataUrl, 'Update logo transparency');
+      setLogoUrl(uploadedUrl);
     } catch (e) {
       console.error('Error removing image background:', e);
     } finally {
@@ -78,10 +80,18 @@ export default function EditFooterModal({
       const rawDataUrl = evt.target?.result as string;
       if (rawDataUrl) {
         setIsProcessingTransparent(true);
-        // Automatically make white background transparent on upload!
-        const transparentDataUrl = await removeImageWhiteBackground(rawDataUrl, 225);
-        setLogoUrl(transparentDataUrl);
-        setIsProcessingTransparent(false);
+        try {
+          // 1. Automatically make white background transparent on upload
+          const transparentDataUrl = await removeImageWhiteBackground(rawDataUrl, 225);
+          // 2. Upload to server storage / repository for permanent URL (/uploads/...)
+          const uploadedUrl = await uploadImageToGithub(`CSN_logo_${Date.now()}_${file.name}`, transparentDataUrl, `Upload site logo ${file.name}`);
+          setLogoUrl(uploadedUrl);
+        } catch (err) {
+          console.error('Logo upload error:', err);
+          setLogoUrl(rawDataUrl);
+        } finally {
+          setIsProcessingTransparent(false);
+        }
       }
     };
     reader.readAsDataURL(file);

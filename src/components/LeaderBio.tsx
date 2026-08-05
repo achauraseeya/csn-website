@@ -211,7 +211,7 @@ export default function LeaderBio({
         <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="flex flex-col md:flex-row gap-8 items-center md:items-start text-center md:text-left relative z-10">
           <div className="w-44 h-44 sm:w-52 sm:h-52 rounded-3xl overflow-hidden border-4 border-emerald-400/40 shadow-2xl shrink-0 bg-teal-900">
-            <img src={leader.photoBase64 || leader.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400'} alt={leader.name[lang]} className="w-full h-full object-cover" />
+            <img src={leader.avatarUrl || leader.photoBase64 || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400'} alt={leader.name[lang]} className="w-full h-full object-cover" />
           </div>
 
           <div className="space-y-4 flex-grow">

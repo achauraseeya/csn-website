@@ -17,6 +17,7 @@ interface DirectorySectionProps {
 }
 
 import { compressImageToBase64 } from '../utils/imageUtils';
+import { uploadImageToGithub } from '../utils/githubDb';
 
 export default function DirectorySection({
   lang,
@@ -90,17 +91,21 @@ export default function DirectorySection({
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert(lang === 'en' ? 'File is too large! Maximum size allowed is 2MB.' : 'फाइल धेरै ठूलो छ! अधिकतम स्वीकृत आकार २MB हो।');
+      if (file.size > 5 * 1024 * 1024) {
+        alert(lang === 'en' ? 'File is too large! Maximum size allowed is 5MB.' : 'फाइल धेरै ठूलो छ! अधिकतम स्वीकृत आकार ५MB हो।');
         return;
       }
       setPhotoName(file.name);
       setUploadProgress(true);
       try {
-        const base64 = await compressImageToBase64(file, 500);
+        const base64 = await compressImageToBase64(file, 600);
         setPhotoBase64(base64);
+        const uploadedUrl = await uploadImageToGithub(`CSN_member_${Date.now()}_${file.name}`, base64, `Upload member photo ${file.name}`);
+        if (uploadedUrl) {
+          setPhotoBase64(uploadedUrl);
+        }
       } catch (err) {
-        alert(lang === 'en' ? 'Failed to read photo file.' : 'फोटो फाइल पढ्न असफल भयो।');
+        console.error('Photo upload error:', err);
       } finally {
         setUploadProgress(false);
       }
@@ -110,17 +115,21 @@ export default function DirectorySection({
   const handleEditPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert(lang === 'en' ? 'File is too large! Maximum size allowed is 2MB.' : 'फाइल धेरै ठूलो छ! अधिकतम स्वीकृत आकार २MB हो।');
+      if (file.size > 5 * 1024 * 1024) {
+        alert(lang === 'en' ? 'File is too large! Maximum size allowed is 5MB.' : 'फाइल धेरै ठूलो छ! अधिकतम स्वीकृत आकार ५MB हो।');
         return;
       }
       setEditPhotoName(file.name);
       setEditUploadProgress(true);
       try {
-        const base64 = await compressImageToBase64(file, 500);
+        const base64 = await compressImageToBase64(file, 600);
         setEditPhotoBase64(base64);
+        const uploadedUrl = await uploadImageToGithub(`CSN_member_${Date.now()}_${file.name}`, base64, `Upload member photo ${file.name}`);
+        if (uploadedUrl) {
+          setEditPhotoBase64(uploadedUrl);
+        }
       } catch (err) {
-        alert(lang === 'en' ? 'Failed to read photo file.' : 'फोटो फाइल पढ्न असफल भयो।');
+        console.error('Edit photo upload error:', err);
       } finally {
         setEditUploadProgress(false);
       }
@@ -148,6 +157,8 @@ export default function DirectorySection({
     e.preventDefault();
     if (!editingMember || !editNameEn || !editNameNe || !editRoleEn || !editRoleNe) return;
 
+    const finalPhotoUrl = editPhotoBase64 || editingMember.avatarUrl || editingMember.photoBase64 || '';
+
     const updatedMember: Member = {
       ...editingMember,
       name: { en: editNameEn, ne: editNameNe },
@@ -157,8 +168,8 @@ export default function DirectorySection({
       email: editEmail,
       address: { en: editAddrEn || 'Nepal', ne: editAddrNe || 'नेपाल' },
       bio: { en: editBioEn || 'Community Member', ne: editBioNe || 'सामुदायिक सदस्य' },
-      avatarUrl: editPhotoBase64 || editingMember.avatarUrl || '',
-      photoBase64: editPhotoBase64 || editingMember.photoBase64 || undefined,
+      avatarUrl: finalPhotoUrl,
+      photoBase64: undefined, // Clear old base64 so avatarUrl is the primary source of truth
       photoName: editPhotoName || editingMember.photoName || undefined,
     };
 
@@ -451,10 +462,10 @@ export default function DirectorySection({
                       </div>
                     ) : (
                       <>
-                        {(editingMember.photoBase64 || editingMember.avatarUrl) && (
+                        {(editingMember.avatarUrl || editingMember.photoBase64) && (
                           <div className="flex flex-col items-center space-y-2 mb-2">
                             <img
-                              src={editingMember.photoBase64 || editingMember.avatarUrl}
+                              src={editingMember.avatarUrl || editingMember.photoBase64}
                               alt="Current"
                               className="w-16 h-16 rounded-full object-cover border border-teal-100 dark:border-slate-700 shadow-inner"
                               referrerPolicy="no-referrer"
@@ -791,9 +802,9 @@ export default function DirectorySection({
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
                   <div className="w-16 h-16 rounded-full overflow-hidden bg-teal-50 dark:bg-slate-800 border-2 border-teal-200 dark:border-slate-700 shrink-0">
-                    {member.photoBase64 || member.avatarUrl ? (
+                    {member.avatarUrl || member.photoBase64 ? (
                       <img
-                        src={member.photoBase64 || member.avatarUrl}
+                        src={member.avatarUrl || member.photoBase64}
                         alt={member.name[lang]}
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover"

@@ -1953,7 +1953,7 @@ export default function HistorySection({
                       <div className="flex flex-col gap-3 pt-2">
                         <div className="flex items-center gap-3">
                           <div className="relative w-12 h-12 rounded-full overflow-hidden border border-teal-200 shrink-0 bg-teal-50 flex items-center justify-center">
-                            <img src={member.photoBase64 || member.avatarUrl} alt="" className="w-full h-full object-cover" />
+                            <img src={member.avatarUrl || member.photoBase64} alt="" className="w-full h-full object-cover" />
                           </div>
                           <div className="space-y-1 w-full">
                             <h5 className="text-xs font-bold text-teal-950">{member.name?.en || ''}</h5>
@@ -2106,7 +2106,7 @@ export default function HistorySection({
                 {/* Noticeable, Elegant Large Photo with Ring */}
                 <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-emerald-400 shadow-xl bg-teal-900 p-0.5 shrink-0 ring-2 ring-emerald-500/30 ring-offset-2 ring-offset-teal-950 group-hover:scale-105 transition-transform duration-300">
                   <img
-                    src={chiefPresident.photoBase64 || chiefPresident.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300'}
+                    src={chiefPresident.avatarUrl || chiefPresident.photoBase64 || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300'}
                     alt={chiefPresident.name?.[lang] || chiefPresident.name?.en}
                     className="w-full h-full object-cover rounded-full"
                   />
@@ -2195,7 +2195,7 @@ export default function HistorySection({
               <div className="flex flex-col items-center text-center space-y-2.5 pt-1">
                 <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-emerald-400 shadow-md bg-teal-900 p-0.5 shrink-0 group-hover:scale-105 transition-transform duration-300">
                   <img
-                    src={chiefPresident.photoBase64 || chiefPresident.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300'}
+                    src={chiefPresident.avatarUrl || chiefPresident.photoBase64 || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300'}
                     alt={chiefPresident.name?.[lang] || chiefPresident.name?.en}
                     className="w-full h-full object-cover rounded-full"
                   />
@@ -3283,7 +3283,7 @@ export default function HistorySection({
             return (
               <div key={member.id || idx} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-teal-100 dark:border-slate-800 flex flex-col items-center text-center gap-2 hover:shadow-md transition-all group relative">
                 <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-emerald-100 dark:border-emerald-900/50 group-hover:border-emerald-400 transition-colors shrink-0 shadow-inner">
-                  <img src={member.photoBase64 || member.avatarUrl} alt={member.name?.[lang] || ''} className="w-full h-full object-cover" />
+                  <img src={member.avatarUrl || member.photoBase64} alt={member.name?.[lang] || ''} className="w-full h-full object-cover" />
                 </div>
                 <div className="space-y-0.5 min-w-0 w-full">
                   <h4 className="font-extrabold text-teal-950 dark:text-teal-50 text-[13px] leading-tight break-words text-center">{member.name?.[lang] || ''}</h4>
