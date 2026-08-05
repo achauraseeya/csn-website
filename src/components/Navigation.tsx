@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Menu, X, Globe, ShieldCheck, Lock, Sun, Moon, ChevronDown, Home, Heart, UserPlus, Camera, Compass, ExternalLink, Link2 } from 'lucide-react';
 import { Language, SiteTexts, NavMenuItem, NavSubMenuItem } from '../types';
 import logoImg from '../assets/images/chaurasiya_logo_1784519579895.jpg';
-import { removeImageWhiteBackground } from '../utils/imageUtils';
+import { removeImageWhiteBackground, getCachedCleanImage } from '../utils/imageUtils';
 
 export const DEFAULT_NAV_MENUS: NavMenuItem[] = [
   {
@@ -148,17 +148,18 @@ export default function Navigation({
     onTrackAction(`Toggle language to ${nextLang.toUpperCase()}`);
   };
 
-  const logoUrl = siteTexts.logoUrl || logoImg;
+  const logoUrl = (siteTexts.logoUrl && !siteTexts.logoUrl.includes('raw.githubusercontent.com')) ? siteTexts.logoUrl : logoImg;
   const logoText = lang === 'en' ? siteTexts.logoTextEn : siteTexts.logoTextNe;
   const logoSub = lang === 'en' ? siteTexts.logoSubEn : siteTexts.logoSubNe;
 
   // Dynamically ensure white background is stripped so logo floats cleanly over header
-  const [cleanLogoUrl, setCleanLogoUrl] = useState<string>(logoUrl);
+  const [cleanLogoUrl, setCleanLogoUrl] = useState<string>(() => getCachedCleanImage(logoUrl) || logoUrl);
 
   useEffect(() => {
     if (!logoUrl) return;
-    if (logoUrl.startsWith('data:image/png;base64,')) {
-      setCleanLogoUrl(logoUrl);
+    const cached = getCachedCleanImage(logoUrl, 195, 300);
+    if (cached) {
+      setCleanLogoUrl(cached);
       return;
     }
     let isMounted = true;
@@ -197,6 +198,9 @@ export default function Navigation({
                 src={cleanLogoUrl || logoUrl}
                 alt="Chaurasiya Samaj Logo"
                 className="h-full w-auto object-contain max-h-full"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
               />
             </div>
           </div>
@@ -224,7 +228,7 @@ export default function Navigation({
             </p>
           </div>
 
-          {/* EXTREME RIGHT: 3D Nepal Flag on Top + Buttons Row Below It */}
+          {/* EXTREME RIGHT: 3D Nepal Flag on Top + Stacked Language & Theme Control Column */}
           <div className="flex flex-col items-end shrink-0 gap-1.5">
             {/* Top Item: 3D Wavering Flag of Nepal */}
             <div
@@ -232,43 +236,47 @@ export default function Navigation({
               title="National Flag of Nepal / नेपालको राष्ट्रिय झण्डा"
             >
               {/* Gold Flagpole */}
-              <div className="w-1 h-12 lg:h-14 bg-gradient-to-b from-amber-200 via-amber-500 to-amber-800 rounded-t-full shadow-md mr-0.5 z-10 shrink-0" />
+              <div className="w-1 h-10 lg:h-12 bg-gradient-to-b from-amber-200 via-amber-500 to-amber-800 rounded-t-full shadow-md mr-0.5 z-10 shrink-0" />
               {/* 3D Fluttering Flag */}
               <div className="relative">
                 <img
                   src="https://upload.wikimedia.org/wikipedia/commons/9/9b/Flag_of_Nepal.svg"
                   alt="Flag of Nepal"
-                  className="h-10 lg:h-12 w-auto max-w-none object-contain animate-wave-flag origin-left filter drop-shadow-md transition-transform duration-300 group-hover:scale-105"
+                  className="h-9 lg:h-11 w-auto max-w-none object-contain animate-wave-flag origin-left filter drop-shadow-md transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
             </div>
 
-            {/* Bottom Row (Below Flag): Language, Theme, Admin Buttons */}
+            {/* Bottom Controls: Language Button with Night Mode stacked underneath, plus Admin buttons */}
             <div className="flex items-center gap-2 shrink-0">
-              {/* Nepali / Language Switcher Button */}
-              <button
-                onClick={toggleLanguage}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-black bg-teal-50 dark:bg-slate-800 text-teal-900 dark:text-teal-100 rounded-lg border border-teal-200 dark:border-slate-700 hover:bg-teal-100 dark:hover:bg-slate-700 transition-all uppercase cursor-pointer shrink-0 shadow-2xs"
-                title="Switch Language / भाषा परिवर्तन गर्नुहोस्"
-              >
-                <Globe className="w-3.5 h-3.5 text-teal-600 dark:text-emerald-400" />
-                <span>{lang === 'en' ? 'नेपाली' : 'English'}</span>
-              </button>
+              {/* Clean Icon-Only Language & Theme Controls */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={toggleLanguage}
+                  className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-lg bg-teal-50 dark:bg-slate-800 text-teal-900 dark:text-teal-100 border border-teal-200 dark:border-slate-700 hover:bg-teal-100 dark:hover:bg-slate-700 transition-all cursor-pointer shrink-0 shadow-2xs"
+                  title={lang === 'en' ? 'Switch to Nepali / नेपालीमा हेर्नुहोस्' : 'Switch to English'}
+                >
+                  <Globe className="w-4 h-4 text-teal-600 dark:text-emerald-400 shrink-0" />
+                </button>
 
-              {/* Dark / Night Mode Button */}
-              <button
-                onClick={toggleTheme}
-                className="p-1.5 rounded-lg bg-teal-50 dark:bg-slate-800 text-teal-900 dark:text-teal-100 border border-teal-200 dark:border-slate-700 hover:bg-teal-100 dark:hover:bg-slate-700 transition-all cursor-pointer shrink-0 shadow-2xs"
-                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-teal-600" />}
-              </button>
+                <button
+                  onClick={toggleTheme}
+                  className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-lg bg-teal-50 dark:bg-slate-800 text-teal-900 dark:text-teal-100 border border-teal-200 dark:border-slate-700 hover:bg-teal-100 dark:hover:bg-slate-700 transition-all cursor-pointer shrink-0 shadow-2xs"
+                  title={theme === 'dark' ? 'Switch to Day Mode' : 'Switch to Night Mode'}
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="w-4 h-4 text-amber-400 shrink-0" />
+                  ) : (
+                    <Moon className="w-4 h-4 text-teal-600 dark:text-teal-300 shrink-0" />
+                  )}
+                </button>
+              </div>
 
               {/* Admin Menu Manager Shortcut */}
               {isAdmin && onOpenMenuManager && (
                 <button
                   onClick={onOpenMenuManager}
-                  className="p-1.5 rounded-lg bg-teal-800 dark:bg-slate-800 text-emerald-300 hover:text-white border border-teal-700 dark:border-slate-700 transition-all cursor-pointer shrink-0 shadow-2xs"
+                  className="p-2 rounded-lg bg-teal-800 dark:bg-slate-800 text-emerald-300 hover:text-white border border-teal-700 dark:border-slate-700 transition-all cursor-pointer shrink-0 shadow-2xs"
                   title={lang === 'en' ? 'Manage Menus & Submenus' : 'मेनु सम्पादक'}
                 >
                   <Compass className="w-4 h-4 text-emerald-400 animate-pulse" />
@@ -278,7 +286,7 @@ export default function Navigation({
               {/* Admin Portal Button */}
               <button
                 onClick={onOpenAdminModal}
-                className={`relative p-1.5 rounded-lg border transition-all shadow-sm cursor-pointer shrink-0 ${
+                className={`relative p-2 rounded-lg border transition-all shadow-sm cursor-pointer shrink-0 ${
                   isAdmin
                     ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white border-emerald-400 hover:from-emerald-700 hover:to-teal-800 ring-2 ring-emerald-400/30'
                     : 'bg-teal-900 dark:bg-slate-950 text-emerald-300 border-teal-700 dark:border-slate-800 hover:bg-teal-950 dark:hover:bg-black hover:text-white'
@@ -324,7 +332,7 @@ export default function Navigation({
                         handleTabChange(menu.target);
                       }
                     }}
-                    className={`px-3 xl:px-4 py-2 text-xs xl:text-sm font-bold tracking-wider uppercase rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                    className={`px-3 xl:px-4 py-2 ${siteTexts.menuFontSizeDesktop || 'text-xs xl:text-sm'} font-bold tracking-wider uppercase rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1.5 shrink-0 ${
                       isMainActive
                         ? 'bg-amber-500 text-teal-950 shadow-md font-black'
                         : 'text-teal-100 hover:bg-teal-800 dark:hover:bg-slate-800 hover:text-amber-300'
@@ -348,7 +356,7 @@ export default function Navigation({
                       }
                     }}
                     onMouseEnter={() => setActiveDropdownId(menu.id)}
-                    className={`px-3 xl:px-4 py-2 text-xs xl:text-sm font-bold tracking-wider uppercase rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3 xl:px-4 py-2 ${siteTexts.menuFontSizeDesktop || 'text-xs xl:text-sm'} font-bold tracking-wider uppercase rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1.5 ${
                       isMainActive
                         ? 'bg-amber-500 text-teal-950 shadow-md font-black'
                         : 'text-teal-100 hover:bg-teal-800 dark:hover:bg-slate-800 hover:text-amber-300'
@@ -398,49 +406,55 @@ export default function Navigation({
       {/* =========================================================================
           MOBILE VIEW (lg:hidden): COMPACT STICKY HEADER BAR FOR MAXIMUM LOGO SPACE
           - Left: Logo + Title (Expanded flexible space)
-          - Right: Compact Language Toggle, Theme Toggle & Hamburger Toggle
+          - Right: Stacked Language & Theme Toggle Column + Hamburger Button
          ========================================================================= */}
-      <div className="lg:hidden sticky top-0 z-50 px-2 py-1.5 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-teal-100 dark:border-slate-800 text-teal-950 dark:text-white shadow-sm">
-        {/* Mobile Left: Logo & Brand (Maximized Width) */}
+      <div className="lg:hidden sticky top-0 z-50 px-2.5 py-1.5 sm:py-2 flex items-center justify-between bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-teal-100 dark:border-slate-800 text-teal-950 dark:text-white shadow-sm min-h-[58px] sm:min-h-[64px]">
+        {/* Mobile Left: Logo & Brand (2-line title support, Maximized Flexible Width) */}
         <div
-          className="flex items-center gap-1.5 cursor-pointer group py-0.5 flex-1 min-w-0 mr-1"
+          className="flex items-center gap-2 cursor-pointer group py-0.5 flex-1 min-w-0 mr-1 overflow-hidden"
           onClick={() => handleTabChange('home')}
         >
-          <div className="h-10 sm:h-12 w-auto flex items-center justify-center shrink-0">
-            <img src={cleanLogoUrl || logoUrl} alt="Chaurasiya Samaj Logo" className="h-full w-auto object-contain max-h-full" />
+          <div className="h-11 sm:h-13 w-auto flex items-center justify-center shrink-0">
+            <img src={cleanLogoUrl || logoUrl} alt="Chaurasiya Samaj Logo" className="h-full w-auto object-contain max-h-full" loading="eager" fetchPriority="high" decoding="async" />
           </div>
-          <div className="flex-1 min-w-0">
-            <h1 className={`${siteTexts.logoFontSizeMobile || 'text-sm xs:text-base sm:text-lg'} font-black tracking-tight text-teal-950 dark:text-teal-50 leading-tight truncate`}>
+          <div className="flex-1 min-w-0 overflow-hidden py-0.5 text-center">
+            <h1 className={`${siteTexts.logoFontSizeMobile || 'text-sm xs:text-base sm:text-lg'} font-black tracking-tight text-teal-950 dark:text-teal-50 leading-[1.15] line-clamp-2 break-words text-center`}>
               {logoText}
             </h1>
-            <p className="text-[10px] sm:text-xs font-extrabold text-teal-600 dark:text-emerald-400 tracking-wider truncate mt-0.5">
+            <p className={`${siteTexts.logoSubFontSizeMobile || 'text-[9px] xs:text-[10px] sm:text-[11px]'} font-bold text-teal-600 dark:text-emerald-400 tracking-wider truncate mt-0.5 leading-none text-center`}>
               {logoSub}
             </p>
           </div>
         </div>
 
-        {/* Mobile Right: Compact Utilities & Hamburger (Admin Lock moved to Mobile Drawer) */}
-        <div className="flex items-center gap-1 shrink-0">
-          <button
-            onClick={toggleTheme}
-            className="p-1 sm:p-1.5 rounded-md bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 border border-teal-200 dark:border-slate-700 transition-all cursor-pointer"
-            title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-          >
-            {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-teal-600" />}
-          </button>
+        {/* Mobile Right: Clean Icon-Only Utilities & Hamburger */}
+        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+          {/* Icon-only Language & Theme Controls */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={toggleLanguage}
+              className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-md bg-teal-50 dark:bg-slate-800 text-teal-900 dark:text-teal-100 border border-teal-200 dark:border-slate-700 cursor-pointer shadow-2xs hover:bg-teal-100 dark:hover:bg-slate-700 transition-all"
+              title={lang === 'en' ? 'Switch to Nepali / नेपालीमा हेर्नुहोस्' : 'Switch to English'}
+            >
+              <Globe className="w-3.5 h-3.5 text-teal-600 dark:text-emerald-400 shrink-0" />
+            </button>
 
-          <button
-            onClick={toggleLanguage}
-            className="flex items-center gap-0.5 px-1.5 py-1 text-[11px] font-bold bg-teal-50 dark:bg-slate-800 text-teal-800 dark:text-teal-200 rounded-md border border-teal-200 dark:border-slate-700 cursor-pointer"
-            title="Switch Language / भाषा"
-          >
-            <Globe className="w-3 h-3 text-teal-600 dark:text-emerald-400" />
-            <span>{lang === 'en' ? 'ने' : 'EN'}</span>
-          </button>
+            <button
+              onClick={toggleTheme}
+              className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-md bg-teal-50 dark:bg-slate-800 text-teal-900 dark:text-teal-100 border border-teal-200 dark:border-slate-700 cursor-pointer shadow-2xs hover:bg-teal-100 dark:hover:bg-slate-700 transition-all"
+              title={theme === 'dark' ? 'Switch to Day Mode' : 'Switch to Night Mode'}
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              ) : (
+                <Moon className="w-3.5 h-3.5 text-teal-600 dark:text-teal-300 shrink-0" />
+              )}
+            </button>
+          </div>
 
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-1.5 rounded-md bg-teal-800 text-white hover:bg-teal-900 focus:outline-none cursor-pointer shadow-xs ml-0.5"
+            className="p-1.5 sm:p-2 rounded-lg bg-teal-800 text-white hover:bg-teal-900 focus:outline-none cursor-pointer shadow-xs"
             title="Toggle Menu"
           >
             {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -469,7 +483,7 @@ export default function Navigation({
                         handleTabChange(menu.target);
                       }
                     }}
-                    className={`flex items-center gap-2 w-full text-left px-4 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
+                    className={`flex items-center gap-2 w-full text-left px-4 py-2.5 rounded-lg ${siteTexts.menuFontSizeMobile || 'text-sm'} font-bold transition-all cursor-pointer ${
                       currentTab === menu.target
                         ? 'bg-amber-500 text-teal-950 shadow-xs'
                         : 'text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800'
@@ -485,7 +499,7 @@ export default function Navigation({
                 <div key={menu.id} className="border-b border-teal-50 dark:border-slate-800/80 pb-1 mb-1">
                   <button
                     onClick={() => setMobileExpandedId(isExpanded ? null : menu.id)}
-                    className="flex items-center justify-between w-full text-left px-4 py-2.5 rounded-lg text-sm font-bold text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                    className={`flex items-center justify-between w-full text-left px-4 py-2.5 rounded-lg ${siteTexts.menuFontSizeMobile || 'text-sm'} font-bold text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-slate-800 transition-all cursor-pointer`}
                   >
                     <span>{menu.label[lang] || menu.label.en}</span>
                     <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />

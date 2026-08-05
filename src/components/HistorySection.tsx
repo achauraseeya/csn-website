@@ -107,8 +107,11 @@ export default function HistorySection({
   const [editSliderBadgeNe, setEditSliderBadgeNe] = useState(siteTexts.sliderBadgeNe || 'जय पान देव');
   const [editLogoTextEn, setEditLogoTextEn] = useState(siteTexts.logoTextEn || 'Chaurasiya Samaj');
   const [editLogoTextNe, setEditLogoTextNe] = useState(siteTexts.logoTextNe || 'चौरसिया समाज');
-  const [editLogoFontSizeMobile, setEditLogoFontSizeMobile] = useState(siteTexts.logoFontSizeMobile || 'text-sm xs:text-base sm:text-lg');
+  const [editLogoFontSizeMobile, setEditLogoFontSizeMobile] = useState(siteTexts.logoFontSizeMobile || 'text-base xs:text-lg sm:text-xl');
   const [editLogoFontSizeDesktop, setEditLogoFontSizeDesktop] = useState(siteTexts.logoFontSizeDesktop || 'text-2xl lg:text-3.5xl');
+  const [editLogoSubFontSizeMobile, setEditLogoSubFontSizeMobile] = useState(siteTexts.logoSubFontSizeMobile || 'text-[9px] xs:text-[10px] sm:text-[11px]');
+  const [editMenuFontSizeDesktop, setEditMenuFontSizeDesktop] = useState(siteTexts.menuFontSizeDesktop || 'text-xs xl:text-sm');
+  const [editMenuFontSizeMobile, setEditMenuFontSizeMobile] = useState(siteTexts.menuFontSizeMobile || 'text-sm');
   const [editLogoSubEn, setEditLogoSubEn] = useState(siteTexts.logoSubEn || 'Nepal');
   const [editLogoSubNe, setEditLogoSubNe] = useState(siteTexts.logoSubNe || 'चौरसिया समाज नेपाल');
   const [editLogoUrl, setEditLogoUrl] = useState(siteTexts.logoUrl || '');
@@ -129,6 +132,38 @@ export default function HistorySection({
   const [editPresidentTitleNe, setEditPresidentTitleNe] = useState(siteTexts.presidentMessageTitleNe || 'मुख्य अध्यक्षको सन्देश');
   const [editPresidentMsgEn, setEditPresidentMsgEn] = useState(siteTexts.presidentMessageEn || '');
   const [editPresidentMsgNe, setEditPresidentMsgNe] = useState(siteTexts.presidentMessageNe || '');
+
+  // Helpline & Community Pillars state
+  const [editHelplineTitleEn, setEditHelplineTitleEn] = useState(siteTexts.helplineTitleEn || 'Emergency & Helpline');
+  const [editHelplineTitleNe, setEditHelplineTitleNe] = useState(siteTexts.helplineTitleNe || 'आकस्मिक तथा हेल्पलाइन');
+  const [editHelplineCentralLabelEn, setEditHelplineCentralLabelEn] = useState(siteTexts.helplineCentralLabelEn || 'Central Helpline');
+  const [editHelplineCentralLabelNe, setEditHelplineCentralLabelNe] = useState(siteTexts.helplineCentralLabelNe || 'केन्द्रीय हेल्पलाइन');
+  const [editHelplinePhone, setEditHelplinePhone] = useState(siteTexts.helplinePhone || '+977-9812345678');
+  const [editHelplineSecretariatLabelEn, setEditHelplineSecretariatLabelEn] = useState(siteTexts.helplineSecretariatLabelEn || 'Secretariat');
+  const [editHelplineSecretariatLabelNe, setEditHelplineSecretariatLabelNe] = useState(siteTexts.helplineSecretariatLabelNe || 'केन्द्रीय सचिवाल');
+  const [editHelplineEmail, setEditHelplineEmail] = useState(siteTexts.helplineEmail || 'achauraseeya@gmail.com');
+
+  const [editPillarsTitleEn, setEditPillarsTitleEn] = useState(siteTexts.pillarsTitleEn || 'Community Pillars');
+  const [editPillarsTitleNe, setEditPillarsTitleNe] = useState(siteTexts.pillarsTitleNe || 'समुदायका आधारहरू');
+  const [editPillar1TitleEn, setEditPillar1TitleEn] = useState(siteTexts.pillar1TitleEn || 'Paan Heritage');
+  const [editPillar1TitleNe, setEditPillar1TitleNe] = useState(siteTexts.pillar1TitleNe || 'पान सम्पदा');
+  const [editPillar1SubEn, setEditPillar1SubEn] = useState(siteTexts.pillar1SubEn || 'Culture & Farming');
+  const [editPillar1SubNe, setEditPillar1SubNe] = useState(siteTexts.pillar1SubNe || 'संस्कृति र खेती');
+
+  const [editPillar2TitleEn, setEditPillar2TitleEn] = useState(siteTexts.pillar2TitleEn || 'Youth & Career');
+  const [editPillar2TitleNe, setEditPillar2TitleNe] = useState(siteTexts.pillar2TitleNe || 'युवा तथा शिक्षा');
+  const [editPillar2SubEn, setEditPillar2SubEn] = useState(siteTexts.pillar2SubEn || 'Grants & Support');
+  const [editPillar2SubNe, setEditPillar2SubNe] = useState(siteTexts.pillar2SubNe || 'छात्रवृत्ति र मार्गदर्शन');
+
+  const [editPillar3TitleEn, setEditPillar3TitleEn] = useState(siteTexts.pillar3TitleEn || 'District Branches');
+  const [editPillar3TitleNe, setEditPillar3TitleNe] = useState(siteTexts.pillar3TitleNe || 'जिल्ला शाखाहरू');
+  const [editPillar3SubEn, setEditPillar3SubEn] = useState(siteTexts.pillar3SubEn || '77 Districts');
+  const [editPillar3SubNe, setEditPillar3SubNe] = useState(siteTexts.pillar3SubNe || '७७ वटै जिल्ला');
+
+  const [editPillar4TitleEn, setEditPillar4TitleEn] = useState(siteTexts.pillar4TitleEn || 'Transparency');
+  const [editPillar4TitleNe, setEditPillar4TitleNe] = useState(siteTexts.pillar4TitleNe || 'सुशासन र कोष');
+  const [editPillar4SubEn, setEditPillar4SubEn] = useState(siteTexts.pillar4SubEn || 'Audited Reports');
+  const [editPillar4SubNe, setEditPillar4SubNe] = useState(siteTexts.pillar4SubNe || 'पारदर्शी विवरण');
 
   const [editHeroImages, setEditHeroImages] = useState<any[]>(() => {
     try {
@@ -226,8 +261,11 @@ export default function HistorySection({
     setEditSliderBadgeNe(siteTexts.sliderBadgeNe || 'जय पान देव');
     setEditLogoTextEn(siteTexts.logoTextEn || 'Chaurasiya Samaj');
     setEditLogoTextNe(siteTexts.logoTextNe || 'चौरसिया समाज');
-    setEditLogoFontSizeMobile(siteTexts.logoFontSizeMobile || 'text-sm xs:text-base sm:text-lg');
+    setEditLogoFontSizeMobile(siteTexts.logoFontSizeMobile || 'text-base xs:text-lg sm:text-xl');
     setEditLogoFontSizeDesktop(siteTexts.logoFontSizeDesktop || 'text-2xl lg:text-3.5xl');
+    setEditLogoSubFontSizeMobile(siteTexts.logoSubFontSizeMobile || 'text-[9px] xs:text-[10px] sm:text-[11px]');
+    setEditMenuFontSizeDesktop(siteTexts.menuFontSizeDesktop || 'text-xs xl:text-sm');
+    setEditMenuFontSizeMobile(siteTexts.menuFontSizeMobile || 'text-sm');
     setEditLogoSubEn(siteTexts.logoSubEn || 'Nepal');
     setEditLogoSubNe(siteTexts.logoSubNe || 'चौरसिया समाज नेपाल');
     setEditLogoUrl(siteTexts.logoUrl || '');
@@ -248,6 +286,37 @@ export default function HistorySection({
     setEditPresidentTitleNe(siteTexts.presidentMessageTitleNe || 'मुख्य अध्यक्षको सन्देश');
     setEditPresidentMsgEn(siteTexts.presidentMessageEn || '');
     setEditPresidentMsgNe(siteTexts.presidentMessageNe || '');
+
+    setEditHelplineTitleEn(siteTexts.helplineTitleEn || 'Emergency & Helpline');
+    setEditHelplineTitleNe(siteTexts.helplineTitleNe || 'आकस्मिक तथा हेल्पलाइन');
+    setEditHelplineCentralLabelEn(siteTexts.helplineCentralLabelEn || 'Central Helpline');
+    setEditHelplineCentralLabelNe(siteTexts.helplineCentralLabelNe || 'केन्द्रीय हेल्पलाइन');
+    setEditHelplinePhone(siteTexts.helplinePhone || '+977-9812345678');
+    setEditHelplineSecretariatLabelEn(siteTexts.helplineSecretariatLabelEn || 'Secretariat');
+    setEditHelplineSecretariatLabelNe(siteTexts.helplineSecretariatLabelNe || 'केन्द्रीय सचिवाल');
+    setEditHelplineEmail(siteTexts.helplineEmail || 'achauraseeya@gmail.com');
+
+    setEditPillarsTitleEn(siteTexts.pillarsTitleEn || 'Community Pillars');
+    setEditPillarsTitleNe(siteTexts.pillarsTitleNe || 'समुदायका आधारहरू');
+    setEditPillar1TitleEn(siteTexts.pillar1TitleEn || 'Paan Heritage');
+    setEditPillar1TitleNe(siteTexts.pillar1TitleNe || 'पान सम्पदा');
+    setEditPillar1SubEn(siteTexts.pillar1SubEn || 'Culture & Farming');
+    setEditPillar1SubNe(siteTexts.pillar1SubNe || 'संस्कृति र खेती');
+
+    setEditPillar2TitleEn(siteTexts.pillar2TitleEn || 'Youth & Career');
+    setEditPillar2TitleNe(siteTexts.pillar2TitleNe || 'युवा तथा शिक्षा');
+    setEditPillar2SubEn(siteTexts.pillar2SubEn || 'Grants & Support');
+    setEditPillar2SubNe(siteTexts.pillar2SubNe || 'छात्रवृत्ति र मार्गदर्शन');
+
+    setEditPillar3TitleEn(siteTexts.pillar3TitleEn || 'District Branches');
+    setEditPillar3TitleNe(siteTexts.pillar3TitleNe || 'जिल्ला शाखाहरू');
+    setEditPillar3SubEn(siteTexts.pillar3SubEn || '77 Districts');
+    setEditPillar3SubNe(siteTexts.pillar3SubNe || '७७ वटै जिल्ला');
+
+    setEditPillar4TitleEn(siteTexts.pillar4TitleEn || 'Transparency');
+    setEditPillar4TitleNe(siteTexts.pillar4TitleNe || 'सुशासन र कोष');
+    setEditPillar4SubEn(siteTexts.pillar4SubEn || 'Audited Reports');
+    setEditPillar4SubNe(siteTexts.pillar4SubNe || 'पारदर्शी विवरण');
 
     try {
       if (siteTexts.heroImagesJson) {
@@ -320,6 +389,9 @@ export default function HistorySection({
         logoTextNe: editLogoTextNe,
         logoFontSizeMobile: editLogoFontSizeMobile,
         logoFontSizeDesktop: editLogoFontSizeDesktop,
+        logoSubFontSizeMobile: editLogoSubFontSizeMobile,
+        menuFontSizeDesktop: editMenuFontSizeDesktop,
+        menuFontSizeMobile: editMenuFontSizeMobile,
         logoSubEn: editLogoSubEn,
         logoSubNe: editLogoSubNe,
         logoUrl: editLogoUrl,
@@ -340,6 +412,32 @@ export default function HistorySection({
         presidentMessageTitleNe: editPresidentTitleNe,
         presidentMessageEn: editPresidentMsgEn,
         presidentMessageNe: editPresidentMsgNe,
+        helplineTitleEn: editHelplineTitleEn,
+        helplineTitleNe: editHelplineTitleNe,
+        helplineCentralLabelEn: editHelplineCentralLabelEn,
+        helplineCentralLabelNe: editHelplineCentralLabelNe,
+        helplinePhone: editHelplinePhone,
+        helplineSecretariatLabelEn: editHelplineSecretariatLabelEn,
+        helplineSecretariatLabelNe: editHelplineSecretariatLabelNe,
+        helplineEmail: editHelplineEmail,
+        pillarsTitleEn: editPillarsTitleEn,
+        pillarsTitleNe: editPillarsTitleNe,
+        pillar1TitleEn: editPillar1TitleEn,
+        pillar1TitleNe: editPillar1TitleNe,
+        pillar1SubEn: editPillar1SubEn,
+        pillar1SubNe: editPillar1SubNe,
+        pillar2TitleEn: editPillar2TitleEn,
+        pillar2TitleNe: editPillar2TitleNe,
+        pillar2SubEn: editPillar2SubEn,
+        pillar2SubNe: editPillar2SubNe,
+        pillar3TitleEn: editPillar3TitleEn,
+        pillar3TitleNe: editPillar3TitleNe,
+        pillar3SubEn: editPillar3SubEn,
+        pillar3SubNe: editPillar3SubNe,
+        pillar4TitleEn: editPillar4TitleEn,
+        pillar4TitleNe: editPillar4TitleNe,
+        pillar4SubEn: editPillar4SubEn,
+        pillar4SubNe: editPillar4SubNe,
         heroImagesJson: JSON.stringify(editHeroImages),
         secondaryImagesJson: JSON.stringify(editSecondaryImages),
         impactStatsJson: JSON.stringify(editImpactStats),
@@ -786,37 +884,88 @@ export default function HistorySection({
                 />
               </div>
 
-              {/* Logo Text Font Sizes (Mobile & Desktop) */}
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
-                  Logo Text Font Size (Mobile View)
-                </label>
-                <select
-                  value={editLogoFontSizeMobile}
-                  onChange={(e) => setEditLogoFontSizeMobile(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                >
-                  <option value="text-xs xs:text-sm">Compact (text-xs)</option>
-                  <option value="text-xs xs:text-sm sm:text-base">Small (text-xs to text-sm)</option>
-                  <option value="text-sm xs:text-base sm:text-lg">Medium / Enhanced (text-sm to text-lg)</option>
-                  <option value="text-base xs:text-lg sm:text-xl">Large (text-base to text-xl)</option>
-                  <option value="text-lg xs:text-xl sm:text-2xl">Extra Large (text-lg to text-2xl)</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
-                  Logo Text Font Size (Desktop View)
-                </label>
-                <select
-                  value={editLogoFontSizeDesktop}
-                  onChange={(e) => setEditLogoFontSizeDesktop(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                >
-                  <option value="text-xl lg:text-2xl">Compact (text-xl to text-2xl)</option>
-                  <option value="text-2xl lg:text-3.5xl">Standard / Default (text-2xl to text-3.5xl)</option>
-                  <option value="text-3xl lg:text-4xl">Large (text-3xl to text-4xl)</option>
-                  <option value="text-4xl lg:text-5xl">Extra Large (text-4xl to text-5xl)</option>
-                </select>
+              {/* Logo Text & Menu Ribbon Font Sizes */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-teal-50/50 p-4 rounded-xl border border-teal-100">
+                <div className="space-y-1">
+                  <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
+                    Logo Main Text Font Size (Mobile Header)
+                  </label>
+                  <select
+                    value={editLogoFontSizeMobile}
+                    onChange={(e) => setEditLogoFontSizeMobile(e.target.value)}
+                    className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                  >
+                    <option value="text-xs xs:text-sm">Compact (text-xs)</option>
+                    <option value="text-sm xs:text-base sm:text-lg">Small (text-sm)</option>
+                    <option value="text-base xs:text-lg sm:text-xl">Medium / Enhanced (text-base) [Default]</option>
+                    <option value="text-lg xs:text-xl sm:text-2xl">Large (text-lg)</option>
+                    <option value="text-xl xs:text-2xl sm:text-3xl">Extra Large (text-xl)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
+                    Logo Subtext / Address Font Size (Mobile)
+                  </label>
+                  <select
+                    value={editLogoSubFontSizeMobile}
+                    onChange={(e) => setEditLogoSubFontSizeMobile(e.target.value)}
+                    className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                  >
+                    <option value="text-[8px] xs:text-[9px]">Extra Small (8px - 9px)</option>
+                    <option value="text-[9px] xs:text-[10px] sm:text-[11px]">Small / Decreased (9px - 10px) [Default]</option>
+                    <option value="text-[10px] sm:text-xs">Medium (10px - 12px)</option>
+                    <option value="text-xs sm:text-sm">Large (12px - 14px)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
+                    Logo Main Text Font Size (Desktop)
+                  </label>
+                  <select
+                    value={editLogoFontSizeDesktop}
+                    onChange={(e) => setEditLogoFontSizeDesktop(e.target.value)}
+                    className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                  >
+                    <option value="text-xl lg:text-2xl">Compact (text-xl to text-2xl)</option>
+                    <option value="text-2xl lg:text-3.5xl">Standard / Default (text-2xl to text-3.5xl)</option>
+                    <option value="text-3xl lg:text-4xl">Large (text-3xl to text-4xl)</option>
+                    <option value="text-4xl lg:text-5xl">Extra Large (text-4xl to text-5xl)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
+                    Menu Ribbon Items Font Size (Desktop)
+                  </label>
+                  <select
+                    value={editMenuFontSizeDesktop}
+                    onChange={(e) => setEditMenuFontSizeDesktop(e.target.value)}
+                    className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                  >
+                    <option value="text-[11px] xl:text-xs">Small (text-[11px])</option>
+                    <option value="text-xs xl:text-sm">Standard (text-xs to text-sm) [Default]</option>
+                    <option value="text-sm xl:text-base">Medium (text-sm to text-base)</option>
+                    <option value="text-base xl:text-lg">Large (text-base to text-lg)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
+                    Menu Items Font Size (Mobile Drawer)
+                  </label>
+                  <select
+                    value={editMenuFontSizeMobile}
+                    onChange={(e) => setEditMenuFontSizeMobile(e.target.value)}
+                    className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                  >
+                    <option value="text-xs">Small (text-xs)</option>
+                    <option value="text-sm">Standard (text-sm) [Default]</option>
+                    <option value="text-base">Medium (text-base)</option>
+                    <option value="text-lg">Large (text-lg)</option>
+                  </select>
+                </div>
               </div>
 
               {/* Logo Subtexts */}
@@ -922,6 +1071,244 @@ export default function HistorySection({
                   onChange={(e) => setEditPresidentMsgNe(e.target.value)}
                   className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
                   placeholder="नेपालीमा मुख्य अध्यक्षको सन्देश राख्नुहोस् (वा खाली छाडेर डाइरेक्टरीबाट लिनुहोस्)"
+                />
+              </div>
+
+              {/* Emergency & Helpline Settings */}
+              <div className="space-y-1 border-t border-teal-200 pt-4 md:col-span-2">
+                <h4 className="text-sm font-black text-teal-950 uppercase tracking-wider mb-2">Emergency & Helpline Card Settings</h4>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Helpline Card Title (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={editHelplineTitleEn}
+                  onChange={(e) => setEditHelplineTitleEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Helpline Card Title (Nepali)</label>
+                <input
+                  type="text"
+                  required
+                  value={editHelplineTitleNe}
+                  onChange={(e) => setEditHelplineTitleNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Central Helpline Phone Number</label>
+                <input
+                  type="text"
+                  required
+                  value={editHelplinePhone}
+                  onChange={(e) => setEditHelplinePhone(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500 font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Secretariat Email</label>
+                <input
+                  type="email"
+                  required
+                  value={editHelplineEmail}
+                  onChange={(e) => setEditHelplineEmail(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500 font-mono"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Central Helpline Label (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={editHelplineCentralLabelEn}
+                  onChange={(e) => setEditHelplineCentralLabelEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Central Helpline Label (Nepali)</label>
+                <input
+                  type="text"
+                  required
+                  value={editHelplineCentralLabelNe}
+                  onChange={(e) => setEditHelplineCentralLabelNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Community Pillars Settings */}
+              <div className="space-y-1 border-t border-teal-200 pt-4 md:col-span-2">
+                <h4 className="text-sm font-black text-teal-950 uppercase tracking-wider mb-2">Community Pillars Card Settings</h4>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Pillars Section Title (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={editPillarsTitleEn}
+                  onChange={(e) => setEditPillarsTitleEn(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Pillars Section Title (Nepali)</label>
+                <input
+                  type="text"
+                  required
+                  value={editPillarsTitleNe}
+                  onChange={(e) => setEditPillarsTitleNe(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Pillar 1 */}
+              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
+                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 1: Title & Subtitle (English)</label>
+                <input
+                  type="text"
+                  value={editPillar1TitleEn}
+                  onChange={(e) => setEditPillar1TitleEn(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
+                  placeholder="Title EN"
+                />
+                <input
+                  type="text"
+                  value={editPillar1SubEn}
+                  onChange={(e) => setEditPillar1SubEn(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
+                  placeholder="Subtitle EN"
+                />
+              </div>
+              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
+                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 1: Title & Subtitle (Nepali)</label>
+                <input
+                  type="text"
+                  value={editPillar1TitleNe}
+                  onChange={(e) => setEditPillar1TitleNe(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
+                  placeholder="Title NE"
+                />
+                <input
+                  type="text"
+                  value={editPillar1SubNe}
+                  onChange={(e) => setEditPillar1SubNe(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
+                  placeholder="Subtitle NE"
+                />
+              </div>
+
+              {/* Pillar 2 */}
+              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
+                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 2: Title & Subtitle (English)</label>
+                <input
+                  type="text"
+                  value={editPillar2TitleEn}
+                  onChange={(e) => setEditPillar2TitleEn(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
+                  placeholder="Title EN"
+                />
+                <input
+                  type="text"
+                  value={editPillar2SubEn}
+                  onChange={(e) => setEditPillar2SubEn(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
+                  placeholder="Subtitle EN"
+                />
+              </div>
+              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
+                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 2: Title & Subtitle (Nepali)</label>
+                <input
+                  type="text"
+                  value={editPillar2TitleNe}
+                  onChange={(e) => setEditPillar2TitleNe(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
+                  placeholder="Title NE"
+                />
+                <input
+                  type="text"
+                  value={editPillar2SubNe}
+                  onChange={(e) => setEditPillar2SubNe(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
+                  placeholder="Subtitle NE"
+                />
+              </div>
+
+              {/* Pillar 3 */}
+              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
+                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 3: Title & Subtitle (English)</label>
+                <input
+                  type="text"
+                  value={editPillar3TitleEn}
+                  onChange={(e) => setEditPillar3TitleEn(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
+                  placeholder="Title EN"
+                />
+                <input
+                  type="text"
+                  value={editPillar3SubEn}
+                  onChange={(e) => setEditPillar3SubEn(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
+                  placeholder="Subtitle EN"
+                />
+              </div>
+              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
+                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 3: Title & Subtitle (Nepali)</label>
+                <input
+                  type="text"
+                  value={editPillar3TitleNe}
+                  onChange={(e) => setEditPillar3TitleNe(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
+                  placeholder="Title NE"
+                />
+                <input
+                  type="text"
+                  value={editPillar3SubNe}
+                  onChange={(e) => setEditPillar3SubNe(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
+                  placeholder="Subtitle NE"
+                />
+              </div>
+
+              {/* Pillar 4 */}
+              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
+                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 4: Title & Subtitle (English)</label>
+                <input
+                  type="text"
+                  value={editPillar4TitleEn}
+                  onChange={(e) => setEditPillar4TitleEn(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
+                  placeholder="Title EN"
+                />
+                <input
+                  type="text"
+                  value={editPillar4SubEn}
+                  onChange={(e) => setEditPillar4SubEn(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
+                  placeholder="Subtitle EN"
+                />
+              </div>
+              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
+                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 4: Title & Subtitle (Nepali)</label>
+                <input
+                  type="text"
+                  value={editPillar4TitleNe}
+                  onChange={(e) => setEditPillar4TitleNe(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
+                  placeholder="Title NE"
+                />
+                <input
+                  type="text"
+                  value={editPillar4SubNe}
+                  onChange={(e) => setEditPillar4SubNe(e.target.value)}
+                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
+                  placeholder="Subtitle NE"
                 />
               </div>
 
@@ -1872,42 +2259,55 @@ export default function HistorySection({
             </div>
           </section>
 
-          {/* DESKTOP SIDEBAR WIDGET 1: Emergency & Helpline Contacts Card */}
-          <div className="hidden lg:block bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-teal-100 dark:border-slate-800 transition-all relative">
+          {/* SIDEBAR WIDGET 1: Emergency & Helpline Contacts Card */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-teal-100 dark:border-slate-800 transition-all relative">
             {/* Sticky Header Bar for Emergency & Helpline */}
             <div className="lg:sticky lg:top-[48px] z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 rounded-t-2xl border-b border-teal-100 dark:border-slate-800 flex items-center justify-between shadow-sm">
               <div className="flex items-center gap-2 text-teal-900 dark:text-teal-100 font-extrabold text-xs">
                 <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />
-                <span>{lang === 'en' ? 'Emergency & Helpline' : 'आकस्मिक तथा हेल्पलाइन'}</span>
+                <span>{lang === 'en' ? (siteTexts.helplineTitleEn || 'Emergency & Helpline') : (siteTexts.helplineTitleNe || 'आकस्मिक तथा हेल्पलाइन')}</span>
               </div>
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingTexts(true)}
+                    className="p-1 bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-[10px] font-bold rounded border border-amber-300/60 dark:border-amber-700/60 flex items-center gap-1 transition-colors cursor-pointer"
+                    title="Edit Emergency & Helpline Section"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                    <span>Edit</span>
+                  </button>
+                )}
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              </div>
             </div>
 
             <div className="p-4 space-y-3">
               <div className="space-y-2 text-[11px]">
                 <a 
-                  href={`tel:${siteTexts.footerPhone || '+977-9812345678'}`}
+                  href={`tel:${siteTexts.helplinePhone || siteTexts.footerPhone || '+977-9812345678'}`}
                   className="flex items-center justify-between p-2.5 rounded-xl bg-teal-50/70 hover:bg-teal-100/80 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-teal-100 dark:border-slate-700 text-teal-950 dark:text-teal-100 font-bold transition-all group"
                 >
                   <div className="flex items-center gap-2 truncate">
                     <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0 group-hover:scale-110 transition-transform" />
-                    <span className="truncate">{lang === 'en' ? 'Central Helpline' : 'केन्द्रीय हेल्पलाइन'}</span>
+                    <span className="truncate">{lang === 'en' ? (siteTexts.helplineCentralLabelEn || 'Central Helpline') : (siteTexts.helplineCentralLabelNe || 'केन्द्रीय हेल्पलाइन')}</span>
                   </div>
                   <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-md shrink-0 font-mono">
-                    {siteTexts.footerPhone || '+977-9812345678'}
+                    {siteTexts.helplinePhone || siteTexts.footerPhone || '+977-9812345678'}
                   </span>
                 </a>
 
                 <a 
-                  href={`mailto:${siteTexts.footerEmail || 'info@csn.org.np'}`}
+                  href={`mailto:${siteTexts.helplineEmail || siteTexts.footerEmail || 'achauraseeya@gmail.com'}`}
                   className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 hover:bg-emerald-100/80 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-emerald-100 dark:border-slate-700 text-emerald-950 dark:text-emerald-100 font-bold transition-all group"
                 >
                   <div className="flex items-center gap-2 truncate">
                     <Mail className="w-3.5 h-3.5 text-teal-600 shrink-0 group-hover:scale-110 transition-transform" />
-                    <span className="truncate">{lang === 'en' ? 'Secretariat' : 'केन्द्रीय सचिवाल'}</span>
+                    <span className="truncate">{lang === 'en' ? (siteTexts.helplineSecretariatLabelEn || 'Secretariat') : (siteTexts.helplineSecretariatLabelNe || 'केन्द्रीय सचिवाल')}</span>
                   </div>
-                  <span className="text-[10px] bg-teal-700 text-white px-2 py-0.5 rounded-md shrink-0 truncate max-w-[110px]">
-                    {siteTexts.footerEmail || 'info@csn.org.np'}
+                  <span className="text-[10px] bg-teal-700 text-white px-2 py-0.5 rounded-md shrink-0 truncate max-w-[120px]">
+                    {siteTexts.helplineEmail || siteTexts.footerEmail || 'achauraseeya@gmail.com'}
                   </span>
                 </a>
               </div>
@@ -1925,15 +2325,28 @@ export default function HistorySection({
             </div>
           </div>
 
-          {/* DESKTOP SIDEBAR WIDGET 2: Core Pillars & Community Services Badge */}
-          <div className="hidden lg:block bg-gradient-to-br from-teal-900 to-emerald-900 rounded-2xl text-white shadow-md border border-teal-700/80 transition-all relative">
+          {/* SIDEBAR WIDGET 2: Core Pillars & Community Services Badge */}
+          <div className="bg-gradient-to-br from-teal-900 to-emerald-900 rounded-2xl text-white shadow-md border border-teal-700/80 transition-all relative">
             {/* Sticky Header Bar for Community Pillars */}
             <div className="lg:sticky lg:top-[48px] z-20 bg-teal-900/95 backdrop-blur-md px-4 py-3 rounded-t-2xl border-b border-teal-700/60 flex items-center justify-between shadow-sm">
               <div className="flex items-center gap-2 text-emerald-200 font-extrabold text-xs">
                 <HeartHandshake className="w-4 h-4 text-emerald-300 shrink-0" />
-                <span>{lang === 'en' ? 'Community Pillars' : 'समुदायका आधारहरू'}</span>
+                <span>{lang === 'en' ? (siteTexts.pillarsTitleEn || 'Community Pillars') : (siteTexts.pillarsTitleNe || 'समुदायका आधारहरू')}</span>
               </div>
-              <span className="text-[10px] font-bold text-teal-200 bg-teal-950/60 px-2 py-0.5 rounded border border-teal-700/60">CSN Nepal</span>
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingTexts(true)}
+                    className="p-1 bg-emerald-800/80 hover:bg-emerald-700/90 text-emerald-100 text-[10px] font-bold rounded border border-emerald-500/50 flex items-center gap-1 transition-colors cursor-pointer"
+                    title="Edit Community Pillars Section"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                    <span>Edit</span>
+                  </button>
+                )}
+                <span className="text-[10px] font-bold text-teal-200 bg-teal-950/60 px-2 py-0.5 rounded border border-teal-700/60">CSN Nepal</span>
+              </div>
             </div>
 
             <div className="p-4 space-y-3">
@@ -1943,8 +2356,8 @@ export default function HistorySection({
                   className="p-2.5 rounded-xl bg-teal-950/50 hover:bg-teal-950/80 border border-teal-700/50 text-left transition-all hover:scale-[1.02] cursor-pointer group"
                 >
                   <Leaf className="w-4 h-4 text-emerald-400 mb-1 group-hover:rotate-12 transition-transform" />
-                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? 'Paan Heritage' : 'पान सम्पदा'}</h5>
-                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? 'Culture & Farming' : 'संस्कृति र खेती'}</p>
+                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? (siteTexts.pillar1TitleEn || 'Paan Heritage') : (siteTexts.pillar1TitleNe || 'पान सम्पदा')}</h5>
+                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? (siteTexts.pillar1SubEn || 'Culture & Farming') : (siteTexts.pillar1SubNe || 'संस्कृति र खेती')}</p>
                 </button>
 
                 <button
@@ -1952,8 +2365,8 @@ export default function HistorySection({
                   className="p-2.5 rounded-xl bg-teal-950/50 hover:bg-teal-950/80 border border-teal-700/50 text-left transition-all hover:scale-[1.02] cursor-pointer group"
                 >
                   <GraduationCap className="w-4 h-4 text-amber-400 mb-1 group-hover:rotate-12 transition-transform" />
-                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? 'Youth & Career' : 'युवा तथा शिक्षा'}</h5>
-                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? 'Grants & Support' : 'छात्रवृत्ति र मार्गदर्शन'}</p>
+                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? (siteTexts.pillar2TitleEn || 'Youth & Career') : (siteTexts.pillar2TitleNe || 'युवा तथा शिक्षा')}</h5>
+                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? (siteTexts.pillar2SubEn || 'Grants & Support') : (siteTexts.pillar2SubNe || 'छात्रवृत्ति र मार्गदर्शन')}</p>
                 </button>
 
                 <button
@@ -1961,8 +2374,8 @@ export default function HistorySection({
                   className="p-2.5 rounded-xl bg-teal-950/50 hover:bg-teal-950/80 border border-teal-700/50 text-left transition-all hover:scale-[1.02] cursor-pointer group"
                 >
                   <Building2 className="w-4 h-4 text-teal-300 mb-1 group-hover:rotate-12 transition-transform" />
-                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? 'District Branches' : 'जिल्ला शाखाहरू'}</h5>
-                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? '77 Districts' : '७७ वटै जिल्ला'}</p>
+                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? (siteTexts.pillar3TitleEn || 'District Branches') : (siteTexts.pillar3TitleNe || 'जिल्ला शाखाहरू')}</h5>
+                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? (siteTexts.pillar3SubEn || '77 Districts') : (siteTexts.pillar3SubNe || '७७ वटै जिल्ला')}</p>
                 </button>
 
                 <button
@@ -1970,8 +2383,8 @@ export default function HistorySection({
                   className="p-2.5 rounded-xl bg-teal-950/50 hover:bg-teal-950/80 border border-teal-700/50 text-left transition-all hover:scale-[1.02] cursor-pointer group"
                 >
                   <ShieldCheck className="w-4 h-4 text-emerald-300 mb-1 group-hover:rotate-12 transition-transform" />
-                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? 'Transparency' : 'सुशासन र कोष'}</h5>
-                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? 'Audited Reports' : 'पारदर्शी विवरण'}</p>
+                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? (siteTexts.pillar4TitleEn || 'Transparency') : (siteTexts.pillar4TitleNe || 'सुशासन र कोष')}</h5>
+                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? (siteTexts.pillar4SubEn || 'Audited Reports') : (siteTexts.pillar4SubNe || 'पारदर्शी विवरण')}</p>
                 </button>
               </div>
             </div>

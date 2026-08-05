@@ -1,3 +1,28 @@
+// Global memory cache to eliminate repeat canvas background removal calculations
+const imageCleanCache = new Map<string, string>();
+
+/**
+ * Synchronously retrieves cached clean transparent image if available in memory or sessionStorage
+ */
+export function getCachedCleanImage(imageSrc: string, threshold = 195, maxDimension = 300): string | null {
+  if (!imageSrc) return null;
+  if (imageSrc.startsWith('data:image/png;base64,')) return imageSrc;
+  const cacheKey = `clean_logo_${threshold}_${maxDimension}_${imageSrc.slice(-120)}`;
+  if (imageCleanCache.has(cacheKey)) {
+    return imageCleanCache.get(cacheKey)!;
+  }
+  try {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem(cacheKey);
+      if (stored) {
+        imageCleanCache.set(cacheKey, stored);
+        return stored;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 /**
  * Helper to process an image, scale it to optimal header logo dimensions (max ~300px),
  * convert white/near-white/corner background pixels to transparent PNG data URL (~10 KB).
@@ -9,6 +34,22 @@ export function removeImageWhiteBackground(imageSrc: string, threshold = 195, ma
       resolve(imageSrc);
       return;
     }
+
+    const cacheKey = `clean_logo_${threshold}_${maxDimension}_${imageSrc.slice(-120)}`;
+    if (imageCleanCache.has(cacheKey)) {
+      resolve(imageCleanCache.get(cacheKey)!);
+      return;
+    }
+
+    try {
+      const stored = typeof window !== 'undefined' ? sessionStorage.getItem(cacheKey) : null;
+      if (stored) {
+        imageCleanCache.set(cacheKey, stored);
+        resolve(stored);
+        return;
+      }
+    } catch (e) {}
+
     const img = new Image();
     img.crossOrigin = 'Anonymous';
     img.onload = () => {
@@ -100,6 +141,10 @@ export function removeImageWhiteBackground(imageSrc: string, threshold = 195, ma
 
         ctx.putImageData(imgData, 0, 0);
         const transparentDataUrl = canvas.toDataURL('image/png');
+        imageCleanCache.set(cacheKey, transparentDataUrl);
+        try {
+          if (typeof window !== 'undefined') sessionStorage.setItem(cacheKey, transparentDataUrl);
+        } catch (e) {}
         resolve(transparentDataUrl);
       } catch (e) {
         console.warn('Image transparency processing fallback:', e);

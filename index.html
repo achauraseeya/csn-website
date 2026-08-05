@@ -58,7 +58,117 @@
     </script>
   </head>
   <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased selection:bg-teal-500 selection:text-white">
-    <div id="root"></div>
+    <div id="root">
+      <div class="initial-loader-wrapper">
+        <style>
+          .initial-loader-wrapper {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #020617;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            z-index: 9999;
+            padding: 1rem;
+          }
+          .initial-loader-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            max-width: 380px;
+            width: 100%;
+            padding: 2.25rem 1.75rem;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(20, 184, 166, 0.25);
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 35px rgba(13, 148, 136, 0.2);
+            backdrop-filter: blur(16px);
+          }
+          .initial-loader-logo-ring {
+            position: relative;
+            width: 76px;
+            height: 76px;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .initial-loader-spinner {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 3.5px solid transparent;
+            border-top-color: #10b981;
+            border-right-color: #14b8a6;
+            border-bottom-color: #f59e0b;
+            animation: spin-loader 1.2s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;
+          }
+          .initial-loader-icon {
+            width: 38px;
+            height: 38px;
+            color: #10b981;
+            animation: pulse-leaf 2s ease-in-out infinite;
+          }
+          .initial-loader-title {
+            color: #f8fafc;
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin: 0 0 0.25rem 0;
+            line-height: 1.2;
+          }
+          .initial-loader-subtitle {
+            color: #34d399;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            margin: 0 0 1.25rem 0;
+          }
+          .initial-loader-progress-track {
+            width: 100%;
+            height: 4px;
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 9999px;
+            overflow: hidden;
+            position: relative;
+          }
+          .initial-loader-progress-bar {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: -100%;
+            width: 100%;
+            background: linear-gradient(90deg, transparent, #10b981, #14b8a6, #f59e0b, transparent);
+            animation: shimmer-bar 1.5s ease-in-out infinite;
+          }
+          @keyframes spin-loader {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          @keyframes pulse-leaf {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.7)); }
+          }
+          @keyframes shimmer-bar {
+            0% { left: -100%; }
+            100% { left: 100%; }
+          }
+        </style>
+        <div class="initial-loader-card">
+          <div class="initial-loader-logo-ring">
+            <div class="initial-loader-spinner"></div>
+            <img src="/uploads/1785640781506_CSN_logo__1__11zon.jpg" alt="Chaurasiya Samaj Nepal" class="initial-loader-icon" style="width: 52px; height: 52px; object-fit: contain; border-radius: 9999px;" />
+          </div>
+          <h2 class="initial-loader-title">Chaurasiya Samaj Nepal</h2>
+          <p class="initial-loader-subtitle">चौरसिया समाज नेपाल</p>
+          <div class="initial-loader-progress-track">
+            <div class="initial-loader-progress-bar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

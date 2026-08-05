@@ -262,7 +262,7 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
 
           <div className="mt-4 p-4 bg-red-50 rounded-xl border border-red-200 text-sm text-red-900 leading-relaxed font-medium space-y-2">
             <strong className="flex items-center gap-2">
-              <span className="text-xl">⚠️</span> Troubleshooting "Loading Community Portal..." or 404 Errors
+              <span className="text-xl">⚠️</span> Troubleshooting Deployment or 404 Errors
             </strong>
             <p>If you see a blank screen or a 404 error in the console, it means the code wasn't built correctly on GitHub Pages. To fix this:</p>
             <ul className="list-disc pl-5 space-y-1">

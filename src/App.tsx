@@ -88,13 +88,16 @@ const defaultSiteTexts: SiteTexts = {
   termsNe: 'चौरसिया समाज नेपालको वेबसाइट प्रयोग गरेर, तपाईं यी सेवाका सर्तहरू पालना गर्न सहमत हुनुहुन्छ। यस प्लेटफर्ममा रहेका सबै सामग्री, लोगो, निर्देशिका र सूचनाहरूको स्वामित्व चौरसिया समाज नेपालमा निहित छ।',
   sliderBadgeEn: 'Jay Paan Dev',
   sliderBadgeNe: 'जय पान देव',
-  logoTextEn: 'Chaurasiya Samaj',
-  logoTextNe: 'चौरसिया समाज',
-  logoFontSizeMobile: 'text-sm xs:text-base sm:text-lg',
+  logoTextEn: 'Chaurasiya Samaj Nepal',
+  logoTextNe: 'चौरसिया समाज नेपाल',
+  logoFontSizeMobile: 'text-base xs:text-lg sm:text-xl',
   logoFontSizeDesktop: 'text-2xl lg:text-3.5xl',
-  logoSubEn: 'Nepal',
-  logoSubNe: 'चौरसिया समाज नेपाल',
-  logoUrl: 'https://raw.githubusercontent.com/achauraseeya/csn-website/main/assets/uploads/1785420190802_square_image_11zon.jpg',
+  logoSubFontSizeMobile: 'text-[9px] xs:text-[10px] sm:text-[11px]',
+  menuFontSizeDesktop: 'text-xs xl:text-sm',
+  menuFontSizeMobile: 'text-sm',
+  logoSubEn: 'Kathmandu-30, Maitidevi',
+  logoSubNe: 'काठमाडौँ-३०,  मैतीदेवी',
+  logoUrl: logoImg,
   taglineEn: 'A dedicated social platform preserving betel leaf culture & serving humanity',
   taglineNe: 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था',
   impactHeaderEn: 'Empowering & Transforming Lives',
@@ -112,6 +115,32 @@ const defaultSiteTexts: SiteTexts = {
   presidentMessageTitleNe: 'मुख्य अध्यक्षको सन्देश',
   presidentMessageEn: 'Welcome to Chaurasiya Samaj Nepal. Our mission is to integrate, unify, and elevate the Chaurasiya community across Nepal, preserving our sacred betel leaf cultural heritage while empowering every member with equal educational, healthcare, and economic opportunities.',
   presidentMessageNe: 'चौरसिया समाज नेपालमा हार्दिक स्वागत छ। हाम्रो मुख्य उद्देश्य नेपालभर छरिएर रहेका चौरसिया समुदायलाई एकीकृत गर्दै, परम्परागत पान खेतीको संरक्षण र विकाससँगै प्रत्येक सदस्यलाई शिक्षा, स्वास्थ्य र आर्थिक अवसरहरू प्रदान गर्नु हो।',
+  helplineTitleEn: 'Emergency & Helpline',
+  helplineTitleNe: 'आकस्मिक तथा हेल्पलाइन',
+  helplineCentralLabelEn: 'Central Helpline',
+  helplineCentralLabelNe: 'केन्द्रीय हेल्पलाइन',
+  helplinePhone: '+977-9812345678',
+  helplineSecretariatLabelEn: 'Secretariat',
+  helplineSecretariatLabelNe: 'केन्द्रीय सचिवाल',
+  helplineEmail: 'achauraseeya@gmail.com',
+  pillarsTitleEn: 'Community Pillars',
+  pillarsTitleNe: 'समुदायका आधारहरू',
+  pillar1TitleEn: 'Paan Heritage',
+  pillar1TitleNe: 'पान सम्पदा',
+  pillar1SubEn: 'Culture & Farming',
+  pillar1SubNe: 'संस्कृति र खेती',
+  pillar2TitleEn: 'Youth & Career',
+  pillar2TitleNe: 'युवा तथा शिक्षा',
+  pillar2SubEn: 'Grants & Support',
+  pillar2SubNe: 'छात्रवृत्ति र मार्गदर्शन',
+  pillar3TitleEn: 'District Branches',
+  pillar3TitleNe: 'जिल्ला शाखाहरू',
+  pillar3SubEn: '77 Districts',
+  pillar3SubNe: '७७ वटै जिल्ला',
+  pillar4TitleEn: 'Transparency',
+  pillar4TitleNe: 'सुशासन र कोष',
+  pillar4SubEn: 'Audited Reports',
+  pillar4SubNe: 'पारदर्शी विवरण',
   heroImagesJson: JSON.stringify([
     {
       id: "g1",
@@ -193,7 +222,19 @@ export default function App() {
   const [networks, setNetworks] = useState<NetworkBranch[]>(initialNetworks);
 
   // Dynamic Site Texts State
-  const [siteTexts, setSiteTexts] = useState<SiteTexts>(defaultSiteTexts);
+  const [siteTexts, setSiteTexts] = useState<SiteTexts>(() => {
+    try {
+      const saved = localStorage.getItem('chaurasiya_site_texts');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          const cleanUrl = (parsed.logoUrl && !parsed.logoUrl.includes('raw.githubusercontent.com')) ? parsed.logoUrl : logoImg;
+          return { ...defaultSiteTexts, ...parsed, logoUrl: cleanUrl || logoImg };
+        }
+      }
+    } catch (e) {}
+    return defaultSiteTexts;
+  });
   const [abhishekAvatar, setAbhishekAvatar] = useState('/abhishek_profile.jpg');
   const [isEditingFooterSocials, setIsEditingFooterSocials] = useState(false);
   
@@ -1578,8 +1619,11 @@ export default function App() {
   useEffect(() => {
     apiFetch<SiteTexts>('/api/site-texts', 'site_texts.json', defaultSiteTexts)
       .then((data) => {
-        if (data) {
-          setSiteTexts(data);
+        if (data && typeof data === 'object') {
+          const cleanUrl = (data.logoUrl && !data.logoUrl.includes('raw.githubusercontent.com')) ? data.logoUrl : logoImg;
+          const merged = { ...defaultSiteTexts, ...data, logoUrl: cleanUrl || logoImg };
+          setSiteTexts(merged);
+          try { localStorage.setItem('chaurasiya_site_texts', JSON.stringify(merged)); } catch (e) {}
         }
       })
       .catch((err) => console.warn('Offline siteTexts fallback:', err));
