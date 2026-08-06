@@ -217,6 +217,14 @@ export default function App() {
   const [membershipSubTab, setMembershipSubTab] = useState<'membership' | 'volunteer' | 'donation'>('membership');
   const [donationCause, setDonationCause] = useState<string>('');
   
+  const [isInitializing, setIsInitializing] = useState(() => {
+    try {
+      return !localStorage.getItem('chaurasiya_site_texts');
+    } catch (e) {
+      return true;
+    }
+  });
+
   // Dynamic Network/Chapters State
   const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null);
   const [networks, setNetworks] = useState<NetworkBranch[]>(initialNetworks);
@@ -605,11 +613,12 @@ export default function App() {
   // Live GitHub Auto-Sync & Real-Time Polling: Instantly reflects edits committed to GitHub repo!
   useEffect(() => {
     const fetchAllGithubData = () => {
-      syncCustomFormFieldsFromGithub().catch(() => {});
-      syncMemberCategoriesFromGithub().catch(() => {});
+      const fetches = [];
+      fetches.push(syncCustomFormFieldsFromGithub().catch(() => {}));
+      fetches.push(syncMemberCategoriesFromGithub().catch(() => {}));
 
       // Notices
-      apiFetch<Notice[]>('/api/notices', 'community_notices.json', [])
+      fetches.push(apiFetch<Notice[]>('/api/notices', 'community_notices.json', [])
         .then((serverNotices) => {
           if (Array.isArray(serverNotices) && serverNotices.length > 0) {
             setNotices((prev) => {
@@ -626,58 +635,58 @@ export default function App() {
             });
           }
         })
-        .catch(() => {});
+        .catch(() => {}));
 
       // Events
-      apiFetch<CommunityEvent[]>('/api/events', 'community_events.json', [])
+      fetches.push(apiFetch<CommunityEvent[]>('/api/events', 'community_events.json', [])
         .then((serverEvents) => {
           if (Array.isArray(serverEvents) && serverEvents.length > 0) {
             setEvents(serverEvents);
             try { localStorage.setItem('chaurasiya_events', JSON.stringify(serverEvents)); } catch (e) {}
           }
         })
-        .catch(() => {});
+        .catch(() => {}));
 
       // Members
-      apiFetch<Member[]>('/api/members', 'community_members.json', [])
+      fetches.push(apiFetch<Member[]>('/api/members', 'community_members.json', [])
         .then((serverMembers) => {
           if (Array.isArray(serverMembers) && serverMembers.length > 0) {
             setMembers(serverMembers);
             try { localStorage.setItem('chaurasiya_members', JSON.stringify(serverMembers)); } catch (e) {}
           }
         })
-        .catch(() => {});
+        .catch(() => {}));
 
       // Documents
-      apiFetch<Document[]>('/api/documents', 'community_documents.json', [])
+      fetches.push(apiFetch<Document[]>('/api/documents', 'community_documents.json', [])
         .then((serverDocs) => {
           if (Array.isArray(serverDocs) && serverDocs.length > 0) {
             setDocumentsList(serverDocs);
             try { localStorage.setItem('chaurasiya_documents', JSON.stringify(serverDocs)); } catch (e) {}
           }
         })
-        .catch(() => {});
+        .catch(() => {}));
 
       // Site Texts
-      apiFetch<SiteTexts>('/api/site-texts', 'site_texts.json', defaultSiteTexts)
+      fetches.push(apiFetch<SiteTexts>('/api/site-texts', 'site_texts.json', defaultSiteTexts)
         .then((data) => {
           if (data && typeof data === 'object') {
             setSiteTexts((prev) => ({ ...prev, ...data }));
           }
         })
-        .catch(() => {});
+        .catch(() => {}));
 
       // Networks
-      apiFetch<NetworkBranch[]>('/api/networks', 'community_networks.json', initialNetworks)
+      fetches.push(apiFetch<NetworkBranch[]>('/api/networks', 'community_networks.json', initialNetworks)
         .then((serverNetworks) => {
           if (Array.isArray(serverNetworks) && serverNetworks.length > 0) {
             setNetworks(serverNetworks);
           }
         })
-        .catch(() => {});
+        .catch(() => {}));
 
       // Journey Albums
-      apiFetch<Album[]>('/api/albums', 'journey_albums.json', [])
+      fetches.push(apiFetch<Album[]>('/api/albums', 'journey_albums.json', [])
         .then((serverAlbums) => {
           if (Array.isArray(serverAlbums) && serverAlbums.length > 0) {
             setAlbums((prev) => {
@@ -688,10 +697,10 @@ export default function App() {
             });
           }
         })
-        .catch(() => {});
+        .catch(() => {}));
 
       // Abhishek Profile
-      apiFetch<any>('/api/abhishek-profile', 'abhishek_profile.json', null)
+      fetches.push(apiFetch<any>('/api/abhishek-profile', 'abhishek_profile.json', null)
         .then((cloudProfile) => {
           if (cloudProfile && typeof cloudProfile === 'object' && cloudProfile.avatarUrl) {
             setAbhishekAvatar(cloudProfile.avatarUrl);
@@ -703,7 +712,11 @@ export default function App() {
             } catch (e) {}
           }
         })
-        .catch(() => {});
+        .catch(() => {}));
+        
+      Promise.allSettled(fetches).finally(() => {
+        setIsInitializing(false);
+      });
     };
 
     // Initial fetch
@@ -2228,6 +2241,19 @@ export default function App() {
       ne: '© २०२६ चौरसिया समाज नेपाल। सर्वाधिकार सुरक्षित।',
     },
   };
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <h2 className="text-teal-900 dark:text-teal-100 font-semibold tracking-wide animate-pulse">
+            Loading {siteTexts.titleEn || 'Chaurasiya Samaj Nepal'}...
+          </h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-teal-200 selection:text-teal-950 transition-colors duration-200 overflow-x-clip">
