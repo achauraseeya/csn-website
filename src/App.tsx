@@ -2259,16 +2259,32 @@ export default function App() {
     <>
       {/* AI Studio Only: Download Blogger XML Button */}
       {(window.location.hostname.includes('run.app') || window.location.hostname.includes('localhost') || window.location.hostname.includes('ai.studio')) && (
-        <a
-          href="/csn-website/chaurasiya_samaj_blogger_headless.xml"
-          download="chaurasiya_samaj_blogger_headless.xml"
+        <button
+          onClick={async () => {
+            try {
+              const res = await fetch('/chaurasiya_samaj_blogger_headless.xml');
+              const text = await res.text();
+              const blob = new Blob([text], { type: 'application/xml' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'chaurasiya_samaj_blogger_headless.xml';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            } catch (e) {
+              console.error('Failed to download XML', e);
+              alert('Failed to download Blogger XML');
+            }
+          }}
           title="Download Blogger XML Theme (Preview Only)"
-          className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-2xl transition-all"
+          className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-2xl transition-all cursor-pointer"
         >
           <Download className="w-5 h-5" />
           <span className="hidden sm:inline">Download Blogger Theme XML</span>
           <span className="sm:hidden">XML</span>
-        </a>
+        </button>
       )}
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-teal-200 selection:text-teal-950 transition-colors duration-200 overflow-x-clip">
       {/* Top Ribbon with Scrolling Taglines Ticker */}
