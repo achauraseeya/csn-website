@@ -5,7 +5,7 @@
 
 import { fetchDriveFolderImagesClient } from './utils/driveClient';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram, ExternalLink, X, Edit, Globe, Phone, MapPin, Sparkles } from 'lucide-react';
+import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram, ExternalLink, X, Edit, Globe, Phone, MapPin, Sparkles, Download } from 'lucide-react';
 import { Language, AnalyticsMetric, Member, Album, AlbumMediaItem, Notice, Document, CommunityEvent, NetworkBranch, MatrimonialProfile, VolunteerApplication, MembershipApplication, NewsletterSubscriber, NavMenuItem } from './types';
 import { initialNetworks } from './data/networkData';
 import { notices as initialNotices, boardMembers as initialMembers, upcomingEvents as initialEvents, documents as initialDocuments } from './data/communityData';
@@ -2256,6 +2256,20 @@ export default function App() {
   }
 
   return (
+    <>
+      {/* AI Studio Only: Download Blogger XML Button */}
+      {(window.location.hostname.includes('run.app') || window.location.hostname.includes('localhost') || window.location.hostname.includes('ai.studio')) && (
+        <a
+          href="/csn-website/chaurasiya_samaj_blogger_headless.xml"
+          download="chaurasiya_samaj_blogger_headless.xml"
+          title="Download Blogger XML Theme (Preview Only)"
+          className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-2xl transition-all"
+        >
+          <Download className="w-5 h-5" />
+          <span className="hidden sm:inline">Download Blogger Theme XML</span>
+          <span className="sm:hidden">XML</span>
+        </a>
+      )}
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-teal-200 selection:text-teal-950 transition-colors duration-200 overflow-x-clip">
       {/* Top Ribbon with Scrolling Taglines Ticker */}
       <div className="bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-teal-50 text-[11px] sm:text-xs py-2 px-4 sm:px-6 lg:px-8 border-b border-teal-800/40">
@@ -2811,5 +2825,6 @@ export default function App() {
         onResetDefaultMenus={handleResetDefaultMenus}
       />
     </div>
+    </>
   );
 }

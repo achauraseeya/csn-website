@@ -297,6 +297,20 @@ export default function AdminCentralDashboardModal({
                 <Download className="w-4 h-4" />
                 Master All-in-One CSV
               </button>
+
+              {/* Blogger XML Download Button - ONLY visible in AI Studio Preview */}
+              {(window.location.hostname.includes('run.app') || window.location.hostname.includes('localhost') || window.location.hostname.includes('ai.studio')) && (
+                <a
+                  href="/chaurasiya_samaj_blogger_headless.xml"
+                  download
+                  title="Download Blogger XML Theme (Preview Only)"
+                  className="hidden md:flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  Blogger XML
+                </a>
+              )}
+
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-white/10 rounded-full transition-colors text-white cursor-pointer"

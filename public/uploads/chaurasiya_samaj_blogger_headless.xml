@@ -39,7 +39,7 @@
   <div id="root">
     <div style="padding: 40px; text-align: center; font-family: sans-serif;">
       <h2>Loading Community Portal...</h2>
-      <p style="color: #666;">If this screen remains for more than a few seconds, there is an issue loading the GitHub Pages assets. Please check your browser's Developer Console (F12) for errors.</p>
+      
     </div>
   </div>
 
