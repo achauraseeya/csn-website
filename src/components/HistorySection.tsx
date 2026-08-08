@@ -131,7 +131,7 @@ export default function HistorySection({
   const [netLocNe, setNetLocNe] = useState('');
 
   // Editable site texts section modal state
-  const [activeEditSection, setActiveEditSection] = useState<'hero' | 'leadership' | 'executive_committee' | 'heritage' | 'mission' | 'impact' | 'eservices' | 'branding' | 'unity' | 'ribbon' | 'pillars' | null>(null);
+  const [activeEditSection, setActiveEditSection] = useState<'hero' | 'leadership' | 'executive_committee' | 'heritage' | 'mission' | 'impact' | 'eservices' | 'branding' | 'unity' | 'ribbon' | 'pillars' | 'recent_updates' | null>(null);
   const [editingUnityStatId, setEditingUnityStatId] = useState<string | number | null>(null);
   const [inlineStatValue, setInlineStatValue] = useState('');
   const [inlineStatLabelEn, setInlineStatLabelEn] = useState('');
@@ -528,6 +528,21 @@ export default function HistorySection({
     setEditUnityNextEventDateNe(siteTexts.unityNextEventDateNe || 'वि.सं. २०८३');
     setEditUnityNextEventLocEn(siteTexts.unityNextEventLocEn || 'Kathmandu / Parsa');
     setEditUnityNextEventLocNe(siteTexts.unityNextEventLocNe || 'काठमाडौँ / पर्सा');
+
+    try {
+      if (siteTexts.secondaryImagesJson) {
+        const parsed = JSON.parse(siteTexts.secondaryImagesJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setEditSecondaryImages(parsed);
+        } else {
+          setEditSecondaryImages([...galleryItems]);
+        }
+      } else {
+        setEditSecondaryImages([...galleryItems]);
+      }
+    } catch (e) {
+      setEditSecondaryImages([...galleryItems]);
+    }
   }, [activeEditSection]);
 
   const handleDeleteUnityStat = async (statId: string | number) => {
@@ -631,6 +646,10 @@ export default function HistorySection({
           heroSubEn: editHeroSubEn,
           heroSubNe: editHeroSubNe,
           heroImagesJson: JSON.stringify(editHeroImages),
+        };
+      } else if (activeEditSection === 'recent_updates') {
+        updates = {
+          secondaryImagesJson: JSON.stringify(editSecondaryImages),
         };
       } else if (activeEditSection === 'leadership') {
         updates = {
@@ -1019,6 +1038,7 @@ export default function HistorySection({
               <Edit3 className="w-5 h-5 text-amber-400 animate-pulse" />
               <h3 className="font-black text-sm sm:text-base uppercase tracking-wider text-amber-300">
                 {activeEditSection === 'hero' && '1. Edit Hero Banner'}
+                {activeEditSection === 'recent_updates' && '11. Edit Recent Updates Image Slider'}
                 {activeEditSection === 'leadership' && "2. Edit Chief President's Message"}
                 {activeEditSection === 'executive_committee' && '3. Manage Executive Committee & Leadership'}
                 {activeEditSection === 'eservices' && '4. Edit Institutional E-Services'}
@@ -1108,41 +1128,350 @@ export default function HistorySection({
                 </div>
 
                 <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Hero Banner Slides</h4>
+                    <div className="flex items-center gap-2">
+                      <label className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{uploadingSlide ? 'Uploading...' : 'Upload & Add Slide'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingSlide}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              setUploadingSlide(true);
+                              const url = await handleFileUpload(file);
+                              setEditHeroImages([...editHeroImages, { 
+                                id: `hero-${Date.now()}`, 
+                                imageUrl: url, 
+                                caption: { en: file.name.split('.')[0], ne: 'नयाँ स्लाइड तस्विर' } 
+                              }]);
+                              alert('New slide image uploaded and added successfully!');
+                            } catch (err) {
+                              alert('Failed to upload slide image.');
+                            } finally {
+                              setUploadingSlide(false);
+                            }
+                          }}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setEditHeroImages([...editHeroImages, { id: `hero-${Date.now()}`, imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&q=80', caption: { en: 'New Slide Image', ne: 'नयाँ स्लाइड तस्विर' } }])}
+                        className="px-3 py-1.5 bg-teal-800 hover:bg-teal-700 text-teal-100 rounded-lg text-xs font-bold flex items-center gap-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Placeholder</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    {editHeroImages.map((img, idx) => (
+                      <div key={img.id || idx} className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-700 flex flex-col gap-2">
+                        <div className="flex items-center gap-3">
+                          <img src={img.imageUrl} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0 border" />
+                          <div className="flex-1 space-y-1 min-w-0">
+                            <input
+                              type="text"
+                              placeholder="Image URL"
+                              value={img.imageUrl}
+                              onChange={(e) => {
+                                const updated = [...editHeroImages];
+                                updated[idx].imageUrl = e.target.value;
+                                setEditHeroImages(updated);
+                              }}
+                              className="w-full p-1.5 border rounded text-xs"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setEditHeroImages(editHeroImages.filter((_, i) => i !== idx))}
+                            className="p-1.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-xs shrink-0"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {/* Slide file upload option */}
+                        <div className="flex items-center gap-2 sm:pl-[76px]">
+                          <label className="px-2.5 py-1 bg-teal-50 dark:bg-slate-800 hover:bg-teal-100 dark:hover:bg-slate-700 text-teal-800 dark:text-teal-200 text-[10px] font-bold rounded border border-teal-200 dark:border-slate-700 cursor-pointer flex items-center gap-1">
+                            <Upload className="w-3 h-3" />
+                            <span>{uploadingSlide ? 'Uploading...' : 'Replace Photo'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={uploadingSlide}
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                try {
+                                  setUploadingSlide(true);
+                                  const url = await handleFileUpload(file);
+                                  const updated = [...editHeroImages];
+                                  updated[idx].imageUrl = url;
+                                  setEditHeroImages(updated);
+                                  alert('Hero image replaced successfully!');
+                                } catch (err) {
+                                  alert('Failed to upload hero image.');
+                                } finally {
+                                  setUploadingSlide(false);
+                                }
+                              }}
+                            />
+                          </label>
+                          <span className="text-[9px] text-slate-500">Upload a photo to replace this URL</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* RECENT UPDATES IMAGE SLIDER EDIT FIELDS */}
+            {activeEditSection === 'recent_updates' && (
+              <div className="space-y-6">
+                <div className="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <span><strong>Notice:</strong> This manages the second visual slider under "Recent Updates" / "हालैका अपडेटहरू" on the homepage. You can add new slides, delete old ones, change text titles & description, and upload photos.</span>
+                </div>
+
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider flex items-center gap-1.5">
+                    <Plus className="w-4 h-4 text-teal-600" />
+                    <span>Create New Update Slide</span>
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Title (English)</label>
+                      <input
+                        type="text"
+                        value={newSecondaryTitleEn}
+                        onChange={(e) => setNewSecondaryTitleEn(e.target.value)}
+                        placeholder="e.g., Annual Chaurasiya Convention"
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={newSecondaryTitleNe}
+                        onChange={(e) => setNewSecondaryTitleNe(e.target.value)}
+                        placeholder="उदा. वार्षिक चौरसिया महाधिवेशन"
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Description (English)</label>
+                      <textarea
+                        rows={2}
+                        value={newSecondaryDescEn}
+                        onChange={(e) => setNewSecondaryDescEn(e.target.value)}
+                        placeholder="Enter short description"
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Description (Nepali)</label>
+                      <textarea
+                        rows={2}
+                        value={newSecondaryDescNe}
+                        onChange={(e) => setNewSecondaryDescNe(e.target.value)}
+                        placeholder="छोटो विवरण नेपालीमा"
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Photo Selection</label>
+                      <div className="flex flex-col sm:flex-row items-center gap-3">
+                        <input
+                          type="text"
+                          value={newSecondaryImage}
+                          onChange={(e) => setNewSecondaryImage(e.target.value)}
+                          placeholder="Image URL or upload file to generate URL"
+                          className="flex-1 p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-mono"
+                        />
+                        <label className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer">
+                          <Upload className="w-4 h-4" />
+                          <span>{uploadingSecondarySlide ? 'Uploading...' : 'Upload Photo'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploadingSecondarySlide}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              try {
+                                setUploadingSecondarySlide(true);
+                                const url = await handleFileUpload(file);
+                                setNewSecondaryImage(url);
+                                alert('Slide photo uploaded successfully!');
+                              } catch (err) {
+                                alert('Failed to upload slide photo.');
+                              } finally {
+                                setUploadingSecondarySlide(false);
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="pt-2 flex justify-end">
                     <button
                       type="button"
-                      onClick={() => setEditHeroImages([...editHeroImages, { id: `hero-${Date.now()}`, imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&q=80', caption: { en: 'New Slide Image', ne: 'नयाँ स्लाइड तस्विर' } }])}
-                      className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold flex items-center gap-1"
+                      disabled={uploadingSecondarySlide || !newSecondaryImage}
+                      onClick={() => {
+                        if (!newSecondaryImage) return;
+                        const newSlide = {
+                          id: `sec-${Date.now()}`,
+                          imageUrl: newSecondaryImage,
+                          title: { en: newSecondaryTitleEn || 'Update', ne: newSecondaryTitleNe || 'अपडेट' },
+                          description: { en: newSecondaryDescEn || '', ne: newSecondaryDescNe || '' }
+                        };
+                        setEditSecondaryImages([...editSecondaryImages, newSlide]);
+                        // Reset form
+                        setNewSecondaryImage('');
+                        setNewSecondaryTitleEn('');
+                        setNewSecondaryTitleNe('');
+                        setNewSecondaryDescEn('');
+                        setNewSecondaryDescNe('');
+                      }}
+                      className="px-5 py-2 bg-teal-800 hover:bg-teal-700 text-white font-bold text-xs rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                     >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add Slide</span>
+                      <Plus className="w-4 h-4" />
+                      <span>Add to Slider</span>
                     </button>
                   </div>
-                  <div className="space-y-3">
-                    {editHeroImages.map((img, idx) => (
-                      <div key={img.id || idx} className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-700 flex flex-wrap sm:flex-nowrap items-center gap-3">
-                        <img src={img.imageUrl} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0 border" />
-                        <div className="flex-1 space-y-1 min-w-0">
-                          <input
-                            type="text"
-                            placeholder="Image URL"
-                            value={img.imageUrl}
-                            onChange={(e) => {
-                              const updated = [...editHeroImages];
-                              updated[idx].imageUrl = e.target.value;
-                              setEditHeroImages(updated);
-                            }}
-                            className="w-full p-1.5 border rounded text-xs"
-                          />
+                </div>
+
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Current Update Slides</h4>
+                  <div className="space-y-4">
+                    {editSecondaryImages.map((img, idx) => (
+                      <div key={img.id || idx} className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-700 space-y-3">
+                        <div className="flex flex-wrap sm:flex-nowrap items-start gap-4">
+                          <img src={img.imageUrl} alt="" className="w-24 h-16 object-cover rounded-lg shrink-0 border" />
+                          <div className="flex-1 space-y-2 min-w-0">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-[9px] font-bold uppercase text-slate-400">Title (EN)</label>
+                                <input
+                                  type="text"
+                                  placeholder="Title (EN)"
+                                  value={img.title?.en || ''}
+                                  onChange={(e) => {
+                                    const updated = [...editSecondaryImages];
+                                    updated[idx].title = { ...updated[idx].title, en: e.target.value };
+                                    setEditSecondaryImages(updated);
+                                  }}
+                                  className="w-full p-1.5 border rounded text-xs"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[9px] font-bold uppercase text-slate-400">Title (NE)</label>
+                                <input
+                                  type="text"
+                                  placeholder="Title (NE)"
+                                  value={img.title?.ne || ''}
+                                  onChange={(e) => {
+                                    const updated = [...editSecondaryImages];
+                                    updated[idx].title = { ...updated[idx].title, ne: e.target.value };
+                                    setEditSecondaryImages(updated);
+                                  }}
+                                  className="w-full p-1.5 border rounded text-xs"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[9px] font-bold uppercase text-slate-400">Description (EN)</label>
+                                <input
+                                  type="text"
+                                  placeholder="Description (EN)"
+                                  value={img.description?.en || ''}
+                                  onChange={(e) => {
+                                    const updated = [...editSecondaryImages];
+                                    updated[idx].description = { ...updated[idx].description, en: e.target.value };
+                                    setEditSecondaryImages(updated);
+                                  }}
+                                  className="w-full p-1.5 border rounded text-xs"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[9px] font-bold uppercase text-slate-400">Description (NE)</label>
+                                <input
+                                  type="text"
+                                  placeholder="Description (NE)"
+                                  value={img.description?.ne || ''}
+                                  onChange={(e) => {
+                                    const updated = [...editSecondaryImages];
+                                    updated[idx].description = { ...updated[idx].description, ne: e.target.value };
+                                    setEditSecondaryImages(updated);
+                                  }}
+                                  className="w-full p-1.5 border rounded text-xs"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-[9px] font-bold uppercase text-slate-400">Image URL</label>
+                              <input
+                                type="text"
+                                placeholder="Image URL"
+                                value={img.imageUrl}
+                                onChange={(e) => {
+                                  const updated = [...editSecondaryImages];
+                                  updated[idx].imageUrl = e.target.value;
+                                  setEditSecondaryImages(updated);
+                                }}
+                                className="w-full p-1.5 border rounded text-xs font-mono"
+                              />
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setEditSecondaryImages(editSecondaryImages.filter((_, i) => i !== idx))}
+                            className="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-xs self-start"
+                            title="Delete Slide"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => setEditHeroImages(editHeroImages.filter((_, i) => i !== idx))}
-                          className="p-1.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-xs"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        
+                        {/* File upload to replace image */}
+                        <div className="flex items-center gap-2 sm:pl-[112px]">
+                          <label className="px-3 py-1.5 bg-teal-50 dark:bg-slate-800 hover:bg-teal-100 dark:hover:bg-slate-700 text-teal-800 dark:text-teal-200 text-xs font-semibold rounded-lg border border-teal-200 dark:border-slate-700 cursor-pointer flex items-center gap-1">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>{uploadingSecondarySlide ? 'Uploading...' : 'Replace Photo'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={uploadingSecondarySlide}
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                try {
+                                  setUploadingSecondarySlide(true);
+                                  const url = await handleFileUpload(file);
+                                  const updated = [...editSecondaryImages];
+                                  updated[idx].imageUrl = url;
+                                  setEditSecondaryImages(updated);
+                                  alert('Slide photo replaced successfully!');
+                                } catch (err) {
+                                  alert('Failed to upload replace image.');
+                                } finally {
+                                  setUploadingSecondarySlide(false);
+                                }
+                              }}
+                            />
+                          </label>
+                          <span className="text-[10px] text-slate-500">Upload a photo to replace this URL</span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -2984,6 +3313,13 @@ export default function HistorySection({
             >
               <span>9. Top Ribbon & Reg.</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveEditSection('recent_updates')}
+              className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-lg transition-all border border-emerald-500/40 flex items-center gap-1 cursor-pointer shadow-sm"
+            >
+              <span>11. Recent Updates</span>
+            </button>
           </div>
         </div>
       )}
@@ -3255,9 +3591,21 @@ export default function HistorySection({
         <div className="lg:col-span-9 space-y-10">
           {/* Image Carousel */}
       <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 shadow-md border border-teal-100 dark:border-slate-800 transition-colors">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-teal-950 dark:text-teal-50 mb-8 flex items-center gap-3">
-          <PlayCircle className="w-7 h-7 text-emerald-500" />
-          {t.photoGallery[lang]}
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-teal-950 dark:text-teal-50 mb-8 flex flex-wrap items-center justify-between gap-4">
+          <span className="flex items-center gap-3">
+            <PlayCircle className="w-7 h-7 text-emerald-500" />
+            <span>{t.photoGallery[lang]}</span>
+          </span>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setActiveEditSection('recent_updates')}
+              className="px-3.5 py-1.5 bg-teal-50 dark:bg-slate-800 hover:bg-teal-100 dark:hover:bg-slate-700 text-teal-800 dark:text-teal-200 text-xs font-bold rounded-xl border border-teal-200 dark:border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit Slider</span>
+            </button>
+          )}
         </h2>
         <div className="relative w-full aspect-video sm:aspect-[21/9] rounded-2xl overflow-hidden bg-gray-100 group shadow-inner">
           {activeSecondaryImages[secondaryImageIdx] && (
