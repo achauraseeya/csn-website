@@ -68,6 +68,24 @@ import {
 } from './services/firebaseDb';
 import { broadcastLiveEvent, listenLiveEvents } from './services/broadcastSync';
 
+const isRecentlySaved = (key: string): boolean => {
+  try {
+    const lastSaved = localStorage.getItem(`recently_saved_${key}`);
+    if (!lastSaved) return false;
+    const now = Date.now();
+    const savedTime = parseInt(lastSaved, 10);
+    return now - savedTime < 10000; // 10 seconds threshold
+  } catch (e) {
+    return false;
+  }
+};
+
+const markRecentlySaved = (key: string) => {
+  try {
+    localStorage.setItem(`recently_saved_${key}`, Date.now().toString());
+  } catch (e) {}
+};
+
 const defaultSiteTexts: SiteTexts = {
   heroTitleEn: 'Chaurasiya Samaj Nepal',
   heroTitleNe: 'चौरसिया समाज नेपाल',
@@ -1020,6 +1038,7 @@ export default function App() {
         const { enabled } = getGithubSettings();
         if (enabled) {
           await saveFileToGithub('site_texts.json', nextTexts, `Update featured leadership profile info for ${updatedMember.name.en}`);
+          markRecentlySaved('site_texts');
         }
       }
     } catch (e) {
@@ -1750,6 +1769,7 @@ export default function App() {
     } catch (e) {}
     try {
       await saveFileToGithub('site_texts.json', nextTexts, 'Update site global texts');
+      markRecentlySaved('site_texts');
     } catch (err) {
       console.error('Failed to update site texts:', err);
     }
@@ -2108,7 +2128,7 @@ export default function App() {
       try {
         localStorage.setItem('chaurasiya_site_texts', JSON.stringify(nextTexts));
       } catch (e) {}
-      saveFileToGithub('site_texts.json', nextTexts, `Update site texts leadership sync ${displayMember.id}`).catch(() => {});
+      saveFileToGithub('site_texts.json', nextTexts, `Update site texts leadership sync ${displayMember.id}`).then(() => markRecentlySaved('site_texts')).catch(() => {});
     }
 
     if (!hasId && !displayMember.chapterId) {
@@ -2140,6 +2160,7 @@ export default function App() {
         const { enabled } = getGithubSettings();
         if (enabled) {
           await saveFileToGithub('site_texts.json', nextTexts, `Update featured leadership profile info for ${displayMember.name.en}`);
+          markRecentlySaved('site_texts');
         }
       }
     } catch (e) {
