@@ -504,7 +504,7 @@ export default function HistorySection({
     setEditUnityTenet2SubNe(siteTexts.unityTenet2SubNe || 'सम्पदा');
     setEditUnityTenet3En(siteTexts.unityTenet3En || 'Cooperation');
     setEditUnityTenet3Ne(siteTexts.unityTenet3Ne || 'सहकार्य');
-    setEditUnityTenet3SubEn(siteTexts.unityTenet3SubNe || 'Mutual Aid');
+    setEditUnityTenet3SubEn(siteTexts.unityTenet3SubEn || 'Mutual Aid');
     setEditUnityTenet3SubNe(siteTexts.unityTenet3SubNe || 'सहयोग');
 
     try {
@@ -543,7 +543,30 @@ export default function HistorySection({
     } catch (e) {
       setEditSecondaryImages([...galleryItems]);
     }
-  }, [activeEditSection]);
+  }, [activeEditSection, siteTexts]);
+
+  useEffect(() => {
+    if (siteTexts.heroImagesJson) {
+      try {
+        const parsed = JSON.parse(siteTexts.heroImagesJson);
+        if (Array.isArray(parsed) && parsed.length > 0) setEditHeroImages(parsed);
+      } catch (e) {}
+    }
+  }, [siteTexts.heroImagesJson]);
+
+  useEffect(() => {
+    if (siteTexts.secondaryImagesJson) {
+      try {
+        const parsed = JSON.parse(siteTexts.secondaryImagesJson);
+        if (Array.isArray(parsed) && parsed.length > 0) setEditSecondaryImages(parsed);
+      } catch (e) {}
+    }
+  }, [siteTexts.secondaryImagesJson]);
+
+  useEffect(() => {
+    if (siteTexts.topRibbonEn) setEditTopRibbonEn(siteTexts.topRibbonEn);
+    if (siteTexts.topRibbonNe) setEditTopRibbonNe(siteTexts.topRibbonNe);
+  }, [siteTexts.topRibbonEn, siteTexts.topRibbonNe]);
 
   const handleDeleteUnityStat = async (statId: string | number) => {
     if (!window.confirm('Are you sure you want to delete this statistic?')) return;
@@ -958,7 +981,7 @@ export default function HistorySection({
       setHeroImageIdx((prev) => (prev + 1) % activeHeroImages.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, [activeHeroImages.length]);
+  }, [activeHeroImages.length, siteTexts.heroImagesJson]);
 
   // Secondary gallery slider controls & timer (4.5s)
   const nextSecondaryImage = () => {
@@ -977,7 +1000,7 @@ export default function HistorySection({
       nextSecondaryImage();
     }, 4500);
     return () => clearInterval(timer);
-  }, [activeSecondaryImages.length]);
+  }, [activeSecondaryImages.length, siteTexts.secondaryImagesJson]);
 
   const t = {
     ctaButton: { en: 'Join Our Community', ne: 'हाम्रो समुदायमा सामेल हुनुहोस्' },

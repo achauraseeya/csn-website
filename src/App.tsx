@@ -653,19 +653,21 @@ export default function App() {
       // Notices
       fetches.push(apiFetch<Notice[]>('/api/notices', 'community_notices.json', [])
         .then((serverNotices) => {
-          if (Array.isArray(serverNotices) && serverNotices.length > 0) {
-            setNotices((prev) => {
-              const mergedMap = new Map<string, Notice>();
-              serverNotices.forEach(n => mergedMap.set(n.id, n));
-              initialNotices.forEach(n => {
-                if (!mergedMap.has(n.id)) {
-                  mergedMap.set(n.id, n);
-                }
-              });
-              const finalNotices = Array.from(mergedMap.values());
-              try { localStorage.setItem('chaurasiya_notices', JSON.stringify(finalNotices)); } catch (e) {}
-              return finalNotices;
-            });
+          if (Array.isArray(serverNotices)) {
+            // AUTHORITATIVE: If we got a list from GitHub, it overrides everything
+            // Note: If serverNotices is [], it means the user deleted all custom notices.
+            // We should only fallback to initialNotices if the user hasn't customized yet.
+            const hasCustomized = localStorage.getItem('chaurasiya_has_customized_notices');
+            let finalNotices = serverNotices;
+            
+            if (serverNotices.length === 0 && !hasCustomized) {
+               finalNotices = initialNotices;
+            } else {
+               localStorage.setItem('chaurasiya_has_customized_notices', 'true');
+            }
+
+            setNotices(finalNotices);
+            try { localStorage.setItem('chaurasiya_notices', JSON.stringify(finalNotices)); } catch (e) {}
           }
         })
         .catch(() => {}));
@@ -701,19 +703,34 @@ export default function App() {
         .catch(() => {}));
 
       // Site Texts
-      fetches.push(apiFetch<SiteTexts>('/api/site-texts', 'site_texts.json', defaultSiteTexts)
-        .then((data) => {
-          if (data && typeof data === 'object') {
-            setSiteTexts((prev) => ({ ...prev, ...data }));
-          }
-        })
-        .catch(() => {}));
+      if (!isRecentlySaved('site_texts')) {
+        fetches.push(apiFetch<SiteTexts>('/api/site-texts', 'site_texts.json', defaultSiteTexts)
+          .then((data) => {
+            if (data && typeof data === 'object') {
+              setSiteTexts((prev) => {
+                const merged = { ...prev, ...data };
+                try { localStorage.setItem('chaurasiya_site_texts', JSON.stringify(merged)); } catch (e) {}
+                return merged;
+              });
+            }
+          })
+          .catch(() => {}));
+      }
 
       // Networks
       fetches.push(apiFetch<NetworkBranch[]>('/api/networks', 'community_networks.json', initialNetworks)
         .then((serverNetworks) => {
-          if (Array.isArray(serverNetworks) && serverNetworks.length > 0) {
-            setNetworks(serverNetworks);
+          if (Array.isArray(serverNetworks)) {
+            const hasCustomized = localStorage.getItem('chaurasiya_has_customized_networks');
+            let finalNetworks = serverNetworks;
+            
+            if (serverNetworks.length === 0 && !hasCustomized) {
+               finalNetworks = initialNetworks;
+            } else {
+               localStorage.setItem('chaurasiya_has_customized_networks', 'true');
+            }
+            setNetworks(finalNetworks);
+            try { localStorage.setItem('chaurasiya_networks', JSON.stringify(finalNetworks)); } catch (e) {}
           }
         })
         .catch(() => {}));
@@ -721,13 +738,18 @@ export default function App() {
       // Journey Albums
       fetches.push(apiFetch<Album[]>('/api/albums', 'journey_albums.json', [])
         .then((serverAlbums) => {
-          if (Array.isArray(serverAlbums) && serverAlbums.length > 0) {
-            setAlbums((prev) => {
-              const mergedMap = new Map<string, Album>();
-              initialJourneyAlbums.forEach(a => mergedMap.set(a.id, a));
-              serverAlbums.forEach((a) => mergedMap.set(a.id, a));
-              return Array.from(mergedMap.values());
-            });
+          if (Array.isArray(serverAlbums)) {
+            const hasCustomized = localStorage.getItem('chaurasiya_has_customized_albums');
+            let finalAlbums = serverAlbums;
+            
+            if (serverAlbums.length === 0 && !hasCustomized) {
+               finalAlbums = initialJourneyAlbums;
+            } else {
+               localStorage.setItem('chaurasiya_has_customized_albums', 'true');
+            }
+
+            setAlbums(finalAlbums);
+            try { localStorage.setItem('chaurasiya_albums', JSON.stringify(finalAlbums)); } catch (e) {}
           }
         })
         .catch(() => {}));
@@ -1048,6 +1070,7 @@ export default function App() {
       const updated = prev.filter((n) => n.id !== id);
       try {
         localStorage.setItem('chaurasiya_notices', JSON.stringify(updated));
+        localStorage.setItem('chaurasiya_has_customized_notices', 'true');
       } catch (e) {
         console.error('Failed to update localStorage', e);
       }
@@ -1445,6 +1468,7 @@ export default function App() {
       const updated = prev.filter((a) => a.id !== albumId);
       try {
         localStorage.setItem('chaurasiya_journey_albums', JSON.stringify(updated));
+        localStorage.setItem('chaurasiya_has_customized_albums', 'true');
       } catch (e) {
         console.error('Failed to update localStorage', e);
       }
@@ -1767,7 +1791,11 @@ export default function App() {
 
   const handleDeleteNetwork = async (id: string) => {
     const listAfterDeletion = networks.filter((n) => n.id !== id);
-    setNetworks((prev) => prev.filter((n) => n.id !== id));
+    setNetworks((prev) => {
+      const updated = prev.filter((n) => n.id !== id);
+      localStorage.setItem('chaurasiya_has_customized_networks', 'true');
+      return updated;
+    });
     if (selectedNetworkId === id) {
       setSelectedNetworkId(null);
       setCurrentTab('history');
@@ -2399,7 +2427,10 @@ export default function App() {
 
             {/* Scrolling Texts Ticker Container */}
             <div className="flex-1 overflow-hidden relative min-w-0">
-              <div className="inline-flex whitespace-nowrap items-center gap-6 animate-[marquee_25s_linear_infinite] hover:[animation-play-state:paused] cursor-default font-bold tracking-wide uppercase text-teal-100 text-[11px] sm:text-xs">
+              <div 
+                key={`${lang}-${siteTexts.topRibbonEn}-${siteTexts.topRibbonNe}`}
+                className="inline-flex whitespace-nowrap items-center gap-6 animate-[marquee_25s_linear_infinite] hover:[animation-play-state:paused] cursor-default font-bold tracking-wide uppercase text-teal-100 text-[11px] sm:text-xs"
+              >
                 {(() => {
                   const rawTexts = (lang === 'en' ? (siteTexts.topRibbonEn || siteTexts.taglineEn) : (siteTexts.topRibbonNe || siteTexts.taglineNe))
                     .split(/[\n|;]+/)
