@@ -28,7 +28,9 @@ const JSON_FILES = [
   'donation_info.json',
   'membership_info.json',
   'volunteer_info.json',
-  'blogger_export.xml'
+  'blogger_export.xml',
+  'chaurasiya_samaj_blogger_headless.xml',
+  'sitemap.xml'
 ];
 
 async function syncJsonAndDataFiles() {

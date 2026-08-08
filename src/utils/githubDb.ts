@@ -242,15 +242,15 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
 
     // 3. Secondary fallback to raw.githubusercontent.com
     const rawUrls = [
-      `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${fileName}?t=${Date.now()}`,
-      `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/public/${fileName}?t=${Date.now()}`
+      `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/${fileName}`,
+      `https://raw.githubusercontent.com/${settings.username}/${settings.repo}/${settings.branch}/public/${fileName}`
     ];
 
     for (const rawUrl of rawUrls) {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 4000);
-        const rawRes = await fetch(rawUrl, { cache: 'no-store', signal: controller.signal });
+        const rawRes = await fetch(rawUrl, { signal: controller.signal });
         clearTimeout(timeoutId);
         if (rawRes.ok) {
           const data = await rawRes.json();
@@ -264,14 +264,14 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
 
   // 3. Fallback to static relative URL from current domain (e.g., ./fileName.json)
   const relativeUrls = [
-    `./${fileName}?t=${Date.now()}`,
-    `/${fileName}?t=${Date.now()}`
+    `./${fileName}`,
+    `/${fileName}`
   ];
   for (const relUrl of relativeUrls) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 4000);
-      const res = await fetch(relUrl, { cache: 'no-store', signal: controller.signal });
+      const res = await fetch(relUrl, { signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) {
         const contentType = res.headers.get('content-type') || '';

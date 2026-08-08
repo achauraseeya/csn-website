@@ -181,6 +181,36 @@ export interface SiteTexts {
   presidentMessageTitleNe?: string;
   presidentMessageEn?: string;
   presidentMessageNe?: string;
+  visionEn?: string;
+  visionNe?: string;
+  eservicesTitleEn?: string;
+  eservicesTitleNe?: string;
+  eservicesSubEn?: string;
+  eservicesSubNe?: string;
+  eservicesJson?: string;
+  unityTitleEn?: string;
+  unityTitleNe?: string;
+  unityVisionEn?: string;
+  unityVisionNe?: string;
+  unityTenet1En?: string;
+  unityTenet1Ne?: string;
+  unityTenet1SubEn?: string;
+  unityTenet1SubNe?: string;
+  unityTenet2En?: string;
+  unityTenet2Ne?: string;
+  unityTenet2SubEn?: string;
+  unityTenet2SubNe?: string;
+  unityTenet3En?: string;
+  unityTenet3Ne?: string;
+  unityTenet3SubEn?: string;
+  unityTenet3SubNe?: string;
+  unityStatsJson?: string;
+  unityNextEventTitleEn?: string;
+  unityNextEventTitleNe?: string;
+  unityNextEventDateEn?: string;
+  unityNextEventDateNe?: string;
+  unityNextEventLocEn?: string;
+  unityNextEventLocNe?: string;
   helplineTitleEn?: string;
   helplineTitleNe?: string;
   helplineCentralLabelEn?: string;
@@ -211,6 +241,10 @@ export interface SiteTexts {
   secondaryImagesJson?: string;
   impactStatsJson?: string;
   leadershipIdsJson?: string;
+  topRibbonEn?: string;
+  topRibbonNe?: string;
+  regNoEn?: string;
+  regNoNe?: string;
 }
 
 export interface NetworkBranch {

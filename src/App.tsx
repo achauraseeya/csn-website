@@ -5,6 +5,7 @@
 
 import { fetchDriveFolderImagesClient } from './utils/driveClient';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram, ExternalLink, X, Edit, Globe, Phone, MapPin, Sparkles, Download } from 'lucide-react';
 import { Language, AnalyticsMetric, Member, Album, AlbumMediaItem, Notice, Document, CommunityEvent, NetworkBranch, MatrimonialProfile, VolunteerApplication, MembershipApplication, NewsletterSubscriber, NavMenuItem } from './types';
 import { initialNetworks } from './data/networkData';
@@ -14,35 +15,35 @@ import logoImg from './assets/images/chaurasiya_logo_1784519579895.jpg';
 
 import Navigation, { DEFAULT_NAV_MENUS } from './components/Navigation';
 import AdminMenuManagerModal from './components/AdminMenuManagerModal';
-import HistorySection from './components/HistorySection';
-import AlbumGallery from './components/AlbumGallery';
-import AlbumDetail from './components/AlbumDetail';
+const HistorySection = React.lazy(() => import('./components/HistorySection'));
+const AlbumGallery = React.lazy(() => import('./components/AlbumGallery'));
+const AlbumDetail = React.lazy(() => import('./components/AlbumDetail'));
 import BlogPostDetail, { SinglePostData } from './components/BlogPostDetail';
-import NetworkBranchDetail from './components/NetworkBranchDetail';
-import NoticeGallery from './components/NoticeGallery';
-import DirectorySection from './components/DirectorySection';
-import EventsSection from './components/EventsSection';
-import MembershipDonation from './components/MembershipDonation';
-import FamilyConnectivitySection from './components/FamilyConnectivitySection';
-import AbhishekBio from './components/AbhishekBio';
-import LeaderBio from './components/LeaderBio';
-import MatrimonialSection from './components/MatrimonialSection';
-import AdminCentralDashboardModal from './components/AdminCentralDashboardModal';
-import BloggerXmlExporter from './components/BloggerXmlExporter';
-import AnalyticsDashboard from './components/AnalyticsDashboard';
-import TransparencySection from './components/TransparencySection';
-import ContactSection from './components/ContactSection';
-import UploadJourneyPostModal from './components/UploadJourneyPostModal';
-import AdminLoginModal from './components/AdminLoginModal';
-import AddNoticeModal from './components/AddNoticeModal';
-import RenownedPeople from './components/RenownedPeople';
-import PrivacySection from './components/PrivacySection';
-import TermsSection from './components/TermsSection';
-import AboutSectionPage from './components/AboutSectionPage';
-import OurHeritagePage from './components/OurHeritagePage';
-import SitemapPage from './components/SitemapPage';
-import { SitemapModal } from './components/SitemapModal';
-import EditFooterModal from './components/EditFooterModal';
+const NetworkBranchDetail = React.lazy(() => import('./components/NetworkBranchDetail'));
+const NoticeGallery = React.lazy(() => import('./components/NoticeGallery'));
+const DirectorySection = React.lazy(() => import('./components/DirectorySection'));
+const EventsSection = React.lazy(() => import('./components/EventsSection'));
+const MembershipDonation = React.lazy(() => import('./components/MembershipDonation'));
+const FamilyConnectivitySection = React.lazy(() => import('./components/FamilyConnectivitySection'));
+const AbhishekBio = React.lazy(() => import('./components/AbhishekBio'));
+const LeaderBio = React.lazy(() => import('./components/LeaderBio'));
+const MatrimonialSection = React.lazy(() => import('./components/MatrimonialSection'));
+const AdminCentralDashboardModal = React.lazy(() => import('./components/AdminCentralDashboardModal'));
+const BloggerXmlExporter = React.lazy(() => import('./components/BloggerXmlExporter'));
+const AnalyticsDashboard = React.lazy(() => import('./components/AnalyticsDashboard'));
+const TransparencySection = React.lazy(() => import('./components/TransparencySection'));
+const ContactSection = React.lazy(() => import('./components/ContactSection'));
+const UploadJourneyPostModal = React.lazy(() => import('./components/UploadJourneyPostModal'));
+const AdminLoginModal = React.lazy(() => import('./components/AdminLoginModal'));
+const AddNoticeModal = React.lazy(() => import('./components/AddNoticeModal'));
+const RenownedPeople = React.lazy(() => import('./components/RenownedPeople'));
+const PrivacySection = React.lazy(() => import('./components/PrivacySection'));
+const TermsSection = React.lazy(() => import('./components/TermsSection'));
+const AboutSectionPage = React.lazy(() => import('./components/AboutSectionPage'));
+const OurHeritagePage = React.lazy(() => import('./components/OurHeritagePage'));
+const SitemapPage = React.lazy(() => import('./components/SitemapPage'));
+const SitemapModal = React.lazy(() => import('./components/SitemapModal').then(module => ({ default: module.SitemapModal })));
+const EditFooterModal = React.lazy(() => import('./components/EditFooterModal'));
 import { SiteTexts } from './types';
 import { apiFetch, apiSave, apiDelete, saveFileToGithub, getGithubSettings, uploadImageToGithub } from './utils/githubDb';
 import { syncCustomFormFieldsFromGithub } from './utils/customFormFields';
@@ -111,10 +112,42 @@ const defaultSiteTexts: SiteTexts = {
   socialFb: 'https://facebook.com',
   socialTw: 'https://twitter.com',
   socialIg: 'https://instagram.com',
+  topRibbonEn: 'Jay Paan Dev ✦ Official Central Portal of Chaurasiya Samaj Nepal ✦ Unifying Community Across Nepal & Abroad ✦ Preserving Betel Leaf Heritage',
+  topRibbonNe: 'जय पान देव ✦ चौरसिया समाज नेपालको आधिकारिक केन्द्रीय पोर्टल ✦ नेपाल तथा विदेशमा रहेका समुदायको एकता ✦ पान संस्कृतिको संरक्षण',
+  regNoEn: 'Reg: 12345/071 | SWC Affiliated',
+  regNoNe: 'दर्ता नं: १२३४५/०७१ | समाज कल्याण परिषद् आबद्ध',
   presidentMessageTitleEn: "Chief President's Message",
   presidentMessageTitleNe: 'मुख्य अध्यक्षको सन्देश',
   presidentMessageEn: 'Welcome to Chaurasiya Samaj Nepal. Our mission is to integrate, unify, and elevate the Chaurasiya community across Nepal, preserving our sacred betel leaf cultural heritage while empowering every member with equal educational, healthcare, and economic opportunities.',
   presidentMessageNe: 'चौरसिया समाज नेपालमा हार्दिक स्वागत छ। हाम्रो मुख्य उद्देश्य नेपालभर छरिएर रहेका चौरसिया समुदायलाई एकीकृत गर्दै, परम्परागत पान खेतीको संरक्षण र विकाससँगै प्रत्येक सदस्यलाई शिक्षा, स्वास्थ्य र आर्थिक अवसरहरू प्रदान गर्नु हो।',
+  visionEn: 'Dedicated to Unity, Consolidation and Cooperation.',
+  visionNe: 'एकता, एक्यबद्धता र सहकार्यमा समर्पित।',
+  eservicesTitleEn: 'Institutional E-Services',
+  eservicesTitleNe: 'डिजिटल नागरिक सेवा पोर्टल',
+  eservicesSubEn: 'Direct Citizen Portals & Verification',
+  eservicesSubNe: 'प्रत्यक्ष संस्थागत तथा नागरिक सेवाहरू',
+  unityTitleEn: 'Unity, Consolidation & Cooperation',
+  unityTitleNe: 'एकता, एक्यबद्धता र सहकार्य',
+  unityVisionEn: 'Dedicated to Unity, Consolidation and Cooperation.',
+  unityVisionNe: 'एकता, एक्यबद्धता र सहकार्यमा समर्पित।',
+  unityTenet1En: 'Unity',
+  unityTenet1Ne: 'एकता',
+  unityTenet1SubEn: 'Harmony',
+  unityTenet1SubNe: 'सद्भाव',
+  unityTenet2En: 'Consolidation',
+  unityTenet2Ne: 'एक्यबद्धता',
+  unityTenet2SubEn: 'Heritage',
+  unityTenet2SubNe: 'सम्पदा',
+  unityTenet3En: 'Cooperation',
+  unityTenet3Ne: 'सहकार्य',
+  unityTenet3SubEn: 'Mutual Aid',
+  unityTenet3SubNe: 'सहयोग',
+  unityNextEventTitleEn: 'Annual Chaurasiya National Convention & Educational Honors',
+  unityNextEventTitleNe: 'चौरासिया समाज राष्ट्रिय महाधिवेशन तथा सम्मान समारोह',
+  unityNextEventDateEn: 'BS 2083',
+  unityNextEventDateNe: 'वि.सं. २०८३',
+  unityNextEventLocEn: 'Kathmandu / Parsa',
+  unityNextEventLocNe: 'काठमाडौँ / पर्सा',
   helplineTitleEn: 'Emergency & Helpline',
   helplineTitleNe: 'आकस्मिक तथा हेल्पलाइन',
   helplineCentralLabelEn: 'Central Helpline',
@@ -1942,6 +1975,22 @@ export default function App() {
     });
   }, []);
 
+  const getWhatsAppHref = () => {
+    const rawPhone = siteTexts.footerPhone || '';
+    const cleanPhone = rawPhone.replace(/\D/g, '');
+    
+    if (!cleanPhone) {
+      return "https://wa.me/9779812345678";
+    }
+    
+    let finalPhone = cleanPhone;
+    if (cleanPhone.length === 10 && cleanPhone.startsWith('9')) {
+      finalPhone = '977' + cleanPhone;
+    }
+    
+    return `https://wa.me/${finalPhone}`;
+  };
+
   // Theme (Dark Mode) State & effect
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try {
@@ -2244,19 +2293,56 @@ export default function App() {
 
   if (isInitializing) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <h2 className="text-teal-900 dark:text-teal-100 font-semibold tracking-wide animate-pulse">
-            Loading {siteTexts.titleEn || 'Chaurasiya Samaj Nepal'}...
-          </h2>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="text-center space-y-6 max-w-sm px-6">
+          <div className="relative w-28 h-28 mx-auto flex items-center justify-center">
+            {/* Elegant spinning background gradient border */}
+            <div className="absolute inset-0 rounded-full border-4 border-teal-600/30 border-t-emerald-500 animate-spin"></div>
+            {/* Elegant rounded-full logo container */}
+            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-teal-100 bg-white shadow-lg flex items-center justify-center">
+              <img 
+                src={siteTexts.logoUrl || logoImg} 
+                alt={siteTexts.logoTextEn || 'Chaurasiya Samaj Nepal'} 
+                className="w-full h-full object-cover rounded-full"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = logoImg;
+                }}
+              />
+            </div>
+          </div>
+          <div className="space-y-2 animate-pulse">
+            <h2 className="text-xl font-black text-teal-950 dark:text-teal-50 tracking-tight uppercase">
+              {lang === 'en' ? (siteTexts.logoTextEn || 'Chaurasiya Samaj Nepal') : (siteTexts.logoTextNe || 'चौरसिया समाज नेपाल')}
+            </h2>
+            <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+              {lang === 'en' ? 'Initializing Central Portal' : 'केन्द्रीय पोर्टल लोड हुँदैछ'}
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
+    <HelmetProvider>
+    <React.Suspense fallback={<div className="flex justify-center items-center h-screen bg-slate-900"><div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>}>
     <>
+
+      <Helmet>
+        <title>{lang === 'en' ? 'Chaurasiya Samaj Nepal - Official Portal & Community Platform' : 'चौरसिया समाज नेपाल - आधिकारिक पोर्टल र सामुदायिक मञ्च'}</title>
+        <meta name="description" content={lang === 'en' ? 'Official website of Chaurasiya Samaj Nepal. Empowering Chaurasiya community through verified members directory, matrimonial portal, cultural heritage, events calendar, volunteer registry and welfare donation.' : 'चौरसिया समाज नेपालको आधिकारिक वेबसाइट। निर्देशिका, वैवाहिक पोर्टल, सांस्कृतिक सम्पदा, घटनाक्रम क्यालेन्डर र कल्याणकारी दानमार्फत चौरसिया समुदायको सशक्तिकरण।'} />
+        <meta name="keywords" content="Chaurasiya Samaj Nepal, Chaurasiya Samaj, Chaurasiya Matrimonial, Chaurasiya Directory, Parsa Nepal, Birgunj Chaurasiya, Chaurasiya Community Nepal, Chaurasiya NGO" />
+        <meta property="og:title" content={lang === 'en' ? 'Chaurasiya Samaj Nepal - Official Portal & Community Hub' : 'चौरसिया समाज नेपाल - आधिकारिक पोर्टल'} />
+        <meta property="og:description" content={lang === 'en' ? 'Connecting hearts, preserving heritage, and fostering socio-economic empowerment across Chaurasiya Samaj Nepal.' : 'चौरसिया समाज नेपालभरि मन जोड्ने, सम्पदा संरक्षण गर्ने र सामाजिक-आर्थिक सशक्तिकरणलाई बढावा दिने।'} />
+      </Helmet>
+
+      <Helmet>
+        <title>{lang === 'en' ? 'Chaurasiya Samaj Nepal - Official Portal & Community Platform' : 'चौरसिया समाज नेपाल - आधिकारिक पोर्टल र सामुदायिक मञ्च'}</title>
+        <meta name="description" content={lang === 'en' ? 'Official website of Chaurasiya Samaj Nepal. Empowering Chaurasiya community through verified members directory, matrimonial portal, cultural heritage, events calendar, volunteer registry and welfare donation.' : 'चौरसिया समाज नेपालको आधिकारिक वेबसाइट। निर्देशिका, वैवाहिक पोर्टल, सांस्कृतिक सम्पदा, घटनाक्रम क्यालेन्डर र कल्याणकारी दानमार्फत चौरसिया समुदायको सशक्तिकरण।'} />
+        <meta name="keywords" content="Chaurasiya Samaj Nepal, Chaurasiya Samaj, Chaurasiya Matrimonial, Chaurasiya Directory, Parsa Nepal, Birgunj Chaurasiya, Chaurasiya Community Nepal, Chaurasiya NGO" />
+        <meta property="og:title" content={lang === 'en' ? 'Chaurasiya Samaj Nepal - Official Portal & Community Hub' : 'चौरसिया समाज नेपाल - आधिकारिक पोर्टल'} />
+        <meta property="og:description" content={lang === 'en' ? 'Connecting hearts, preserving heritage, and fostering socio-economic empowerment across Chaurasiya Samaj Nepal.' : 'चौरसिया समाज नेपालभरि मन जोड्ने, सम्पदा संरक्षण गर्ने र सामाजिक-आर्थिक सशक्तिकरणलाई बढावा दिने।'} />
+      </Helmet>
       {/* AI Studio Only: Download Blogger XML Button */}
       {(window.location.hostname.includes('run.app') || window.location.hostname.includes('localhost') || window.location.hostname.includes('ai.studio')) && (
         <button
@@ -2300,11 +2386,11 @@ export default function App() {
             <div className="flex-1 overflow-hidden relative min-w-0">
               <div className="inline-flex whitespace-nowrap items-center gap-6 animate-[marquee_25s_linear_infinite] hover:[animation-play-state:paused] cursor-default font-bold tracking-wide uppercase text-teal-100 text-[11px] sm:text-xs">
                 {(() => {
-                  const rawTexts = (lang === 'en' ? siteTexts.taglineEn : siteTexts.taglineNe)
+                  const rawTexts = (lang === 'en' ? (siteTexts.topRibbonEn || siteTexts.taglineEn) : (siteTexts.topRibbonNe || siteTexts.taglineNe))
                     .split(/[\n|;]+/)
                     .map(s => s.trim())
                     .filter(Boolean);
-                  const list = rawTexts.length > 0 ? rawTexts : ['A dedicated social platform preserving betel leaf culture & serving humanity'];
+                  const list = rawTexts.length > 0 ? rawTexts : ['Jay Paan Dev ✦ Official Central Portal of Chaurasiya Samaj Nepal'];
                   // Duplicate array to create seamless loop
                   return [...list, ...list, ...list].map((item, idx) => (
                     <span key={idx} className="inline-flex items-center gap-2">
@@ -2337,7 +2423,9 @@ export default function App() {
       />
 
       {/* Main body viewport container */}
-      <main className="flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+                  <main className="flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        <React.Suspense fallback={<div className="flex justify-center items-center h-64"><div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>}>
+        <React.Suspense fallback={<div className="flex justify-center items-center h-64"><div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>}>
         {(currentTab === 'history' || currentTab === 'home') && (
           <HistorySection
             lang={lang}
@@ -2642,6 +2730,8 @@ export default function App() {
             onSendMessage={handleContactSendMessage}
           />
         )}
+              </React.Suspense>
+              </React.Suspense>
       </main>
 
       {/* Enhanced NGO Footer */}
@@ -2724,7 +2814,7 @@ export default function App() {
 
         {/* Footer Credit Line */}
         <div className="max-w-7xl mx-auto pt-6 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-3 text-xs sm:text-sm text-gray-500 font-medium">
-          <span>{formatNumber(t.rights[lang], lang)} | {formatNumber(lang === 'en' ? 'Reg: 12345/071' : 'दर्ता नं: १२३४५/०त्१', lang)}</span>
+          <span>{formatNumber(t.rights[lang], lang)} | {formatNumber(lang === 'en' ? (siteTexts.regNoEn || 'Reg: 12345/071') : (siteTexts.regNoNe || 'दर्ता नं: १२३४५/०७१'), lang)}</span>
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
             <button onClick={() => handleNavigate('privacy')} className="hover:text-emerald-400 transition-colors">{lang === 'en' ? 'Privacy Policy' : 'गोपनीयता नीति'}</button>
             <button onClick={() => handleNavigate('terms')} className="hover:text-emerald-400 transition-colors">{lang === 'en' ? 'Terms of Service' : 'सेवाका सर्तहरू'}</button>
@@ -2755,7 +2845,7 @@ export default function App() {
 
       {/* Floating WhatsApp Button */}
       <a 
-        href="https://wa.me/9779812345678" 
+        href={getWhatsAppHref()} 
         target="_blank" 
         rel="noopener noreferrer"
         onClick={() => handleTrackAction('Click WhatsApp Float')}
@@ -2842,5 +2932,7 @@ export default function App() {
       />
     </div>
     </>
+    </React.Suspense>
+    </HelmetProvider>
   );
 }

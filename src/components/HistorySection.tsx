@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin, ShieldCheck, Lock, Trash2, Plus, ExternalLink, Edit, Edit3, Save, Phone, Mail, HeartHandshake, GraduationCap, ShieldAlert, LifeBuoy, Building2 } from 'lucide-react';
+import { BookOpen, Map, Users, ChevronRight, ChevronLeft, Leaf, PlayCircle, ArrowRight, Bell, Calendar, Image as ImageIcon, Eye, Download, X, Film, Play, Sparkles, MapPin, ShieldCheck, Lock, Trash2, Plus, ExternalLink, Edit, Edit3, Save, Phone, Mail, HeartHandshake, GraduationCap, ShieldAlert, LifeBuoy, Building2, Globe, FileText, Heart, Search, CheckCircle, TrendingUp, BarChart2, UserCheck, Clock, Droplet, FolderDown, Layers, Award, Upload, Wand2 } from 'lucide-react';
 import { Album, Language, Notice, SiteTexts, NetworkBranch, Member } from '../types';
 import { uploadImageToGithub } from '../utils/githubDb';
-import { compressImageToBase64 } from '../utils/imageUtils';
-import { communityHistory, impactStats, galleryItems, boardMembers, notices as defaultNotices, blogPosts } from '../data/communityData';
+import { compressImageToBase64, removeImageWhiteBackground } from '../utils/imageUtils';
+import { communityHistory, impactStats, galleryItems, boardMembers, notices as defaultNotices, blogPosts, upcomingEvents } from '../data/communityData';
 import { journeyAlbums as defaultJourneyAlbums } from '../data/albumsData';
 import AlbumDetail from './AlbumDetail';
 import { extractGoogleDriveId, formatNumber, getBestAlbumCover } from '../utils/mediaUrl';
@@ -42,6 +42,51 @@ interface BloggerPost {
   link: string;
   tags?: string[];
 }
+
+const defaultEservices = [
+  { id: '1', titleEn: 'Directory & Member ID', titleNe: 'सदस्यता तथा परिचयपत्र प्रणाली', subEn: 'Search members & verify credentials', subNe: 'सदस्य खोजी र डिजिटल प्रमाण प्रमाणीकरण', icon: 'UserCheck', targetPage: 'directory' },
+  { id: '2', titleEn: 'Matrimonial Match Portal', titleNe: 'वैवाहिक जोडी खोज तथा दर्ता', subEn: 'Verified matrimonial profiles hub', subNe: 'प्रमाणित बायोडाटा र वैवाहिक समन्वय', icon: 'Heart', targetPage: 'matrimonial' },
+  { id: '3', titleEn: 'Emergency Blood Bank', titleNe: 'आकस्मिक रक्तदान तथा स्वास्थ्य कोष', subEn: 'Find blood donors & medical aid', subNe: 'रक्तदाता सूची र आकस्मिक स्वास्थ्य सहयोग', icon: 'Droplet', targetPage: 'directory' },
+  { id: '4', titleEn: 'Youth Scholarship Desk', titleNe: 'विद्यार्थी छात्रवृत्ति तथा युवा मार्गदर्शन', subEn: 'Higher education grants & IT training', subNe: 'उच्च शिक्षा छात्रवृत्ति र प्राविधिक तालिम', icon: 'GraduationCap', targetPage: 'membership' },
+  { id: '5', titleEn: 'Bareja Paan Farmers Helpdesk', titleNe: 'बरैजा पान किसान सहयोग कक्ष', subEn: 'Subsidies, crop insurance & guidance', subNe: 'अनुदान, कृषि बीमा र प्राविधिक सल्लाह', icon: 'FolderDown', targetPage: 'our-heritage' },
+  { id: '6', titleEn: 'Official Document & Circular Portal', titleNe: 'अधिकार तथा परिपत्र पोर्टल', subEn: 'Download SWC registration & bylaws', subNe: 'विधान, दर्ता प्रमाण र वार्षिक प्रतिवेदन', icon: 'FileText', targetPage: 'documents' },
+  { id: '7', titleEn: 'Notice & Press Announcements', titleNe: 'सूचना तथा प्रेस विज्ञप्ति', subEn: 'Official central press releases & notices', subNe: 'केन्द्रीय प्रेस विज्ञप्ति र आधिकारिक निर्णय', icon: 'Bell', targetPage: 'history' }
+];
+
+const defaultUnityStats = [
+  { id: '1', labelEn: 'Members', labelNe: 'दर्ता परिवार', val: '12,500+', subEn: 'Verified Profiles', subNe: 'नेपाल र विदेश', icon: 'Users' },
+  { id: '2', labelEn: 'Branches', labelNe: 'जिल्ला शाखा', val: '35+', subEn: 'Active Committees', subNe: 'कार्यसमिति गठन', icon: 'Building2' },
+  { id: '3', labelEn: 'Blood Donors', labelNe: 'रक्तदाता', val: '1,400+', subEn: 'Ready Assistance', subNe: 'आकस्मिक सूची', icon: 'Droplet' },
+  { id: '4', labelEn: 'Weddings', labelNe: 'सफल जोडी', val: '450+', subEn: 'Happy Unions', subNe: 'सम्पन्न विवाह', icon: 'Heart' }
+];
+
+const renderServiceIcon = (iconName?: string) => {
+  switch (iconName) {
+    case 'UserCheck': return <UserCheck className="w-4 h-4" />;
+    case 'Heart': return <Heart className="w-4 h-4" />;
+    case 'Droplet': return <Droplet className="w-4 h-4" />;
+    case 'GraduationCap': return <GraduationCap className="w-4 h-4" />;
+    case 'FolderDown': return <FolderDown className="w-4 h-4" />;
+    case 'FileText': return <FileText className="w-4 h-4" />;
+    case 'Bell': return <Bell className="w-4 h-4" />;
+    case 'Globe': return <Globe className="w-4 h-4" />;
+    case 'Building2': return <Building2 className="w-4 h-4" />;
+    case 'Users': return <Users className="w-4 h-4" />;
+    case 'ShieldCheck': return <ShieldCheck className="w-4 h-4" />;
+    default: return <Globe className="w-4 h-4" />;
+  }
+};
+
+const renderStatIcon = (iconName?: string) => {
+  switch (iconName) {
+    case 'Users': return <Users className="w-3.5 h-3.5 text-emerald-500" />;
+    case 'Building2': return <Building2 className="w-3.5 h-3.5 text-blue-500" />;
+    case 'Droplet': return <Droplet className="w-3.5 h-3.5 text-rose-500" />;
+    case 'Heart': return <Heart className="w-3.5 h-3.5 text-pink-500" />;
+    case 'GraduationCap': return <GraduationCap className="w-3.5 h-3.5 text-teal-500" />;
+    default: return <Sparkles className="w-3.5 h-3.5 text-emerald-500" />;
+  }
+};
 
 export default function HistorySection({ 
   lang, 
@@ -85,8 +130,22 @@ export default function HistorySection({
   const [netLocEn, setNetLocEn] = useState('');
   const [netLocNe, setNetLocNe] = useState('');
 
-  // Editable site texts state
-  const [isEditingTexts, setIsEditingTexts] = useState(false);
+  // Editable site texts section modal state
+  const [activeEditSection, setActiveEditSection] = useState<'hero' | 'leadership' | 'executive_committee' | 'heritage' | 'mission' | 'impact' | 'eservices' | 'branding' | 'unity' | 'ribbon' | 'pillars' | null>(null);
+  const [editingUnityStatId, setEditingUnityStatId] = useState<string | number | null>(null);
+  const [inlineStatValue, setInlineStatValue] = useState('');
+  const [inlineStatLabelEn, setInlineStatLabelEn] = useState('');
+  const [inlineStatLabelNe, setInlineStatLabelNe] = useState('');
+  const [inlineStatSubEn, setInlineStatSubEn] = useState('');
+  const [inlineStatSubNe, setInlineStatSubNe] = useState('');
+  const [inlineStatIcon, setInlineStatIcon] = useState('Users');
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [editTopRibbonEn, setEditTopRibbonEn] = useState(siteTexts.topRibbonEn || '');
+  const [editTopRibbonNe, setEditTopRibbonNe] = useState(siteTexts.topRibbonNe || '');
+  const [editRegNoEn, setEditRegNoEn] = useState(siteTexts.regNoEn || '');
+  const [editRegNoNe, setEditRegNoNe] = useState(siteTexts.regNoNe || '');
+  const [selectedDirectoryMemberId, setSelectedDirectoryMemberId] = useState<string>('');
+
   const [editHeroTitleEn, setEditHeroTitleEn] = useState(siteTexts.heroTitleEn);
   const [editHeroTitleNe, setEditHeroTitleNe] = useState(siteTexts.heroTitleNe);
   const [editHeroSubEn, setEditHeroSubEn] = useState(siteTexts.heroSubEn);
@@ -215,6 +274,59 @@ export default function HistorySection({
     return boardMembers.filter(m => m.id === '1' || m.id === 'vc1');
   });
 
+  // E-Services editable state
+  const [editEservicesTitleEn, setEditEservicesTitleEn] = useState(siteTexts.eservicesTitleEn || 'Institutional E-Services');
+  const [editEservicesTitleNe, setEditEservicesTitleNe] = useState(siteTexts.eservicesTitleNe || 'डिजिटल नागरिक सेवा पोर्टल');
+  const [editEservicesSubEn, setEditEservicesSubEn] = useState(siteTexts.eservicesSubEn || 'Direct Citizen Portals & Verification');
+  const [editEservicesSubNe, setEditEservicesSubNe] = useState(siteTexts.eservicesSubNe || 'प्रत्यक्ष संस्थागत तथा नागरिक सेवाहरू');
+  const [editEservicesList, setEditEservicesList] = useState<any[]>(() => {
+    try {
+      if (siteTexts.eservicesJson) {
+        const parsed = JSON.parse(siteTexts.eservicesJson);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return defaultEservices;
+  });
+
+  // Unity, Consolidation & Cooperation editable state
+  const [editUnityTitleEn, setEditUnityTitleEn] = useState(siteTexts.unityTitleEn || 'Unity, Consolidation & Cooperation');
+  const [editUnityTitleNe, setEditUnityTitleNe] = useState(siteTexts.unityTitleNe || 'एकता, एक्यबद्धता र सहकार्य');
+  const [editUnityVisionEn, setEditUnityVisionEn] = useState(siteTexts.unityVisionEn || siteTexts.visionEn || 'Dedicated to Unity, Consolidation and Cooperation.');
+  const [editUnityVisionNe, setEditUnityVisionNe] = useState(siteTexts.unityVisionNe || siteTexts.visionNe || 'एकता, एक्यबद्धता र सहकार्यमा समर्पित।');
+
+  const [editUnityTenet1En, setEditUnityTenet1En] = useState(siteTexts.unityTenet1En || 'Unity');
+  const [editUnityTenet1Ne, setEditUnityTenet1Ne] = useState(siteTexts.unityTenet1Ne || 'एकता');
+  const [editUnityTenet1SubEn, setEditUnityTenet1SubEn] = useState(siteTexts.unityTenet1SubEn || 'Harmony');
+  const [editUnityTenet1SubNe, setEditUnityTenet1SubNe] = useState(siteTexts.unityTenet1SubNe || 'सद्भाव');
+
+  const [editUnityTenet2En, setEditUnityTenet2En] = useState(siteTexts.unityTenet2En || 'Consolidation');
+  const [editUnityTenet2Ne, setEditUnityTenet2Ne] = useState(siteTexts.unityTenet2Ne || 'एक्यबद्धता');
+  const [editUnityTenet2SubEn, setEditUnityTenet2SubEn] = useState(siteTexts.unityTenet2SubEn || 'Heritage');
+  const [editUnityTenet2SubNe, setEditUnityTenet2SubNe] = useState(siteTexts.unityTenet2SubNe || 'सम्पदा');
+
+  const [editUnityTenet3En, setEditUnityTenet3En] = useState(siteTexts.unityTenet3En || 'Cooperation');
+  const [editUnityTenet3Ne, setEditUnityTenet3Ne] = useState(siteTexts.unityTenet3Ne || 'सहकार्य');
+  const [editUnityTenet3SubEn, setEditUnityTenet3SubEn] = useState(siteTexts.unityTenet3SubEn || 'Mutual Aid');
+  const [editUnityTenet3SubNe, setEditUnityTenet3SubNe] = useState(siteTexts.unityTenet3SubNe || 'सहयोग');
+
+  const [editUnityStats, setEditUnityStats] = useState<any[]>(() => {
+    try {
+      if (siteTexts.unityStatsJson) {
+        const parsed = JSON.parse(siteTexts.unityStatsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return defaultUnityStats;
+  });
+
+  const [editUnityNextEventTitleEn, setEditUnityNextEventTitleEn] = useState(siteTexts.unityNextEventTitleEn || 'Annual Chaurasiya National Convention & Educational Honors');
+  const [editUnityNextEventTitleNe, setEditUnityNextEventTitleNe] = useState(siteTexts.unityNextEventTitleNe || 'चौरासिया समाज राष्ट्रिय महाधिवेशन तथा सम्मान समारोह');
+  const [editUnityNextEventDateEn, setEditUnityNextEventDateEn] = useState(siteTexts.unityNextEventDateEn || 'BS 2083');
+  const [editUnityNextEventDateNe, setEditUnityNextEventDateNe] = useState(siteTexts.unityNextEventDateNe || 'वि.सं. २०८३');
+  const [editUnityNextEventLocEn, setEditUnityNextEventLocEn] = useState(siteTexts.unityNextEventLocEn || 'Kathmandu / Parsa');
+  const [editUnityNextEventLocNe, setEditUnityNextEventLocNe] = useState(siteTexts.unityNextEventLocNe || 'काठमाडौँ / पर्सा');
+
   // State for adding a new hero slider image
   const [newSlideImage, setNewSlideImage] = useState('');
   const [newSlideTitleEn, setNewSlideTitleEn] = useState('');
@@ -240,7 +352,7 @@ export default function HistorySection({
   };
 
   useEffect(() => {
-    if (!isEditingTexts) return;
+    if (!activeEditSection) return;
 
     setEditHeroTitleEn(siteTexts.heroTitleEn);
     setEditHeroTitleNe(siteTexts.heroTitleNe);
@@ -362,91 +474,292 @@ export default function HistorySection({
     } catch (e) {
       setEditLeadership(boardMembers.filter(m => m.id === '1' || m.id === 'vc1'));
     }
-  }, [isEditingTexts]);
 
-  const handleSaveTexts = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingTexts(true);
+    // Sync E-Services and Unity state
+    setEditEservicesTitleEn(siteTexts.eservicesTitleEn || 'Institutional E-Services');
+    setEditEservicesTitleNe(siteTexts.eservicesTitleNe || 'डिजिटल नागरिक सेवा पोर्टल');
+    setEditEservicesSubEn(siteTexts.eservicesSubEn || 'Direct Citizen Portals & Verification');
+    setEditEservicesSubNe(siteTexts.eservicesSubNe || 'प्रत्यक्ष संस्थागत तथा नागरिक सेवाहरू');
+    try {
+      if (siteTexts.eservicesJson) {
+        const parsed = JSON.parse(siteTexts.eservicesJson);
+        if (Array.isArray(parsed) && parsed.length > 0) setEditEservicesList(parsed);
+        else setEditEservicesList(defaultEservices);
+      } else {
+        setEditEservicesList(defaultEservices);
+      }
+    } catch (e) { setEditEservicesList(defaultEservices); }
+
+    setEditUnityTitleEn(siteTexts.unityTitleEn || 'Unity, Consolidation & Cooperation');
+    setEditUnityTitleNe(siteTexts.unityTitleNe || 'एकता, एक्यबद्धता र सहकार्य');
+    setEditUnityVisionEn(siteTexts.unityVisionEn || siteTexts.visionEn || 'Dedicated to Unity, Consolidation and Cooperation.');
+    setEditUnityVisionNe(siteTexts.unityVisionNe || siteTexts.visionNe || 'एकता, एक्यबद्धता र सहकार्यमा समर्पित।');
+    setEditUnityTenet1En(siteTexts.unityTenet1En || 'Unity');
+    setEditUnityTenet1Ne(siteTexts.unityTenet1Ne || 'एकता');
+    setEditUnityTenet1SubEn(siteTexts.unityTenet1SubEn || 'Harmony');
+    setEditUnityTenet1SubNe(siteTexts.unityTenet1SubNe || 'सद्भाव');
+    setEditUnityTenet2En(siteTexts.unityTenet2En || 'Consolidation');
+    setEditUnityTenet2Ne(siteTexts.unityTenet2Ne || 'एक्यबद्धता');
+    setEditUnityTenet2SubEn(siteTexts.unityTenet2SubEn || 'Heritage');
+    setEditUnityTenet2SubNe(siteTexts.unityTenet2SubNe || 'सम्पदा');
+    setEditUnityTenet3En(siteTexts.unityTenet3En || 'Cooperation');
+    setEditUnityTenet3Ne(siteTexts.unityTenet3Ne || 'सहकार्य');
+    setEditUnityTenet3SubEn(siteTexts.unityTenet3SubNe || 'Mutual Aid');
+    setEditUnityTenet3SubNe(siteTexts.unityTenet3SubNe || 'सहयोग');
+
+    try {
+      if (siteTexts.unityStatsJson) {
+        const parsed = JSON.parse(siteTexts.unityStatsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) setEditUnityStats(parsed);
+        else setEditUnityStats(defaultUnityStats);
+      } else {
+        setEditUnityStats(defaultUnityStats);
+      }
+    } catch (e) { setEditUnityStats(defaultUnityStats); }
+
+    setEditTopRibbonEn(siteTexts.topRibbonEn || 'जय चौरसिया समाज ! Chaurasiya Samaj Central Secretariat Birgunj, Parsa Nepal');
+    setEditTopRibbonNe(siteTexts.topRibbonNe || 'जय चौरसिया समाज ! चौरसिया समाज नेपाल - केन्द्रीय कार्यालय वीरगन्ज, पर्सा');
+    setEditRegNoEn(siteTexts.regNoEn || 'Reg. No. 1284/080/081');
+    setEditRegNoNe(siteTexts.regNoNe || 'दर्ता नं. १२८४/०८०/०८१');
+
+    setEditUnityNextEventTitleEn(siteTexts.unityNextEventTitleEn || 'Annual Chaurasiya National Convention & Educational Honors');
+    setEditUnityNextEventTitleNe(siteTexts.unityNextEventTitleNe || 'चौरासिया समाज राष्ट्रिय महाधिवेशन तथा सम्मान समारोह');
+    setEditUnityNextEventDateEn(siteTexts.unityNextEventDateEn || 'BS 2083');
+    setEditUnityNextEventDateNe(siteTexts.unityNextEventDateNe || 'वि.सं. २०८३');
+    setEditUnityNextEventLocEn(siteTexts.unityNextEventLocEn || 'Kathmandu / Parsa');
+    setEditUnityNextEventLocNe(siteTexts.unityNextEventLocNe || 'काठमाडौँ / पर्सा');
+  }, [activeEditSection]);
+
+  const handleDeleteUnityStat = async (statId: string | number) => {
+    if (!window.confirm('Are you sure you want to delete this statistic?')) return;
+    const updatedStats = activeUnityStatsList.filter(s => s.id !== statId);
+    setEditUnityStats(updatedStats);
     try {
       await onUpdateSiteTexts({
-        heroTitleEn: editHeroTitleEn,
-        heroTitleNe: editHeroTitleNe,
-        heroSubEn: editHeroSubEn,
-        heroSubNe: editHeroSubNe,
-        introEn: editIntroEn,
-        introNe: editIntroNe,
-        paanStoryTitleEn: editPaanStoryTitleEn,
-        paanStoryTitleNe: editPaanStoryTitleNe,
-        paanStoryEn: editPaanStoryEn,
-        paanStoryNe: editPaanStoryNe,
-        missionTitleEn: editMissionTitleEn,
-        missionTitleNe: editMissionTitleNe,
-        missionEn: editMissionEn,
-        missionNe: editMissionNe,
-        sliderBadgeEn: editSliderBadgeEn,
-        sliderBadgeNe: editSliderBadgeNe,
-        logoTextEn: editLogoTextEn,
-        logoTextNe: editLogoTextNe,
-        logoFontSizeMobile: editLogoFontSizeMobile,
-        logoFontSizeDesktop: editLogoFontSizeDesktop,
-        logoSubFontSizeMobile: editLogoSubFontSizeMobile,
-        menuFontSizeDesktop: editMenuFontSizeDesktop,
-        menuFontSizeMobile: editMenuFontSizeMobile,
-        logoSubEn: editLogoSubEn,
-        logoSubNe: editLogoSubNe,
-        logoUrl: editLogoUrl,
-        taglineEn: editTaglineEn,
-        taglineNe: editTaglineNe,
-        impactHeaderEn: editImpactHeaderEn,
-        impactHeaderNe: editImpactHeaderNe,
-        footerAboutEn: editFooterAboutEn,
-        footerAboutNe: editFooterAboutNe,
-        footerAddressEn: editFooterAddressEn,
-        footerAddressNe: editFooterAddressNe,
-        footerPhone: editFooterPhone,
-        footerEmail: editFooterEmail,
-        socialFb: editSocialFb,
-        socialTw: editSocialTw,
-        socialIg: editSocialIg,
-        presidentMessageTitleEn: editPresidentTitleEn,
-        presidentMessageTitleNe: editPresidentTitleNe,
-        presidentMessageEn: editPresidentMsgEn,
-        presidentMessageNe: editPresidentMsgNe,
-        helplineTitleEn: editHelplineTitleEn,
-        helplineTitleNe: editHelplineTitleNe,
-        helplineCentralLabelEn: editHelplineCentralLabelEn,
-        helplineCentralLabelNe: editHelplineCentralLabelNe,
-        helplinePhone: editHelplinePhone,
-        helplineSecretariatLabelEn: editHelplineSecretariatLabelEn,
-        helplineSecretariatLabelNe: editHelplineSecretariatLabelNe,
-        helplineEmail: editHelplineEmail,
-        pillarsTitleEn: editPillarsTitleEn,
-        pillarsTitleNe: editPillarsTitleNe,
-        pillar1TitleEn: editPillar1TitleEn,
-        pillar1TitleNe: editPillar1TitleNe,
-        pillar1SubEn: editPillar1SubEn,
-        pillar1SubNe: editPillar1SubNe,
-        pillar2TitleEn: editPillar2TitleEn,
-        pillar2TitleNe: editPillar2TitleNe,
-        pillar2SubEn: editPillar2SubEn,
-        pillar2SubNe: editPillar2SubNe,
-        pillar3TitleEn: editPillar3TitleEn,
-        pillar3TitleNe: editPillar3TitleNe,
-        pillar3SubEn: editPillar3SubEn,
-        pillar3SubNe: editPillar3SubNe,
-        pillar4TitleEn: editPillar4TitleEn,
-        pillar4TitleNe: editPillar4TitleNe,
-        pillar4SubEn: editPillar4SubEn,
-        pillar4SubNe: editPillar4SubNe,
-        heroImagesJson: JSON.stringify(editHeroImages),
-        secondaryImagesJson: JSON.stringify(editSecondaryImages),
-        impactStatsJson: JSON.stringify(editImpactStats),
-        leadershipIdsJson: JSON.stringify(editLeadership)
+        unityStatsJson: JSON.stringify(updatedStats)
       });
-      setIsEditingTexts(false);
-      onTrackAction('Save Homepage Site Texts via Admin');
+      onTrackAction('Delete Unity Stat inline');
     } catch (err) {
-      alert('Failed to save texts.');
+      alert('Failed to delete statistic.');
+    }
+  };
+
+  const handleStartInlineEdit = (st: any) => {
+    setEditingUnityStatId(st.id);
+    setInlineStatValue(st.value || st.val || '');
+    setInlineStatLabelEn(st.label?.en || st.labelEn || '');
+    setInlineStatLabelNe(st.label?.ne || st.labelNe || '');
+    setInlineStatSubEn(st.sub?.en || st.subEn || '');
+    setInlineStatSubNe(st.sub?.ne || st.subNe || '');
+    setInlineStatIcon(st.icon || 'Users');
+  };
+
+  const handleSaveInlineUnityStat = async (statId: string | number) => {
+    const updatedStats = activeUnityStatsList.map(s => {
+      if (s.id === statId) {
+        return {
+          ...s,
+          value: inlineStatValue,
+          val: inlineStatValue,
+          label: { en: inlineStatLabelEn, ne: inlineStatLabelNe },
+          labelEn: inlineStatLabelEn,
+          labelNe: inlineStatLabelNe,
+          sub: { en: inlineStatSubEn, ne: inlineStatSubNe },
+          subEn: inlineStatSubEn,
+          subNe: inlineStatSubNe,
+          icon: inlineStatIcon
+        };
+      }
+      return s;
+    });
+    setEditUnityStats(updatedStats);
+    try {
+      await onUpdateSiteTexts({
+        unityStatsJson: JSON.stringify(updatedStats)
+      });
+      setEditingUnityStatId(null);
+      onTrackAction('Save Unity Stat inline');
+    } catch (err) {
+      alert('Failed to save statistic.');
+    }
+  };
+
+  const handleAddInlineUnityStat = async () => {
+    const newId = `ustat-${Date.now()}`;
+    const newStat = {
+      id: newId,
+      value: '100+',
+      val: '100+',
+      label: { en: 'New Metric', ne: 'नयाँ सूचक' },
+      labelEn: 'New Metric',
+      labelNe: 'नयाँ सूचक',
+      sub: { en: 'Active Members', ne: 'सक्रिय सदस्यहरू' },
+      subEn: 'Active Members',
+      subNe: 'सक्रिय सदस्यहरू',
+      icon: 'Users'
+    };
+    const updatedStats = [...activeUnityStatsList, newStat];
+    setEditUnityStats(updatedStats);
+    try {
+      await onUpdateSiteTexts({
+        unityStatsJson: JSON.stringify(updatedStats)
+      });
+      setEditingUnityStatId(newId);
+      setInlineStatValue('100+');
+      setInlineStatLabelEn('New Metric');
+      setInlineStatLabelNe('नयाँ सूचक');
+      setInlineStatSubEn('Active Members');
+      setInlineStatSubNe('सक्रिय सदस्यहरू');
+      setInlineStatIcon('Users');
+      onTrackAction('Add Unity Stat inline');
+    } catch (err) {
+      alert('Failed to add new statistic.');
+    }
+  };
+
+  const handleSaveCurrentSection = async () => {
+    setIsSavingTexts(true);
+    try {
+      let updates: Partial<typeof siteTexts> = {};
+
+      if (activeEditSection === 'hero') {
+        updates = {
+          sliderBadgeEn: editSliderBadgeEn,
+          sliderBadgeNe: editSliderBadgeNe,
+          heroTitleEn: editHeroTitleEn,
+          heroTitleNe: editHeroTitleNe,
+          heroSubEn: editHeroSubEn,
+          heroSubNe: editHeroSubNe,
+          heroImagesJson: JSON.stringify(editHeroImages),
+        };
+      } else if (activeEditSection === 'leadership') {
+        updates = {
+          presidentMessageTitleEn: editPresidentTitleEn,
+          presidentMessageTitleNe: editPresidentTitleNe,
+          presidentMessageEn: editPresidentMsgEn,
+          presidentMessageNe: editPresidentMsgNe,
+        };
+      } else if (activeEditSection === 'executive_committee') {
+        updates = {
+          leadershipIdsJson: JSON.stringify(editLeadership),
+        };
+      } else if (activeEditSection === 'heritage') {
+        updates = {
+          introEn: editIntroEn,
+          introNe: editIntroNe,
+          paanStoryTitleEn: editPaanStoryTitleEn,
+          paanStoryTitleNe: editPaanStoryTitleNe,
+          paanStoryEn: editPaanStoryEn,
+          paanStoryNe: editPaanStoryNe,
+        };
+      } else if (activeEditSection === 'mission') {
+        updates = {
+          missionTitleEn: editMissionTitleEn,
+          missionTitleNe: editMissionTitleNe,
+          missionEn: editMissionEn,
+          missionNe: editMissionNe,
+        };
+      } else if (activeEditSection === 'impact') {
+        updates = {
+          impactHeaderEn: editImpactHeaderEn,
+          impactHeaderNe: editImpactHeaderNe,
+          impactStatsJson: JSON.stringify(editImpactStats),
+        };
+      } else if (activeEditSection === 'eservices') {
+        updates = {
+          eservicesTitleEn: editEservicesTitleEn,
+          eservicesTitleNe: editEservicesTitleNe,
+          eservicesSubEn: editEservicesSubEn,
+          eservicesSubNe: editEservicesSubNe,
+          eservicesJson: JSON.stringify(editEservicesList),
+        };
+      } else if (activeEditSection === 'unity') {
+        updates = {
+          unityTitleEn: editUnityTitleEn,
+          unityTitleNe: editUnityTitleNe,
+          unityVisionEn: editUnityVisionEn,
+          unityVisionNe: editUnityVisionNe,
+          unityTenet1En: editUnityTenet1En,
+          unityTenet1Ne: editUnityTenet1Ne,
+          unityTenet1SubEn: editUnityTenet1SubEn,
+          unityTenet1SubNe: editUnityTenet1SubNe,
+          unityTenet2En: editUnityTenet2En,
+          unityTenet2Ne: editUnityTenet2Ne,
+          unityTenet2SubEn: editUnityTenet2SubEn,
+          unityTenet2SubNe: editUnityTenet2SubNe,
+          unityTenet3En: editUnityTenet3En,
+          unityTenet3Ne: editUnityTenet3Ne,
+          unityTenet3SubEn: editUnityTenet3SubEn,
+          unityTenet3SubNe: editUnityTenet3SubNe,
+          unityStatsJson: JSON.stringify(editUnityStats),
+          unityNextEventTitleEn: editUnityNextEventTitleEn,
+          unityNextEventTitleNe: editUnityNextEventTitleNe,
+          unityNextEventDateEn: editUnityNextEventDateEn,
+          unityNextEventDateNe: editUnityNextEventDateNe,
+          unityNextEventLocEn: editUnityNextEventLocEn,
+          unityNextEventLocNe: editUnityNextEventLocNe,
+        };
+      } else if (activeEditSection === 'ribbon') {
+        updates = {
+          topRibbonEn: editTopRibbonEn,
+          topRibbonNe: editTopRibbonNe,
+          regNoEn: editRegNoEn,
+          regNoNe: editRegNoNe,
+          helplinePhone: editHelplinePhone,
+          helplineEmail: editHelplineEmail,
+        };
+      } else if (activeEditSection === 'branding') {
+        updates = {
+          logoTextEn: editLogoTextEn,
+          logoTextNe: editLogoTextNe,
+          logoSubEn: editLogoSubEn,
+          logoSubNe: editLogoSubNe,
+          logoUrl: editLogoUrl,
+          logoFontSizeMobile: editLogoFontSizeMobile,
+          logoFontSizeDesktop: editLogoFontSizeDesktop,
+          logoSubFontSizeMobile: editLogoSubFontSizeMobile,
+          menuFontSizeDesktop: editMenuFontSizeDesktop,
+          menuFontSizeMobile: editMenuFontSizeMobile,
+          taglineEn: editTaglineEn,
+          taglineNe: editTaglineNe,
+          footerAboutEn: editFooterAboutEn,
+          footerAboutNe: editFooterAboutNe,
+          footerAddressEn: editFooterAddressEn,
+          footerAddressNe: editFooterAddressNe,
+          footerPhone: editFooterPhone,
+          footerEmail: editFooterEmail,
+          socialFb: editSocialFb,
+          socialTw: editSocialTw,
+          socialIg: editSocialIg,
+        };
+      } else if (activeEditSection === 'pillars') {
+        updates = {
+          pillarsTitleEn: editPillarsTitleEn,
+          pillarsTitleNe: editPillarsTitleNe,
+          pillar1TitleEn: editPillar1TitleEn,
+          pillar1TitleNe: editPillar1TitleNe,
+          pillar1SubEn: editPillar1SubEn,
+          pillar1SubNe: editPillar1SubNe,
+          pillar2TitleEn: editPillar2TitleEn,
+          pillar2TitleNe: editPillar2TitleNe,
+          pillar2SubEn: editPillar2SubEn,
+          pillar2SubNe: editPillar2SubNe,
+          pillar3TitleEn: editPillar3TitleEn,
+          pillar3TitleNe: editPillar3TitleNe,
+          pillar3SubEn: editPillar3SubEn,
+          pillar3SubNe: editPillar3SubNe,
+          pillar4TitleEn: editPillar4TitleEn,
+          pillar4TitleNe: editPillar4TitleNe,
+          pillar4SubEn: editPillar4SubEn,
+          pillar4SubNe: editPillar4SubNe,
+        };
+      }
+
+      await onUpdateSiteTexts(updates);
+      setActiveEditSection(null);
+      onTrackAction('Save Section Site Texts via Admin');
+    } catch (err) {
+      alert('Failed to save section texts.');
     } finally {
       setIsSavingTexts(false);
     }
@@ -542,13 +855,12 @@ export default function HistorySection({
       if (siteTexts.leadershipIdsJson) {
         const parsed = JSON.parse(siteTexts.leadershipIdsJson);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Merge with latest data from membersList or boardMembers
           return parsed.map((item: any) => {
             const latestMember = membersList?.find(m => m.id === item.id) || boardMembers.find(m => m.id === item.id);
             if (latestMember) {
               return {
                 ...item,
-                ...latestMember, // Override with latest data
+                ...latestMember,
               };
             }
             return item;
@@ -561,6 +873,29 @@ export default function HistorySection({
       return latestMember ? { ...bm, ...latestMember } : bm;
     });
   };
+
+  const getActiveEservices = (): any[] => {
+    try {
+      if (siteTexts.eservicesJson) {
+        const parsed = JSON.parse(siteTexts.eservicesJson);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return defaultEservices;
+  };
+
+  const getActiveUnityStats = (): any[] => {
+    try {
+      if (siteTexts.unityStatsJson) {
+        const parsed = JSON.parse(siteTexts.unityStatsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return defaultUnityStats;
+  };
+
+  const activeEservicesList = getActiveEservices();
+  const activeUnityStatsList = getActiveUnityStats();
 
   const getChiefPresident = (): Member => {
     if (membersList && membersList.length > 0) {
@@ -632,1379 +967,2024 @@ export default function HistorySection({
     impactHeader: { en: 'Empowering & Transforming Lives', ne: 'सशक्तिकरण र जीवन परिवर्तन' },
   };
 
-  if (isAdmin && isEditingTexts) {
+  const handleLogoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingLogo(true);
+    try {
+      const base64 = await compressImageToBase64(file, 800, 0.85);
+      const transparentDataUrl = await removeImageWhiteBackground(base64, 225);
+      try {
+        const uploadedUrl = await uploadImageToGithub(`CSN_logo_${Date.now()}_${file.name}`, transparentDataUrl, `Upload site logo ${file.name}`);
+        setEditLogoUrl(uploadedUrl);
+      } catch (ghErr) {
+        setEditLogoUrl(transparentDataUrl);
+      }
+    } catch (err) {
+      console.error('Failed to process logo image:', err);
+      alert('Failed to process logo image.');
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  const handleMakeLogoTransparent = async () => {
+    if (!editLogoUrl) return;
+    setIsUploadingLogo(true);
+    try {
+      const transparentDataUrl = await removeImageWhiteBackground(editLogoUrl, 225);
+      try {
+        const uploadedUrl = await uploadImageToGithub(`CSN_logo_${Date.now()}.png`, transparentDataUrl, 'Update logo transparency');
+        setEditLogoUrl(uploadedUrl);
+      } catch (ghErr) {
+        setEditLogoUrl(transparentDataUrl);
+      }
+    } catch (err) {
+      console.error('Failed to make logo transparent:', err);
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  /* Individual section edit modals */
+  const renderSectionEditModal = () => {
+    if (!activeEditSection) return null;
+
     return (
-      <div className="space-y-6">
-        <section className="bg-teal-50 dark:bg-slate-900 border-2 border-emerald-500 p-6 sm:p-8 rounded-3xl shadow-lg space-y-6 animate-in fade-in duration-200">
-          <div className="border-b border-emerald-500 pb-4 flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-bold text-teal-950 dark:text-teal-50 flex items-center gap-2">
-                <Edit className="w-5 h-5 text-emerald-600 animate-pulse" />
-                <span>Edit Homepage Text Content</span>
+      <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-teal-500/40 shadow-2xl w-full max-w-4xl my-8 max-h-[85vh] flex flex-col overflow-hidden text-teal-950 dark:text-teal-50">
+          {/* Modal Header */}
+          <div className="p-4 sm:p-5 bg-teal-900 text-white flex items-center justify-between border-b border-teal-700 shrink-0">
+            <div className="flex items-center gap-2">
+              <Edit3 className="w-5 h-5 text-amber-400 animate-pulse" />
+              <h3 className="font-black text-sm sm:text-base uppercase tracking-wider text-amber-300">
+                {activeEditSection === 'hero' && '1. Edit Hero Banner'}
+                {activeEditSection === 'leadership' && "2. Edit Chief President's Message"}
+                {activeEditSection === 'executive_committee' && '3. Manage Executive Committee & Leadership'}
+                {activeEditSection === 'eservices' && '4. Edit Institutional E-Services'}
+                {activeEditSection === 'heritage' && '5. Edit Heritage & Paan Story'}
+                {activeEditSection === 'mission' && '6. Edit Vision & Mission'}
+                {activeEditSection === 'unity' && '7. Edit Unity, Consolidation & Cooperation'}
+                {activeEditSection === 'branding' && '8. Edit Branding, Logo & Typography Details'}
+                {activeEditSection === 'ribbon' && '9. Edit Top Ribbon Announcement & Reg. No.'}
+                {activeEditSection === 'pillars' && '10. Edit Community Pillars'}
               </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Changes are saved online instantly to the server database.</p>
             </div>
             <button
               type="button"
-              onClick={() => setIsEditingTexts(false)}
-              className="p-1.5 bg-gray-200/50 dark:bg-slate-800 hover:bg-gray-200 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
+              onClick={() => setActiveEditSection(null)}
+              className="p-1.5 bg-teal-800 hover:bg-teal-700 text-teal-200 hover:text-white rounded-xl transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <form onSubmit={handleSaveTexts} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Hero Title */}
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Hero Section Title (English)</label>
-                <input
-                  type="text"
-                  required
-                  value={editHeroTitleEn}
-                  onChange={(e) => setEditHeroTitleEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Hero Section Title (Nepali)</label>
-                <input
-                  type="text"
-                  required
-                  value={editHeroTitleNe}
-                  onChange={(e) => setEditHeroTitleNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Hero Sub */}
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Hero Subtitle (English)</label>
-                <textarea
-                  required
-                  rows={2}
-                  value={editHeroSubEn}
-                  onChange={(e) => setEditHeroSubEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Hero Subtitle (Nepali)</label>
-                <textarea
-                  required
-                  rows={2}
-                  value={editHeroSubNe}
-                  onChange={(e) => setEditHeroSubNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Intro Text */}
-              <div className="space-y-1 md:col-span-2 border-t border-teal-200 pt-4">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Introduction Text (English)</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={editIntroEn}
-                  onChange={(e) => setEditIntroEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Introduction Text (Nepali)</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={editIntroNe}
-                  onChange={(e) => setEditIntroNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Paan Story Title */}
-              <div className="space-y-1 border-t border-teal-200 pt-4">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Paan Story Title (English)</label>
-                <input
-                  type="text"
-                  required
-                  value={editPaanStoryTitleEn}
-                  onChange={(e) => setEditPaanStoryTitleEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1 border-t border-teal-200 pt-4">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Paan Story Title (Nepali)</label>
-                <input
-                  type="text"
-                  required
-                  value={editPaanStoryTitleNe}
-                  onChange={(e) => setEditPaanStoryTitleNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Paan Story Body */}
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Paan Story Body (English)</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={editPaanStoryEn}
-                  onChange={(e) => setEditPaanStoryEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Paan Story Body (Nepali)</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={editPaanStoryNe}
-                  onChange={(e) => setEditPaanStoryNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Mission Title */}
-              <div className="space-y-1 border-t border-teal-200 pt-4">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Mission Title (English)</label>
-                <input
-                  type="text"
-                  required
-                  value={editMissionTitleEn}
-                  onChange={(e) => setEditMissionTitleEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1 border-t border-teal-200 pt-4">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Mission Title (Nepali)</label>
-                <input
-                  type="text"
-                  required
-                  value={editMissionTitleNe}
-                  onChange={(e) => setEditMissionTitleNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Mission Body */}
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Mission Body (English)</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={editMissionEn}
-                  onChange={(e) => setEditMissionEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Mission Body (Nepali)</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={editMissionNe}
-                  onChange={(e) => setEditMissionNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Slider Badge Text */}
-              <div className="space-y-1 border-t border-teal-200 pt-4">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Slider Badge Text (English)</label>
-                <input
-                  type="text"
-                  required
-                  value={editSliderBadgeEn}
-                  onChange={(e) => setEditSliderBadgeEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1 border-t border-teal-200 pt-4">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Slider Badge Text (Nepali)</label>
-                <input
-                  type="text"
-                  required
-                  value={editSliderBadgeNe}
-                  onChange={(e) => setEditSliderBadgeNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Logo Settings */}
-              <div className="space-y-1 border-t border-teal-200 pt-4 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Logo Image File (Upload to Repository)</label>
-                <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-teal-100">
-                  {editLogoUrl ? (
-                    <img src={editLogoUrl} className="w-12 h-12 rounded-full object-cover border border-teal-200 shadow-sm" alt="Logo preview" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 text-xs font-bold border border-teal-200">Default</div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        try {
-                          const url = await handleFileUpload(file);
-                          setEditLogoUrl(url);
-                        } catch (err: any) {
-                          alert('Upload failed: ' + err.message);
-                        }
-                      }
-                    }}
-                    className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
-                  />
-                  {editLogoUrl && (
-                    <button type="button" onClick={() => setEditLogoUrl('')} className="text-xs text-red-500 hover:underline">Reset to Default</button>
-                  )}
-                </div>
-              </div>
-
-              {/* Logo Texts aside Logo */}
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Logo Text Aside (English)</label>
-                <input
-                  type="text"
-                  required
-                  value={editLogoTextEn}
-                  onChange={(e) => setEditLogoTextEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Logo Text Aside (Nepali)</label>
-                <input
-                  type="text"
-                  required
-                  value={editLogoTextNe}
-                  onChange={(e) => setEditLogoTextNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Logo Text & Menu Ribbon Font Sizes */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-teal-50/50 p-4 rounded-xl border border-teal-100">
-                <div className="space-y-1">
-                  <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
-                    Logo Main Text Font Size (Mobile Header)
-                  </label>
-                  <select
-                    value={editLogoFontSizeMobile}
-                    onChange={(e) => setEditLogoFontSizeMobile(e.target.value)}
-                    className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                  >
-                    <option value="text-xs xs:text-sm">Compact (text-xs)</option>
-                    <option value="text-sm xs:text-base sm:text-lg">Small (text-sm)</option>
-                    <option value="text-base xs:text-lg sm:text-xl">Medium / Enhanced (text-base) [Default]</option>
-                    <option value="text-lg xs:text-xl sm:text-2xl">Large (text-lg)</option>
-                    <option value="text-xl xs:text-2xl sm:text-3xl">Extra Large (text-xl)</option>
-                  </select>
+          {/* Modal Body */}
+          <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-sm">
+            {/* HERO BANNER EDIT FIELDS */}
+            {activeEditSection === 'hero' && (
+              <div className="space-y-6">
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-teal-600" />
+                    <span>Hero Banner Headings</span>
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Badge Tag (English)</label>
+                      <input
+                        type="text"
+                        value={editSliderBadgeEn}
+                        onChange={(e) => setEditSliderBadgeEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-700 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Badge Tag (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editSliderBadgeNe}
+                        onChange={(e) => setEditSliderBadgeNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-700 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Hero Title (English)</label>
+                      <input
+                        type="text"
+                        value={editHeroTitleEn}
+                        onChange={(e) => setEditHeroTitleEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-700 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Hero Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editHeroTitleNe}
+                        onChange={(e) => setEditHeroTitleNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-700 rounded-xl"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Hero Subtitle (English)</label>
+                      <textarea
+                        rows={2}
+                        value={editHeroSubEn}
+                        onChange={(e) => setEditHeroSubEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-700 rounded-xl"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Hero Subtitle (Nepali)</label>
+                      <textarea
+                        rows={2}
+                        value={editHeroSubNe}
+                        onChange={(e) => setEditHeroSubNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-700 rounded-xl"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
-                    Logo Subtext / Address Font Size (Mobile)
-                  </label>
-                  <select
-                    value={editLogoSubFontSizeMobile}
-                    onChange={(e) => setEditLogoSubFontSizeMobile(e.target.value)}
-                    className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                  >
-                    <option value="text-[8px] xs:text-[9px]">Extra Small (8px - 9px)</option>
-                    <option value="text-[9px] xs:text-[10px] sm:text-[11px]">Small / Decreased (9px - 10px) [Default]</option>
-                    <option value="text-[10px] sm:text-xs">Medium (10px - 12px)</option>
-                    <option value="text-xs sm:text-sm">Large (12px - 14px)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
-                    Logo Main Text Font Size (Desktop)
-                  </label>
-                  <select
-                    value={editLogoFontSizeDesktop}
-                    onChange={(e) => setEditLogoFontSizeDesktop(e.target.value)}
-                    className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                  >
-                    <option value="text-xl lg:text-2xl">Compact (text-xl to text-2xl)</option>
-                    <option value="text-2xl lg:text-3.5xl">Standard / Default (text-2xl to text-3.5xl)</option>
-                    <option value="text-3xl lg:text-4xl">Large (text-3xl to text-4xl)</option>
-                    <option value="text-4xl lg:text-5xl">Extra Large (text-4xl to text-5xl)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
-                    Menu Ribbon Items Font Size (Desktop)
-                  </label>
-                  <select
-                    value={editMenuFontSizeDesktop}
-                    onChange={(e) => setEditMenuFontSizeDesktop(e.target.value)}
-                    className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                  >
-                    <option value="text-[11px] xl:text-xs">Small (text-[11px])</option>
-                    <option value="text-xs xl:text-sm">Standard (text-xs to text-sm) [Default]</option>
-                    <option value="text-sm xl:text-base">Medium (text-sm to text-base)</option>
-                    <option value="text-base xl:text-lg">Large (text-base to text-lg)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1 md:col-span-2">
-                  <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
-                    Menu Items Font Size (Mobile Drawer)
-                  </label>
-                  <select
-                    value={editMenuFontSizeMobile}
-                    onChange={(e) => setEditMenuFontSizeMobile(e.target.value)}
-                    className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                  >
-                    <option value="text-xs">Small (text-xs)</option>
-                    <option value="text-sm">Standard (text-sm) [Default]</option>
-                    <option value="text-base">Medium (text-base)</option>
-                    <option value="text-lg">Large (text-lg)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Logo Subtexts */}
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Logo Subtext (English)</label>
-                <input
-                  type="text"
-                  required
-                  value={editLogoSubEn}
-                  onChange={(e) => setEditLogoSubEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Logo Subtext (Nepali)</label>
-                <input
-                  type="text"
-                  required
-                  value={editLogoSubNe}
-                  onChange={(e) => setEditLogoSubNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Tagline Top text */}
-              <div className="space-y-1 md:col-span-2 border-t border-teal-200 pt-4">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
-                  Top Ribbon Scrolling Texts (English)
-                  <span className="text-[11px] font-normal text-teal-700 block text-transform-none">
-                    Separate two or more scrolling messages with <code className="bg-teal-100 px-1 py-0.5 rounded text-teal-900 font-mono">|</code> or line breaks.
-                  </span>
-                </label>
-                <textarea
-                  rows={2}
-                  required
-                  value={editTaglineEn}
-                  onChange={(e) => setEditTaglineEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500 font-sans"
-                  placeholder="e.g. Preserving betel leaf culture | SWC Registered Portal | Unifying Chaurasiya Samaj"
-                />
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">
-                  Top Ribbon Scrolling Texts (Nepali)
-                  <span className="text-[11px] font-normal text-teal-700 block text-transform-none">
-                    दुई वा बढी सन्देशहरूलाई स्क्रोल गराउन <code className="bg-teal-100 px-1 py-0.5 rounded text-teal-900 font-mono">|</code> प्रयोग गर्नुहोस्।
-                  </span>
-                </label>
-                <textarea
-                  rows={2}
-                  required
-                  value={editTaglineNe}
-                  onChange={(e) => setEditTaglineNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500 font-sans"
-                  placeholder="उदा. पान संस्कृतिको संरक्षण र मानव सेवा | समाज कल्याण परिषद्मा दर्ता | चौरसिया समाज नेपाल"
-                />
-              </div>
-
-              {/* Chief President's Message Settings */}
-              <div className="space-y-1 border-t border-teal-200 pt-4 md:col-span-2">
-                <h4 className="text-sm font-black text-teal-950 uppercase tracking-wider mb-2">Chief President's Message Settings</h4>
-                <p className="text-xs text-teal-700">Photo, name, and contact details are automatically loaded from the Member Directory.</p>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Message Section Title (English)</label>
-                <input
-                  type="text"
-                  required
-                  value={editPresidentTitleEn}
-                  onChange={(e) => setEditPresidentTitleEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                  placeholder="e.g. Chief President's Message"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Message Section Title (Nepali)</label>
-                <input
-                  type="text"
-                  required
-                  value={editPresidentTitleNe}
-                  onChange={(e) => setEditPresidentTitleNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                  placeholder="उदा. मुख्य अध्यक्षको सन्देश"
-                />
-              </div>
-
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Message Quote Text (English)</label>
-                <textarea
-                  rows={3}
-                  value={editPresidentMsgEn}
-                  onChange={(e) => setEditPresidentMsgEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                  placeholder="Enter custom message in English (or leave blank to use Leader's vision from directory)"
-                />
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Message Quote Text (Nepali)</label>
-                <textarea
-                  rows={3}
-                  value={editPresidentMsgNe}
-                  onChange={(e) => setEditPresidentMsgNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                  placeholder="नेपालीमा मुख्य अध्यक्षको सन्देश राख्नुहोस् (वा खाली छाडेर डाइरेक्टरीबाट लिनुहोस्)"
-                />
-              </div>
-
-              {/* Emergency & Helpline Settings */}
-              <div className="space-y-1 border-t border-teal-200 pt-4 md:col-span-2">
-                <h4 className="text-sm font-black text-teal-950 uppercase tracking-wider mb-2">Emergency & Helpline Card Settings</h4>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Helpline Card Title (English)</label>
-                <input
-                  type="text"
-                  required
-                  value={editHelplineTitleEn}
-                  onChange={(e) => setEditHelplineTitleEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Helpline Card Title (Nepali)</label>
-                <input
-                  type="text"
-                  required
-                  value={editHelplineTitleNe}
-                  onChange={(e) => setEditHelplineTitleNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Central Helpline Phone Number</label>
-                <input
-                  type="text"
-                  required
-                  value={editHelplinePhone}
-                  onChange={(e) => setEditHelplinePhone(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500 font-mono"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Secretariat Email</label>
-                <input
-                  type="email"
-                  required
-                  value={editHelplineEmail}
-                  onChange={(e) => setEditHelplineEmail(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500 font-mono"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Central Helpline Label (English)</label>
-                <input
-                  type="text"
-                  required
-                  value={editHelplineCentralLabelEn}
-                  onChange={(e) => setEditHelplineCentralLabelEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Central Helpline Label (Nepali)</label>
-                <input
-                  type="text"
-                  required
-                  value={editHelplineCentralLabelNe}
-                  onChange={(e) => setEditHelplineCentralLabelNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Community Pillars Settings */}
-              <div className="space-y-1 border-t border-teal-200 pt-4 md:col-span-2">
-                <h4 className="text-sm font-black text-teal-950 uppercase tracking-wider mb-2">Community Pillars Card Settings</h4>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Pillars Section Title (English)</label>
-                <input
-                  type="text"
-                  required
-                  value={editPillarsTitleEn}
-                  onChange={(e) => setEditPillarsTitleEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Pillars Section Title (Nepali)</label>
-                <input
-                  type="text"
-                  required
-                  value={editPillarsTitleNe}
-                  onChange={(e) => setEditPillarsTitleNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Pillar 1 */}
-              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
-                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 1: Title & Subtitle (English)</label>
-                <input
-                  type="text"
-                  value={editPillar1TitleEn}
-                  onChange={(e) => setEditPillar1TitleEn(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
-                  placeholder="Title EN"
-                />
-                <input
-                  type="text"
-                  value={editPillar1SubEn}
-                  onChange={(e) => setEditPillar1SubEn(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
-                  placeholder="Subtitle EN"
-                />
-              </div>
-              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
-                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 1: Title & Subtitle (Nepali)</label>
-                <input
-                  type="text"
-                  value={editPillar1TitleNe}
-                  onChange={(e) => setEditPillar1TitleNe(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
-                  placeholder="Title NE"
-                />
-                <input
-                  type="text"
-                  value={editPillar1SubNe}
-                  onChange={(e) => setEditPillar1SubNe(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
-                  placeholder="Subtitle NE"
-                />
-              </div>
-
-              {/* Pillar 2 */}
-              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
-                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 2: Title & Subtitle (English)</label>
-                <input
-                  type="text"
-                  value={editPillar2TitleEn}
-                  onChange={(e) => setEditPillar2TitleEn(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
-                  placeholder="Title EN"
-                />
-                <input
-                  type="text"
-                  value={editPillar2SubEn}
-                  onChange={(e) => setEditPillar2SubEn(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
-                  placeholder="Subtitle EN"
-                />
-              </div>
-              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
-                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 2: Title & Subtitle (Nepali)</label>
-                <input
-                  type="text"
-                  value={editPillar2TitleNe}
-                  onChange={(e) => setEditPillar2TitleNe(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
-                  placeholder="Title NE"
-                />
-                <input
-                  type="text"
-                  value={editPillar2SubNe}
-                  onChange={(e) => setEditPillar2SubNe(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
-                  placeholder="Subtitle NE"
-                />
-              </div>
-
-              {/* Pillar 3 */}
-              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
-                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 3: Title & Subtitle (English)</label>
-                <input
-                  type="text"
-                  value={editPillar3TitleEn}
-                  onChange={(e) => setEditPillar3TitleEn(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
-                  placeholder="Title EN"
-                />
-                <input
-                  type="text"
-                  value={editPillar3SubEn}
-                  onChange={(e) => setEditPillar3SubEn(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
-                  placeholder="Subtitle EN"
-                />
-              </div>
-              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
-                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 3: Title & Subtitle (Nepali)</label>
-                <input
-                  type="text"
-                  value={editPillar3TitleNe}
-                  onChange={(e) => setEditPillar3TitleNe(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
-                  placeholder="Title NE"
-                />
-                <input
-                  type="text"
-                  value={editPillar3SubNe}
-                  onChange={(e) => setEditPillar3SubNe(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
-                  placeholder="Subtitle NE"
-                />
-              </div>
-
-              {/* Pillar 4 */}
-              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
-                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 4: Title & Subtitle (English)</label>
-                <input
-                  type="text"
-                  value={editPillar4TitleEn}
-                  onChange={(e) => setEditPillar4TitleEn(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
-                  placeholder="Title EN"
-                />
-                <input
-                  type="text"
-                  value={editPillar4SubEn}
-                  onChange={(e) => setEditPillar4SubEn(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
-                  placeholder="Subtitle EN"
-                />
-              </div>
-              <div className="space-y-1 bg-teal-50 p-2.5 rounded-lg border border-teal-100">
-                <label className="text-[11px] font-black text-teal-950 uppercase block">Pillar 4: Title & Subtitle (Nepali)</label>
-                <input
-                  type="text"
-                  value={editPillar4TitleNe}
-                  onChange={(e) => setEditPillar4TitleNe(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs mb-1"
-                  placeholder="Title NE"
-                />
-                <input
-                  type="text"
-                  value={editPillar4SubNe}
-                  onChange={(e) => setEditPillar4SubNe(e.target.value)}
-                  className="w-full p-2 bg-white border border-teal-200 rounded text-xs"
-                  placeholder="Subtitle NE"
-                />
-              </div>
-
-              {/* Impact Header */}
-              <div className="space-y-1 md:col-span-2 border-t border-teal-200 pt-4">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Impact/Empowerment Header (English)</label>
-                <input
-                  type="text"
-                  required
-                  value={editImpactHeaderEn}
-                  onChange={(e) => setEditImpactHeaderEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Impact/Empowerment Header (Nepali)</label>
-                <input
-                  type="text"
-                  required
-                  value={editImpactHeaderNe}
-                  onChange={(e) => setEditImpactHeaderNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Footer Settings */}
-              <div className="space-y-1 border-t border-teal-200 pt-4 md:col-span-2">
-                <h4 className="text-sm font-black text-teal-950 uppercase tracking-wider mb-2">Footer Settings</h4>
-              </div>
-
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Footer About/Description (English)</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={editFooterAboutEn}
-                  onChange={(e) => setEditFooterAboutEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Footer About/Description (Nepali)</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={editFooterAboutNe}
-                  onChange={(e) => setEditFooterAboutNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Headquarters Address (English)</label>
-                <input
-                  type="text"
-                  required
-                  value={editFooterAddressEn}
-                  onChange={(e) => setEditFooterAddressEn(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Headquarters Address (Nepali)</label>
-                <input
-                  type="text"
-                  required
-                  value={editFooterAddressNe}
-                  onChange={(e) => setEditFooterAddressNe(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Phone Number</label>
-                <input
-                  type="text"
-                  required
-                  value={editFooterPhone}
-                  onChange={(e) => setEditFooterPhone(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  value={editFooterEmail}
-                  onChange={(e) => setEditFooterEmail(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Social Media Links */}
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Facebook URL</label>
-                <input
-                  type="url"
-                  placeholder="https://facebook.com/..."
-                  value={editSocialFb}
-                  onChange={(e) => setEditSocialFb(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Twitter (X) URL</label>
-                <input
-                  type="url"
-                  placeholder="https://twitter.com/..."
-                  value={editSocialTw}
-                  onChange={(e) => setEditSocialTw(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black text-teal-950 uppercase tracking-wider block">Instagram URL</label>
-                <input
-                  type="url"
-                  placeholder="https://instagram.com/..."
-                  value={editSocialIg}
-                  onChange={(e) => setEditSocialIg(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-teal-200 rounded-lg text-sm text-teal-900 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              {/* Hero Slider Images Manager */}
-              <div className="space-y-4 md:col-span-2 border-t border-teal-200 pt-6">
-                <h4 className="text-sm font-black text-teal-950 uppercase tracking-wider">Hero Slider Images Manager</h4>
-                <p className="text-xs text-gray-500">Add, change, or delete images in the hero slider slideshow. Added images are uploaded and saved on the repository.</p>
-                
-                {/* List of current slides */}
-                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-                  {editHeroImages.map((image, sIdx) => (
-                    <div key={image.id || sIdx} className="p-4 bg-white border border-teal-100 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <img src={image.imageUrl} className="w-16 h-10 object-cover rounded-lg border border-teal-200 shadow-sm" alt="" />
-                        <div>
-                          <div className="text-xs font-extrabold text-teal-950">{image.title?.en || 'Slide ' + (sIdx + 1)}</div>
-                          <div className="text-[10px] text-gray-400 font-medium">{image.imageUrl}</div>
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Hero Banner Slides</h4>
+                    <button
+                      type="button"
+                      onClick={() => setEditHeroImages([...editHeroImages, { id: `hero-${Date.now()}`, imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&q=80', caption: { en: 'New Slide Image', ne: 'नयाँ स्लाइड तस्विर' } }])}
+                      className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Slide</span>
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {editHeroImages.map((img, idx) => (
+                      <div key={img.id || idx} className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-700 flex flex-wrap sm:flex-nowrap items-center gap-3">
+                        <img src={img.imageUrl} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0 border" />
+                        <div className="flex-1 space-y-1 min-w-0">
+                          <input
+                            type="text"
+                            placeholder="Image URL"
+                            value={img.imageUrl}
+                            onChange={(e) => {
+                              const updated = [...editHeroImages];
+                              updated[idx].imageUrl = e.target.value;
+                              setEditHeroImages(updated);
+                            }}
+                            className="w-full p-1.5 border rounded text-xs"
+                          />
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 self-end sm:self-auto">
                         <button
                           type="button"
-                          onClick={() => {
-                            const updated = editHeroImages.filter((_, i) => i !== sIdx);
-                            setEditHeroImages(updated);
-                          }}
-                          className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
-                          title="Delete Slide"
+                          onClick={() => setEditHeroImages(editHeroImages.filter((_, i) => i !== idx))}
+                          className="p-1.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-xs"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* LEADERSHIP SECTION EDIT FIELDS */}
+            {activeEditSection === 'leadership' && (
+              <div className="space-y-6">
+                <div className="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <span><strong>Note:</strong> Chief President photo, name, designation, and phone details are automatically synced from the Chief President profile in the Member Directory.</span>
+                </div>
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">President Message Headings & Text</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Title (English)</label>
+                      <input
+                        type="text"
+                        value={editPresidentTitleEn}
+                        onChange={(e) => setEditPresidentTitleEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
                     </div>
-                  ))}
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editPresidentTitleNe}
+                        onChange={(e) => setEditPresidentTitleNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Message Body (English)</label>
+                      <textarea
+                        rows={4}
+                        value={editPresidentMsgEn}
+                        onChange={(e) => setEditPresidentMsgEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Message Body (Nepali)</label>
+                      <textarea
+                        rows={4}
+                        value={editPresidentMsgNe}
+                        onChange={(e) => setEditPresidentMsgNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* DEDICATED EXECUTIVE COMMITTEE MODAL */}
+            {activeEditSection === 'executive_committee' && (
+              <div className="space-y-6">
+                <div className="bg-amber-50 dark:bg-slate-800/80 p-4 rounded-2xl border border-amber-300 dark:border-amber-700/60 space-y-3">
+                  <div className="flex items-center gap-2 text-amber-900 dark:text-amber-300 font-extrabold text-xs uppercase tracking-wider">
+                    <UserCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    <span>Select & Import Executive Leader from Member Directory</span>
+                  </div>
+                  <p className="text-xs text-amber-800 dark:text-amber-200">
+                    Choose an existing registered member from the Member Directory list to automatically fetch their photo and details into the Executive Committee.
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center gap-2.5">
+                    <select
+                      value={selectedDirectoryMemberId}
+                      onChange={(e) => setSelectedDirectoryMemberId(e.target.value)}
+                      className="flex-1 p-2.5 bg-white dark:bg-slate-900 border border-amber-300 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-200"
+                    >
+                      <option value="">-- Select Registered Member ({membersList?.length || 0} available) --</option>
+                      {(membersList || []).map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name?.en || m.name?.ne || 'Unknown'} ({m.role?.en || 'Member'}) - {m.address?.en || 'Nepal'} [ID: {m.id}]
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!selectedDirectoryMemberId) {
+                          alert('Please select a member from the directory dropdown first.');
+                          return;
+                        }
+                        const member = (membersList || []).find((m) => m.id === selectedDirectoryMemberId);
+                        if (!member) return;
+                        const newLeader = {
+                          id: member.id,
+                          name: { en: member.name?.en || '', ne: member.name?.ne || member.name?.en || '' },
+                          role: { en: member.role?.en || 'Executive Member', ne: member.role?.ne || 'कार्यकारी सदस्य' },
+                          avatarUrl: member.avatarUrl || member.photoBase64 || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80',
+                          phone: member.phone || '',
+                          email: member.email || '',
+                          address: member.address?.en || '',
+                        };
+                        setEditLeadership([...editLeadership, newLeader]);
+                        setSelectedDirectoryMemberId('');
+                        alert(`Successfully added ${member.name?.en || member.name?.ne || 'Member'} to Executive Committee list!`);
+                      }}
+                      className="w-full sm:w-auto px-4 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Member</span>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Form to add a new slide */}
-                <div className="p-4 bg-teal-100/30 border border-teal-200/50 rounded-2xl space-y-4">
-                  <div className="text-xs font-extrabold text-teal-950 uppercase tracking-wider">Add New Image Slide</div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-teal-950 uppercase tracking-wider block">Slide Image (Upload File)</label>
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Active Executive Committee ({editLeadership.length})</h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {editLeadership.map((ldr, idx) => (
+                      <div key={ldr.id || idx} className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-700 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {ldr.avatarUrl && (
+                              <img src={ldr.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-emerald-400" />
+                            )}
+                            <span className="text-xs font-bold text-teal-900 dark:text-teal-200">{ldr.name?.en || ldr.name?.ne || `Leader #${idx + 1}`}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setEditLeadership(editLeadership.filter((_, i) => i !== idx))}
+                            className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded cursor-pointer"
+                            title="Remove Leader"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <input type="text" placeholder="Title/Role (EN)" value={ldr.role?.en || ''} onChange={(e) => { const u = [...editLeadership]; u[idx].role = { ...u[idx].role, en: e.target.value }; setEditLeadership(u); }} className="w-full p-1.5 border rounded text-xs" />
+                          <input type="text" placeholder="Title/Role (NE)" value={ldr.role?.ne || ''} onChange={(e) => { const u = [...editLeadership]; u[idx].role = { ...u[idx].role, ne: e.target.value }; setEditLeadership(u); }} className="w-full p-1.5 border rounded text-xs" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* E-SERVICES SECTION EDIT FIELDS */}
+            {activeEditSection === 'eservices' && (
+              <div className="space-y-6">
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">E-Services Headings</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Title (English)</label>
                       <input
-                        type="file"
-                        accept="image/*"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setUploadingSlide(true);
-                            try {
-                              const url = await handleFileUpload(file);
-                              setNewSlideImage(url);
-                            } catch (err: any) {
-                              alert('Upload failed: ' + err.message);
-                            } finally {
-                              setUploadingSlide(false);
-                            }
-                          }
-                        }}
-                        className="text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                        type="text"
+                        value={editEservicesTitleEn}
+                        onChange={(e) => setEditEservicesTitleEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
                       />
-                      {newSlideImage && (
-                        <div className="text-[10px] text-emerald-600 mt-1 font-medium">Selected: {newSlideImage}</div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editEservicesTitleNe}
+                        onChange={(e) => setEditEservicesTitleNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Subtitle (English)</label>
+                      <textarea
+                        rows={2}
+                        value={editEservicesSubEn}
+                        onChange={(e) => setEditEservicesSubEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Subtitle (Nepali)</label>
+                      <textarea
+                        rows={2}
+                        value={editEservicesSubNe}
+                        onChange={(e) => setEditEservicesSubNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* MANUAL BOX: HOW TO LINK A PAGE */}
+                <div className="bg-sky-50 dark:bg-slate-800/80 p-4 rounded-2xl border border-sky-300 dark:border-sky-700/60 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-sky-900 dark:text-sky-300 font-extrabold text-xs uppercase tracking-wider">
+                      <BookOpen className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+                      <span>💡 Manual & Complete List of All Website Tabs / Pages</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const allTabsServices = [
+                          { id: 'srv-dir', title: { en: 'Member Directory & KYC', ne: 'सदस्य निर्देशिका र खोजी' }, desc: { en: 'Search, verify, and view digital ID cards of all CSN members.', ne: 'नेपालभरका चौरसिया सदस्यहरूको खोजी र डिजिटल कार्ड।' }, actionUrl: 'directory', icon: 'UserCheck' },
+                          { id: 'srv-mat', title: { en: 'Matrimonial Hub', ne: 'वैवाहिक समन्वय केन्द्र' }, desc: { en: 'Find verified marriage profiles within Chaurasiya community.', ne: 'स्वजातीय विवाह जोडी खोज र बायोडाटा व्यवस्थापन।' }, actionUrl: 'matrimonial', icon: 'Heart' },
+                          { id: 'srv-bld', title: { en: 'Emergency Blood Donors', ne: 'आकस्मिक रक्तदान सेवा' }, desc: { en: 'Connect instantly with volunteer donors and blood banks.', ne: 'आपतकालीन समयमा तत्काल रगत उपलब्ध गराउने सेवा।' }, actionUrl: 'blood', icon: 'Droplet' },
+                          { id: 'srv-mem', title: { en: 'Membership & Youth Grants', ne: 'सदस्यता तथा छात्रवृत्ति' }, desc: { en: 'Apply for central membership and student excellence grants.', ne: 'केन्द्रीय सदस्यता दर्ता र मेधावी छात्रवृत्ति आवेदन।' }, actionUrl: 'membership', icon: 'Award' },
+                          { id: 'srv-vol', title: { en: 'Volunteer Registration', ne: 'स्वयंसेवक फारम' }, desc: { en: 'Join youth volunteer wing for community social welfare.', ne: 'सामाजिक कार्य र युवा स्वयंसेवक समूहमा आबद्धता।' }, actionUrl: 'volunteer', icon: 'Users' },
+                          { id: 'srv-don', title: { en: 'Guest House Donation', ne: 'अतिथि गृह दान कोष' }, desc: { en: 'Contribute to Central Guest House & Bhawan building fund.', ne: 'केन्द्रीय चौरसिया भवन निर्माण र दान सहयोग।' }, actionUrl: 'donate', icon: 'Building' },
+                          { id: 'srv-her', title: { en: 'Paan Culture & Farming Heritage', ne: 'पान संस्कृति र बरैजा खेती' }, desc: { en: 'Learn about ancient Chaurasiya betel cultivation & lore.', ne: 'चौरसिया समाजको पौराणिक इतिहास र पान खेती।' }, actionUrl: 'our-heritage', icon: 'BookOpen' },
+                          { id: 'srv-doc', title: { en: 'Official Bylaws & SWC Registry', ne: 'विधान तथा प्रमाणपत्र' }, desc: { en: 'Download constitution, annual reports, and government registration.', ne: 'समाज कल्याण परिषद दर्ता, विधान र प्रतिवेदन।' }, actionUrl: 'documents', icon: 'FileText' },
+                          { id: 'srv-his', title: { en: 'Central Notice & Press Portal', ne: 'सूचना तथा प्रेस विज्ञप्ति' }, desc: { en: 'Read official central press releases, notices & decisions.', ne: 'केन्द्रीय समिति निर्णय, विज्ञप्ति र आधिकारिक समाचार।' }, actionUrl: 'history', icon: 'Newspaper' },
+                          { id: 'srv-evt', title: { en: 'Events Calendar & Conventions', ne: 'कार्यक्रम क्यालेन्डर' }, desc: { en: 'Schedule for national conventions, rallies & Kul Puja.', ne: 'राष्ट्रिय महाधिवेशन, कुलपुजा र सभाको तालिका।' }, actionUrl: 'events', icon: 'Calendar' },
+                          { id: 'srv-fam', title: { en: 'Family Trees & Lineage', ne: 'वंशवृक्ष र परिवार नाता' }, desc: { en: 'Connect family trees, gotras, and ancestral roots.', ne: 'वंशवृक्ष खोजी, गोत्र र पारिवारिक नाता जोड्ने।' }, actionUrl: 'family-connectivity', icon: 'Network' },
+                          { id: 'srv-ren', title: { en: 'Renowned Personalities', ne: 'विशिष्ट व्यक्तित्व सम्मान' }, desc: { en: 'Honoring prominent leaders, doctors & scholars of CSN.', ne: 'चौरसिया समाजका विशिष्ट विद्वान तथा प्रतिभा सम्मान।' }, actionUrl: 'renowned-people', icon: 'Sparkles' },
+                          { id: 'srv-gal', title: { en: 'Photo & Video Archives', ne: 'तस्विर तथा भिडियो ग्यालरी' }, desc: { en: 'Browse historical photos and event media archives.', ne: 'केन्द्रीय र जिल्ला तहका कार्यक्रमका तस्विरहरू।' }, actionUrl: 'albums-gallery', icon: 'Image' },
+                          { id: 'srv-trn', title: { en: 'Financial Transparency Audit', ne: 'वित्तीय पारदर्शिता र लेखा' }, desc: { en: 'View audited financial balance sheets and fund allocation.', ne: 'लेखा परीक्षण गरिएको आय-व्यय र वित्तीय पारदर्शिता।' }, actionUrl: 'transparency', icon: 'CheckCircle' },
+                          { id: 'srv-cnt', title: { en: 'Central Helpdesk & Contacts', ne: 'सचिवालय सम्पर्क' }, desc: { en: 'Get in touch with central secretariat & district offices.', ne: 'केन्द्रीय सचिवालय ठेगाना र टेलिफोन सम्पर्क।' }, actionUrl: 'contacts', icon: 'PhoneCall' },
+                        ];
+                        setEditEservicesList(allTabsServices);
+                        alert('Auto-populated services list with all 15 website tabs!');
+                      }}
+                      className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow transition-all shrink-0 flex items-center gap-1 cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Auto-Populate Services for All Website Tabs</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-sky-800 dark:text-sky-200 leading-relaxed">
+                    Click any tab badge below or enter its exact <strong>Tab ID</strong> in the target page field of any service card:
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 pt-1 text-[11px]">
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">directory</code>: Member Directory</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">matrimonial</code>: Matrimonial Hub</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">blood</code>: Emergency Blood</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">membership</code>: Join & Grants</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">volunteer</code>: Youth Volunteers</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">donate</code>: Guest House Fund</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">our-heritage</code>: Cultural Paan</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">documents</code>: Official Bylaws</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">history</code>: News & Notices</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">events</code>: Events Calendar</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">family-connectivity</code>: Family Trees</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">renowned-people</code>: Achievers</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">albums-gallery</code>: Media Gallery</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">transparency</code>: Financial Audit</div>
+                    <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><code className="font-bold text-teal-700 dark:text-teal-300">contacts</code>: Central Helpdesk</div>
+                  </div>
+                </div>
+
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Services List ({editEservicesList.length})</h4>
+                    <button
+                      type="button"
+                      onClick={() => setEditEservicesList([...editEservicesList, { id: `srv-${Date.now()}`, title: { en: 'New Service', ne: 'नयाँ सेवा' }, desc: { en: 'Service description', ne: 'सेवा विवरण' }, actionUrl: 'directory', icon: 'FileText' }])}
+                      className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Service</span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {editEservicesList.map((srv, idx) => (
+                      <div key={srv.id || idx} className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-700 space-y-2.5 shadow-sm">
+                        <div className="flex items-center justify-between pb-1 border-b border-gray-100 dark:border-slate-800">
+                          <span className="text-[11px] font-extrabold text-teal-800 dark:text-teal-300 uppercase tracking-wide">
+                            Service #{idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to delete service #${idx + 1}?`)) {
+                                setEditEservicesList(editEservicesList.filter((_, i) => i !== idx));
+                              }
+                            }}
+                            className="px-2 py-1 bg-red-100 hover:bg-red-200 dark:bg-red-950/60 text-red-600 dark:text-red-300 rounded-md text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                            title="Delete this Service"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-600 dark:text-gray-400">Title (EN / NE)</label>
+                          <div className="grid grid-cols-2 gap-1.5 mt-0.5">
+                            <input type="text" placeholder="Title (EN)" value={srv.title?.en || srv.titleEn || ''} onChange={(e) => { const u = [...editEservicesList]; u[idx].title = { ...u[idx].title, en: e.target.value }; setEditEservicesList(u); }} className="w-full p-1.5 border rounded text-xs" />
+                            <input type="text" placeholder="Title (NE)" value={srv.title?.ne || srv.titleNe || ''} onChange={(e) => { const u = [...editEservicesList]; u[idx].title = { ...u[idx].title, ne: e.target.value }; setEditEservicesList(u); }} className="w-full p-1.5 border rounded text-xs" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-600 dark:text-gray-400">Description (EN / NE)</label>
+                          <div className="grid grid-cols-2 gap-1.5 mt-0.5">
+                            <input type="text" placeholder="Desc (EN)" value={srv.desc?.en || srv.subEn || ''} onChange={(e) => { const u = [...editEservicesList]; u[idx].desc = { ...u[idx].desc, en: e.target.value }; setEditEservicesList(u); }} className="w-full p-1.5 border rounded text-xs" />
+                            <input type="text" placeholder="Desc (NE)" value={srv.desc?.ne || srv.subNe || ''} onChange={(e) => { const u = [...editEservicesList]; u[idx].desc = { ...u[idx].desc, ne: e.target.value }; setEditEservicesList(u); }} className="w-full p-1.5 border rounded text-xs" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-600 dark:text-gray-400">Target Tab ID (e.g. directory, blood, matrimonial, membership)</label>
+                          <input type="text" placeholder="Target Tab ID" value={srv.actionUrl || srv.targetPage || ''} onChange={(e) => { const u = [...editEservicesList]; u[idx].actionUrl = e.target.value; setEditEservicesList(u); }} className="w-full p-1.5 border rounded text-xs font-mono bg-teal-50/50 dark:bg-slate-800" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* HERITAGE & PAAN SECTION EDIT FIELDS */}
+            {activeEditSection === 'heritage' && (
+              <div className="space-y-6">
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Homepage Introduction Paragraphs</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Intro Text (English)</label>
+                      <textarea
+                        rows={5}
+                        value={editIntroEn}
+                        onChange={(e) => setEditIntroEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Intro Text (Nepali)</label>
+                      <textarea
+                        rows={5}
+                        value={editIntroNe}
+                        onChange={(e) => setEditIntroNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Cultural Paan Story</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Paan Story Title (English)</label>
+                      <input
+                        type="text"
+                        value={editPaanStoryTitleEn}
+                        onChange={(e) => setEditPaanStoryTitleEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Paan Story Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editPaanStoryTitleNe}
+                        onChange={(e) => setEditPaanStoryTitleNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Paan Story Body (English)</label>
+                      <textarea
+                        rows={5}
+                        value={editPaanStoryEn}
+                        onChange={(e) => setEditPaanStoryEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Paan Story Body (Nepali)</label>
+                      <textarea
+                        rows={5}
+                        value={editPaanStoryNe}
+                        onChange={(e) => setEditPaanStoryNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* MISSION SECTION EDIT FIELDS */}
+            {activeEditSection === 'mission' && (
+              <div className="space-y-6">
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Vision & Mission Content</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Mission Title (English)</label>
+                      <input
+                        type="text"
+                        value={editMissionTitleEn}
+                        onChange={(e) => setEditMissionTitleEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Mission Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editMissionTitleNe}
+                        onChange={(e) => setEditMissionTitleNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Mission Statement (English)</label>
+                      <textarea
+                        rows={4}
+                        value={editMissionEn}
+                        onChange={(e) => setEditMissionEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Mission Statement (Nepali)</label>
+                      <textarea
+                        rows={4}
+                        value={editMissionNe}
+                        onChange={(e) => setEditMissionNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* IMPACT STATS EDIT FIELDS */}
+            {activeEditSection === 'impact' && (
+              <div className="space-y-6">
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Impact Section Header</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Header Title (English)</label>
+                      <input
+                        type="text"
+                        value={editImpactHeaderEn}
+                        onChange={(e) => setEditImpactHeaderEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Header Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editImpactHeaderNe}
+                        onChange={(e) => setEditImpactHeaderNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Impact Counters</h4>
+                    <button
+                      type="button"
+                      onClick={() => setEditImpactStats([...editImpactStats, { id: `stat-${Date.now()}`, value: '1,000+', label: { en: 'New Metric', ne: 'नयाँ सूचक' }, sub: { en: 'Across Nepal', ne: 'नेपालभर' } }])}
+                      className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Stat</span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {editImpactStats.map((st, idx) => (
+                      <div key={st.id || idx} className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-700 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-teal-800 dark:text-teal-300">Metric #{idx + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => setEditImpactStats(editImpactStats.filter((_, i) => i !== idx))}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <input type="text" placeholder="Value Number (e.g. 50,000+)" value={st.value || ''} onChange={(e) => { const u = [...editImpactStats]; u[idx].value = e.target.value; setEditImpactStats(u); }} className="w-full p-1.5 border rounded text-xs font-bold" />
+                        <input type="text" placeholder="Label (EN)" value={st.label?.en || ''} onChange={(e) => { const u = [...editImpactStats]; u[idx].label = { ...u[idx].label, en: e.target.value }; setEditImpactStats(u); }} className="w-full p-1.5 border rounded text-xs" />
+                        <input type="text" placeholder="Label (NE)" value={st.label?.ne || ''} onChange={(e) => { const u = [...editImpactStats]; u[idx].label = { ...u[idx].label, ne: e.target.value }; setEditImpactStats(u); }} className="w-full p-1.5 border rounded text-xs" />
+                        <input type="text" placeholder="Subtext (EN)" value={st.sub?.en || ''} onChange={(e) => { const u = [...editImpactStats]; u[idx].sub = { ...u[idx].sub, en: e.target.value }; setEditImpactStats(u); }} className="w-full p-1.5 border rounded text-xs" />
+                        <input type="text" placeholder="Subtext (NE)" value={st.sub?.ne || ''} onChange={(e) => { const u = [...editImpactStats]; u[idx].sub = { ...u[idx].sub, ne: e.target.value }; setEditImpactStats(u); }} className="w-full p-1.5 border rounded text-xs" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* UNITY, CONSOLIDATION & COOPERATION EDIT FIELDS */}
+            {activeEditSection === 'unity' && (
+              <div className="space-y-6">
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Unity Section Headings & Motto</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Section Title (English)</label>
+                      <input
+                        type="text"
+                        value={editUnityTitleEn}
+                        onChange={(e) => setEditUnityTitleEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Section Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editUnityTitleNe}
+                        onChange={(e) => setEditUnityTitleNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Central Vision/Motto Statement (English)</label>
+                      <textarea
+                        rows={2}
+                        value={editUnityVisionEn}
+                        onChange={(e) => setEditUnityVisionEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Central Vision/Motto Statement (Nepali)</label>
+                      <textarea
+                        rows={2}
+                        value={editUnityVisionNe}
+                        onChange={(e) => setEditUnityVisionNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">3 Core Tenets</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-700 space-y-2">
+                      <p className="font-bold text-xs text-teal-800 dark:text-teal-300">Tenet 1: Unity</p>
+                      <input type="text" placeholder="Title (EN)" value={editUnityTenet1En} onChange={(e) => setEditUnityTenet1En(e.target.value)} className="w-full p-1.5 border rounded text-xs" />
+                      <input type="text" placeholder="Title (NE)" value={editUnityTenet1Ne} onChange={(e) => setEditUnityTenet1Ne(e.target.value)} className="w-full p-1.5 border rounded text-xs" />
+                      <input type="text" placeholder="Subtitle (EN)" value={editUnityTenet1SubEn} onChange={(e) => setEditUnityTenet1SubEn(e.target.value)} className="w-full p-1.5 border rounded text-xs" />
+                      <input type="text" placeholder="Subtitle (NE)" value={editUnityTenet1SubNe} onChange={(e) => setEditUnityTenet1SubNe(e.target.value)} className="w-full p-1.5 border rounded text-xs" />
+                    </div>
+                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-700 space-y-2">
+                      <p className="font-bold text-xs text-teal-800 dark:text-teal-300">Tenet 2: Consolidation</p>
+                      <input type="text" placeholder="Title (EN)" value={editUnityTenet2En} onChange={(e) => setEditUnityTenet2En(e.target.value)} className="w-full p-1.5 border rounded text-xs" />
+                      <input type="text" placeholder="Title (NE)" value={editUnityTenet2Ne} onChange={(e) => setEditUnityTenet2Ne(e.target.value)} className="w-full p-1.5 border rounded text-xs" />
+                      <input type="text" placeholder="Subtitle (EN)" value={editUnityTenet2SubEn} onChange={(e) => setEditUnityTenet2SubEn(e.target.value)} className="w-full p-1.5 border rounded text-xs" />
+                      <input type="text" placeholder="Subtitle (NE)" value={editUnityTenet2SubNe} onChange={(e) => setEditUnityTenet2SubNe(e.target.value)} className="w-full p-1.5 border rounded text-xs" />
+                    </div>
+                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-700 space-y-2">
+                      <p className="font-bold text-xs text-teal-800 dark:text-teal-300">Tenet 3: Cooperation</p>
+                      <input type="text" placeholder="Title (EN)" value={editUnityTenet3En} onChange={(e) => setEditUnityTenet3En(e.target.value)} className="w-full p-1.5 border rounded text-xs" />
+                      <input type="text" placeholder="Title (NE)" value={editUnityTenet3Ne} onChange={(e) => setEditUnityTenet3Ne(e.target.value)} className="w-full p-1.5 border rounded text-xs" />
+                      <input type="text" placeholder="Subtitle (EN)" value={editUnityTenet3SubEn} onChange={(e) => setEditUnityTenet3SubEn(e.target.value)} className="w-full p-1.5 border rounded text-xs" />
+                      <input type="text" placeholder="Subtitle (NE)" value={editUnityTenet3SubNe} onChange={(e) => setEditUnityTenet3SubNe(e.target.value)} className="w-full p-1.5 border rounded text-xs" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Unity & Organization Key Statistics ({editUnityStats.length})</h4>
+                    <button
+                      type="button"
+                      onClick={() => setEditUnityStats([...editUnityStats, { id: `ustat-${Date.now()}`, value: '100+', label: { en: 'New Stat', ne: 'नयाँ तथ्याङ्क' }, sub: { en: 'Across Nepal', ne: 'नेपालभर' } }])}
+                      className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Stat Metric</span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {editUnityStats.map((st, idx) => (
+                      <div key={st.id || idx} className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-700 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-teal-800 dark:text-teal-300">Stat #{idx + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => setEditUnityStats(editUnityStats.filter((_, i) => i !== idx))}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded cursor-pointer"
+                            title="Delete Stat"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <input type="text" placeholder="Value Number (e.g. 77 Districts, 100k+)" value={st.value || ''} onChange={(e) => { const u = [...editUnityStats]; u[idx].value = e.target.value; setEditUnityStats(u); }} className="w-full p-1.5 border rounded text-xs font-bold" />
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <input type="text" placeholder="Label (EN)" value={st.label?.en || ''} onChange={(e) => { const u = [...editUnityStats]; u[idx].label = { ...u[idx].label, en: e.target.value }; setEditUnityStats(u); }} className="w-full p-1.5 border rounded text-xs" />
+                          <input type="text" placeholder="Label (NE)" value={st.label?.ne || ''} onChange={(e) => { const u = [...editUnityStats]; u[idx].label = { ...u[idx].label, ne: e.target.value }; setEditUnityStats(u); }} className="w-full p-1.5 border rounded text-xs" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <input type="text" placeholder="Subtext (EN)" value={st.sub?.en || ''} onChange={(e) => { const u = [...editUnityStats]; u[idx].sub = { ...u[idx].sub, en: e.target.value }; setEditUnityStats(u); }} className="w-full p-1.5 border rounded text-xs" />
+                          <input type="text" placeholder="Subtext (NE)" value={st.sub?.ne || ''} onChange={(e) => { const u = [...editUnityStats]; u[idx].sub = { ...u[idx].sub, ne: e.target.value }; setEditUnityStats(u); }} className="w-full p-1.5 border rounded text-xs" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Next Major Community Event Banner</h4>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (upcomingEvents && upcomingEvents.length > 0) {
+                          const nextEvt = upcomingEvents[0];
+                          setEditUnityNextEventTitleEn(nextEvt.title.en);
+                          setEditUnityNextEventTitleNe(nextEvt.title.ne);
+                          setEditUnityNextEventDateEn(`${nextEvt.date} | ${nextEvt.location.en}`);
+                          setEditUnityNextEventDateNe(`${nextEvt.date} | ${nextEvt.location.ne}`);
+                          alert(`Auto-fetched next event: "${nextEvt.title.en}" from Community Calendar!`);
+                        } else {
+                          alert('No upcoming events found in calendar.');
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow transition-all shrink-0 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>Auto-Fetch Next Event from Calendar Page</span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Event Title (English)</label>
+                      <input
+                        type="text"
+                        value={editUnityNextEventTitleEn}
+                        onChange={(e) => setEditUnityNextEventTitleEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Event Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editUnityNextEventTitleNe}
+                        onChange={(e) => setEditUnityNextEventTitleNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Date (English)</label>
+                      <input
+                        type="text"
+                        value={editUnityNextEventDateEn}
+                        onChange={(e) => setEditUnityNextEventDateEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Date (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editUnityNextEventDateNe}
+                        onChange={(e) => setEditUnityNextEventDateNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TOP RIBBON & REGISTRATION NO. EDIT FIELDS */}
+            {activeEditSection === 'ribbon' && (
+              <div className="space-y-6">
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Top Header Ribbon Marquee Ticker</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Top Ribbon Ticker Announcement (English)</label>
+                      <input
+                        type="text"
+                        value={editTopRibbonEn}
+                        onChange={(e) => setEditTopRibbonEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Top Ribbon Ticker Announcement (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editTopRibbonNe}
+                        onChange={(e) => setEditTopRibbonNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-medium"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Official Registration Number (SWC)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Registration No. (English)</label>
+                      <input
+                        type="text"
+                        value={editRegNoEn}
+                        onChange={(e) => setEditRegNoEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Registration No. (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editRegNoNe}
+                        onChange={(e) => setEditRegNoNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* BRANDING & FOOTER EDIT FIELDS */}
+            {activeEditSection === 'branding' && (
+              <div className="space-y-6">
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Logo & Branding Identity</h4>
+                  
+                  {/* Logo Image Upload & Transparent Tool */}
+                  <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-teal-200 dark:border-slate-700 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-teal-900 dark:text-teal-200 uppercase tracking-wider flex items-center gap-1.5">
+                        <ImageIcon className="w-4 h-4 text-emerald-600" />
+                        Logo Emblem Image & Background Processing
+                      </span>
+                      {isUploadingLogo && (
+                        <span className="text-xs font-bold text-amber-600 animate-pulse flex items-center gap-1">
+                          <Wand2 className="w-3.5 h-3.5 animate-spin" />
+                          Processing Logo...
+                        </span>
                       )}
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-teal-950 uppercase tracking-wider block">Slide Image URL (Or paste directly)</label>
-                      <input
-                        type="text"
-                        placeholder="https://..."
-                        value={newSlideImage}
-                        onChange={(e) => setNewSlideImage(e.target.value)}
-                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-teal-950 uppercase tracking-wider block">Slide Title (English)</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Traditional Cultivation"
-                        value={newSlideTitleEn}
-                        onChange={(e) => setNewSlideTitleEn(e.target.value)}
-                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-teal-950 uppercase tracking-wider block">Slide Title (Nepali)</label>
-                      <input
-                        type="text"
-                        placeholder="जस्तै: परम्परागत खेती"
-                        value={newSlideTitleNe}
-                        onChange={(e) => setNewSlideTitleNe(e.target.value)}
-                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-1 sm:col-span-2">
-                      <label className="text-[10px] font-black text-teal-950 uppercase tracking-wider block">Description (English)</label>
-                      <input
-                        type="text"
-                        placeholder="Short description of this slide..."
-                        value={newSlideDescEn}
-                        onChange={(e) => setNewSlideDescEn(e.target.value)}
-                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-1 sm:col-span-2">
-                      <label className="text-[10px] font-black text-teal-950 uppercase tracking-wider block">Description (Nepali)</label>
-                      <input
-                        type="text"
-                        placeholder="यस स्लाइडको संक्षिप्त विवरण..."
-                        value={newSlideDescNe}
-                        onChange={(e) => setNewSlideDescNe(e.target.value)}
-                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    disabled={uploadingSlide || !newSlideImage}
-                    onClick={() => {
-                      const newSlide = {
-                        id: 'custom_slide_' + Date.now(),
-                        imageUrl: newSlideImage,
-                        title: {
-                          en: newSlideTitleEn || 'Custom Slide',
-                          ne: newSlideTitleNe || 'अनुकूलित स्लाइड'
-                        },
-                        description: {
-                          en: newSlideDescEn || '',
-                          ne: newSlideDescNe || ''
-                        }
-                      };
-                      setEditHeroImages([...editHeroImages, newSlide]);
-                      setNewSlideImage('');
-                      setNewSlideTitleEn('');
-                      setNewSlideTitleNe('');
-                      setNewSlideDescEn('');
-                      setNewSlideDescNe('');
-                    }}
-                    className="px-4 py-2 bg-teal-700 hover:bg-teal-850 text-white disabled:opacity-50 text-xs font-bold uppercase rounded-lg transition-colors flex items-center gap-1 shadow-sm border border-teal-800"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add to Hero Slider List</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Secondary Gallery Carousel Manager */}
-              <div className="md:col-span-2 border-t border-teal-200 pt-6 space-y-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div>
-                    <h4 className="text-sm font-extrabold text-teal-950 uppercase tracking-wide">Manage Secondary Gallery Carousel Images</h4>
-                    <p className="text-xs text-gray-500">Add, reorder, or remove images for the 'Glimpses of Our Journey' gallery carousel independently.</p>
-                  </div>
-                  <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-300">
-                    {editSecondaryImages.length} Gallery Images
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {editSecondaryImages.map((slide, sIdx) => (
-                    <div key={slide.id || sIdx} className="p-3 bg-white rounded-2xl border border-teal-200 space-y-2 relative group shadow-sm">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditSecondaryImages(editSecondaryImages.filter((_, idx) => idx !== sIdx));
-                        }}
-                        className="absolute top-2 right-2 p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors border border-red-200 z-10"
-                        title="Delete Slide"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-
-                      <div className="h-28 rounded-xl overflow-hidden bg-gray-100 border border-teal-100">
-                        <img src={slide.imageUrl} alt="" className="w-full h-full object-cover" />
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      <div className="w-20 h-20 shrink-0 rounded-2xl border-2 border-teal-300 dark:border-slate-700 flex items-center justify-center p-2 bg-slate-50 dark:bg-slate-950 shadow-inner overflow-hidden">
+                        {editLogoUrl ? (
+                          <img src={editLogoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
+                        ) : (
+                          <span className="text-[10px] font-bold text-gray-400">No Logo</span>
+                        )}
                       </div>
 
-                      <div className="space-y-1">
+                      <div className="flex-1 space-y-2.5 w-full">
                         <input
                           type="text"
-                          value={slide.title?.en || ''}
-                          placeholder="Title (English)"
-                          onChange={(e) => {
-                            const updated = [...editSecondaryImages];
-                            updated[sIdx] = {
-                              ...updated[sIdx],
-                              title: { ...(updated[sIdx].title || { en: '', ne: '' }), en: e.target.value }
-                            };
-                            setEditSecondaryImages(updated);
-                          }}
-                          className="w-full p-1.5 bg-teal-50/50 border border-teal-200 rounded text-xs font-bold text-teal-900"
+                          value={editLogoUrl}
+                          onChange={(e) => setEditLogoUrl(e.target.value)}
+                          placeholder="https://... or upload file below"
+                          className="w-full p-2 bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-700 rounded-xl text-xs font-mono"
                         />
-                        <input
-                          type="text"
-                          value={slide.title?.ne || ''}
-                          placeholder="Title (Nepali)"
-                          onChange={(e) => {
-                            const updated = [...editSecondaryImages];
-                            updated[sIdx] = {
-                              ...updated[sIdx],
-                              title: { ...(updated[sIdx].title || { en: '', ne: '' }), ne: e.target.value }
-                            };
-                            setEditSecondaryImages(updated);
-                          }}
-                          className="w-full p-1.5 bg-teal-50/50 border border-teal-200 rounded text-xs text-teal-900"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
 
-                {/* Add New Secondary Gallery Slide */}
-                <div className="p-4 bg-teal-50/50 rounded-2xl border border-teal-200 space-y-3">
-                  <h5 className="text-xs font-extrabold text-teal-950 uppercase tracking-wide">Add Image to Secondary Gallery Carousel</h5>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="sm:col-span-2 space-y-1">
-                      <label className="text-[10px] font-bold text-teal-900 uppercase">Image File / URL</label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={newSecondaryImage}
-                          onChange={(e) => setNewSecondaryImage(e.target.value)}
-                          placeholder="Paste image URL or click upload"
-                          className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                        />
-                        <label className="px-3 py-2 bg-teal-800 hover:bg-teal-700 text-white rounded-lg text-xs font-bold cursor-pointer shrink-0 flex items-center justify-center">
-                          {uploadingSecondarySlide ? 'Uploading...' : 'Upload'}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              setUploadingSecondarySlide(true);
-                              try {
-                                const url = await handleFileUpload(file);
-                                setNewSecondaryImage(url);
-                              } catch (err) {
-                                alert('Failed to upload image');
-                              } finally {
-                                setUploadingSecondarySlide(false);
-                              }
-                            }}
-                          />
-                        </label>
-                      </div>
-                    </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <label className="px-3 py-1.5 bg-teal-800 hover:bg-teal-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm transition-all">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Upload Logo Image</span>
+                            <input type="file" accept="image/*" onChange={handleLogoFileUpload} className="hidden" />
+                          </label>
 
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-teal-900 uppercase">Title (English)</label>
-                      <input
-                        type="text"
-                        value={newSecondaryTitleEn}
-                        onChange={(e) => setNewSecondaryTitleEn(e.target.value)}
-                        placeholder="e.g. Annual Cultural Program"
-                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-teal-900 uppercase">Title (Nepali)</label>
-                      <input
-                        type="text"
-                        value={newSecondaryTitleNe}
-                        onChange={(e) => setNewSecondaryTitleNe(e.target.value)}
-                        placeholder="वार्षिक सांस्कृतिक कार्यक्रम"
-                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-teal-900 uppercase">Description (English)</label>
-                      <input
-                        type="text"
-                        value={newSecondaryDescEn}
-                        onChange={(e) => setNewSecondaryDescEn(e.target.value)}
-                        placeholder="Brief caption..."
-                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-teal-900 uppercase">Description (Nepali)</label>
-                      <input
-                        type="text"
-                        value={newSecondaryDescNe}
-                        onChange={(e) => setNewSecondaryDescNe(e.target.value)}
-                        placeholder="छोटो विवरण..."
-                        className="w-full p-2 bg-white border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                      />
+                          <button
+                            type="button"
+                            onClick={handleMakeLogoTransparent}
+                            disabled={!editLogoUrl || isUploadingLogo}
+                            className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 transition-all"
+                            title="Removes white background and creates transparent PNG logo"
+                          >
+                            <Wand2 className="w-3.5 h-3.5 text-amber-300" />
+                            <span>Make Background Transparent</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    disabled={uploadingSecondarySlide || !newSecondaryImage}
-                    onClick={() => {
-                      const newSlide = {
-                        id: 'gallery_slide_' + Date.now(),
-                        imageUrl: newSecondaryImage,
-                        title: {
-                          en: newSecondaryTitleEn || 'Gallery Slide',
-                          ne: newSecondaryTitleNe || 'ग्यालेरी स्लाइड'
-                        },
-                        description: {
-                          en: newSecondaryDescEn || '',
-                          ne: newSecondaryDescNe || ''
-                        }
-                      };
-                      setEditSecondaryImages([...editSecondaryImages, newSlide]);
-                      setNewSecondaryImage('');
-                      setNewSecondaryTitleEn('');
-                      setNewSecondaryTitleNe('');
-                      setNewSecondaryDescEn('');
-                      setNewSecondaryDescNe('');
-                    }}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 text-xs font-bold uppercase rounded-lg transition-colors flex items-center gap-1 shadow-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add to Gallery Carousel</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Impact Statistics Manager */}
-              <div className="md:col-span-2 border-t border-teal-200 pt-6 mt-6 space-y-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div>
-                    <h4 className="text-sm font-extrabold text-teal-950 uppercase tracking-wide">Manage Impact Statistics</h4>
-                    <p className="text-xs text-gray-500">Add, edit, or delete statistics displayed below 'Empowering & Transforming Lives'</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Logo Main Name (English)</label>
+                      <input
+                        type="text"
+                        value={editLogoTextEn}
+                        onChange={(e) => setEditLogoTextEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Logo Main Name (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editLogoTextNe}
+                        onChange={(e) => setEditLogoTextNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Logo Subtitle (English)</label>
+                      <input
+                        type="text"
+                        value={editLogoSubEn}
+                        onChange={(e) => setEditLogoSubEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Logo Subtitle (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editLogoSubNe}
+                        onChange={(e) => setEditLogoSubNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newStat = {
-                        id: 'stat_' + Date.now(),
-                        value: '100+',
-                        label: { en: 'New Stat Label', ne: 'नयाँ तथ्याङ्क लेबल' },
-                        desc: { en: 'New description detail', ne: 'नयाँ विवरण विवरण' }
-                      };
-                      setEditImpactStats([...editImpactStats, newStat]);
-                    }}
-                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold uppercase rounded-lg flex items-center gap-1 shadow-sm transition-all shrink-0"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Statistic</span>
-                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {editImpactStats.map((stat, sIdx) => (
-                    <div key={stat.id || sIdx} className="p-4 bg-white rounded-2xl border border-teal-150 space-y-3 relative group shadow-sm">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditImpactStats(editImpactStats.filter((_, idx) => idx !== sIdx));
-                        }}
-                        className="absolute top-3 right-3 p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors border border-red-200"
-                        title="Delete Statistic"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-
-                      <div className="grid grid-cols-3 gap-2 pr-6">
-                        {/* Stat Value */}
-                        <div className="col-span-1 space-y-1">
-                          <label className="text-[10px] font-bold text-teal-900 uppercase">Value</label>
-                          <input
-                            type="text"
-                            required
-                            value={stat.value}
-                            onChange={(e) => {
-                              const updated = [...editImpactStats];
-                              updated[sIdx] = { ...updated[sIdx], value: e.target.value };
-                              setEditImpactStats(updated);
-                            }}
-                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs font-bold text-teal-950 focus:outline-none"
-                          />
-                        </div>
-
-                        {/* Stat Label English */}
-                        <div className="col-span-2 space-y-1">
-                          <label className="text-[10px] font-bold text-teal-900 uppercase">Label (EN)</label>
-                          <input
-                            type="text"
-                            required
-                            value={stat.label?.en || ''}
-                            onChange={(e) => {
-                              const updated = [...editImpactStats];
-                              const label = { ...(updated[sIdx].label || { en: '', ne: '' }), en: e.target.value };
-                              updated[sIdx] = { ...updated[sIdx], label };
-                              setEditImpactStats(updated);
-                            }}
-                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {/* Label Nepali */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-teal-900 uppercase">Label (NE)</label>
-                          <input
-                            type="text"
-                            required
-                            value={stat.label?.ne || ''}
-                            onChange={(e) => {
-                              const updated = [...editImpactStats];
-                              const label = { ...(updated[sIdx].label || { en: '', ne: '' }), ne: e.target.value };
-                              updated[sIdx] = { ...updated[sIdx], label };
-                              setEditImpactStats(updated);
-                            }}
-                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                          />
-                        </div>
-
-                        {/* Desc English */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-teal-900 uppercase">Desc (EN)</label>
-                          <input
-                            type="text"
-                            required
-                            value={stat.desc?.en || ''}
-                            onChange={(e) => {
-                              const updated = [...editImpactStats];
-                              const desc = { ...(updated[sIdx].desc || { en: '', ne: '' }), en: e.target.value };
-                              updated[sIdx] = { ...updated[sIdx], desc };
-                              setEditImpactStats(updated);
-                            }}
-                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                          />
-                        </div>
-
-                        {/* Desc Nepali */}
-                        <div className="space-y-1 sm:col-span-2">
-                          <label className="text-[10px] font-bold text-teal-900 uppercase">Desc (NE)</label>
-                          <input
-                            type="text"
-                            required
-                            value={stat.desc?.ne || ''}
-                            onChange={(e) => {
-                              const updated = [...editImpactStats];
-                              const desc = { ...(updated[sIdx].desc || { en: '', ne: '' }), ne: e.target.value };
-                              updated[sIdx] = { ...updated[sIdx], desc };
-                              setEditImpactStats(updated);
-                            }}
-                            className="w-full p-2 bg-teal-50/50 border border-teal-200 rounded-lg text-xs text-teal-900 focus:outline-none"
-                          />
-                        </div>
-                      </div>
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Website Tagline (Footer & Header)</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Tagline (English)</label>
+                      <input
+                        type="text"
+                        value={editTaglineEn}
+                        onChange={(e) => setEditTaglineEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Featured Leadership Manager */}
-              <div className="md:col-span-2 border-t border-teal-200 pt-6 mt-6 space-y-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div>
-                    <h4 className="text-sm font-extrabold text-teal-950 uppercase tracking-wide">Manage Featured Leadership Section</h4>
-                    <p className="text-xs text-gray-500">Select key leaders from the available Member Directory to display on the homepage.</p>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Tagline (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editTaglineNe}
+                        onChange={(e) => setEditTaglineNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
                   </div>
-                  {membersList && membersList.length > 0 && (
-                    <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-                      <select
-                        className="w-full sm:w-auto px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold uppercase rounded-xl border border-emerald-600 focus:outline-none shadow-sm cursor-pointer"
-                        onChange={(e) => {
-                          const m = membersList.find(x => x.id === e.target.value);
-                          if (m) {
-                            if (editLeadership.some(l => l.id === m.id)) {
-                              alert(lang === 'en' ? 'This member is already added to featured leadership.' : 'यो सदस्य पहिल्यै फिचर्ड नेतृत्वमा थपिसकिएको छ।');
-                              e.target.value = "";
-                              return;
-                            }
-                            const newLeader = {
-                              id: m.id,
-                              name: m.name,
-                              role: m.role,
-                              category: m.category,
-                              address: m.address,
-                              avatarUrl: m.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
-                            };
-                            setEditLeadership([...editLeadership, newLeader]);
-                          }
-                          e.target.value = "";
-                        }}
-                      >
-                        <option value="" className="bg-slate-900 text-white font-bold">
-                          + Select & Add from Member Directory ({membersList.length} Members)...
-                        </option>
-                        {membersList.map(m => (
-                          <option key={m.id} value={m.id} className="bg-slate-900 text-white font-medium">
-                            {m.name[lang] || m.name.en} ({m.role[lang] || m.role.en})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {editLeadership.map((member, lIdx) => (
-                    <div key={member.id || lIdx} className="p-4 bg-white rounded-2xl border border-teal-150 space-y-3 relative group shadow-sm">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditLeadership(editLeadership.filter((_, idx) => idx !== lIdx));
-                        }}
-                        className="absolute top-3 right-3 p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors border border-red-200"
-                        title="Delete Leader"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-
-                      <div className="flex flex-col gap-3 pt-2">
-                        <div className="flex items-center gap-3">
-                          <div className="relative w-12 h-12 rounded-full overflow-hidden border border-teal-200 shrink-0 bg-teal-50 flex items-center justify-center">
-                            <img src={member.avatarUrl || member.photoBase64} alt="" className="w-full h-full object-cover" />
-                          </div>
-                          <div className="space-y-1 w-full">
-                            <h5 className="text-xs font-bold text-teal-950">{member.name?.en || ''}</h5>
-                            <p className="text-[10px] text-teal-700 uppercase font-semibold">{member.role?.en || ''}</p>
-                            <p className="text-[10px] text-gray-500 italic mt-1">
-                              {lang === 'en' ? 'Profile details (photo, name, role) are synced from the Member Directory. Edit them there.' : 'प्रोफाइल विवरण (फोटो, नाम, भूमिका) सदस्य निर्देशिकाबाट सिंक गरिएको छ। त्यहाँ सम्पादन गर्नुहोस्।'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Footer About & Contact Details</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Footer About Paragraph (English)</label>
+                      <textarea
+                        rows={2}
+                        value={editFooterAboutEn}
+                        onChange={(e) => setEditFooterAboutEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
                     </div>
-                  ))}
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Footer About Paragraph (Nepali)</label>
+                      <textarea
+                        rows={2}
+                        value={editFooterAboutNe}
+                        onChange={(e) => setEditFooterAboutNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Contact Phone</label>
+                      <input
+                        type="text"
+                        value={editFooterPhone}
+                        onChange={(e) => setEditFooterPhone(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Contact Email</label>
+                      <input
+                        type="text"
+                        value={editFooterEmail}
+                        onChange={(e) => setEditFooterEmail(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Address (English)</label>
+                      <input
+                        type="text"
+                        value={editFooterAddressEn}
+                        onChange={(e) => setEditFooterAddressEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Address (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editFooterAddressNe}
+                        onChange={(e) => setEditFooterAddressNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+            {activeEditSection === 'pillars' && (
+              <div className="space-y-6">
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-teal-600" />
+                    <span>Pillars Section Title</span>
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillars Title (English)</label>
+                      <input
+                        type="text"
+                        value={editPillarsTitleEn}
+                        onChange={(e) => setEditPillarsTitleEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillars Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editPillarsTitleNe}
+                        onChange={(e) => setEditPillarsTitleNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                  </div>
+                </div>
 
-            <div className="flex items-center gap-3 pt-4 border-t border-teal-200">
-              <button
-                type="submit"
-                disabled={isSavingTexts}
-                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-extrabold text-xs uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center gap-1.5"
-              >
-                <Save className="w-4 h-4" />
-                <span>{isSavingTexts ? 'Saving...' : 'Save Homepage Content'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsEditingTexts(false)}
-                className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-xs uppercase tracking-wider rounded-lg transition-all"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </section>
+                {/* Pillar 1 */}
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-900 flex items-center justify-center text-teal-700 dark:text-teal-300 text-[10px] font-black">1</span>
+                    <span>Pillar 1 Details</span>
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 1 Title (English)</label>
+                      <input
+                        type="text"
+                        value={editPillar1TitleEn}
+                        onChange={(e) => setEditPillar1TitleEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 1 Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editPillar1TitleNe}
+                        onChange={(e) => setEditPillar1TitleNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 1 Subtext / Category (English)</label>
+                      <input
+                        type="text"
+                        value={editPillar1SubEn}
+                        onChange={(e) => setEditPillar1SubEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 1 Subtext / Category (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editPillar1SubNe}
+                        onChange={(e) => setEditPillar1SubNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pillar 2 */}
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-900 flex items-center justify-center text-teal-700 dark:text-teal-300 text-[10px] font-black">2</span>
+                    <span>Pillar 2 Details</span>
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 2 Title (English)</label>
+                      <input
+                        type="text"
+                        value={editPillar2TitleEn}
+                        onChange={(e) => setEditPillar2TitleEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 2 Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editPillar2TitleNe}
+                        onChange={(e) => setEditPillar2TitleNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 2 Subtext / Category (English)</label>
+                      <input
+                        type="text"
+                        value={editPillar2SubEn}
+                        onChange={(e) => setEditPillar2SubEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 2 Subtext / Category (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editPillar2SubNe}
+                        onChange={(e) => setEditPillar2SubNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pillar 3 */}
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-900 flex items-center justify-center text-teal-700 dark:text-teal-300 text-[10px] font-black">3</span>
+                    <span>Pillar 3 Details</span>
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 3 Title (English)</label>
+                      <input
+                        type="text"
+                        value={editPillar3TitleEn}
+                        onChange={(e) => setEditPillar3TitleEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 3 Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editPillar3TitleNe}
+                        onChange={(e) => setEditPillar3TitleNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 3 Subtext / Category (English)</label>
+                      <input
+                        type="text"
+                        value={editPillar3SubEn}
+                        onChange={(e) => setEditPillar3SubEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 3 Subtext / Category (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editPillar3SubNe}
+                        onChange={(e) => setEditPillar3SubNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pillar 4 */}
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-900 flex items-center justify-center text-teal-700 dark:text-teal-300 text-[10px] font-black">4</span>
+                    <span>Pillar 4 Details</span>
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 4 Title (English)</label>
+                      <input
+                        type="text"
+                        value={editPillar4TitleEn}
+                        onChange={(e) => setEditPillar4TitleEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 4 Title (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editPillar4TitleNe}
+                        onChange={(e) => setEditPillar4TitleNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 4 Subtext / Category (English)</label>
+                      <input
+                        type="text"
+                        value={editPillar4SubEn}
+                        onChange={(e) => setEditPillar4SubEn(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Pillar 4 Subtext / Category (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editPillar4SubNe}
+                        onChange={(e) => setEditPillar4SubNe(e.target.value)}
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Modal Footer Controls */}
+          <div className="p-4 bg-teal-50 dark:bg-slate-800/80 border-t border-teal-200 dark:border-slate-700 flex items-center justify-end gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveEditSection(null)}
+              className="px-5 py-2.5 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveCurrentSection}
+              disabled={isSavingTexts}
+              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <Save className="w-4 h-4" />
+              <span>{isSavingTexts ? 'Saving...' : 'Save Section Changes'}</span>
+            </button>
+          </div>
+        </div>
       </div>
     );
-  }
+  };
+
+  const renderEservicesPortal = () => (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-teal-100 dark:border-slate-800 transition-all relative">
+      {/* Sticky Header Bar */}
+      <div className="lg:sticky lg:top-[48px] z-20 bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-white px-4 py-3 rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-800/60">
+        <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-teal-100">
+          <Globe className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+          <span>{lang === 'en' ? (siteTexts.eservicesTitleEn || 'Institutional E-Services') : (siteTexts.eservicesTitleNe || 'डिजिटल नागरिक सेवा पोर्टल')}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+            {lang === 'en' ? 'Live Portal' : '२४/७ खुला'}
+          </span>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setActiveEditSection('eservices')}
+              className="p-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-bold rounded border border-amber-400/40 transition-colors cursor-pointer"
+              title="Edit E-Services Section"
+            >
+              <Edit3 className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="p-3.5 space-y-2.5">
+        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1">
+          {lang === 'en' ? (siteTexts.eservicesSubEn || 'Direct Citizen Portals & Verification') : (siteTexts.eservicesSubNe || 'प्रत्यक्ष संस्थागत तथा नागरिक सेवाहरू')}
+        </p>
+
+        <div className="space-y-1.5">
+          {activeEservicesList.map((srv, sIdx) => {
+            return (
+              <button
+                key={srv.id || sIdx}
+                onClick={() => {
+                  onNavigate(srv.targetPage || 'directory');
+                  onTrackAction(`Click E-Services ${srv.titleEn}`);
+                }}
+                className="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-teal-50/80 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 transition-all group flex items-center justify-between cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    {renderServiceIcon(srv.icon)}
+                  </div>
+                  <div className="min-w-0">
+                    <h5 className="text-[11px] font-extrabold text-slate-900 dark:text-slate-100 leading-tight group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors truncate">
+                      {lang === 'en' ? srv.titleEn : srv.titleNe}
+                    </h5>
+                    <p className="text-[9.5px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                      {lang === 'en' ? srv.subEn : srv.subNe}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-teal-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderCommunityPillars = () => (
+    <div className="bg-[#03443e] dark:bg-slate-900 rounded-2xl shadow-md border border-teal-800/40 dark:border-slate-800 transition-all relative">
+      {/* Header Bar */}
+      <div className="lg:sticky lg:top-[48px] z-20 bg-gradient-to-r from-[#02332f] to-[#03443e] dark:from-slate-950 dark:to-slate-900 text-white px-4 py-3 rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-850/40">
+        <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-teal-100">
+          <HeartHandshake className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span>{lang === 'en' ? (siteTexts.pillarsTitleEn || 'Community Pillars') : (siteTexts.pillarsTitleNe || 'समुदायका आधारहरू')}</span>
+        </div>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => setActiveEditSection('pillars')}
+            className="px-2 py-1 bg-teal-800/60 hover:bg-teal-700/80 text-white hover:text-emerald-300 text-[11px] font-bold rounded-lg border border-teal-700/40 transition-colors cursor-pointer flex items-center gap-1"
+            title="Edit Pillars"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>{lang === 'en' ? 'Edit' : 'सम्पादन'}</span>
+          </button>
+        )}
+      </div>
+
+      <div className="p-3.5 space-y-2.5">
+        <div className="grid grid-cols-2 gap-2">
+          {/* Pillar 1 */}
+          <button
+            type="button"
+            onClick={() => {
+              onNavigate('our-heritage');
+              onTrackAction('Click Pillar Paan Heritage');
+            }}
+            className="p-3 rounded-2xl bg-[#02332f]/80 hover:bg-[#022b27] border border-teal-800/40 hover:border-emerald-500/40 text-left flex flex-col justify-between transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] group cursor-pointer shadow-sm w-full min-h-[105px]"
+          >
+            <Leaf className="w-5 h-5 text-emerald-400 transition-transform group-hover:scale-110 shrink-0" />
+            <div className="mt-2.5">
+              <h5 className="text-[12px] font-black text-white leading-tight">
+                {lang === 'en' ? (siteTexts.pillar1TitleEn || 'Paan Heritage') : (siteTexts.pillar1TitleNe || 'पान सम्पदा')}
+              </h5>
+              <span className="text-[10px] font-medium text-teal-300 group-hover:text-emerald-300 transition-colors block mt-0.5">
+                {lang === 'en' ? (siteTexts.pillar1SubEn || 'Culture & Farming') : (siteTexts.pillar1SubNe || 'संस्कृति र खेती')}
+              </span>
+            </div>
+          </button>
+
+          {/* Pillar 2 */}
+          <button
+            type="button"
+            onClick={() => {
+              onNavigate('about-vision');
+              onTrackAction('Click Pillar Youth & Career');
+            }}
+            className="p-3 rounded-2xl bg-[#02332f]/80 hover:bg-[#022b27] border border-teal-800/40 hover:border-emerald-500/40 text-left flex flex-col justify-between transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] group cursor-pointer shadow-sm w-full min-h-[105px]"
+          >
+            <GraduationCap className="w-5 h-5 text-amber-400 transition-transform group-hover:scale-110 shrink-0" />
+            <div className="mt-2.5">
+              <h5 className="text-[12px] font-black text-white leading-tight">
+                {lang === 'en' ? (siteTexts.pillar2TitleEn || 'Youth & Career') : (siteTexts.pillar2TitleNe || 'युवा तथा शिक्षा')}
+              </h5>
+              <span className="text-[10px] font-medium text-teal-300 group-hover:text-emerald-300 transition-colors block mt-0.5">
+                {lang === 'en' ? (siteTexts.pillar2SubEn || 'Grants & Support') : (siteTexts.pillar2SubNe || 'छात्रवृत्ति र मार्गदर्शन')}
+              </span>
+            </div>
+          </button>
+
+          {/* Pillar 3 */}
+          <button
+            type="button"
+            onClick={() => {
+              onNavigate('directory');
+              onTrackAction('Click Pillar District Branches');
+            }}
+            className="p-3 rounded-2xl bg-[#02332f]/80 hover:bg-[#022b27] border border-teal-800/40 hover:border-emerald-500/40 text-left flex flex-col justify-between transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] group cursor-pointer shadow-sm w-full min-h-[105px]"
+          >
+            <Building2 className="w-5 h-5 text-cyan-400 transition-transform group-hover:scale-110 shrink-0" />
+            <div className="mt-2.5">
+              <h5 className="text-[12px] font-black text-white leading-tight">
+                {lang === 'en' ? (siteTexts.pillar3TitleEn || 'District Branches') : (siteTexts.pillar3TitleNe || 'जिल्ला शाखाहरू')}
+              </h5>
+              <span className="text-[10px] font-medium text-teal-300 group-hover:text-emerald-300 transition-colors block mt-0.5">
+                {lang === 'en' ? (siteTexts.pillar3SubEn || '77 Districts') : (siteTexts.pillar3SubNe || '७७ वटै जिल्ला')}
+              </span>
+            </div>
+          </button>
+
+          {/* Pillar 4 */}
+          <button
+            type="button"
+            onClick={() => {
+              onNavigate('transparency');
+              onTrackAction('Click Pillar Transparency');
+            }}
+            className="p-3 rounded-2xl bg-[#02332f]/80 hover:bg-[#022b27] border border-teal-800/40 hover:border-emerald-500/40 text-left flex flex-col justify-between transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] group cursor-pointer shadow-sm w-full min-h-[105px]"
+          >
+            <ShieldCheck className="w-5 h-5 text-emerald-400 transition-transform group-hover:scale-110 shrink-0" />
+            <div className="mt-2.5">
+              <h5 className="text-[12px] font-black text-white leading-tight">
+                {lang === 'en' ? (siteTexts.pillar4TitleEn || 'Transparency') : (siteTexts.pillar4TitleNe || 'सुशासन र कोष')}
+              </h5>
+              <span className="text-[10px] font-medium text-teal-300 group-hover:text-emerald-300 transition-colors block mt-0.5">
+                {lang === 'en' ? (siteTexts.pillar4SubEn || 'Audited Reports') : (siteTexts.pillar4SubNe || 'पारदर्शी विवरण')}
+              </span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderUnityWidget = () => (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-teal-100 dark:border-slate-800 transition-all relative">
+      {/* Sticky/Static Header Bar */}
+      <div className="lg:sticky lg:top-[48px] z-20 bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-white px-4 py-3 rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-800/60">
+        <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-teal-100">
+          <Users className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{lang === 'en' ? (siteTexts.unityTitleEn || 'Unity, Consolidation & Cooperation') : (siteTexts.unityTitleNe || 'एकता, एक्यबद्धता र सहकार्य')}</span>
+        </div>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => setActiveEditSection('unity')}
+            className="p-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-bold rounded border border-amber-400/40 transition-colors cursor-pointer"
+            title="Edit Unity Section"
+          >
+            <Edit3 className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+
+      <div className="p-4 space-y-4">
+        {/* Vision / Motto Statement */}
+        <p className="text-xs text-gray-600 dark:text-gray-300 font-medium italic border-l-2 border-emerald-500 pl-2.5 leading-relaxed">
+          "{lang === 'en' ? (siteTexts.unityVisionEn || 'Dedicated to Unity, Consolidation and Cooperation.') : (siteTexts.unityVisionNe || 'एकता, एक्यबद्धता र सहकार्यमा समर्पित।')}"
+        </p>
+
+        {/* Statistics Grid */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {lang === 'en' ? 'Community Statistics' : 'समुदाय तथ्याङ्कहरू'}
+            </p>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={handleAddInlineUnityStat}
+                className="px-1.5 py-0.5 bg-teal-600 text-white hover:bg-teal-700 rounded text-[9px] font-extrabold flex items-center gap-0.5 cursor-pointer shadow-sm transition-all"
+              >
+                <Plus className="w-2.5 h-2.5" />
+                <span>{lang === 'en' ? 'Add' : 'थप्नुहोस्'}</span>
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            {activeUnityStatsList.map((st, idx) => {
+              const statVal = st.value || st.val || '';
+              const statLabel = lang === 'en' 
+                ? (st.label?.en || st.labelEn || '') 
+                : (st.label?.ne || st.labelNe || '');
+              const statSub = lang === 'en'
+                ? (st.sub?.en || st.subEn || '')
+                : (st.sub?.ne || st.subNe || '');
+              const iconName = st.icon || 'Users';
+              
+              if (editingUnityStatId === st.id) {
+                return (
+                  <div 
+                    key={st.id || idx} 
+                    className="bg-teal-50/40 dark:bg-slate-800 p-2.5 rounded-xl border border-teal-200 dark:border-slate-700 col-span-2 space-y-2 text-xs shadow-inner"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-extrabold text-[10px] text-teal-800 dark:text-teal-300 uppercase tracking-wide">Edit Stat Metric</span>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-[8px] font-bold text-slate-500 dark:text-slate-400 uppercase">Metric Value</label>
+                      <input 
+                        type="text" 
+                        value={inlineStatValue} 
+                        onChange={(e) => setInlineStatValue(e.target.value)} 
+                        className="w-full p-1 border rounded text-[11px] font-bold bg-white dark:bg-slate-900 dark:text-white"
+                        placeholder="e.g. 12,500+" 
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div>
+                        <label className="block text-[8px] font-bold text-slate-500 dark:text-slate-400 uppercase">Label (EN)</label>
+                        <input 
+                          type="text" 
+                          value={inlineStatLabelEn} 
+                          onChange={(e) => setInlineStatLabelEn(e.target.value)} 
+                          className="w-full p-1 border rounded text-[11px] bg-white dark:bg-slate-900 dark:text-white"
+                          placeholder="Label En" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[8px] font-bold text-slate-500 dark:text-slate-400 uppercase">Label (NE)</label>
+                        <input 
+                          type="text" 
+                          value={inlineStatLabelNe} 
+                          onChange={(e) => setInlineStatLabelNe(e.target.value)} 
+                          className="w-full p-1 border rounded text-[11px] bg-white dark:bg-slate-900 dark:text-white"
+                          placeholder="Label Ne" 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div>
+                        <label className="block text-[8px] font-bold text-slate-500 dark:text-slate-400 uppercase">Subtext (EN)</label>
+                        <input 
+                          type="text" 
+                          value={inlineStatSubEn} 
+                          onChange={(e) => setInlineStatSubEn(e.target.value)} 
+                          className="w-full p-1 border rounded text-[11px] bg-white dark:bg-slate-900 dark:text-white"
+                          placeholder="Subtext En" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[8px] font-bold text-slate-500 dark:text-slate-400 uppercase">Subtext (NE)</label>
+                        <input 
+                          type="text" 
+                          value={inlineStatSubNe} 
+                          onChange={(e) => setInlineStatSubNe(e.target.value)} 
+                          className="w-full p-1 border rounded text-[11px] bg-white dark:bg-slate-900 dark:text-white"
+                          placeholder="Subtext Ne" 
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[8px] font-bold text-slate-500 dark:text-slate-400 uppercase">Icon</label>
+                      <select 
+                        value={inlineStatIcon} 
+                        onChange={(e) => setInlineStatIcon(e.target.value)}
+                        className="w-full p-1 border rounded text-[11px] bg-white dark:bg-slate-900 dark:text-white"
+                      >
+                        <option value="Users">Users (Default)</option>
+                        <option value="Building2">Building</option>
+                        <option value="Droplet">Droplet</option>
+                        <option value="Heart">Heart</option>
+                        <option value="GraduationCap">Cap</option>
+                        <option value="Sparkles">Sparkles</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-teal-100 dark:border-slate-700/60 mt-1">
+                      <button 
+                        type="button" 
+                        onClick={() => setEditingUnityStatId(null)}
+                        className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded text-[10px] font-bold cursor-pointer hover:bg-slate-300 transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => handleSaveInlineUnityStat(st.id)}
+                        className="px-2.5 py-1 bg-teal-600 text-white rounded text-[10px] font-bold cursor-pointer hover:bg-teal-700 transition-all"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+              
+              return (
+                <div 
+                  key={st.id || idx} 
+                  className="bg-slate-50/80 dark:bg-slate-800/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80 flex flex-col justify-between transition-all hover:border-teal-200 dark:hover:border-slate-700/60 shadow-sm relative group/stat"
+                >
+                  <div className="flex items-start justify-between gap-1 mb-1">
+                    <span className="text-[9px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wide truncate max-w-[65px]">
+                      {statLabel}
+                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isAdmin && (
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover/stat:opacity-100 transition-opacity bg-slate-100/90 dark:bg-slate-800/90 px-1 py-0.5 rounded shadow-sm">
+                          <button
+                            type="button"
+                            onClick={() => handleStartInlineEdit(st)}
+                            className="p-0.5 text-amber-600 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/40 rounded transition-colors cursor-pointer"
+                            title="Edit Stat"
+                          >
+                            <Edit3 className="w-2.5 h-2.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteUnityStat(st.id || idx)}
+                            className="p-0.5 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/40 rounded transition-colors cursor-pointer"
+                            title="Delete Stat"
+                          >
+                            <Trash2 className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+                      )}
+                      <div className="w-5 h-5 rounded-full bg-teal-50 dark:bg-teal-950/40 flex items-center justify-center shrink-0">
+                        {renderStatIcon(iconName)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="pt-0.5">
+                    <div className="text-sm sm:text-base font-black text-teal-950 dark:text-teal-50 tracking-tight leading-none">
+                      {formatNumber(statVal, lang)}
+                    </div>
+                    <p className="text-[8.5px] font-semibold text-slate-400 dark:text-slate-500 leading-tight truncate mt-0.5">
+                      {statSub}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Three Tenets Row */}
+        <div className="space-y-2 pt-1.5 border-t border-slate-100 dark:border-slate-800/60">
+          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1">
+            {lang === 'en' ? 'Core Tenets' : 'मुख्य सिद्धान्तहरू'}
+          </p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {/* Tenet 1 */}
+            <div className="p-2 rounded-xl bg-teal-50/50 dark:bg-teal-950/20 text-center border border-teal-100/30">
+              <div className="text-[10.5px] font-black text-teal-900 dark:text-teal-200 leading-none mb-1">
+                {lang === 'en' ? (siteTexts.unityTenet1En || 'Unity') : (siteTexts.unityTenet1Ne || 'एकता')}
+              </div>
+              <div className="text-[8.5px] font-bold text-teal-600/70 dark:text-teal-400/70 truncate">
+                {lang === 'en' ? (siteTexts.unityTenet1SubEn || 'Harmony') : (siteTexts.unityTenet1SubNe || 'सद्भाव')}
+              </div>
+            </div>
+
+            {/* Tenet 2 */}
+            <div className="p-2 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 text-center border border-emerald-100/30">
+              <div className="text-[10.5px] font-black text-emerald-900 dark:text-emerald-200 leading-none mb-1">
+                {lang === 'en' ? (siteTexts.unityTenet2En || 'Consolidation') : (siteTexts.unityTenet2Ne || 'एक्यबद्धता')}
+              </div>
+              <div className="text-[8.5px] font-bold text-emerald-600/70 dark:text-emerald-400/70 truncate">
+                {lang === 'en' ? (siteTexts.unityTenet2SubEn || 'Heritage') : (siteTexts.unityTenet2SubNe || 'सम्पदा')}
+              </div>
+            </div>
+
+            {/* Tenet 3 */}
+            <div className="p-2 rounded-xl bg-cyan-50/50 dark:bg-cyan-950/20 text-center border border-cyan-100/30">
+              <div className="text-[10.5px] font-black text-cyan-900 dark:text-cyan-200 leading-none mb-1">
+                {lang === 'en' ? (siteTexts.unityTenet3En || 'Cooperation') : (siteTexts.unityTenet3Ne || 'सहकार्य')}
+              </div>
+              <div className="text-[8.5px] font-bold text-cyan-600/70 dark:text-cyan-400/70 truncate">
+                {lang === 'en' ? (siteTexts.unityTenet3SubEn || 'Mutual Aid') : (siteTexts.unityTenet3SubNe || 'सहयोग')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Next Major Community Event Banner */}
+        <button
+          type="button"
+          onClick={() => onNavigate('events')}
+          className="w-full text-left mt-2 p-3 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50/50 dark:from-slate-800/80 dark:to-slate-800 border border-teal-100/80 dark:border-slate-700/80 hover:border-emerald-300 dark:hover:border-slate-600 hover:shadow-md transition-all cursor-pointer group space-y-2 block text-slate-900 dark:text-white"
+        >
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1 bg-emerald-600 text-white px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider">
+              <Calendar className="w-3 h-3" />
+              <span>{lang === 'en' ? 'Upcoming Event' : 'आगामी कार्यक्रम'}</span>
+            </span>
+            <ChevronRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+          <h6 className="text-[11px] font-black text-slate-900 dark:text-slate-100 leading-snug group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+            {lang === 'en' ? (siteTexts.unityNextEventTitleEn || 'Annual Chaurasiya National Convention & Educational Honors') : (siteTexts.unityNextEventTitleNe || 'चौरासिया समाज राष्ट्रिय महाधिवेशन तथा सम्मान समारोह')}
+          </h6>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] font-bold text-slate-500 dark:text-slate-400 pt-0.5">
+            <span className="inline-flex items-center gap-0.5 bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60">
+              <Clock className="w-2.5 h-2.5 text-emerald-500" />
+              <span>{lang === 'en' ? (siteTexts.unityNextEventDateEn || 'BS 2083') : (siteTexts.unityNextEventDateNe || 'वि.सं. २०८३')}</span>
+            </span>
+            <span className="inline-flex items-center gap-0.5 bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60">
+              <MapPin className="w-2.5 h-2.5 text-emerald-500" />
+              <span>{lang === 'en' ? (siteTexts.unityNextEventLocEn || 'Kathmandu / Parsa') : (siteTexts.unityNextEventLocNe || 'काठमाडौँ / पर्सा')}</span>
+            </span>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderNoticesSection = () => (
+    <section className="space-y-6 py-2">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Bell className="w-8 h-8 text-teal-600" />
+          <h3 className="text-2xl sm:text-3xl font-black text-teal-950 uppercase tracking-tight">
+            {lang === 'en' ? 'Community Notices' : 'सामुदायिक सूचनाहरू'}
+          </h3>
+        </div>
+
+        {/* Admin Add Notice Button ONLY visible when logged in as admin */}
+        {isAdmin && onOpenAddNoticeModal && (
+          <button
+            onClick={onOpenAddNoticeModal}
+            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{lang === 'en' ? '+ Add Community Notice' : '+ सूचना थप्नुहोस्'}</span>
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {[...noticesList]
+          .sort((a, b) => {
+            const dateA = new Date(a.date).getTime();
+            const dateB = new Date(b.date).getTime();
+            if (!isNaN(dateA) && !isNaN(dateB) && dateA !== dateB) {
+              return dateB - dateA;
+            }
+            return b.id.localeCompare(a.id);
+          })
+          .slice(0, 4)
+          .map((notice) => (
+          <div key={notice.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-teal-100 dark:border-slate-800 overflow-hidden hover:shadow-md transition-all">
+            <div 
+              className="p-6 cursor-pointer hover:bg-teal-50/50 dark:hover:bg-slate-800/50 transition-colors"
+              onClick={() => {
+                setExpandedNoticeId(prev => prev === notice.id ? null : notice.id);
+                setViewPdfNoticeId(null);
+                onTrackAction(`Toggled notice expansion: ${notice.title.en || notice.title.ne}`);
+              }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 text-sm text-teal-600 dark:text-teal-400 font-bold">
+                  <Calendar className="w-4 h-4" />
+                  {formatNumber(notice.date, lang)}
+                </div>
+                <ChevronRight className={`w-5 h-5 text-teal-400 transition-transform ${expandedNoticeId === notice.id ? 'rotate-90' : ''}`} />
+              </div>
+              <h4 className="text-xl font-bold text-teal-950 dark:text-teal-50 mb-2">
+                {formatNumber(notice.title[lang] || notice.title.en, lang)}
+              </h4>
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">
+                {formatNumber(notice.content[lang] || notice.content.en, lang)}
+              </p>
+            </div>
+            
+            {expandedNoticeId === notice.id && (
+              <div className="px-6 pb-6 pt-3 bg-teal-50/40 border-t border-teal-100 space-y-4">
+                {/* Attached Google Drive File Link */}
+                {(notice.driveFileUrl || notice.fileUrl) && (
+                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-emerald-950 font-medium">
+                    <div className="flex items-center gap-2">
+                      <span className="p-1.5 bg-emerald-600 text-white rounded-lg">📄</span>
+                      <div>
+                        <span className="font-extrabold block text-emerald-900">
+                          {lang === 'en' ? 'Google Drive Attached Document' : 'गुगल ड्राइभ संलग्न कागजात'}
+                        </span>
+                        <span className="text-[11px] text-emerald-700">
+                          {notice.driveFileUrl || notice.fileUrl}
+                        </span>
+                      </div>
+                    </div>
+
+                    <a
+                      href={notice.driveFileUrl || notice.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>{lang === 'en' ? 'Open in Google Drive ↗' : 'गुगल ड्राइभमा खोल्नुहोस् ↗'}</span>
+                    </a>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button 
+                      onClick={() => {
+                        setViewPdfNoticeId(prev => prev === notice.id ? null : notice.id);
+                        onTrackAction(`Toggled view PDF: ${notice.title.en || notice.title.ne}`);
+                      }}
+                      className="text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                    >
+                      {viewPdfNoticeId === notice.id ? <X className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      {viewPdfNoticeId === notice.id 
+                        ? (lang === 'en' ? 'Close Preview' : 'पूर्वावलोकन बन्द गर्नुहोस्') 
+                        : (lang === 'en' ? 'View Document Preview' : 'कागजात पूर्वावलोकन हेर्नुहोस्')}
+                    </button>
+
+                    {(notice.driveFileUrl || notice.fileUrl) ? (
+                      <a 
+                        href={notice.driveFileUrl || notice.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => onTrackAction(`Opened notice file: ${notice.title.en}`)}
+                        className="text-xs font-bold text-teal-800 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                      >
+                        <Download className="w-3.5 h-3.5 text-teal-600" />
+                        {lang === 'en' ? 'Download / View File' : 'फाइल डाउनलोड / हेर्नुहोस्'}
+                      </a>
+                    ) : (
+                      <a 
+                        href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+                        target="_blank"
+                        download={`Notice_${notice.date}.pdf`}
+                        onClick={() => onTrackAction(`Downloaded notice: ${notice.title.en}`)}
+                        className="text-xs font-bold text-teal-800 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                      >
+                        <Download className="w-3.5 h-3.5 text-teal-600" />
+                        {lang === 'en' ? 'Download PDF' : 'PDF डाउनलोड गर्नुहोस्'}
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Admin Delete Notice Action */}
+                  {isAdmin && onDeleteNotice && (
+                    <button
+                      onClick={() => {
+                        if (confirm(lang === 'en' ? 'Are you sure you want to delete this notice?' : 'के तपाईं निश्चित रूपमा यो सूचना हटाउन चाहनुहुन्छ?')) {
+                          onDeleteNotice(notice.id);
+                        }
+                      }}
+                      className="text-xs font-extrabold text-red-600 hover:text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{lang === 'en' ? 'Delete Notice (Admin)' : 'सूचना हटाउनुहोस्'}</span>
+                    </button>
+                  )}
+                </div>
+                
+                {viewPdfNoticeId === notice.id && (
+                  <div className="mt-4 rounded-2xl overflow-hidden border border-teal-200 shadow-inner bg-slate-900">
+                    {(() => {
+                      const rawUrl = notice.driveFileUrl || notice.fileUrl;
+                      const driveId = rawUrl ? extractGoogleDriveId(rawUrl) : null;
+                      const embedUrl = driveId 
+                        ? `https://drive.google.com/file/d/${driveId}/preview`
+                        : (rawUrl || "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf#toolbar=0");
+
+                      return (
+                        <iframe 
+                          src={embedUrl} 
+                          className="w-full h-[400px]"
+                          title={notice.title.en || notice.title.ne}
+                        />
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-center mt-8">
+        <button
+          onClick={() => {
+            onNavigate('notices-gallery');
+            onTrackAction('Navigated to view all notices');
+          }}
+          className="text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 px-6 py-3 rounded-lg transition-colors inline-flex items-center gap-2 shadow-sm"
+        >
+          {lang === 'en' ? 'View All Notices' : 'सबै सूचनाहरू हेर्नुहोस्'} <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    </section>
+  );
 
   return (
     <div className="space-y-10">
-      {/* Admin Edit Homepage Content Button */}
+      {/* Active Homepage Section Edit Modal */}
+      {renderSectionEditModal()}
+      {/* Admin Homepage CMS Quick Bar */}
       {isAdmin && (
-        <div className="flex justify-end -mb-8">
-          <button
-            onClick={() => setIsEditingTexts(true)}
-            className="px-4 py-2.5 bg-teal-800 hover:bg-teal-700 text-white text-xs font-extrabold uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 border border-teal-700 z-20"
-          >
-            <Edit className="w-4 h-4 text-teal-300" />
-            <span>Edit Homepage Content</span>
-          </button>
+        <div className="bg-teal-900/95 dark:bg-slate-900/95 text-white p-3.5 rounded-2xl border border-teal-700/80 shadow-xl flex flex-wrap items-center justify-between gap-3 -mb-4 z-20">
+          <div className="flex items-center gap-2 font-black text-xs uppercase text-amber-300 tracking-wider">
+            <Edit3 className="w-4 h-4 text-amber-400" />
+            <span>Edit Homepage Section:</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setActiveEditSection('hero')}
+              className="px-2.5 py-1.5 bg-teal-800 hover:bg-teal-700 text-teal-100 hover:text-white text-[11px] font-bold rounded-lg transition-all border border-teal-700/60 flex items-center gap-1 cursor-pointer shadow-sm"
+            >
+              <span>1. Hero Banner</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveEditSection('leadership')}
+              className="px-2.5 py-1.5 bg-teal-800 hover:bg-teal-700 text-teal-100 hover:text-white text-[11px] font-bold rounded-lg transition-all border border-teal-700/60 flex items-center gap-1 cursor-pointer shadow-sm"
+            >
+              <span>2. President Message</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveEditSection('executive_committee')}
+              className="px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 text-[11px] font-bold rounded-lg transition-all border border-amber-400/40 flex items-center gap-1 cursor-pointer shadow-sm"
+            >
+              <span>3. Executive Committee</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveEditSection('eservices')}
+              className="px-2.5 py-1.5 bg-teal-800 hover:bg-teal-700 text-teal-100 hover:text-white text-[11px] font-bold rounded-lg transition-all border border-teal-700/60 flex items-center gap-1 cursor-pointer shadow-sm"
+            >
+              <span>4. E-Services</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveEditSection('heritage')}
+              className="px-2.5 py-1.5 bg-teal-800 hover:bg-teal-700 text-teal-100 hover:text-white text-[11px] font-bold rounded-lg transition-all border border-teal-700/60 flex items-center gap-1 cursor-pointer shadow-sm"
+            >
+              <span>5. Heritage & Paan</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveEditSection('mission')}
+              className="px-2.5 py-1.5 bg-teal-800 hover:bg-teal-700 text-teal-100 hover:text-white text-[11px] font-bold rounded-lg transition-all border border-teal-700/60 flex items-center gap-1 cursor-pointer shadow-sm"
+            >
+              <span>6. Vision & Mission</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveEditSection('unity')}
+              className="px-2.5 py-1.5 bg-teal-800 hover:bg-teal-700 text-teal-100 hover:text-white text-[11px] font-bold rounded-lg transition-all border border-teal-700/60 flex items-center gap-1 cursor-pointer shadow-sm"
+            >
+              <span>7. Unity & Motto</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveEditSection('branding')}
+              className="px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 text-[11px] font-bold rounded-lg transition-all border border-amber-400/40 flex items-center gap-1 cursor-pointer shadow-sm"
+            >
+              <span>8. Branding & Logo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveEditSection('ribbon')}
+              className="px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 text-[11px] font-bold rounded-lg transition-all border border-amber-400/40 flex items-center gap-1 cursor-pointer shadow-sm"
+            >
+              <span>9. Top Ribbon & Reg.</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -2089,7 +3069,7 @@ export default function HistorySection({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setIsEditingTexts(true);
+                        setActiveEditSection('leadership');
                       }}
                       className="px-2.5 py-1 bg-emerald-500/30 hover:bg-emerald-500/50 text-emerald-200 text-xs font-bold rounded-lg border border-emerald-400/40 flex items-center gap-1 transition-colors"
                     >
@@ -2177,7 +3157,7 @@ export default function HistorySection({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setIsEditingTexts(true);
+                      setActiveEditSection('leadership');
                     }}
                     className="p-1.5 bg-emerald-500/30 hover:bg-emerald-500/50 text-emerald-200 text-xs font-bold rounded-lg border border-emerald-400/40 flex items-center gap-1 transition-colors"
                     title="Edit Message"
@@ -2259,136 +3239,13 @@ export default function HistorySection({
             </div>
           </section>
 
-          {/* SIDEBAR WIDGET 1: Emergency & Helpline Contacts Card */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-teal-100 dark:border-slate-800 transition-all relative">
-            {/* Sticky Header Bar for Emergency & Helpline */}
-            <div className="lg:sticky lg:top-[48px] z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 rounded-t-2xl border-b border-teal-100 dark:border-slate-800 flex items-center justify-between shadow-sm">
-              <div className="flex items-center gap-2 text-teal-900 dark:text-teal-100 font-extrabold text-xs">
-                <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />
-                <span>{lang === 'en' ? (siteTexts.helplineTitleEn || 'Emergency & Helpline') : (siteTexts.helplineTitleNe || 'आकस्मिक तथा हेल्पलाइन')}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingTexts(true)}
-                    className="p-1 bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-[10px] font-bold rounded border border-amber-300/60 dark:border-amber-700/60 flex items-center gap-1 transition-colors cursor-pointer"
-                    title="Edit Emergency & Helpline Section"
-                  >
-                    <Edit3 className="w-3 h-3" />
-                    <span>Edit</span>
-                  </button>
-                )}
-                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              </div>
-            </div>
-
-            <div className="p-4 space-y-3">
-              <div className="space-y-2 text-[11px]">
-                <a 
-                  href={`tel:${siteTexts.helplinePhone || siteTexts.footerPhone || '+977-9812345678'}`}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-teal-50/70 hover:bg-teal-100/80 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-teal-100 dark:border-slate-700 text-teal-950 dark:text-teal-100 font-bold transition-all group"
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0 group-hover:scale-110 transition-transform" />
-                    <span className="truncate">{lang === 'en' ? (siteTexts.helplineCentralLabelEn || 'Central Helpline') : (siteTexts.helplineCentralLabelNe || 'केन्द्रीय हेल्पलाइन')}</span>
-                  </div>
-                  <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-md shrink-0 font-mono">
-                    {siteTexts.helplinePhone || siteTexts.footerPhone || '+977-9812345678'}
-                  </span>
-                </a>
-
-                <a 
-                  href={`mailto:${siteTexts.helplineEmail || siteTexts.footerEmail || 'achauraseeya@gmail.com'}`}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 hover:bg-emerald-100/80 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-emerald-100 dark:border-slate-700 text-emerald-950 dark:text-emerald-100 font-bold transition-all group"
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    <Mail className="w-3.5 h-3.5 text-teal-600 shrink-0 group-hover:scale-110 transition-transform" />
-                    <span className="truncate">{lang === 'en' ? (siteTexts.helplineSecretariatLabelEn || 'Secretariat') : (siteTexts.helplineSecretariatLabelNe || 'केन्द्रीय सचिवाल')}</span>
-                  </div>
-                  <span className="text-[10px] bg-teal-700 text-white px-2 py-0.5 rounded-md shrink-0 truncate max-w-[120px]">
-                    {siteTexts.helplineEmail || siteTexts.footerEmail || 'achauraseeya@gmail.com'}
-                  </span>
-                </a>
-              </div>
-
-              <button
-                onClick={() => {
-                  onNavigate('directory');
-                  onTrackAction('Click Helpline Committee Directory');
-                }}
-                className="w-full py-2 bg-gradient-to-r from-teal-800 to-emerald-800 hover:from-teal-700 hover:to-emerald-700 text-white text-[11px] font-extrabold rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Users className="w-3.5 h-3.5 text-emerald-300" />
-                <span>{lang === 'en' ? 'Committee Directory & Contacts' : 'कार्यसमिति र सम्पर्क सूची'}</span>
-              </button>
-            </div>
+          {/* DESKTOP VIEW ONLY SIDEBAR WIDGETS */}
+          <div className="hidden lg:block space-y-6">
+            {renderEservicesPortal()}
+            {renderCommunityPillars()}
+            {renderUnityWidget()}
           </div>
 
-          {/* SIDEBAR WIDGET 2: Core Pillars & Community Services Badge */}
-          <div className="bg-gradient-to-br from-teal-900 to-emerald-900 rounded-2xl text-white shadow-md border border-teal-700/80 transition-all relative">
-            {/* Sticky Header Bar for Community Pillars */}
-            <div className="lg:sticky lg:top-[48px] z-20 bg-teal-900/95 backdrop-blur-md px-4 py-3 rounded-t-2xl border-b border-teal-700/60 flex items-center justify-between shadow-sm">
-              <div className="flex items-center gap-2 text-emerald-200 font-extrabold text-xs">
-                <HeartHandshake className="w-4 h-4 text-emerald-300 shrink-0" />
-                <span>{lang === 'en' ? (siteTexts.pillarsTitleEn || 'Community Pillars') : (siteTexts.pillarsTitleNe || 'समुदायका आधारहरू')}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingTexts(true)}
-                    className="p-1 bg-emerald-800/80 hover:bg-emerald-700/90 text-emerald-100 text-[10px] font-bold rounded border border-emerald-500/50 flex items-center gap-1 transition-colors cursor-pointer"
-                    title="Edit Community Pillars Section"
-                  >
-                    <Edit3 className="w-3 h-3" />
-                    <span>Edit</span>
-                  </button>
-                )}
-                <span className="text-[10px] font-bold text-teal-200 bg-teal-950/60 px-2 py-0.5 rounded border border-teal-700/60">CSN Nepal</span>
-              </div>
-            </div>
-
-            <div className="p-4 space-y-3">
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
-                <button
-                  onClick={() => onNavigate('our-heritage')}
-                  className="p-2.5 rounded-xl bg-teal-950/50 hover:bg-teal-950/80 border border-teal-700/50 text-left transition-all hover:scale-[1.02] cursor-pointer group"
-                >
-                  <Leaf className="w-4 h-4 text-emerald-400 mb-1 group-hover:rotate-12 transition-transform" />
-                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? (siteTexts.pillar1TitleEn || 'Paan Heritage') : (siteTexts.pillar1TitleNe || 'पान सम्पदा')}</h5>
-                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? (siteTexts.pillar1SubEn || 'Culture & Farming') : (siteTexts.pillar1SubNe || 'संस्कृति र खेती')}</p>
-                </button>
-
-                <button
-                  onClick={() => onNavigate('about-vision')}
-                  className="p-2.5 rounded-xl bg-teal-950/50 hover:bg-teal-950/80 border border-teal-700/50 text-left transition-all hover:scale-[1.02] cursor-pointer group"
-                >
-                  <GraduationCap className="w-4 h-4 text-amber-400 mb-1 group-hover:rotate-12 transition-transform" />
-                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? (siteTexts.pillar2TitleEn || 'Youth & Career') : (siteTexts.pillar2TitleNe || 'युवा तथा शिक्षा')}</h5>
-                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? (siteTexts.pillar2SubEn || 'Grants & Support') : (siteTexts.pillar2SubNe || 'छात्रवृत्ति र मार्गदर्शन')}</p>
-                </button>
-
-                <button
-                  onClick={() => onNavigate('directory')}
-                  className="p-2.5 rounded-xl bg-teal-950/50 hover:bg-teal-950/80 border border-teal-700/50 text-left transition-all hover:scale-[1.02] cursor-pointer group"
-                >
-                  <Building2 className="w-4 h-4 text-teal-300 mb-1 group-hover:rotate-12 transition-transform" />
-                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? (siteTexts.pillar3TitleEn || 'District Branches') : (siteTexts.pillar3TitleNe || 'जिल्ला शाखाहरू')}</h5>
-                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? (siteTexts.pillar3SubEn || '77 Districts') : (siteTexts.pillar3SubNe || '७७ वटै जिल्ला')}</p>
-                </button>
-
-                <button
-                  onClick={() => onNavigate('transparency')}
-                  className="p-2.5 rounded-xl bg-teal-950/50 hover:bg-teal-950/80 border border-teal-700/50 text-left transition-all hover:scale-[1.02] cursor-pointer group"
-                >
-                  <ShieldCheck className="w-4 h-4 text-emerald-300 mb-1 group-hover:rotate-12 transition-transform" />
-                  <h5 className="font-extrabold text-white text-[11px] leading-tight">{lang === 'en' ? (siteTexts.pillar4TitleEn || 'Transparency') : (siteTexts.pillar4TitleNe || 'सुशासन र कोष')}</h5>
-                  <p className="text-[9px] text-teal-200/80 mt-0.5 line-clamp-1">{lang === 'en' ? (siteTexts.pillar4SubEn || 'Audited Reports') : (siteTexts.pillar4SubNe || 'पारदर्शी विवरण')}</p>
-                </button>
-              </div>
-            </div>
-          </div>
         </aside>
 
         {/* =========================================================================
@@ -2488,8 +3345,15 @@ export default function HistorySection({
         </div>
       </section>
 
+      {/* Mobile-only Sidebar Widgets: Shown below Vision & Mission on mobile */}
+      <div className="lg:hidden space-y-6 pt-2 pb-6 border-b border-teal-100 dark:border-slate-800">
+        {renderEservicesPortal()}
+        {renderCommunityPillars()}
+        {renderUnityWidget()}
+      </div>
+
       {/* Impact Stats */}
-      <section className="space-y-8">
+      <section className="space-y-8 hidden">
         <h3 className="text-2xl sm:text-3xl font-black text-teal-950 dark:text-teal-50 text-center uppercase tracking-tight">
           {formatNumber(lang === 'en' ? siteTexts.impactHeaderEn : siteTexts.impactHeaderNe, lang)}
         </h3>
@@ -2519,185 +3383,7 @@ export default function HistorySection({
         </div>
       </section>
 
-      {/* Notices Section */}
-      <section className="space-y-6 py-2">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Bell className="w-8 h-8 text-teal-600" />
-            <h3 className="text-2xl sm:text-3xl font-black text-teal-950 uppercase tracking-tight">
-              {lang === 'en' ? 'Community Notices' : 'सामुदायिक सूचनाहरू'}
-            </h3>
-          </div>
 
-          {/* Admin Add Notice Button ONLY visible when logged in as admin */}
-          {isAdmin && onOpenAddNoticeModal && (
-            <button
-              onClick={onOpenAddNoticeModal}
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{lang === 'en' ? '+ Add Community Notice' : '+ सूचना थप्नुहोस्'}</span>
-            </button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[...noticesList]
-            .sort((a, b) => {
-              const dateA = new Date(a.date).getTime();
-              const dateB = new Date(b.date).getTime();
-              if (!isNaN(dateA) && !isNaN(dateB) && dateA !== dateB) {
-                return dateB - dateA;
-              }
-              return b.id.localeCompare(a.id);
-            })
-            .slice(0, 4)
-            .map((notice) => (
-            <div key={notice.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-teal-100 dark:border-slate-800 overflow-hidden hover:shadow-md transition-all">
-              <div 
-                className="p-6 cursor-pointer hover:bg-teal-50/50 dark:hover:bg-slate-800/50 transition-colors"
-                onClick={() => {
-                  setExpandedNoticeId(prev => prev === notice.id ? null : notice.id);
-                  setViewPdfNoticeId(null);
-                  onTrackAction(`Toggled notice expansion: ${notice.title.en || notice.title.ne}`);
-                }}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2 text-sm text-teal-600 dark:text-teal-400 font-bold">
-                    <Calendar className="w-4 h-4" />
-                    {formatNumber(notice.date, lang)}
-                  </div>
-                  <ChevronRight className={`w-5 h-5 text-teal-400 transition-transform ${expandedNoticeId === notice.id ? 'rotate-90' : ''}`} />
-                </div>
-                <h4 className="text-xl font-bold text-teal-950 dark:text-teal-50 mb-2">
-                  {formatNumber(notice.title[lang] || notice.title.en, lang)}
-                </h4>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">
-                  {formatNumber(notice.content[lang] || notice.content.en, lang)}
-                </p>
-              </div>
-              
-              {expandedNoticeId === notice.id && (
-                <div className="px-6 pb-6 pt-3 bg-teal-50/40 border-t border-teal-100 space-y-4">
-                  {/* Attached Google Drive File Link */}
-                  {(notice.driveFileUrl || notice.fileUrl) && (
-                    <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-emerald-950 font-medium">
-                      <div className="flex items-center gap-2">
-                        <span className="p-1.5 bg-emerald-600 text-white rounded-lg">📄</span>
-                        <div>
-                          <span className="font-extrabold block text-emerald-900">
-                            {lang === 'en' ? 'Google Drive Attached Document' : 'गुगल ड्राइभ संलग्न कागजात'}
-                          </span>
-                          <span className="text-[11px] text-emerald-700">
-                            {notice.driveFileUrl || notice.fileUrl}
-                          </span>
-                        </div>
-                      </div>
-
-                      <a
-                        href={notice.driveFileUrl || notice.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>{lang === 'en' ? 'Open in Google Drive ↗' : 'गुगल ड्राइभमा खोल्नुहोस् ↗'}</span>
-                      </a>
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <button 
-                        onClick={() => {
-                          setViewPdfNoticeId(prev => prev === notice.id ? null : notice.id);
-                          onTrackAction(`Toggled view PDF: ${notice.title.en || notice.title.ne}`);
-                        }}
-                        className="text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
-                      >
-                        {viewPdfNoticeId === notice.id ? <X className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                        {viewPdfNoticeId === notice.id 
-                          ? (lang === 'en' ? 'Close Preview' : 'पूर्वावलोकन बन्द गर्नुहोस्') 
-                          : (lang === 'en' ? 'View Document Preview' : 'कागजात पूर्वावलोकन हेर्नुहोस्')}
-                      </button>
-
-                      {(notice.driveFileUrl || notice.fileUrl) ? (
-                        <a 
-                          href={notice.driveFileUrl || notice.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => onTrackAction(`Opened notice file: ${notice.title.en}`)}
-                          className="text-xs font-bold text-teal-800 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
-                        >
-                          <Download className="w-3.5 h-3.5 text-teal-600" />
-                          {lang === 'en' ? 'Download / View File' : 'फाइल डाउनलोड / हेर्नुहोस्'}
-                        </a>
-                      ) : (
-                        <a 
-                          href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
-                          target="_blank"
-                          download={`Notice_${notice.date}.pdf`}
-                          onClick={() => onTrackAction(`Downloaded notice: ${notice.title.en}`)}
-                          className="text-xs font-bold text-teal-800 bg-white border border-teal-200 hover:bg-teal-50 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
-                        >
-                          <Download className="w-3.5 h-3.5 text-teal-600" />
-                          {lang === 'en' ? 'Download PDF' : 'PDF डाउनलोड गर्नुहोस्'}
-                        </a>
-                      )}
-                    </div>
-
-                    {/* Admin Delete Notice Action */}
-                    {isAdmin && onDeleteNotice && (
-                      <button
-                        onClick={() => {
-                          if (confirm(lang === 'en' ? 'Are you sure you want to delete this notice?' : 'के तपाईं निश्चित रूपमा यो सूचना हटाउन चाहनुहुन्छ?')) {
-                            onDeleteNotice(notice.id);
-                          }
-                        }}
-                        className="text-xs font-extrabold text-red-600 hover:text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>{lang === 'en' ? 'Delete Notice (Admin)' : 'सूचना हटाउनुहोस्'}</span>
-                      </button>
-                    )}
-                  </div>
-                  
-                  {viewPdfNoticeId === notice.id && (
-                    <div className="mt-4 rounded-2xl overflow-hidden border border-teal-200 shadow-inner bg-slate-900">
-                      {(() => {
-                        const rawUrl = notice.driveFileUrl || notice.fileUrl;
-                        const driveId = rawUrl ? extractGoogleDriveId(rawUrl) : null;
-                        const embedUrl = driveId 
-                          ? `https://drive.google.com/file/d/${driveId}/preview`
-                          : (rawUrl || "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf#toolbar=0");
-
-                        return (
-                          <iframe 
-                            src={embedUrl} 
-                            className="w-full h-[400px]"
-                            title={notice.title.en || notice.title.ne}
-                          />
-                        );
-                      })()}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-center mt-8">
-          <button
-            onClick={() => {
-              onNavigate('notices-gallery');
-              onTrackAction('Navigated to view all notices');
-            }}
-            className="text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 px-6 py-3 rounded-lg transition-colors inline-flex items-center gap-2 shadow-sm"
-          >
-            {lang === 'en' ? 'View All Notices' : 'सबै सूचनाहरू हेर्नुहोस्'} <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </section>
 
       {/* Blog Section */}
       <section className="space-y-6 py-2">
@@ -2926,6 +3612,9 @@ export default function HistorySection({
           </button>
         </div>
       </section>
+
+      {/* Community Notices Section */}
+      {renderNoticesSection()}
 
       {/* Our Network: District Chapters & Sister Institutions */}
       <section className="space-y-6 py-6 border-t border-teal-100 dark:border-slate-800">
@@ -3265,11 +3954,11 @@ export default function HistorySection({
           {isAdmin && (
             <button
               onClick={() => {
-                setIsEditingTexts(true);
+                setActiveEditSection('executive_committee');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               className="px-3 py-1.5 bg-teal-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-700 text-teal-800 dark:text-teal-200 text-[11px] font-bold rounded-lg hover:bg-teal-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 shadow-sm"
-              title="Edit Leadership List"
+              title="Manage Executive Committee"
             >
               <Edit className="w-3.5 h-3.5 text-emerald-600" />
               <span>Edit Leadership</span>
@@ -3277,11 +3966,11 @@ export default function HistorySection({
           )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-w-5xl mx-auto">
+        <div className="flex flex-wrap justify-center gap-4 max-w-5xl mx-auto">
           {activeLeadership.map((member, idx) => {
             if (!member) return null;
             return (
-              <div key={member.id || idx} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-teal-100 dark:border-slate-800 flex flex-col items-center text-center gap-2 hover:shadow-md transition-all group relative">
+              <div key={member.id || idx} className="w-[calc(50%-0.5rem)] sm:w-[calc(33.33%-0.67rem)] md:w-[calc(25%-0.75rem)] lg:w-[calc(20%-0.8rem)] max-w-[200px] bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-teal-100 dark:border-slate-800 flex flex-col items-center text-center gap-2 hover:shadow-md transition-all group relative">
                 <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-emerald-100 dark:border-emerald-900/50 group-hover:border-emerald-400 transition-colors shrink-0 shadow-inner">
                   <img src={member.avatarUrl || member.photoBase64} alt={member.name?.[lang] || ''} className="w-full h-full object-cover" />
                 </div>
