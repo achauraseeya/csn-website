@@ -46,6 +46,57 @@ async function fetchFileSha(path: string, settings: GithubSettings, pat: string)
 
 export async function uploadImageToGithub(fileName: string, base64Data: string, commitMessage: string): Promise<string> {
   const safeName = fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
+
+  // Automatically compress image client-side to below 100 KB while preserving quality
+  let processedBase64 = base64Data;
+  try {
+    processedBase64 = await new Promise<string>((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Max dimensions safeguard for high-res photos
+        const MAX_DIMENSION = 1600;
+        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIMENSION) / width);
+            width = MAX_DIMENSION;
+          } else {
+            width = Math.round((width * MAX_DIMENSION) / height);
+            height = MAX_DIMENSION;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(base64Data);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Iteratively reduce quality until size is < 100KB (approx 102400 bytes)
+        let quality = 0.90;
+        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+        
+        // Estimate size in bytes from base64 string length
+        while (dataUrl.length * 0.75 > 102400 && quality > 0.3) {
+          quality -= 0.10;
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+        resolve(dataUrl);
+      };
+      img.onerror = () => resolve(base64Data);
+      img.src = base64Data;
+    });
+  } catch (err) {
+    console.warn('Image compression fallback used:', err);
+  }
+
   let localUrl = '';
 
   // 1. Upload to local server image storage first
@@ -53,7 +104,7 @@ export async function uploadImageToGithub(fileName: string, base64Data: string, 
     const serverRes = await fetch('/api/upload-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileName: safeName, base64Data })
+      body: JSON.stringify({ fileName: safeName, base64Data: processedBase64 })
     });
     if (serverRes.ok) {
       const data = await serverRes.json();
@@ -71,7 +122,7 @@ export async function uploadImageToGithub(fileName: string, base64Data: string, 
 
   if (settings.enabled && pat) {
     try {
-      const base64Content = base64Data.split(',')[1] || base64Data;
+      const base64Content = processedBase64.split(',')[1] || processedBase64;
       const primaryPath = `assets/uploads/${safeName}`;
       const url = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${primaryPath}`;
       const sha = await fetchFileSha(primaryPath, settings, pat);
@@ -106,8 +157,8 @@ export async function uploadImageToGithub(fileName: string, base64Data: string, 
     }
   }
 
-  // Return localUrl if available, otherwise return base64 string as fallback
-  return localUrl || base64Data;
+  // Return localUrl if available, otherwise return processedBase64 string as fallback
+  return localUrl || processedBase64;
 }
 
 function utf8ToBase64(str: string): string {

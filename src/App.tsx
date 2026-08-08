@@ -1064,11 +1064,18 @@ export default function App() {
       );
       setNotices((prev) => {
         const mergedMap = new Map<string, Notice>();
+        // Use updatedList as source of truth so deleted notices do not reappear
         updatedList.forEach((n) => mergedMap.set(n.id, n));
         initialNotices.forEach(n => {
-          if (!mergedMap.has(n.id)) mergedMap.set(n.id, n);
+          if (!mergedMap.has(n.id) && !listAfterDeletion.some(item => item.id === n.id)) {
+            // do not re-add if deleted
+          } else if (!mergedMap.has(n.id) && initialNotices.some(i => i.id === n.id) && listAfterDeletion.some(item => item.id === n.id)) {
+            mergedMap.set(n.id, n);
+          }
         });
-        return Array.from(mergedMap.values());
+        const finalArr = Array.from(mergedMap.values()).filter(n => n.id !== id);
+        try { localStorage.setItem('chaurasiya_notices', JSON.stringify(finalArr)); } catch (e) {}
+        return finalArr;
       });
     } catch (err) {
       console.error('Failed to delete notice:', err);
@@ -1454,9 +1461,17 @@ export default function App() {
       );
       setAlbums((prev) => {
         const mergedMap = new Map<string, Album>();
-        initialJourneyAlbums.forEach(a => mergedMap.set(a.id, a));
         updatedList.forEach((a) => mergedMap.set(a.id, a));
-        return Array.from(mergedMap.values());
+        initialJourneyAlbums.forEach(a => {
+          if (!mergedMap.has(a.id) && !listAfterDeletion.some(item => item.id === a.id)) {
+            // do not re-add if deleted
+          } else if (!mergedMap.has(a.id) && initialJourneyAlbums.some(i => i.id === a.id) && listAfterDeletion.some(item => item.id === a.id)) {
+            mergedMap.set(a.id, a);
+          }
+        });
+        const finalArr = Array.from(mergedMap.values()).filter(a => a.id !== albumId);
+        try { localStorage.setItem('chaurasiya_journey_albums', JSON.stringify(finalArr)); } catch (e) {}
+        return finalArr;
       });
     } catch (err) {
       console.error('Failed to delete album:', err);
