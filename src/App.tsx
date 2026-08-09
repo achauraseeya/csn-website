@@ -9,7 +9,7 @@ import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { Leaf, Award, Heart, Shield, Landmark, MessageCircle, Mail, Facebook, Twitter, Instagram, ExternalLink, X, Edit, Globe, Phone, MapPin, Sparkles, Download } from 'lucide-react';
 import { Language, AnalyticsMetric, Member, Album, AlbumMediaItem, Notice, Document, CommunityEvent, NetworkBranch, MatrimonialProfile, VolunteerApplication, MembershipApplication, NewsletterSubscriber, NavMenuItem } from './types';
 import { initialNetworks } from './data/networkData';
-import { notices as initialNotices, boardMembers as initialMembers, upcomingEvents as initialEvents, documents as initialDocuments } from './data/communityData';
+import { notices as initialNotices, boardMembers as initialMembers, upcomingEvents as initialEvents, documents as initialDocuments, galleryItems as initialGalleryItems } from './data/communityData';
 import { journeyAlbums as initialJourneyAlbums } from './data/albumsData';
 import logoImg from './assets/images/chaurasiya_logo_1784519579895.jpg';
 
@@ -143,7 +143,7 @@ const defaultSiteTexts: SiteTexts = {
   unityTenet3Ne: 'सहकार्य',
   unityTenet3SubEn: 'Mutual Aid',
   unityTenet3SubNe: 'सहयोग',
-  secondaryImagesJson: '',
+  secondaryImagesJson: JSON.stringify(initialGalleryItems),
   heroImagesJson: JSON.stringify([
     {
       id: "g1",
@@ -272,7 +272,7 @@ export default function App() {
     try {
       return !localStorage.getItem('chaurasiya_site_texts');
     } catch (e) {
-      return true;
+      return false;
     }
   });
 
@@ -1627,17 +1627,32 @@ export default function App() {
 
   // --- SITE TEXTS API & Handlers ---
   useEffect(() => {
-    apiFetch<SiteTexts>('/api/site-texts', 'site_texts.json', defaultSiteTexts)
-      .then((data) => {
-        if (data && typeof data === 'object') {
-          const cleanUrl = (data.logoUrl && !data.logoUrl.includes('raw.githubusercontent.com')) ? data.logoUrl : logoImg;
-          const merged = { ...defaultSiteTexts, ...data, logoUrl: cleanUrl || logoImg };
-          setSiteTexts(merged);
-          try { localStorage.setItem('chaurasiya_site_texts', JSON.stringify(merged)); } catch (e) {}
-        }
-      })
-      .catch((err) => console.warn('Offline siteTexts fallback:', err));
+    const fetchSiteTexts = () => {
+      apiFetch<SiteTexts>('/api/site-texts', 'site_texts.json', defaultSiteTexts)
+        .then((data) => {
+          if (data && typeof data === 'object') {
+            const cleanUrl = (data.logoUrl && !data.logoUrl.includes('raw.githubusercontent.com')) ? data.logoUrl : logoImg;
+            const merged = { ...defaultSiteTexts, ...data, logoUrl: cleanUrl || logoImg };
+            
+            setSiteTexts((prev) => {
+              // Only update state if there is a real change to avoid unnecessary re-renders
+              if (JSON.stringify(prev) !== JSON.stringify(merged)) {
+                try { localStorage.setItem('chaurasiya_site_texts', JSON.stringify(merged)); } catch (e) {}
+                return merged;
+              }
+              return prev;
+            });
+          }
+        })
+        .catch((err) => console.warn('Offline siteTexts fallback:', err));
+    };
 
+    fetchSiteTexts();
+    const interval = setInterval(fetchSiteTexts, 10000); // Poll every 10 seconds for real-time sync across live users
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     // Load Abhishek avatar
     try {
       const saved = localStorage.getItem('chaurasiya_abhishek_profile_data');
@@ -2704,9 +2719,9 @@ export default function App() {
 
       {/* Enhanced NGO Footer */}
       <footer className="bg-gray-900 text-white border-t-8 border-emerald-500 py-10 sm:py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-12 gap-8 items-start mb-8">
           
-          <div className="lg:col-span-5 space-y-4">
+          <div className="xl:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-16 h-10 sm:w-20 sm:h-11 rounded-xl bg-white overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-sm border border-slate-700">
                 <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-contain rounded-lg" />
@@ -2746,7 +2761,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="lg:col-span-3 space-y-3">
+          <div className="xl:col-span-3 space-y-3">
             <h4 className="font-bold text-white mb-2">{lang === 'en' ? 'Quick Links' : 'त्वरित लिङ्कहरू'}</h4>
             <div className="flex flex-col gap-2.5 text-sm text-gray-400 font-medium">
               <button onClick={() => handleNavigate('home')} className="hover:text-emerald-400 text-left transition-colors">{lang === 'en' ? 'Home' : 'गृहपृष्ठ'}</button>
@@ -2761,7 +2776,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="lg:col-span-4 space-y-3">
+          <div className="xl:col-span-4 space-y-3">
             <h4 className="font-bold text-white mb-2">{lang === 'en' ? 'Headquarters' : 'केन्द्रीय कार्यालय'}</h4>
             <div className="text-sm text-gray-400 space-y-2.5 font-medium">
               <p className="flex items-start gap-2">

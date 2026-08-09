@@ -1,0 +1,6 @@
+{
+  "name": "Chaurasiya Samaj Nepal",
+  "description": "Official community portal and website builder for Chaurasiya Samaj Nepal, featuring event schedules, directories, memberships, and a custom Blogger XML theme exporter.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

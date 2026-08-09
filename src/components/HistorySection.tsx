@@ -1328,11 +1328,14 @@ export default function HistorySection({
                             try {
                               setUploadingSlide(true);
                               const url = await handleFileUpload(file);
-                              setEditHeroImages([...editHeroImages, { 
+                              const updatedHero = [{ 
                                 id: `hero-${Date.now()}`, 
                                 imageUrl: url, 
                                 caption: { en: file.name.split('.')[0], ne: 'नयाँ स्लाइड तस्विर' } 
-                              }]);
+                              }, ...editHeroImages];
+                              setEditHeroImages(updatedHero);
+                              setHeroImageIdx(0);
+                              await onUpdateSiteTexts({ heroImagesJson: JSON.stringify(updatedHero) });
                               alert('New slide image uploaded and added successfully!');
                             } catch (err) {
                               alert('Failed to upload slide image.');
@@ -1344,7 +1347,12 @@ export default function HistorySection({
                       </label>
                       <button
                         type="button"
-                        onClick={() => setEditHeroImages([...editHeroImages, { id: `hero-${Date.now()}`, imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&q=80', caption: { en: 'New Slide Image', ne: 'नयाँ स्लाइड तस्विर' } }])}
+                        onClick={async () => {
+                          const updatedHero = [{ id: `hero-${Date.now()}`, imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&q=80', caption: { en: 'New Slide Image', ne: 'नयाँ स्लाइड तस्विर' } }, ...editHeroImages];
+                          setEditHeroImages(updatedHero);
+                          setHeroImageIdx(0);
+                          await onUpdateSiteTexts({ heroImagesJson: JSON.stringify(updatedHero) });
+                        }}
                         className="px-3 py-1.5 bg-teal-800 hover:bg-teal-700 text-teal-100 rounded-lg text-xs font-bold flex items-center gap-1"
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -1367,12 +1375,17 @@ export default function HistorySection({
                                 updated[idx].imageUrl = e.target.value;
                                 setEditHeroImages(updated);
                               }}
+                              onBlur={() => onUpdateSiteTexts({ heroImagesJson: JSON.stringify(editHeroImages) }).catch(() => {})}
                               className="w-full p-1.5 border rounded text-xs"
                             />
                           </div>
                           <button
                             type="button"
-                            onClick={() => setEditHeroImages(editHeroImages.filter((_, i) => i !== idx))}
+                            onClick={async () => {
+                              const updatedHero = editHeroImages.filter((_, i) => i !== idx);
+                              setEditHeroImages(updatedHero);
+                              await onUpdateSiteTexts({ heroImagesJson: JSON.stringify(updatedHero) });
+                            }}
                             className="p-1.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-xs shrink-0"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1397,6 +1410,7 @@ export default function HistorySection({
                                   const updated = [...editHeroImages];
                                   updated[idx].imageUrl = url;
                                   setEditHeroImages(updated);
+                                  await onUpdateSiteTexts({ heroImagesJson: JSON.stringify(updated) });
                                   alert('Hero image replaced successfully!');
                                 } catch (err) {
                                   alert('Failed to upload hero image.');
@@ -1510,7 +1524,7 @@ export default function HistorySection({
                     <button
                       type="button"
                       disabled={uploadingSecondarySlide || !newSecondaryImage}
-                      onClick={() => {
+                      onClick={async () => {
                         if (!newSecondaryImage) return;
                         const newSlide = {
                           id: `sec-${Date.now()}`,
@@ -1518,13 +1532,22 @@ export default function HistorySection({
                           title: { en: newSecondaryTitleEn || 'Update', ne: newSecondaryTitleNe || 'अपडेट' },
                           description: { en: newSecondaryDescEn || '', ne: newSecondaryDescNe || '' }
                         };
-                        setEditSecondaryImages([...editSecondaryImages, newSlide]);
+                        const updatedList = [newSlide, ...editSecondaryImages];
+                        setEditSecondaryImages(updatedList);
+                        setSecondaryImageIdx(0);
                         // Reset form
                         setNewSecondaryImage('');
                         setNewSecondaryTitleEn('');
                         setNewSecondaryTitleNe('');
                         setNewSecondaryDescEn('');
                         setNewSecondaryDescNe('');
+
+                        // Auto-persist immediately
+                        try {
+                          await onUpdateSiteTexts({ secondaryImagesJson: JSON.stringify(updatedList) });
+                        } catch (e) {
+                          console.warn('Auto-save slide failed:', e);
+                        }
                       }}
                       className="px-5 py-2 bg-teal-800 hover:bg-teal-700 text-white font-bold text-xs rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                     >
@@ -1554,6 +1577,7 @@ export default function HistorySection({
                                     updated[idx].title = { ...updated[idx].title, en: e.target.value };
                                     setEditSecondaryImages(updated);
                                   }}
+                                  onBlur={() => onUpdateSiteTexts({ secondaryImagesJson: JSON.stringify(editSecondaryImages) }).catch(() => {})}
                                   className="w-full p-1.5 border rounded text-xs"
                                 />
                               </div>
@@ -1568,6 +1592,7 @@ export default function HistorySection({
                                     updated[idx].title = { ...updated[idx].title, ne: e.target.value };
                                     setEditSecondaryImages(updated);
                                   }}
+                                  onBlur={() => onUpdateSiteTexts({ secondaryImagesJson: JSON.stringify(editSecondaryImages) }).catch(() => {})}
                                   className="w-full p-1.5 border rounded text-xs"
                                 />
                               </div>
@@ -1582,6 +1607,7 @@ export default function HistorySection({
                                     updated[idx].description = { ...updated[idx].description, en: e.target.value };
                                     setEditSecondaryImages(updated);
                                   }}
+                                  onBlur={() => onUpdateSiteTexts({ secondaryImagesJson: JSON.stringify(editSecondaryImages) }).catch(() => {})}
                                   className="w-full p-1.5 border rounded text-xs"
                                 />
                               </div>
@@ -1596,6 +1622,7 @@ export default function HistorySection({
                                     updated[idx].description = { ...updated[idx].description, ne: e.target.value };
                                     setEditSecondaryImages(updated);
                                   }}
+                                  onBlur={() => onUpdateSiteTexts({ secondaryImagesJson: JSON.stringify(editSecondaryImages) }).catch(() => {})}
                                   className="w-full p-1.5 border rounded text-xs"
                                 />
                               </div>
@@ -1611,13 +1638,22 @@ export default function HistorySection({
                                   updated[idx].imageUrl = e.target.value;
                                   setEditSecondaryImages(updated);
                                 }}
+                                onBlur={() => onUpdateSiteTexts({ secondaryImagesJson: JSON.stringify(editSecondaryImages) }).catch(() => {})}
                                 className="w-full p-1.5 border rounded text-xs font-mono"
                               />
                             </div>
                           </div>
                           <button
                             type="button"
-                            onClick={() => setEditSecondaryImages(editSecondaryImages.filter((_, i) => i !== idx))}
+                            onClick={async () => {
+                              const updated = editSecondaryImages.filter((_, i) => i !== idx);
+                              setEditSecondaryImages(updated);
+                              try {
+                                await onUpdateSiteTexts({ secondaryImagesJson: JSON.stringify(updated) });
+                              } catch (e) {
+                                console.warn('Auto-save slide deletion failed:', e);
+                              }
+                            }}
                             className="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-xs self-start"
                             title="Delete Slide"
                           >
@@ -1644,6 +1680,7 @@ export default function HistorySection({
                                   const updated = [...editSecondaryImages];
                                   updated[idx].imageUrl = url;
                                   setEditSecondaryImages(updated);
+                                  await onUpdateSiteTexts({ secondaryImagesJson: JSON.stringify(updated) });
                                   alert('Slide photo replaced successfully!');
                                 } catch (err) {
                                   alert('Failed to upload replace image.');
@@ -3797,8 +3834,11 @@ export default function HistorySection({
           {activeSecondaryImages[secondaryImageIdx] && (
             <>
               <img 
-                src={activeSecondaryImages[secondaryImageIdx].imageUrl}
+                src={activeSecondaryImages[secondaryImageIdx].imageUrl || 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=600'}
                 alt={activeSecondaryImages[secondaryImageIdx].title?.[lang] || ''}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=600';
+                }}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-10 text-white">
