@@ -669,23 +669,11 @@ export default function App() {
       fetches.push(syncMemberCategoriesFromGithub().catch(() => {}));
 
       // Notices
-      fetches.push(apiFetch<Notice[]>('/api/notices', 'community_notices.json', [])
+      fetches.push(apiFetch<Notice[]>('/api/notices', 'community_notices.json', initialNotices)
         .then((serverNotices) => {
           if (Array.isArray(serverNotices)) {
-            // AUTHORITATIVE: If we got a list from GitHub, it overrides everything
-            // Note: If serverNotices is [], it means the user deleted all custom notices.
-            // We should only fallback to initialNotices if the user hasn't customized yet.
-            const hasCustomized = localStorage.getItem('chaurasiya_has_customized_notices');
-            let finalNotices = serverNotices;
-            
-            if (serverNotices.length === 0 && !hasCustomized) {
-               finalNotices = initialNotices;
-            } else {
-               localStorage.setItem('chaurasiya_has_customized_notices', 'true');
-            }
-
-            setNotices(finalNotices);
-            try { localStorage.setItem('chaurasiya_notices', JSON.stringify(finalNotices)); } catch (e) {}
+            setNotices(serverNotices);
+            try { localStorage.setItem('chaurasiya_notices', JSON.stringify(serverNotices)); } catch (e) {}
           }
         })
         .catch(() => {}));
@@ -693,7 +681,7 @@ export default function App() {
       // Events
       fetches.push(apiFetch<CommunityEvent[]>('/api/events', 'community_events.json', [])
         .then((serverEvents) => {
-          if (Array.isArray(serverEvents) && serverEvents.length > 0) {
+          if (Array.isArray(serverEvents)) {
             setEvents(serverEvents);
             try { localStorage.setItem('chaurasiya_events', JSON.stringify(serverEvents)); } catch (e) {}
           }
@@ -703,7 +691,7 @@ export default function App() {
       // Members
       fetches.push(apiFetch<Member[]>('/api/members', 'community_members.json', [])
         .then((serverMembers) => {
-          if (Array.isArray(serverMembers) && serverMembers.length > 0) {
+          if (Array.isArray(serverMembers)) {
             setMembers(serverMembers);
             try { localStorage.setItem('chaurasiya_members', JSON.stringify(serverMembers)); } catch (e) {}
           }
@@ -713,7 +701,7 @@ export default function App() {
       // Documents
       fetches.push(apiFetch<Document[]>('/api/documents', 'community_documents.json', [])
         .then((serverDocs) => {
-          if (Array.isArray(serverDocs) && serverDocs.length > 0) {
+          if (Array.isArray(serverDocs)) {
             setDocumentsList(serverDocs);
             try { localStorage.setItem('chaurasiya_documents', JSON.stringify(serverDocs)); } catch (e) {}
           }
@@ -739,35 +727,18 @@ export default function App() {
       fetches.push(apiFetch<NetworkBranch[]>('/api/networks', 'community_networks.json', initialNetworks)
         .then((serverNetworks) => {
           if (Array.isArray(serverNetworks)) {
-            const hasCustomized = localStorage.getItem('chaurasiya_has_customized_networks');
-            let finalNetworks = serverNetworks;
-            
-            if (serverNetworks.length === 0 && !hasCustomized) {
-               finalNetworks = initialNetworks;
-            } else {
-               localStorage.setItem('chaurasiya_has_customized_networks', 'true');
-            }
-            setNetworks(finalNetworks);
-            try { localStorage.setItem('chaurasiya_networks', JSON.stringify(finalNetworks)); } catch (e) {}
+            setNetworks(serverNetworks);
+            try { localStorage.setItem('chaurasiya_networks', JSON.stringify(serverNetworks)); } catch (e) {}
           }
         })
         .catch(() => {}));
 
       // Journey Albums
-      fetches.push(apiFetch<Album[]>('/api/albums', 'journey_albums.json', [])
+      fetches.push(apiFetch<Album[]>('/api/albums', 'journey_albums.json', initialJourneyAlbums)
         .then((serverAlbums) => {
           if (Array.isArray(serverAlbums)) {
-            const hasCustomized = localStorage.getItem('chaurasiya_has_customized_albums');
-            let finalAlbums = serverAlbums;
-            
-            if (serverAlbums.length === 0 && !hasCustomized) {
-               finalAlbums = initialJourneyAlbums;
-            } else {
-               localStorage.setItem('chaurasiya_has_customized_albums', 'true');
-            }
-
-            setAlbums(finalAlbums);
-            try { localStorage.setItem('chaurasiya_albums', JSON.stringify(finalAlbums)); } catch (e) {}
+            setAlbums(serverAlbums);
+            try { localStorage.setItem('chaurasiya_albums', JSON.stringify(serverAlbums)); } catch (e) {}
           }
         })
         .catch(() => {}));
@@ -1070,58 +1041,31 @@ export default function App() {
         `Publish community notice: ${typeof newNotice.title === 'object' ? newNotice.title.en : newNotice.title}`,
         getAuthHeaders()
       );
-      setNotices((prev) => {
-        const mergedMap = new Map<string, Notice>();
-        updatedList.forEach((n) => mergedMap.set(n.id, n));
-        initialNotices.forEach(n => {
-          if (!mergedMap.has(n.id)) mergedMap.set(n.id, n);
-        });
-        return Array.from(mergedMap.values());
-      });
+      setNotices(updatedList);
     } catch (err) {
       console.error('Failed to save notice:', err);
     }
   };
 
   const handleDeleteNotice = async (id: string) => {
-    const listAfterDeletion = notices.filter((n) => n.id !== id);
     setNotices((prev) => {
       const updated = prev.filter((n) => n.id !== id);
       try {
         localStorage.setItem('chaurasiya_notices', JSON.stringify(updated));
-        localStorage.setItem('chaurasiya_has_customized_notices', 'true');
       } catch (e) {
         console.error('Failed to update localStorage', e);
       }
-      return updated;
-    });
-
-    try {
-      const updatedList = await apiDelete<Notice>(
+      
+      apiDelete<Notice>(
         `/api/notices/${id}`,
         'community_notices.json',
-        listAfterDeletion,
+        updated,
         `Delete community notice ID: ${id}`,
         getAuthHeaders()
-      );
-      setNotices((prev) => {
-        const mergedMap = new Map<string, Notice>();
-        // Use updatedList as source of truth so deleted notices do not reappear
-        updatedList.forEach((n) => mergedMap.set(n.id, n));
-        initialNotices.forEach(n => {
-          if (!mergedMap.has(n.id) && !listAfterDeletion.some(item => item.id === n.id)) {
-            // do not re-add if deleted
-          } else if (!mergedMap.has(n.id) && initialNotices.some(i => i.id === n.id) && listAfterDeletion.some(item => item.id === n.id)) {
-            mergedMap.set(n.id, n);
-          }
-        });
-        const finalArr = Array.from(mergedMap.values()).filter(n => n.id !== id);
-        try { localStorage.setItem('chaurasiya_notices', JSON.stringify(finalArr)); } catch (e) {}
-        return finalArr;
-      });
-    } catch (err) {
-      console.error('Failed to delete notice:', err);
-    }
+      ).catch((err) => console.error('Failed to delete notice:', err));
+      
+      return updated;
+    });
   };
 
   // Glimpses of Our Journey Albums State (Initial + Server Online + LocalStorage saved)
@@ -1454,12 +1398,7 @@ export default function App() {
         `Post journey album: ${typeof albumToSave.title === 'object' ? albumToSave.title.en : albumToSave.title}`,
         getAuthHeaders()
       );
-      setAlbums((prev) => {
-        const mergedMap = new Map<string, Album>();
-        initialJourneyAlbums.forEach(a => mergedMap.set(a.id, a));
-        updatedList.forEach((a) => mergedMap.set(a.id, a));
-        return Array.from(mergedMap.values());
-      });
+      setAlbums(updatedList);
     } catch (err) {
       console.error('Failed to save album:', err);
     }
@@ -1482,43 +1421,24 @@ export default function App() {
   };
 
   const handleDeleteAlbum = async (albumId: string) => {
-    const listAfterDeletion = albums.filter((a) => a.id !== albumId);
     setAlbums((prev) => {
       const updated = prev.filter((a) => a.id !== albumId);
       try {
         localStorage.setItem('chaurasiya_journey_albums', JSON.stringify(updated));
-        localStorage.setItem('chaurasiya_has_customized_albums', 'true');
       } catch (e) {
         console.error('Failed to update localStorage', e);
       }
-      return updated;
-    });
 
-    try {
-      const updatedList = await apiDelete<Album>(
+      apiDelete<Album>(
         `/api/albums/${albumId}`,
         'journey_albums.json',
-        listAfterDeletion,
+        updated,
         `Delete journey album ID: ${albumId}`,
         getAuthHeaders()
-      );
-      setAlbums((prev) => {
-        const mergedMap = new Map<string, Album>();
-        updatedList.forEach((a) => mergedMap.set(a.id, a));
-        initialJourneyAlbums.forEach(a => {
-          if (!mergedMap.has(a.id) && !listAfterDeletion.some(item => item.id === a.id)) {
-            // do not re-add if deleted
-          } else if (!mergedMap.has(a.id) && initialJourneyAlbums.some(i => i.id === a.id) && listAfterDeletion.some(item => item.id === a.id)) {
-            mergedMap.set(a.id, a);
-          }
-        });
-        const finalArr = Array.from(mergedMap.values()).filter(a => a.id !== albumId);
-        try { localStorage.setItem('chaurasiya_journey_albums', JSON.stringify(finalArr)); } catch (e) {}
-        return finalArr;
-      });
-    } catch (err) {
-      console.error('Failed to delete album:', err);
-    }
+      ).catch((err) => console.error('Failed to delete album:', err));
+
+      return updated;
+    });
   };
 
   // --- EVENTS API & Handlers ---
@@ -1562,27 +1482,22 @@ export default function App() {
   };
 
   const handleDeleteEvent = async (id: string) => {
-    const listAfterDeletion = events.filter((e) => e.id !== id);
     setEvents((prev) => {
       const updated = prev.filter((e) => e.id !== id);
       try {
         localStorage.setItem('chaurasiya_events', JSON.stringify(updated));
       } catch (e) {}
-      return updated;
-    });
 
-    try {
-      const updatedList = await apiDelete<CommunityEvent>(
+      apiDelete<CommunityEvent>(
         `/api/events/${id}`,
         'community_events.json',
-        listAfterDeletion,
+        updated,
         `Delete community event ID: ${id}`,
         getAuthHeaders()
-      );
-      setEvents(updatedList);
-    } catch (err) {
-      console.error('Failed to delete event:', err);
-    }
+      ).catch((err) => console.error('Failed to delete event:', err));
+
+      return updated;
+    });
   };
 
   const handleUpdateEventRequirements = async (eventId: string, requirements: { en: string; ne: string }) => {
@@ -1635,27 +1550,22 @@ export default function App() {
   }, []);
 
   const handleDeleteMember = async (id: string) => {
-    const listAfterDeletion = members.filter((m) => m.id !== id);
     setMembers((prev) => {
       const updated = prev.filter((m) => m.id !== id);
       try {
         localStorage.setItem('chaurasiya_members', JSON.stringify(updated));
       } catch (e) {}
-      return updated;
-    });
 
-    try {
-      const updatedList = await apiDelete<Member>(
+      apiDelete<Member>(
         `/api/members/${id}`,
         'community_members.json',
-        listAfterDeletion,
+        updated,
         `Delete community directory member: ${id}`,
         getAuthHeaders()
-      );
-      setMembers(updatedList);
-    } catch (err) {
-      console.error('Failed to delete member:', err);
-    }
+      ).catch((err) => console.error('Failed to delete member:', err));
+
+      return updated;
+    });
   };
 
   // --- DOCUMENTS API & Handlers ---
@@ -1699,27 +1609,22 @@ export default function App() {
   };
 
   const handleDeleteDocument = async (id: string) => {
-    const listAfterDeletion = documentsList.filter((d) => d.id !== id);
     setDocumentsList((prev) => {
       const updated = prev.filter((d) => d.id !== id);
       try {
         localStorage.setItem('chaurasiya_documents', JSON.stringify(updated));
       } catch (e) {}
-      return updated;
-    });
 
-    try {
-      const updatedList = await apiDelete<Document>(
+      apiDelete<Document>(
         `/api/documents/${id}`,
         'community_documents.json',
-        listAfterDeletion,
+        updated,
         `Delete community document ID: ${id}`,
         getAuthHeaders()
-      );
-      setDocumentsList(updatedList);
-    } catch (err) {
-      console.error('Failed to delete document:', err);
-    }
+      ).catch((err) => console.error('Failed to delete document:', err));
+
+      return updated;
+    });
   };
 
   // --- SITE TEXTS API & Handlers ---
@@ -1762,17 +1667,18 @@ export default function App() {
   }, []);
 
   const handleUpdateSiteTexts = async (updatedTexts: Partial<SiteTexts>) => {
-    const nextTexts = { ...siteTexts, ...updatedTexts };
-    setSiteTexts(nextTexts);
-    try {
-      localStorage.setItem('chaurasiya_site_texts', JSON.stringify(nextTexts));
-    } catch (e) {}
-    try {
-      await saveFileToGithub('site_texts.json', nextTexts, 'Update site global texts');
-      markRecentlySaved('site_texts');
-    } catch (err) {
-      console.error('Failed to update site texts:', err);
-    }
+    setSiteTexts((prev) => {
+      const nextTexts = { ...prev, ...updatedTexts };
+      try {
+        localStorage.setItem('chaurasiya_site_texts', JSON.stringify(nextTexts));
+      } catch (e) {}
+      
+      saveFileToGithub('site_texts.json', nextTexts, 'Update site global texts')
+        .then(() => markRecentlySaved('site_texts'))
+        .catch((err) => console.error('Failed to update site texts:', err));
+        
+      return nextTexts;
+    });
   };
 
   // --- NETWORKS/CHAPTERS API & Handlers ---
@@ -1810,28 +1716,25 @@ export default function App() {
   };
 
   const handleDeleteNetwork = async (id: string) => {
-    const listAfterDeletion = networks.filter((n) => n.id !== id);
     setNetworks((prev) => {
       const updated = prev.filter((n) => n.id !== id);
-      localStorage.setItem('chaurasiya_has_customized_networks', 'true');
+      try {
+        localStorage.setItem('chaurasiya_networks', JSON.stringify(updated));
+      } catch (e) {}
+
+      apiDelete<NetworkBranch>(
+        `/api/networks/${id}`,
+        'community_networks.json',
+        updated,
+        `Delete network branch ID: ${id}`,
+        getAuthHeaders()
+      ).catch((err) => console.error('Failed to delete network:', err));
+
       return updated;
     });
     if (selectedNetworkId === id) {
       setSelectedNetworkId(null);
       setCurrentTab('history');
-    }
-
-    try {
-      const updatedList = await apiDelete<NetworkBranch>(
-        `/api/networks/${id}`,
-        'community_networks.json',
-        listAfterDeletion,
-        `Delete network branch ID: ${id}`,
-        getAuthHeaders()
-      );
-      setNetworks(updatedList);
-    } catch (err) {
-      console.error('Failed to delete network:', err);
     }
   };
 

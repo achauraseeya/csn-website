@@ -179,39 +179,47 @@ function base64ToUtf8(base64Str: string): string {
   return new TextDecoder('utf-8').decode(bytes);
 }
 
+let saveQueue: Promise<any> = Promise.resolve();
+
 export async function saveFileToGithub(path: string, content: any, commitMessage: string) {
-  const cleanKey = path.replace(/\.json$/, '');
+  // Use a sequential queue to prevent SHA mismatch race conditions on simultaneous saves
+  const currentSave = saveQueue.then(async () => {
+    const cleanKey = path.replace(/\.json$/, '');
 
-  // 1. Always save to server API first so all devices/visitors see updates instantly!
-  try {
-    await fetch(`/api/site-data/${cleanKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(content)
-    });
-  } catch (e) {
-    console.warn('Failed to save to server site-data endpoint:', e);
-  }
-
-  // 2. Also save to GitHub repository if PAT is available
-  const settings = getGithubSettings();
-  const pat = getPat();
-  if (!settings.enabled || !pat) return;
-
-  try {
-    const jsonStr = JSON.stringify(content, null, 2);
-    const base64Content = utf8ToBase64(jsonStr);
-
-    // A) Push to primary path in GitHub repo (e.g. abhishek_profile.json)
-    await pushContentToGithubRepo(path, base64Content, commitMessage, settings, pat, true);
-
-    // B) If path is a json file not in public/, also push to public/ path so static builds get it!
-    if (path.endsWith('.json') && !path.startsWith('public/')) {
-      await pushContentToGithubRepo(`public/${path}`, base64Content, commitMessage, settings, pat, true).catch(() => {});
+    // 1. Always save to server API first so all devices/visitors see updates instantly!
+    try {
+      await fetch(`/api/site-data/${cleanKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(content)
+      });
+    } catch (e) {
+      console.warn('Failed to save to server site-data endpoint:', e);
     }
-  } catch (err) {
-    console.warn(`GitHub push failed for ${path}:`, err);
-  }
+
+    // 2. Also save to GitHub repository if PAT is available
+    const settings = getGithubSettings();
+    const pat = getPat();
+    if (!settings.enabled || !pat) return;
+
+    try {
+      const jsonStr = JSON.stringify(content, null, 2);
+      const base64Content = utf8ToBase64(jsonStr);
+
+      // A) Push to primary path in GitHub repo (e.g. abhishek_profile.json)
+      await pushContentToGithubRepo(path, base64Content, commitMessage, settings, pat, true);
+
+      // B) If path is a json file not in public/, also push to public/ path so static builds get it!
+      if (path.endsWith('.json') && !path.startsWith('public/')) {
+        await pushContentToGithubRepo(`public/${path}`, base64Content, commitMessage, settings, pat, true).catch(() => {});
+      }
+    } catch (err) {
+      console.warn(`GitHub push failed for ${path}:`, err);
+    }
+  });
+
+  saveQueue = currentSave.catch(() => {});
+  return currentSave;
 }
 
 async function pushContentToGithubRepo(path: string, base64Content: string, commitMessage: string, settings: GithubSettings, pat: string, isRawBase64 = false) {
@@ -252,7 +260,7 @@ export async function apiFetch<T>(endpoint: string, fileName: string, fallbackDa
     clearTimeout(timeoutId);
     if (res.ok) {
       const data = await res.json();
-      if (data !== null && data !== undefined && (!Array.isArray(data) || data.length > 0 || Array.isArray(fallbackData))) {
+      if (data !== null && data !== undefined) {
         return data as T;
       }
     }
