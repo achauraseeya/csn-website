@@ -372,9 +372,11 @@ export async function apiDelete<T extends { id: string }>(
 
 export async function triggerEntireRepoSync(): Promise<{ success: boolean; message: string; output?: string }> {
   try {
+    const pat = getPat();
     const res = await fetch('/api/sync-github-repo', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: pat })
     });
     if (res.ok) {
       const data = await res.json();

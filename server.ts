@@ -58,8 +58,14 @@ async function startServer() {
         return res.status(404).json({ error: "Sync script sync_github_data.cjs not found" });
       }
 
+      const token = req.body?.token || req.query?.token || "";
       console.log('Manual Trigger: Syncing Entire GitHub Repository (Files, Folders & Photos)...');
-      exec(`node "${syncScriptPath}"`, (error, stdout, stderr) => {
+      exec(`node "${syncScriptPath}"`, {
+        env: {
+          ...process.env,
+          GITHUB_PAT: token || process.env.GITHUB_PAT || process.env.GITHUB_TOKEN || ""
+        }
+      }, (error, stdout, stderr) => {
         if (error) {
           console.error(`Manual GitHub Sync Error: ${error.message}`);
           return res.status(500).json({ error: "Failed to sync repository", details: error.message });

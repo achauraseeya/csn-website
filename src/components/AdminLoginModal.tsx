@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, LogOut, LogIn, ShieldCheck } from 'lucide-react';
+import { X, LogOut, LogIn, ShieldCheck, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Language } from '../types';
+import { triggerEntireRepoSync } from '../utils/githubDb';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
@@ -21,6 +22,30 @@ export default function AdminLoginModal({
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('');
+  const [syncError, setSyncError] = useState('');
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    setSyncStatus(lang === 'en' ? 'Syncing entire repository (all JSON databases, folders, and photo assets)...' : 'सम्पूर्ण भण्डार सिंक गर्दै (सबै JSON डाटाबेसहरू, फोल्डरहरू, र फोटोहरू)...');
+    setSyncError('');
+    try {
+      const res = await triggerEntireRepoSync();
+      if (res.success) {
+        setSyncStatus(lang === 'en' ? '✅ Entire repository synced successfully! Refreshing...' : '✅ सम्पूर्ण भण्डार सफलतापूर्वक सिंक भयो! रिफ्रेस गर्दै...');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        setSyncError(res.message || (lang === 'en' ? 'Failed to sync' : 'सिंक गर्न असफल भयो'));
+        setIsSyncing(false);
+      }
+    } catch (err: any) {
+      setSyncError(err.message || (lang === 'en' ? 'Network error during sync' : 'सिंक गर्दा नेटवर्क त्रुटि भयो'));
+      setIsSyncing(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -106,6 +131,49 @@ export default function AdminLoginModal({
                   <p className="text-[10px] font-medium">{lang === 'en' ? 'Admin session active' : 'प्रशासक सत्र सक्रिय छ'}</p>
                 </div>
               </div>
+
+              {/* GitHub Sync Section */}
+              {(window.location.hostname.includes('run.app') || window.location.hostname.includes('localhost') || window.location.hostname.includes('ai.studio')) && (
+                <div className="p-3.5 bg-teal-50 rounded-2xl border border-teal-100 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <RefreshCw className={`w-4 h-4 text-teal-700 mt-0.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                    <div>
+                      <h4 className="text-xs font-bold text-teal-950">
+                        {lang === 'en' ? 'GitHub Synchronization' : 'गिटहब सिंक्रोनाइजेसन'}
+                      </h4>
+                      <p className="text-[10px] text-teal-800 font-medium leading-normal mt-1">
+                        {lang === 'en' 
+                          ? 'Force a manual recursive sync of all JSON databases, custom folders, and photo assets from the GitHub master repository.' 
+                          : 'गिटहब मास्टर भण्डारबाट सबै JSON डाटाबेसहरू, अनुकूलन फोल्डरहरू, र फोटोहरू म्यानुअल रूपमा सिंक गर्नुहोस्।'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {isSyncing ? (
+                    <div className="text-[11px] font-bold text-teal-800 bg-white/60 p-2.5 rounded-lg border border-teal-200/50 animate-pulse">
+                      ⏳ {syncStatus}
+                    </div>
+                  ) : syncStatus.startsWith('✅') ? (
+                    <div className="text-[11px] font-bold text-emerald-800 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200/50">
+                      {syncStatus}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleSync}
+                      className="w-full py-2.5 bg-teal-700 hover:bg-teal-600 text-white font-extrabold text-[11px] uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      {lang === 'en' ? 'Sync All from GitHub' : 'गिटहबबाट सबै सिंक गर्नुहोस्'}
+                    </button>
+                  )}
+
+                  {syncError && (
+                    <div className="text-[11px] font-bold text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200/50">
+                      ⚠️ {syncError}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <button
                 onClick={handleLogout}

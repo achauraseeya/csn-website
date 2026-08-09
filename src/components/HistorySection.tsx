@@ -546,22 +546,24 @@ export default function HistorySection({
   }, [activeEditSection]);
 
   useEffect(() => {
+    if (activeEditSection !== null) return; // Do not overwrite local states while user is actively editing
     if (siteTexts.heroImagesJson) {
       try {
         const parsed = JSON.parse(siteTexts.heroImagesJson);
         if (Array.isArray(parsed)) setEditHeroImages(parsed);
       } catch (e) {}
     }
-  }, [siteTexts.heroImagesJson]);
+  }, [siteTexts.heroImagesJson, activeEditSection]);
 
   useEffect(() => {
+    if (activeEditSection !== null) return; // Do not overwrite local states while user is actively editing
     if (siteTexts.secondaryImagesJson) {
       try {
         const parsed = JSON.parse(siteTexts.secondaryImagesJson);
         if (Array.isArray(parsed)) setEditSecondaryImages(parsed);
       } catch (e) {}
     }
-  }, [siteTexts.secondaryImagesJson]);
+  }, [siteTexts.secondaryImagesJson, activeEditSection]);
 
   useEffect(() => {
     if (siteTexts.topRibbonEn) setEditTopRibbonEn(siteTexts.topRibbonEn);
