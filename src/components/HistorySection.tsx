@@ -228,7 +228,7 @@ export default function HistorySection({
     try {
       if (siteTexts.heroImagesJson) {
         const parsed = JSON.parse(siteTexts.heroImagesJson);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch (e) {}
     return [...galleryItems];
@@ -238,7 +238,7 @@ export default function HistorySection({
     try {
       if (siteTexts.secondaryImagesJson) {
         const parsed = JSON.parse(siteTexts.secondaryImagesJson);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch (e) {}
     return [...galleryItems];
@@ -532,7 +532,7 @@ export default function HistorySection({
     try {
       if (siteTexts.secondaryImagesJson) {
         const parsed = JSON.parse(siteTexts.secondaryImagesJson);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           setEditSecondaryImages(parsed);
         } else {
           setEditSecondaryImages([...galleryItems]);
@@ -549,7 +549,7 @@ export default function HistorySection({
     if (siteTexts.heroImagesJson) {
       try {
         const parsed = JSON.parse(siteTexts.heroImagesJson);
-        if (Array.isArray(parsed) && parsed.length > 0) setEditHeroImages(parsed);
+        if (Array.isArray(parsed)) setEditHeroImages(parsed);
       } catch (e) {}
     }
   }, [siteTexts.heroImagesJson]);
@@ -558,7 +558,7 @@ export default function HistorySection({
     if (siteTexts.secondaryImagesJson) {
       try {
         const parsed = JSON.parse(siteTexts.secondaryImagesJson);
-        if (Array.isArray(parsed) && parsed.length > 0) setEditSecondaryImages(parsed);
+        if (Array.isArray(parsed)) setEditSecondaryImages(parsed);
       } catch (e) {}
     }
   }, [siteTexts.secondaryImagesJson]);

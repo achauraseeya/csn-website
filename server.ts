@@ -65,6 +65,21 @@ async function startServer() {
           return res.status(500).json({ error: "Failed to sync repository", details: error.message });
         }
         console.log(`Manual GitHub Sync completed:\n${stdout}`);
+
+        // Clear all .local_only files so that local state is aligned with GitHub's master copy
+        try {
+          if (fs.existsSync(DATA_DIR)) {
+            const files = fs.readdirSync(DATA_DIR);
+            for (const file of files) {
+              if (file.endsWith('.local_only')) {
+                fs.unlinkSync(path.join(DATA_DIR, file));
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to clear local_only flags:', e);
+        }
+
         return res.json({
           success: true,
           message: "Entire repository synced successfully! All files, folders, and photos up to date.",
@@ -223,6 +238,8 @@ async function startServer() {
       ];
 
       // Check if we have a very recently saved local file (within 5 minutes)
+      // or if it was modified locally via POST (flagged with .local_only)
+      const isLocalOnly = fs.existsSync(path.join(DATA_DIR, `${key}.local_only`));
       let isRecentlyModified = false;
       let localContent: string | null = null;
 
@@ -245,8 +262,8 @@ async function startServer() {
         }
       }
 
-      // If local file was saved recently, serve it directly to prevent race conditions with GitHub CDN caching
-      if (isRecentlyModified && localContent) {
+      // If local file was saved recently or is flagged as local-only, serve it directly to prevent race conditions with GitHub CDN caching
+      if ((isRecentlyModified || isLocalOnly) && localContent) {
         return res.json(JSON.parse(localContent));
       }
 
@@ -324,6 +341,12 @@ async function startServer() {
           fs.writeFileSync(filePath, content, 'utf-8');
         } catch (e) {}
       }
+
+      // Write .local_only file to mark it as locally modified
+      try {
+        fs.writeFileSync(path.join(DATA_DIR, `${key}.local_only`), String(Date.now()), 'utf-8');
+      } catch (e) {}
+
       return res.json({ success: true, key });
     } catch (err) {
       return res.status(500).json({ error: "Failed to save site data" });
