@@ -163,9 +163,9 @@ export default function AnalyticsDashboard({
       </section>
 
       {/* Grid: Charts & Clicks */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-stretch">
         {/* Custom SVG Traffic Chart */}
-        <div className="lg:col-span-8 bg-white p-6 sm:p-8 rounded-2xl border border-teal-100 shadow-sm space-y-6">
+        <div className="xl:col-span-8 bg-white p-6 sm:p-8 rounded-2xl border border-teal-100 shadow-sm space-y-6">
           <div>
             <h3 className="font-extrabold text-teal-950 text-base flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-teal-700" />
@@ -197,7 +197,7 @@ export default function AnalyticsDashboard({
         </div>
 
         {/* Click events tracker log */}
-        <div className="lg:col-span-4 bg-teal-950 text-white p-6 sm:p-8 rounded-2xl shadow-md border-b-4 border-emerald-500 space-y-6 flex flex-col justify-between">
+        <div className="xl:col-span-4 bg-teal-950 text-white p-6 sm:p-8 rounded-2xl shadow-md border-b-4 border-emerald-500 space-y-6 flex flex-col justify-between">
           <div className="space-y-4">
             <h3 className="font-extrabold text-white text-sm uppercase tracking-wide border-b border-teal-800 pb-2 flex items-center gap-1.5">
               <MousePointer className="w-4 h-4 text-emerald-400" />

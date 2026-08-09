@@ -543,7 +543,7 @@ export default function HistorySection({
     } catch (e) {
       setEditSecondaryImages([...galleryItems]);
     }
-  }, [activeEditSection, siteTexts]);
+  }, [activeEditSection]);
 
   useEffect(() => {
     if (siteTexts.heroImagesJson) {
@@ -872,7 +872,7 @@ export default function HistorySection({
     try {
       if (siteTexts.heroImagesJson) {
         const parsed = JSON.parse(siteTexts.heroImagesJson);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
@@ -884,7 +884,7 @@ export default function HistorySection({
     try {
       if (siteTexts.impactStatsJson) {
         const parsed = JSON.parse(siteTexts.impactStatsJson);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
@@ -896,7 +896,7 @@ export default function HistorySection({
     try {
       if (siteTexts.leadershipIdsJson) {
         const parsed = JSON.parse(siteTexts.leadershipIdsJson);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed.map((item: any) => {
             const latestMember = membersList?.find(m => m.id === item.id) || boardMembers.find(m => m.id === item.id);
             if (latestMember) {
@@ -920,7 +920,7 @@ export default function HistorySection({
     try {
       if (siteTexts.eservicesJson) {
         const parsed = JSON.parse(siteTexts.eservicesJson);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch (e) {}
     return defaultEservices;
@@ -930,14 +930,14 @@ export default function HistorySection({
     try {
       if (siteTexts.unityStatsJson) {
         const parsed = JSON.parse(siteTexts.unityStatsJson);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch (e) {}
     return defaultUnityStats;
   };
 
-  const activeEservicesList = getActiveEservices();
-  const activeUnityStatsList = getActiveUnityStats();
+  const activeEservicesList = activeEditSection === 'eservices' ? editEservicesList : getActiveEservices();
+  const activeUnityStatsList = activeEditSection === 'unity' ? editUnityStats : getActiveUnityStats();
 
   const getChiefPresident = (): Member => {
     if (membersList && membersList.length > 0) {
@@ -961,7 +961,7 @@ export default function HistorySection({
     try {
       if (siteTexts.secondaryImagesJson) {
         const parsed = JSON.parse(siteTexts.secondaryImagesJson);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
@@ -969,19 +969,179 @@ export default function HistorySection({
     return galleryItems;
   };
 
-  const activeHeroImages = getActiveHeroImages();
-  const activeSecondaryImages = getActiveSecondaryImages();
-  const activeImpactStats = getActiveImpactStats();
-  const activeLeadership = getActiveLeadership();
+  const activeHeroImages = activeEditSection === 'hero' ? editHeroImages : getActiveHeroImages();
+  const activeSecondaryImages = activeEditSection === 'recent_updates' ? editSecondaryImages : getActiveSecondaryImages();
+  const activeImpactStats = activeEditSection === 'impact' ? editImpactStats : getActiveImpactStats();
+  const activeLeadership = activeEditSection === 'executive_committee' ? editLeadership : getActiveLeadership();
+
+  // Keep edit state in sync with siteTexts only when modal opens
+  useEffect(() => {
+    if (!activeEditSection) return;
+
+    if (activeEditSection === 'hero') {
+      try {
+        if (siteTexts.heroImagesJson) {
+          const parsed = JSON.parse(siteTexts.heroImagesJson);
+          if (Array.isArray(parsed)) setEditHeroImages(parsed);
+        } else {
+          setEditHeroImages([...galleryItems]);
+        }
+      } catch(e) { setEditHeroImages([...galleryItems]); }
+      setEditSliderBadgeEn(siteTexts.sliderBadgeEn || '');
+      setEditSliderBadgeNe(siteTexts.sliderBadgeNe || '');
+      setEditHeroTitleEn(siteTexts.heroTitleEn || '');
+      setEditHeroTitleNe(siteTexts.heroTitleNe || '');
+      setEditHeroSubEn(siteTexts.heroSubEn || '');
+      setEditHeroSubNe(siteTexts.heroSubNe || '');
+    } else if (activeEditSection === 'recent_updates') {
+      try {
+        if (siteTexts.secondaryImagesJson) {
+          const parsed = JSON.parse(siteTexts.secondaryImagesJson);
+          if (Array.isArray(parsed)) setEditSecondaryImages(parsed);
+        } else {
+          setEditSecondaryImages([...galleryItems]);
+        }
+      } catch(e) { setEditSecondaryImages([...galleryItems]); }
+    } else if (activeEditSection === 'leadership') {
+      setEditPresidentTitleEn(siteTexts.presidentMessageTitleEn || '');
+      setEditPresidentTitleNe(siteTexts.presidentMessageTitleNe || '');
+      setEditPresidentMsgEn(siteTexts.presidentMessageEn || '');
+      setEditPresidentMsgNe(siteTexts.presidentMessageNe || '');
+    } else if (activeEditSection === 'executive_committee') {
+      try {
+        if (siteTexts.leadershipIdsJson) {
+          const parsed = JSON.parse(siteTexts.leadershipIdsJson);
+          if (Array.isArray(parsed)) setEditLeadership(parsed);
+        } else {
+          const initialLeadership = boardMembers.filter(m => m.id === '1' || m.id === 'vc1').map(bm => {
+            const latestMember = membersList?.find(m => m.id === bm.id);
+            return latestMember ? { ...bm, ...latestMember } : bm;
+          });
+          setEditLeadership(initialLeadership);
+        }
+      } catch(e) { 
+        const initialLeadership = boardMembers.filter(m => m.id === '1' || m.id === 'vc1').map(bm => {
+          const latestMember = membersList?.find(m => m.id === bm.id);
+          return latestMember ? { ...bm, ...latestMember } : bm;
+        });
+        setEditLeadership(initialLeadership);
+      }
+    } else if (activeEditSection === 'heritage') {
+      setEditIntroEn(siteTexts.introEn || '');
+      setEditIntroNe(siteTexts.introNe || '');
+      setEditPaanStoryTitleEn(siteTexts.paanStoryTitleEn || '');
+      setEditPaanStoryTitleNe(siteTexts.paanStoryTitleNe || '');
+      setEditPaanStoryEn(siteTexts.paanStoryEn || '');
+      setEditPaanStoryNe(siteTexts.paanStoryNe || '');
+    } else if (activeEditSection === 'mission') {
+      setEditMissionTitleEn(siteTexts.missionTitleEn || '');
+      setEditMissionTitleNe(siteTexts.missionTitleNe || '');
+      setEditMissionEn(siteTexts.missionEn || '');
+      setEditMissionNe(siteTexts.missionNe || '');
+    } else if (activeEditSection === 'impact') {
+      setEditImpactHeaderEn(siteTexts.impactHeaderEn || '');
+      setEditImpactHeaderNe(siteTexts.impactHeaderNe || '');
+      try {
+        if (siteTexts.impactStatsJson) {
+          const parsed = JSON.parse(siteTexts.impactStatsJson);
+          if (Array.isArray(parsed)) setEditImpactStats(parsed);
+        } else {
+          setEditImpactStats([...impactStats]);
+        }
+      } catch(e) { setEditImpactStats([...impactStats]); }
+    } else if (activeEditSection === 'eservices') {
+      setEditEservicesTitleEn(siteTexts.eservicesTitleEn || '');
+      setEditEservicesTitleNe(siteTexts.eservicesTitleNe || '');
+      setEditEservicesSubEn(siteTexts.eservicesSubEn || '');
+      setEditEservicesSubNe(siteTexts.eservicesSubNe || '');
+      try {
+        if (siteTexts.eservicesJson) {
+          const parsed = JSON.parse(siteTexts.eservicesJson);
+          if (Array.isArray(parsed)) setEditEservicesList(parsed);
+        } else {
+          setEditEservicesList([...defaultEservices]);
+        }
+      } catch(e) { setEditEservicesList([...defaultEservices]); }
+    } else if (activeEditSection === 'unity') {
+      setEditUnityTitleEn(siteTexts.unityTitleEn || '');
+      setEditUnityTitleNe(siteTexts.unityTitleNe || '');
+      setEditUnityVisionEn(siteTexts.unityVisionEn || '');
+      setEditUnityVisionNe(siteTexts.unityVisionNe || '');
+      setEditUnityTenet1En(siteTexts.unityTenet1En || '');
+      setEditUnityTenet1Ne(siteTexts.unityTenet1Ne || '');
+      setEditUnityTenet1SubEn(siteTexts.unityTenet1SubEn || '');
+      setEditUnityTenet1SubNe(siteTexts.unityTenet1SubNe || '');
+      setEditUnityTenet2En(siteTexts.unityTenet2En || '');
+      setEditUnityTenet2Ne(siteTexts.unityTenet2Ne || '');
+      setEditUnityTenet2SubEn(siteTexts.unityTenet2SubEn || '');
+      setEditUnityTenet2SubNe(siteTexts.unityTenet2SubNe || '');
+      setEditUnityTenet3En(siteTexts.unityTenet3En || '');
+      setEditUnityTenet3Ne(siteTexts.unityTenet3Ne || '');
+      setEditUnityTenet3SubEn(siteTexts.unityTenet3SubEn || '');
+      setEditUnityTenet3SubNe(siteTexts.unityTenet3SubNe || '');
+      try {
+        if (siteTexts.unityStatsJson) {
+          const parsed = JSON.parse(siteTexts.unityStatsJson);
+          if (Array.isArray(parsed)) setEditUnityStats(parsed);
+        } else {
+          setEditUnityStats([...defaultUnityStats]);
+        }
+      } catch(e) { setEditUnityStats([...defaultUnityStats]); }
+      setEditUnityNextEventTitleEn(siteTexts.unityNextEventTitleEn || '');
+      setEditUnityNextEventTitleNe(siteTexts.unityNextEventTitleNe || '');
+      setEditUnityNextEventDateEn(siteTexts.unityNextEventDateEn || '');
+      setEditUnityNextEventDateNe(siteTexts.unityNextEventDateNe || '');
+      setEditUnityNextEventLocEn(siteTexts.unityNextEventLocEn || '');
+      setEditUnityNextEventLocNe(siteTexts.unityNextEventLocNe || '');
+    } else if (activeEditSection === 'ribbon') {
+      setEditTopRibbonEn(siteTexts.topRibbonEn || '');
+      setEditTopRibbonNe(siteTexts.topRibbonNe || '');
+      setEditRegNoEn(siteTexts.regNoEn || '');
+      setEditRegNoNe(siteTexts.regNoNe || '');
+      setEditHelplinePhone(siteTexts.helplinePhone || '');
+    } else if (activeEditSection === 'pillars') {
+      setEditPillar1TitleEn(siteTexts.pillar1TitleEn || '');
+      setEditPillar1TitleNe(siteTexts.pillar1TitleNe || '');
+      setEditPillar1SubEn(siteTexts.pillar1SubEn || '');
+      setEditPillar1SubNe(siteTexts.pillar1SubNe || '');
+      setEditPillar2TitleEn(siteTexts.pillar2TitleEn || '');
+      setEditPillar2TitleNe(siteTexts.pillar2TitleNe || '');
+      setEditPillar2SubEn(siteTexts.pillar2SubEn || '');
+      setEditPillar2SubNe(siteTexts.pillar2SubNe || '');
+      setEditPillar3TitleEn(siteTexts.pillar3TitleEn || '');
+      setEditPillar3TitleNe(siteTexts.pillar3TitleNe || '');
+      setEditPillar3SubEn(siteTexts.pillar3SubEn || '');
+      setEditPillar3SubNe(siteTexts.pillar3SubNe || '');
+      setEditPillar4TitleEn(siteTexts.pillar4TitleEn || '');
+      setEditPillar4TitleNe(siteTexts.pillar4TitleNe || '');
+      setEditPillar4SubEn(siteTexts.pillar4SubEn || '');
+      setEditPillar4SubNe(siteTexts.pillar4SubNe || '');
+    }
+  }, [activeEditSection]);
 
   // Hero background slider timer (6s)
   useEffect(() => {
-    if (!activeHeroImages.length) return;
+    if (!activeHeroImages.length) {
+      setHeroImageIdx(0);
+      return;
+    }
+    if (heroImageIdx >= activeHeroImages.length) {
+      setHeroImageIdx(0);
+    }
     const timer = setInterval(() => {
       setHeroImageIdx((prev) => (prev + 1) % activeHeroImages.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, [activeHeroImages.length, siteTexts.heroImagesJson]);
+  }, [activeHeroImages.length, heroImageIdx]);
+
+  // Ensure secondary image index is valid if list changes
+  useEffect(() => {
+    if (secondaryImageIdx >= activeSecondaryImages.length && activeSecondaryImages.length > 0) {
+      setSecondaryImageIdx(activeSecondaryImages.length - 1);
+    } else if (activeSecondaryImages.length === 0) {
+      setSecondaryImageIdx(0);
+    }
+  }, [activeSecondaryImages.length, secondaryImageIdx]);
 
   // Secondary gallery slider controls & timer (4.5s)
   const nextSecondaryImage = () => {
@@ -2629,10 +2789,13 @@ export default function HistorySection({
               type="button"
               onClick={handleSaveCurrentSection}
               disabled={isSavingTexts}
-              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex flex-col items-center gap-0.5 cursor-pointer group"
             >
-              <Save className="w-4 h-4" />
-              <span>{isSavingTexts ? 'Saving...' : 'Save Section Changes'}</span>
+              <div className="flex items-center gap-1.5">
+                <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span>{isSavingTexts ? 'Saving...' : 'Save Section Changes'}</span>
+              </div>
+              <span className="text-[9px] opacity-70 font-medium normal-case">Mandatory to persist changes</span>
             </button>
           </div>
         </div>
@@ -2643,7 +2806,7 @@ export default function HistorySection({
   const renderEservicesPortal = () => (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-teal-100 dark:border-slate-800 transition-all relative">
       {/* Sticky Header Bar */}
-      <div className="lg:sticky lg:top-[48px] z-20 bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-white px-4 py-3 rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-800/60">
+      <div className="xl:sticky xl:top-[48px] z-20 bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-white px-4 py-3 rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-800/60">
         <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-teal-100">
           <Globe className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
           <span>{lang === 'en' ? (siteTexts.eservicesTitleEn || 'Institutional E-Services') : (siteTexts.eservicesTitleNe || 'डिजिटल नागरिक सेवा पोर्टल')}</span>
@@ -2706,7 +2869,7 @@ export default function HistorySection({
   const renderCommunityPillars = () => (
     <div className="bg-[#03443e] dark:bg-slate-900 rounded-2xl shadow-md border border-teal-800/40 dark:border-slate-800 transition-all relative">
       {/* Header Bar */}
-      <div className="lg:sticky lg:top-[48px] z-20 bg-gradient-to-r from-[#02332f] to-[#03443e] dark:from-slate-950 dark:to-slate-900 text-white px-4 py-3 rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-850/40">
+      <div className="xl:sticky xl:top-[48px] z-20 bg-gradient-to-r from-[#02332f] to-[#03443e] dark:from-slate-950 dark:to-slate-900 text-white px-4 py-3 rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-850/40">
         <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-teal-100">
           <HeartHandshake className="w-5 h-5 text-emerald-400 shrink-0" />
           <span>{lang === 'en' ? (siteTexts.pillarsTitleEn || 'Community Pillars') : (siteTexts.pillarsTitleNe || 'समुदायका आधारहरू')}</span>
@@ -2813,7 +2976,7 @@ export default function HistorySection({
   const renderUnityWidget = () => (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-teal-100 dark:border-slate-800 transition-all relative">
       {/* Sticky/Static Header Bar */}
-      <div className="lg:sticky lg:top-[48px] z-20 bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-white px-4 py-3 rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-800/60">
+      <div className="xl:sticky xl:top-[48px] z-20 bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-white px-4 py-3 rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-800/60">
         <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-teal-100">
           <Users className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{lang === 'en' ? (siteTexts.unityTitleEn || 'Unity, Consolidation & Cooperation') : (siteTexts.unityTitleNe || 'एकता, एक्यबद्धता र सहकार्य')}</span>
@@ -3394,21 +3557,21 @@ export default function HistorySection({
       </section>
 
       {/* 2-Column Desktop View Layout Below Hero Slider */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
         {/* =========================================================================
-            COLUMN 1: LEFT COLUMN (25% Width on Desktop: lg:col-span-3)
-            - On Mobile (lg:hidden): Reverted to exact original full-width horizontal presentation
-            - On Desktop (hidden lg:block): Vertical sidebar card
+            COLUMN 1: LEFT COLUMN (25% Width on Desktop: xl:col-span-3)
+            - On Mobile (xl:hidden): Reverted to exact original full-width horizontal presentation
+            - On Desktop (hidden xl:block): Vertical sidebar card
            ========================================================================= */}
-        <aside className="lg:col-span-3 space-y-6 self-start">
+        <aside className="xl:col-span-3 space-y-6 self-start">
           
-          {/* MOBILE VIEW PRESENTATION (lg:hidden): Elegant Horizontal & Prominent Photo Format */}
+          {/* MOBILE VIEW PRESENTATION (xl:hidden): Elegant Horizontal & Prominent Photo Format */}
           <section
             onClick={() => {
               onSelectLeader(chiefPresident.id);
               onTrackAction('Click Chief President Message Section');
             }}
-            className="lg:hidden bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-2xl p-4 sm:p-5 text-white shadow-xl border border-teal-800/80 hover:border-emerald-400/90 relative overflow-hidden transition-all duration-300 cursor-pointer group"
+            className="xl:hidden bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-2xl p-4 sm:p-5 text-white shadow-xl border border-teal-800/80 hover:border-emerald-400/90 relative overflow-hidden transition-all duration-300 cursor-pointer group"
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -3489,18 +3652,18 @@ export default function HistorySection({
             </div>
           </section>
 
-          {/* DESKTOP VIEW PRESENTATION (hidden lg:flex): Vertical Sidebar Column */}
+          {/* DESKTOP VIEW PRESENTATION (hidden xl:flex): Vertical Sidebar Column */}
           <section
             onClick={() => {
               onSelectLeader(chiefPresident.id);
               onTrackAction('Click Chief President Message Section');
             }}
-            className="hidden lg:flex bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-2xl text-white shadow-xl border border-teal-800/80 hover:border-emerald-400/90 relative transition-all duration-300 cursor-pointer group flex-col"
+            className="hidden xl:flex bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-2xl text-white shadow-xl border border-teal-800/80 hover:border-emerald-400/90 relative transition-all duration-300 cursor-pointer group flex-col"
           >
             <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none rounded-2xl" />
 
             {/* Sticky Header Bar for Chairperson's Message */}
-            <div className="lg:sticky lg:top-[48px] z-20 bg-teal-950/95 backdrop-blur-md px-5 py-3.5 rounded-t-2xl border-b border-teal-800/80 flex items-center justify-between shadow-md">
+            <div className="xl:sticky xl:top-[48px] z-20 bg-teal-950/95 backdrop-blur-md px-5 py-3.5 rounded-t-2xl border-b border-teal-800/80 flex items-center justify-between shadow-md">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-black uppercase tracking-wider border border-emerald-500/30">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span className="truncate">
@@ -3599,7 +3762,7 @@ export default function HistorySection({
           </section>
 
           {/* DESKTOP VIEW ONLY SIDEBAR WIDGETS */}
-          <div className="hidden lg:block space-y-6">
+          <div className="hidden xl:block space-y-6">
             {renderEservicesPortal()}
             {renderCommunityPillars()}
             {renderUnityWidget()}
@@ -3608,10 +3771,10 @@ export default function HistorySection({
         </aside>
 
         {/* =========================================================================
-            COLUMN 2: RIGHT COLUMN (75% Width on Desktop: lg:col-span-9)
+            COLUMN 2: RIGHT COLUMN (75% Width on Desktop: xl:col-span-9)
             All remaining homepage sections
            ========================================================================= */}
-        <div className="lg:col-span-9 space-y-10">
+        <div className="xl:col-span-9 space-y-10">
           {/* Image Carousel */}
       <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 shadow-md border border-teal-100 dark:border-slate-800 transition-colors">
         <h2 className="text-2xl sm:text-3xl font-extrabold text-teal-950 dark:text-teal-50 mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -3672,8 +3835,8 @@ export default function HistorySection({
       </section>
 
       {/* Intro & History Content */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <div className="lg:col-span-7 space-y-6">
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+        <div className="xl:col-span-7 space-y-6">
           <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-teal-50 dark:border-slate-800/60 relative overflow-hidden transition-colors">
             <div className="absolute top-0 right-0 p-4 opacity-5">
               <BookOpen className="w-32 h-32 text-teal-900 dark:text-teal-100" />
@@ -3700,7 +3863,7 @@ export default function HistorySection({
         </div>
 
         {/* Vision & Mission sidebar card */}
-        <div className="lg:col-span-5">
+        <div className="xl:col-span-5">
           <div className="bg-teal-900 text-white p-8 rounded-3xl shadow-lg border-t-8 border-emerald-400 h-full flex flex-col justify-center relative overflow-hidden">
              <div className="absolute -bottom-10 -right-10 bg-teal-800 rounded-full w-40 h-40 opacity-50 blur-2xl" />
              <div className="relative z-10">
@@ -3717,7 +3880,7 @@ export default function HistorySection({
       </section>
 
       {/* Mobile-only Sidebar Widgets: Shown below Vision & Mission on mobile */}
-      <div className="lg:hidden space-y-6 pt-2 pb-6 border-b border-teal-100 dark:border-slate-800">
+      <div className="xl:hidden space-y-6 pt-2 pb-6 border-b border-teal-100 dark:border-slate-800">
         {renderEservicesPortal()}
         {renderCommunityPillars()}
         {renderUnityWidget()}
@@ -4378,8 +4541,8 @@ export default function HistorySection({
         </div>
       </section>
 
-        </div> {/* End of Column 2 (lg:col-span-9) */}
-      </div> {/* End of 2-Column Grid (grid-cols-1 lg:grid-cols-12) */}
+        </div> {/* End of Column 2 (xl:col-span-9) */}
+      </div> {/* End of 2-Column Grid (grid-cols-1 xl:grid-cols-12) */}
 
     </div>
   );

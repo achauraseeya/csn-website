@@ -102,33 +102,16 @@ const defaultSiteTexts: SiteTexts = {
   missionEn: 'To build a self-reliant, literate, and healthy community where traditional knowledge of betel leaf cultivation is scientifically modernized, and every member has access to equal education, healthcare, and livelihood opportunities.',
   missionNe: 'एक आत्मनिर्भर, शिक्षित र स्वस्थ चौरसिया समाजको निर्माण गर्ने, जहाँ परम्परागत पान खेतीलाई आधुनिक वैज्ञानिक प्रविधिसँग जोडिनेछ र समुदायका प्रत्येक सदस्यले समान शिक्षा, स्वास्थ्य र जीविकोपार्जनका अवसरहरू प्राप्त गर्नेछन्।',
   privacyEn: 'Your privacy is extremely important to us. This Privacy Policy details how Chaurasiya Samaj Nepal collects, uses, and safeguards the personal information of our directory members and donors. We strictly protect your contact information and never sell or distribute data to third parties without explicit consent.',
-  privacyNe: 'तपाईंको गोपनीयता हाम्रो लागि अत्यन्तै महत्त्वपूर्ण छ। यो गोपनीयता नीतिले चौरसिया समाज नेपालले हाम्रा सदस्यहरू र दाताहरूको व्यक्तिगत विवरणहरू कसरी संकलन, प्रयोग र संरक्षण गर्छ भन्ने व्याख्या गर्दछ। हामी तपाईंको सम्पर्क विवरणहरूलाई सुरक्षित राख्छौँ र बिना अनुमति तेस्रो पक्षलाई प्रदान गर्दैनौँ।',
-  termsEn: 'By accessing Chaurasiya Samaj Nepal website, you agree to be bound by these Terms of Service. All content, logo, directories, and notices on this platform are owned by Chaurasiya Samaj Nepal. Any nomination or directory submission must contain valid, truthful information.',
-  termsNe: 'चौरसिया समाज नेपालको वेबसाइट प्रयोग गरेर, तपाईं यी सेवाका सर्तहरू पालना गर्न सहमत हुनुहुन्छ। यस प्लेटफर्ममा रहेका सबै सामग्री, लोगो, निर्देशिका र सूचनाहरूको स्वामित्व चौरसिया समाज नेपालमा निहित छ।',
-  sliderBadgeEn: 'Jay Paan Dev',
-  sliderBadgeNe: 'जय पान देव',
+  privacyNe: 'तपाईंको गोपनीयता हाम्रो लागि अत्यन्तै महत्त्वपूर्ण छ। यो गोपनीयता नीतिले चौरसिया समाज नेपालले हाम्रा सदस्यहरू र सहयोगीहरूको व्यक्तिगत जानकारी कसरी सङ्कलन, प्रयोग र सुरक्षित गर्छ भन्ने विवरण दिन्छ। हामी तेस्रो पक्षलाई डाटा बिक्री वा वितरण गर्दैनौं।',
+  termsEn: 'Terms and Conditions',
+  termsNe: 'नियम र सर्तहरू',
+  sliderBadgeEn: 'Latest Updates',
+  sliderBadgeNe: 'पछिल्ला अपडेटहरू',
   logoTextEn: 'Chaurasiya Samaj Nepal',
   logoTextNe: 'चौरसिया समाज नेपाल',
-  logoFontSizeMobile: 'text-base xs:text-lg sm:text-xl',
-  logoFontSizeDesktop: 'text-2xl lg:text-3.5xl',
-  logoSubFontSizeMobile: 'text-[9px] xs:text-[10px] sm:text-[11px]',
-  menuFontSizeDesktop: 'text-xs xl:text-sm',
-  menuFontSizeMobile: 'text-sm',
-  logoSubEn: 'Kathmandu-30, Maitidevi',
-  logoSubNe: 'काठमाडौँ-३०,  मैतीदेवी',
-  logoUrl: logoImg,
-  taglineEn: 'A dedicated social platform preserving betel leaf culture & serving humanity',
-  taglineNe: 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था',
-  impactHeaderEn: 'Empowering & Transforming Lives',
-  impactHeaderNe: 'सशक्तिकरण र जीवन परिवर्तन',
-  footerAboutEn: 'We are dedicated to unifying community coordinators, supporting traditional cultivation, and providing essential healthcare and youth education programs.',
-  footerAboutNe: 'हामी सामुदायिक संयोजकहरूलाई एकीकृत गर्न, परम्परागत खेतीलाई सहयोग गर्न र आवश्यक स्वास्थ्य सेवा र युवा शिक्षा कार्यक्रमहरू प्रदान गर्न समर्पित छौं।',
-  footerAddressEn: 'Ghantaghar Path, Birgunj, Parsa, Madhesh Province, Nepal',
-  footerAddressNe: 'घण्टाघर पथ, वीरगन्ज, पर्सा, मधेश प्रदेश, नेपाल',
-  footerPhone: '+977-9812345678',
-  footerEmail: 'achauraseeya@gmail.com',
-  socialFb: 'https://facebook.com',
-  socialTw: 'https://twitter.com',
+  logoSubEn: 'Central Executive Committee',
+  logoSubNe: 'केन्द्रीय कार्यसमिति',
+  logoUrl: '',
   socialIg: 'https://instagram.com',
   topRibbonEn: 'Jay Paan Dev ✦ Official Central Portal of Chaurasiya Samaj Nepal ✦ Unifying Community Across Nepal & Abroad ✦ Preserving Betel Leaf Heritage',
   topRibbonNe: 'जय पान देव ✦ चौरसिया समाज नेपालको आधिकारिक केन्द्रीय पोर्टल ✦ नेपाल तथा विदेशमा रहेका समुदायको एकता ✦ पान संस्कृतिको संरक्षण',
@@ -160,6 +143,52 @@ const defaultSiteTexts: SiteTexts = {
   unityTenet3Ne: 'सहकार्य',
   unityTenet3SubEn: 'Mutual Aid',
   unityTenet3SubNe: 'सहयोग',
+  secondaryImagesJson: '',
+  heroImagesJson: JSON.stringify([
+    {
+      id: "g1",
+      title: { en: "Fresh Paan Garden (Betel Vineyard)", ne: "ताजा पान खेती (पानको बरेजा)" },
+      imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=600",
+      description: {
+        en: "A beautiful lush green traditional paan cultivation structure (Bareja) managed by local community members.",
+        ne: "स्थानीय समुदायका सदस्यहरूद्वारा व्यवस्थित एक सुन्दर हरियो परम्परागत पान खेती संरचना (बरेजा)।"
+      }
+    },
+    {
+      id: "g2",
+      title: { en: "Community Health Camp Parsa", ne: "सामुदायिक स्वास्थ्य शिविर पर्सा" },
+      imageUrl: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&q=80&w=600",
+      description: {
+        en: "Free health screenings, eye tests, and medicine distribution for underprivileged elders.",
+        ne: "अल्पसुविधा प्राप्त वृद्धवृद्धाहरूका लागि निःशुल्क स्वास्थ्य परीक्षण, आँखा जाँच र औषधि वितरण।"
+      }
+    },
+    {
+      id: "g3",
+      title: { en: "Youth Interaction & IT Training", ne: "युवा अन्तरक्रिया र सूचना प्रविधि तालिम" },
+      imageUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=600",
+      description: {
+        en: "Workshop on modern IT skills while staying connected to roots.",
+        ne: "जरासँग जोडिएर आधुनिक सूचना प्रविधि सीपहरूमा कार्यशाला।"
+      }
+    }
+  ]),
+  impactStatsJson: '',
+  leadershipIdsJson: '',
+  eservicesJson: '',
+  unityStatsJson: '',
+  taglineEn: 'Platform preserving betel leaf culture and serving humanity',
+  taglineNe: 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था',
+  impactHeaderEn: 'Empowering & Transforming Lives',
+  impactHeaderNe: 'सशक्तिकरण र जीवन परिवर्तन',
+  footerAboutEn: 'We are dedicated to unifying community coordinators, supporting traditional cultivation, and providing essential healthcare and youth education programs.',
+  footerAboutNe: 'हामी सामुदायिक संयोजकहरूलाई एकीकृत गर्न, परम्परागत खेतीलाई सहयोग गर्न र आवश्यक स्वास्थ्य सेवा र युवा शिक्षा कार्यक्रमहरू प्रदान गर्न समर्पित छौं।',
+  footerAddressEn: 'Ghantaghar Path, Birgunj, Parsa, Madhesh Province, Nepal',
+  footerAddressNe: 'घण्टाघर पथ, वीरगन्ज, पर्सा, मधेश प्रदेश, नेपाल',
+  footerPhone: '+977-9812345678',
+  footerEmail: 'achauraseeya@gmail.com',
+  socialFb: 'https://facebook.com',
+  socialTw: 'https://twitter.com',
   unityNextEventTitleEn: 'Annual Chaurasiya National Convention & Educational Honors',
   unityNextEventTitleNe: 'चौरासिया समाज राष्ट्रिय महाधिवेशन तथा सम्मान समारोह',
   unityNextEventDateEn: 'BS 2083',
@@ -192,35 +221,6 @@ const defaultSiteTexts: SiteTexts = {
   pillar4TitleNe: 'सुशासन र कोष',
   pillar4SubEn: 'Audited Reports',
   pillar4SubNe: 'पारदर्शी विवरण',
-  heroImagesJson: JSON.stringify([
-    {
-      id: "g1",
-      title: { en: "Fresh Paan Garden (Betel Vineyard)", ne: "ताजा पान खेती (पानको बरेजा)" },
-      imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=600",
-      description: {
-        en: "A beautiful lush green traditional paan cultivation structure (Bareja) managed by local community members.",
-        ne: "स्थानीय समुदायका सदस्यहरूद्वारा व्यवस्थित एक सुन्दर हरियो परम्परागत पान खेती संरचना (बरेजा)।"
-      }
-    },
-    {
-      id: "g2",
-      title: { en: "Community Health Camp Parsa", ne: "सामुदायिक स्वास्थ्य शिविर पर्सा" },
-      imageUrl: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&q=80&w=600",
-      description: {
-        en: "Free health screenings, eye tests, and medicine distribution for underprivileged elders.",
-        ne: "अल्पसुविधा प्राप्त वृद्धवृद्धाहरूका लागि निःशुल्क स्वास्थ्य परीक्षण, आँखा जाँच र औषधि वितरण।"
-      }
-    },
-    {
-      id: "g3",
-      title: { en: "Youth Interaction & IT Training", ne: "युवा अन्तरक्रिया र सूचना प्रविधि तालिम" },
-      imageUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=600",
-      description: {
-        en: "Workshop on modern IT skills while staying connected to roots.",
-        ne: "जरासँग जोडिएर आधुनिक सूचना प्रविधि सीपहरूमा कार्यशाला।"
-      }
-    }
-  ])
 };
 
 export default function App() {
@@ -513,9 +513,8 @@ export default function App() {
       const saved = localStorage.getItem('chaurasiya_notices');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const customOnly = parsed.filter(p => !initialNotices.some(i => i.id === p.id));
-          return [...customOnly, ...initialNotices];
+        if (Array.isArray(parsed)) {
+          return parsed;
         }
       }
     } catch (e) {
@@ -1018,54 +1017,60 @@ export default function App() {
   };
 
   const handleAddNotice = async (newNotice: Notice) => {
-    // 1. Immediately update local state & localStorage
+    // 1. Immediately update local state & localStorage for responsive UI
+    let updatedList: Notice[] = [];
     setNotices((prev) => {
-      const updated = [newNotice, ...prev.filter(n => n.id !== newNotice.id)];
+      updatedList = [newNotice, ...prev.filter(n => n.id !== newNotice.id)];
       try {
-        localStorage.setItem('chaurasiya_notices', JSON.stringify(updated));
+        localStorage.setItem('chaurasiya_notices', JSON.stringify(updatedList));
       } catch (e) {
         console.error('Failed to save notice to localStorage', e);
       }
-      return updated;
+      return updatedList;
     });
 
     // 2. Persist using unified API abstraction
     try {
-      const cleanList = notices.filter(n => n.id !== newNotice.id);
-      const fullList = [newNotice, ...cleanList];
-      const updatedList = await apiSave<Notice>(
+      const result = await apiSave<Notice>(
         '/api/notices',
         'community_notices.json',
-        fullList,
+        updatedList,
         newNotice,
         `Publish community notice: ${typeof newNotice.title === 'object' ? newNotice.title.en : newNotice.title}`,
         getAuthHeaders()
       );
-      setNotices(updatedList);
+      if (Array.isArray(result)) {
+        setNotices(result);
+        localStorage.setItem('chaurasiya_notices', JSON.stringify(result));
+      }
     } catch (err) {
       console.error('Failed to save notice:', err);
     }
   };
 
   const handleDeleteNotice = async (id: string) => {
+    let updated: Notice[] = [];
     setNotices((prev) => {
-      const updated = prev.filter((n) => n.id !== id);
+      updated = prev.filter((n) => n.id !== id);
       try {
         localStorage.setItem('chaurasiya_notices', JSON.stringify(updated));
       } catch (e) {
         console.error('Failed to update localStorage', e);
       }
-      
-      apiDelete<Notice>(
+      return updated;
+    });
+
+    try {
+      await apiDelete<Notice>(
         `/api/notices/${id}`,
         'community_notices.json',
         updated,
         `Delete community notice ID: ${id}`,
         getAuthHeaders()
-      ).catch((err) => console.error('Failed to delete notice:', err));
-      
-      return updated;
-    });
+      );
+    } catch (err) {
+      console.error('Failed to delete notice from server:', err);
+    }
   };
 
   // Glimpses of Our Journey Albums State (Initial + Server Online + LocalStorage saved)
@@ -1074,11 +1079,8 @@ export default function App() {
       const saved = localStorage.getItem('chaurasiya_journey_albums');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const mergedMap = new Map<string, Album>();
-          initialJourneyAlbums.forEach(a => mergedMap.set(a.id, a));
-          parsed.forEach(p => mergedMap.set(p.id, p));
-          return Array.from(mergedMap.values());
+        if (Array.isArray(parsed)) {
+          return parsed;
         }
       }
     } catch (e) {
@@ -1096,10 +1098,6 @@ export default function App() {
             const mergedMap = new Map<string, Album>();
             // Preserve existing state (which might have fetched media items)
             prev.forEach(a => mergedMap.set(a.id, a));
-            // Add default initial albums if not already present
-            initialJourneyAlbums.forEach(a => {
-              if (!mergedMap.has(a.id)) mergedMap.set(a.id, a);
-            });
             // Add or overwrite with server online custom albums
             serverAlbums.forEach(a => {
               const existing = mergedMap.get(a.id);
@@ -2706,9 +2704,9 @@ export default function App() {
 
       {/* Enhanced NGO Footer */}
       <footer className="bg-gray-900 text-white border-t-8 border-emerald-500 py-10 sm:py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 items-start mb-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-8">
           
-          <div className="md:col-span-5 space-y-4">
+          <div className="lg:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-16 h-10 sm:w-20 sm:h-11 rounded-xl bg-white overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-sm border border-slate-700">
                 <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-contain rounded-lg" />
@@ -2748,7 +2746,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="md:col-span-3 space-y-3">
+          <div className="lg:col-span-3 space-y-3">
             <h4 className="font-bold text-white mb-2">{lang === 'en' ? 'Quick Links' : 'त्वरित लिङ्कहरू'}</h4>
             <div className="flex flex-col gap-2.5 text-sm text-gray-400 font-medium">
               <button onClick={() => handleNavigate('home')} className="hover:text-emerald-400 text-left transition-colors">{lang === 'en' ? 'Home' : 'गृहपृष्ठ'}</button>
@@ -2763,7 +2761,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="md:col-span-4 space-y-3">
+          <div className="lg:col-span-4 space-y-3">
             <h4 className="font-bold text-white mb-2">{lang === 'en' ? 'Headquarters' : 'केन्द्रीय कार्यालय'}</h4>
             <div className="text-sm text-gray-400 space-y-2.5 font-medium">
               <p className="flex items-start gap-2">

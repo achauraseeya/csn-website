@@ -303,9 +303,9 @@ export default function AdminMenuManagerModal({
         )}
 
         {/* Body Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 xl:grid-cols-12 gap-6">
           {/* Left Column: Top-Level Menus List & Add Main Menu */}
-          <div className="lg:col-span-5 space-y-5 border-r-0 lg:border-r border-teal-100 dark:border-slate-800 lg:pr-6">
+          <div className="xl:col-span-5 space-y-5 border-r-0 lg:border-r border-teal-100 dark:border-slate-800 lg:pr-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xs sm:text-sm font-black text-teal-950 dark:text-teal-100 uppercase tracking-wider flex items-center gap-2">
                 <LayoutGrid className="w-4 h-4 text-teal-600 dark:text-emerald-400" />
@@ -490,7 +490,7 @@ export default function AdminMenuManagerModal({
           </div>
 
           {/* Right Column: Manage Selected Menu Properties & Submenus */}
-          <div className="lg:col-span-7 space-y-5">
+          <div className="xl:col-span-7 space-y-5">
             {currentSelectedMenu ? (
               <>
                 {/* Main Menu Properties Editor Box */}

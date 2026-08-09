@@ -491,9 +491,9 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
       </section>
 
       {/* Grid: Bio Details & Skills */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
         {/* Left: Bio Text & Contributions */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="xl:col-span-8 space-y-6">
           <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-6">
             <h2 className="text-xl font-extrabold text-teal-950 dark:text-teal-100 border-b border-teal-50 dark:border-slate-800 pb-3 flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-teal-700 dark:text-emerald-400" />
@@ -548,7 +548,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
         </div>
 
         {/* Right: Technical Expertise & Contacts */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="xl:col-span-4 space-y-6">
           {/* Tech stack */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-4">
             <h3 className="font-extrabold text-teal-950 dark:text-teal-100 text-sm uppercase tracking-wide border-b border-teal-50 dark:border-slate-800 pb-2">

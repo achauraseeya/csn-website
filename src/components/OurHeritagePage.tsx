@@ -224,8 +224,8 @@ export default function OurHeritagePage({ lang, isAdmin, onTrackAction }: OurHer
       </section>
 
       {/* Grid: Main Historical Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-8 space-y-8">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+        <div className="xl:col-span-8 space-y-8">
           {/* Section 1: Origin */}
           <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-4">
             <h2 className="text-xl font-extrabold text-teal-950 dark:text-teal-100 border-b border-teal-50 dark:border-slate-800 pb-3 flex items-center gap-2">
@@ -261,7 +261,7 @@ export default function OurHeritagePage({ lang, isAdmin, onTrackAction }: OurHer
         </div>
 
         {/* Right Sidebar: Cover Image & Timeline */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="xl:col-span-4 space-y-6">
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-teal-100 dark:border-slate-800 overflow-hidden shadow-sm">
             <img
               src={heritageData.imageUrl}

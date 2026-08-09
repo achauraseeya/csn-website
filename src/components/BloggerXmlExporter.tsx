@@ -90,7 +90,7 @@ export default function BloggerXmlExporter({ lang, onDownload, onTrackAction }: 
       </section>
 
       {/* Grid customization parameters */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
         {/* Left: Customization form */}
         <div className="lg:col-span-6 bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
           <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2 border-b border-slate-100 pb-2">

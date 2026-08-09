@@ -9,13 +9,19 @@ import { matrimonialProfiles, volunteerApplications, membershipApplications, new
 import { eq } from "drizzle-orm";
 
 async function startServer() {
+  console.log('Starting Chaurasiya Samaj Nepal Server initialization...');
   const app = express();
   app.use(cors());
   const PORT = 3000;
 
+  // Add a dedicated health check endpoint before everything else
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", uptime: process.uptime() });
+  });
+
   app.use(express.json({ limit: '50mb' }));
 
-  // Ensure data_store directory exists for local filesystem cache
+  console.log('Ensuring directories exist...');
   const DATA_DIR = path.join(process.cwd(), 'data_store');
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -673,10 +679,12 @@ ${pages
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
+    console.log('Initializing Vite Dev Server Middleware...');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
+    console.log('Vite Dev Server Middleware ready.');
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');

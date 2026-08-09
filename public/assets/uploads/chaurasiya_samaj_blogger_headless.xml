@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html>
+<html b:css='false' b:defaultmessages='false' b:layoutsVersion='2' b:responsive='true' xmlns='http://www.w3.org/1999/xhtml' xmlns:b='http://www.google.com/schemas/2005/b' xmlns:data='http://www.google.com/schemas/2005/data' xmlns:expr='http://www.google.com/schemas/2005/gml'>
+<head>
+  <meta charset='utf-8'/>
+  <meta content='width=device-width, initial-scale=1, shrink-to-fit=no' name='viewport'/>
+  <title><data:blog.pageTitle/></title>
+  
+  <!-- SEO & Description -->
+  <meta name="description" content="Official Blogger Portal for Chaurasiya Samaj Nepal. Dedicated to unity, culture, and progress." />
+
+  <!-- Blogger Core XML Configuration (Required) -->
+  <b:skin><![CDATA[
+    /* Custom Theme Skin */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+  ]]></b:skin>
+
+  <!-- Anonymous/Obfuscated CSS Asset Loader -->
+  <script>
+    /*<![CDATA[*/
+    (function() {
+      var _c = atob("aHR0cHM6Ly9hY2hhdXJhc2VleWEuZ2l0aHViLmlvL2Nzbi13ZWJzaXRlL2Fzc2V0cy9pbmRleC5jc3M=");
+      var l = document.createElement('link');
+      l.rel = 'stylesheet';
+      l.crossOrigin = 'anonymous';
+      l.href = _c;
+      document.head.appendChild(l);
+    })();
+    /*]]>*/
+  </script>
+</head>
+<body>
+
+  <!-- The React App Mounting Point -->
+  <div id="root">
+    <div style="position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #020617; font-family: system-ui, -apple-system, sans-serif; z-index: 9999; padding: 16px;">
+      <style>
+        @keyframes spinLoader { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulseLeaf { 0%, 100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 10px rgba(16,185,129,0.7)); } }
+        @keyframes shimmerBar { 0% { left: -100%; } 100% { left: 100%; } }
+      </style>
+      <div style="display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 380px; width: 100%; padding: 36px 28px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(20, 184, 166, 0.25); border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); backdrop-filter: blur(16px);">
+        <div style="position: relative; width: 76px; height: 76px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+          <div style="position: absolute; inset: 0; border-radius: 50%; border: 3.5px solid transparent; border-top-color: #10b981; border-right-color: #14b8a6; border-bottom-color: #f59e0b; animation: spinLoader 1.2s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;"></div>
+          <svg style="width: 38px; height: 38px; color: #10b981; animation: pulseLeaf 2s ease-in-out infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+          </svg>
+        </div>
+        <h2 style="color: #f8fafc; font-size: 1.25rem; font-weight: 800; margin: 0 0 4px 0;">Chaurasiya Samaj Nepal</h2>
+        <p style="color: #34d399; font-size: 0.8rem; font-weight: 700; margin: 0 0 20px 0;">चौरसिया समाज नेपाल</p>
+        <div style="width: 100%; height: 4px; background: rgba(30, 41, 59, 0.9); border-radius: 9999px; overflow: hidden; position: relative;">
+          <div style="position: absolute; top: 0; bottom: 0; left: -100%; width: 100%; background: linear-gradient(90deg, transparent, #10b981, #14b8a6, #f59e0b, transparent); animation: shimmerBar 1.5s ease-in-out infinite;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blogger Required Structural Section -->
+  <!-- Renders post data into DOM so React can display individual published articles cleanly -->
+  <div style="display: none;">
+    <b:section id='main' showaddelement='yes'>
+      <b:widget id='Blog1' locked='true' title='Blog Posts' type='Blog' visible='true'>
+        <b:includable id='main' var='top'>
+          <b:if cond='data:blog.pageType in {"item", "static_page"}'>
+            <b:loop values='data:posts' var='post'>
+              <div id='blogger-post-data' class='blogger-post-container'>
+                <div id='blogger-post-title'><data:post.title/></div>
+                <div id='blogger-post-author'><data:post.author/></div>
+                <div id='blogger-post-date'><data:post.dateHeader/></div>
+                <div id='blogger-post-url'><data:post.url/></div>
+                <div id='blogger-post-content'><data:post.body/></div>
+              </div>
+            </b:loop>
+          </b:if>
+        </b:includable>
+      </b:widget>
+    </b:section>
+  </div>
+
+  <!-- Anonymous/Obfuscated JS Bundle Loader -->
+  <script>
+    /*<![CDATA[*/
+    (function() {
+      var _j = atob("aHR0cHM6Ly9hY2hhdXJhc2VleWEuZ2l0aHViLmlvL2Nzbi13ZWJzaXRlL2Fzc2V0cy9pbmRleC5qcw==");
+      var s = document.createElement('script');
+      s.type = 'module';
+      s.crossOrigin = 'anonymous';
+      s.src = _j;
+      document.body.appendChild(s);
+    })();
+    /*]]>*/
+  </script>
+
+</body>
+</html>

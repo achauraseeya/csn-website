@@ -187,7 +187,7 @@ export default function Navigation({
           - Center: Institution Name & Subtitle & Location (Original Font Colors)
           - Extreme Right: 3D Nepal Flag on top, with Language, Theme & Admin buttons below it
          ========================================================================= */}
-      <div className="hidden lg:block bg-white dark:bg-slate-900 border-b border-teal-100 dark:border-slate-800 py-3 px-6 lg:px-8">
+      <div className="hidden xl:block bg-white dark:bg-slate-900 border-b border-teal-100 dark:border-slate-800 py-3 px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 lg:gap-6">
           
           {/* EXTREME LEFT: Transparent Logo overlaying pure white header */}
@@ -314,9 +314,9 @@ export default function Navigation({
          ========================================================================= */}
       <header className="sticky top-0 z-50 w-full bg-teal-900 dark:bg-slate-950 shadow-md border-y border-teal-800 dark:border-slate-800 backdrop-blur-md text-white" id="nav-bar" ref={navRef}>
         {/* DESKTOP MAIN NAVIGATION MENU BAR */}
-        <div className="hidden lg:block py-1.5">
+        <div className="hidden xl:block py-1.5">
         <div className="max-w-7xl mx-auto px-4 lg:px-6">
-          <div className="flex items-center justify-center space-x-1 xl:space-x-2">
+          <div className="flex items-center justify-center flex-wrap gap-1 xl:gap-2">
             {navMenus.map((menu) => {
               const isDropdown = menu.linkType === 'dropdown' && menu.subItems && menu.subItems.length > 0;
               const isMenuDropdownOpen = activeDropdownId === menu.id;
@@ -407,11 +407,11 @@ export default function Navigation({
       </div>
 
       {/* =========================================================================
-          MOBILE VIEW (lg:hidden): COMPACT STICKY HEADER BAR FOR MAXIMUM LOGO SPACE
+          MOBILE VIEW (xl:hidden): COMPACT STICKY HEADER BAR FOR MAXIMUM LOGO SPACE
           - Left: Logo + Title (Expanded flexible space)
           - Right: Stacked Language & Theme Toggle Column + Hamburger Button
          ========================================================================= */}
-      <div className="lg:hidden sticky top-0 z-50 px-2.5 py-1.5 sm:py-2 flex items-center justify-between bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-teal-100 dark:border-slate-800 text-teal-950 dark:text-white shadow-sm min-h-[58px] sm:min-h-[64px]">
+      <div className="xl:hidden sticky top-0 z-50 px-2.5 py-1.5 sm:py-2 flex items-center justify-between bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-teal-100 dark:border-slate-800 text-teal-950 dark:text-white shadow-sm min-h-[58px] sm:min-h-[64px]">
         {/* Mobile Left: Logo & Brand (2-line title support, Maximized Flexible Width) */}
         <div
           className="flex items-center gap-2 cursor-pointer group py-0.5 flex-1 min-w-0 mr-1 overflow-hidden"
@@ -469,7 +469,7 @@ export default function Navigation({
           MOBILE DRAWER NAVIGATION
          ========================================================================= */}
       {isOpen && (
-        <div className="lg:hidden bg-white dark:bg-slate-900 border-t border-teal-100 dark:border-slate-800 py-3 px-4 shadow-xl animate-in fade-in slide-in-from-top-2 duration-150 max-h-[85vh] overflow-y-auto">
+        <div className="xl:hidden bg-white dark:bg-slate-900 border-t border-teal-100 dark:border-slate-800 py-3 px-4 shadow-xl animate-in fade-in slide-in-from-top-2 duration-150 max-h-[85vh] overflow-y-auto">
           <div className="space-y-1">
             {navMenus.map((menu) => {
               const isDropdown = menu.linkType === 'dropdown' && menu.subItems && menu.subItems.length > 0;

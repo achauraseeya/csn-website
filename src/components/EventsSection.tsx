@@ -424,9 +424,9 @@ export default function EventsSection({
       )}
 
       {/* Grid: Left Column (Events list & details), Right Column (Calendar & Registration Form) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
         {/* Left Column: List and Details */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="xl:col-span-7 space-y-6">
           {/* Active Event Showcase Card */}
           <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-5">
             <div className="flex items-center justify-between">
@@ -580,7 +580,7 @@ export default function EventsSection({
         </div>
 
         {/* Right Column: Calendar Grid & Volunteer Sign-Up Form */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="xl:col-span-5 space-y-6">
           {/* Calendar Widget */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-teal-50 dark:border-slate-800 pb-2">

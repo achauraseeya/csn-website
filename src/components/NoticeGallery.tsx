@@ -105,7 +105,7 @@ export default function NoticeGallery({
   return (
     <div className="space-y-12">
       {/* Notices & Bulletins Row */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
         {/* Notices list column */}
         <div className="lg:col-span-12 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-teal-100 dark:border-slate-800 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-teal-50 dark:border-slate-800 pb-4">
