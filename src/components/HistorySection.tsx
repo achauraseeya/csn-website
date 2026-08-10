@@ -2820,9 +2820,9 @@ export default function HistorySection({
   };
 
   const renderEservicesPortal = () => (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-teal-100 dark:border-slate-800 transition-all relative">
+    <div className="bg-white dark:bg-slate-900 rounded-none sm:rounded-2xl shadow-md border-y sm:border border-teal-100 dark:border-slate-800 transition-all relative -mx-4 sm:mx-0">
       {/* Sticky Header Bar */}
-      <div className="xl:sticky xl:top-[48px] z-20 bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-white px-4 py-3 rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-800/60">
+      <div className="xl:sticky xl:top-[48px] z-20 bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-white px-4 py-3 sm:rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-800/60">
         <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-teal-100">
           <Globe className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
           <span>{lang === 'en' ? (siteTexts.eservicesTitleEn || 'Institutional E-Services') : (siteTexts.eservicesTitleNe || 'डिजिटल नागरिक सेवा पोर्टल')}</span>
@@ -2883,9 +2883,9 @@ export default function HistorySection({
   );
 
   const renderCommunityPillars = () => (
-    <div className="bg-[#03443e] dark:bg-slate-900 rounded-2xl shadow-md border border-teal-800/40 dark:border-slate-800 transition-all relative">
+    <div className="bg-[#03443e] dark:bg-slate-900 rounded-none sm:rounded-2xl shadow-md border-y sm:border border-teal-800/40 dark:border-slate-800 transition-all relative -mx-4 sm:mx-0">
       {/* Header Bar */}
-      <div className="xl:sticky xl:top-[48px] z-20 bg-gradient-to-r from-[#02332f] to-[#03443e] dark:from-slate-950 dark:to-slate-900 text-white px-4 py-3 rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-850/40">
+      <div className="xl:sticky xl:top-[48px] z-20 bg-gradient-to-r from-[#02332f] to-[#03443e] dark:from-slate-950 dark:to-slate-900 text-white px-4 py-3 sm:rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-850/40">
         <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-teal-100">
           <HeartHandshake className="w-5 h-5 text-emerald-400 shrink-0" />
           <span>{lang === 'en' ? (siteTexts.pillarsTitleEn || 'Community Pillars') : (siteTexts.pillarsTitleNe || 'समुदायका आधारहरू')}</span>
@@ -2990,9 +2990,9 @@ export default function HistorySection({
   );
 
   const renderUnityWidget = () => (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-teal-100 dark:border-slate-800 transition-all relative">
+    <div className="bg-white dark:bg-slate-900 rounded-none sm:rounded-2xl shadow-md border-y sm:border border-teal-100 dark:border-slate-800 transition-all relative -mx-4 sm:mx-0">
       {/* Sticky/Static Header Bar */}
-      <div className="xl:sticky xl:top-[48px] z-20 bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-white px-4 py-3 rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-800/60">
+      <div className="xl:sticky xl:top-[48px] z-20 bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 text-white px-4 py-3 sm:rounded-t-2xl flex items-center justify-between shadow-sm border-b border-teal-800/60">
         <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-teal-100">
           <Users className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{lang === 'en' ? (siteTexts.unityTitleEn || 'Unity, Consolidation & Cooperation') : (siteTexts.unityTitleNe || 'एकता, एक्यबद्धता र सहकार्य')}</span>
@@ -3281,7 +3281,7 @@ export default function HistorySection({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 -mx-4 sm:mx-0">
         {[...noticesList]
           .sort((a, b) => {
             const dateA = new Date(a.date).getTime();
@@ -3293,7 +3293,7 @@ export default function HistorySection({
           })
           .slice(0, 4)
           .map((notice) => (
-          <div key={notice.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-teal-100 dark:border-slate-800 overflow-hidden hover:shadow-md transition-all">
+          <div key={notice.id} className="bg-white dark:bg-slate-900 rounded-none sm:rounded-2xl shadow-sm border-y sm:border border-teal-100 dark:border-slate-800 overflow-hidden hover:shadow-md transition-all">
             <div 
               className="p-6 cursor-pointer hover:bg-teal-50/50 dark:hover:bg-slate-800/50 transition-colors"
               onClick={() => {
@@ -3441,7 +3441,7 @@ export default function HistorySection({
   );
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-3 sm:space-y-10">
       {/* Active Homepage Section Edit Modal */}
       {renderSectionEditModal()}
       {/* Admin Homepage CMS Quick Bar */}
@@ -3527,7 +3527,7 @@ export default function HistorySection({
       )}
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden text-white rounded-3xl py-16 px-6 sm:px-12 lg:px-20 shadow-2xl border-b-8 border-emerald-500">
+      <section className="relative overflow-hidden text-white rounded-none sm:rounded-3xl -mx-4 sm:mx-0 py-8 sm:py-16 px-6 sm:px-12 lg:px-20 shadow-2xl border-b-8 border-emerald-500">
         {/* Background Slider */}
         {activeHeroImages.map((item, idx) => (
           <div
@@ -3573,7 +3573,7 @@ export default function HistorySection({
       </section>
 
       {/* 2-Column Desktop View Layout Below Hero Slider */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-px sm:gap-8 items-start">
         {/* =========================================================================
             COLUMN 1: LEFT COLUMN (25% Width on Desktop: xl:col-span-3)
             - On Mobile (xl:hidden): Reverted to exact original full-width horizontal presentation
@@ -3587,7 +3587,7 @@ export default function HistorySection({
               onSelectLeader(chiefPresident.id);
               onTrackAction('Click Chief President Message Section');
             }}
-            className="xl:hidden bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-2xl p-4 sm:p-5 text-white shadow-xl border border-teal-800/80 hover:border-emerald-400/90 relative overflow-hidden transition-all duration-300 cursor-pointer group"
+            className="xl:hidden bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-950 rounded-none sm:rounded-2xl -mx-4 sm:mx-0 p-4 sm:p-5 text-white shadow-xl border-y sm:border-x border-teal-800/80 hover:border-emerald-400/90 relative overflow-hidden transition-all duration-300 cursor-pointer group"
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -3790,26 +3790,28 @@ export default function HistorySection({
             COLUMN 2: RIGHT COLUMN (75% Width on Desktop: xl:col-span-9)
             All remaining homepage sections
            ========================================================================= */}
-        <div className="xl:col-span-9 space-y-10">
+        <div className="xl:col-span-9 space-y-4 sm:space-y-10">
           {/* Image Carousel */}
-      <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 shadow-md border border-teal-100 dark:border-slate-800 transition-colors">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-teal-950 dark:text-teal-50 mb-8 flex flex-wrap items-center justify-between gap-4">
-          <span className="flex items-center gap-3">
-            <PlayCircle className="w-7 h-7 text-emerald-500" />
-            <span>{t.photoGallery[lang]}</span>
-          </span>
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => setActiveEditSection('recent_updates')}
-              className="px-3.5 py-1.5 bg-teal-50 dark:bg-slate-800 hover:bg-teal-100 dark:hover:bg-slate-700 text-teal-800 dark:text-teal-200 text-xs font-bold rounded-xl border border-teal-200 dark:border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Edit Slider</span>
-            </button>
-          )}
-        </h2>
-        <div className="relative w-full aspect-video sm:aspect-[21/9] rounded-2xl overflow-hidden bg-gray-100 group shadow-inner">
+      <section className="bg-white dark:bg-slate-900 rounded-none sm:rounded-3xl -mx-4 sm:mx-0 pt-4 pb-0 sm:pt-6 sm:pb-10 shadow-md border-y sm:border border-teal-100 dark:border-slate-800 transition-colors overflow-hidden">
+        <div className="px-4 sm:px-0 mb-4 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-teal-950 dark:text-teal-50 flex flex-wrap items-center justify-between gap-4">
+            <span className="flex items-center gap-3">
+              <PlayCircle className="w-7 h-7 text-emerald-500" />
+              <span>{t.photoGallery[lang]}</span>
+            </span>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setActiveEditSection('recent_updates')}
+                className="px-3.5 py-1.5 bg-teal-50 dark:bg-slate-800 hover:bg-teal-100 dark:hover:bg-slate-700 text-teal-800 dark:text-teal-200 text-xs font-bold rounded-xl border border-teal-200 dark:border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Edit Slider</span>
+              </button>
+            )}
+          </h2>
+        </div>
+        <div className="relative w-full aspect-[4/3] sm:aspect-[21/9] rounded-none sm:rounded-2xl overflow-hidden bg-gray-100 group shadow-inner">
           {activeSecondaryImages[secondaryImageIdx] && (
             <>
               <img 
@@ -3854,9 +3856,9 @@ export default function HistorySection({
       </section>
 
       {/* Intro & History Content */}
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 sm:gap-10">
         <div className="xl:col-span-7 space-y-6">
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-teal-50 dark:border-slate-800/60 relative overflow-hidden transition-colors">
+          <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-none sm:rounded-3xl -mx-4 sm:mx-0 shadow-sm border-y sm:border border-teal-50 dark:border-slate-800/60 relative overflow-hidden transition-colors">
             <div className="absolute top-0 right-0 p-4 opacity-5">
               <BookOpen className="w-32 h-32 text-teal-900 dark:text-teal-100" />
             </div>
@@ -3883,7 +3885,7 @@ export default function HistorySection({
 
         {/* Vision & Mission sidebar card */}
         <div className="xl:col-span-5">
-          <div className="bg-teal-900 text-white p-8 rounded-3xl shadow-lg border-t-8 border-emerald-400 h-full flex flex-col justify-center relative overflow-hidden">
+          <div className="bg-teal-900 text-white p-6 sm:p-8 rounded-none sm:rounded-3xl -mx-4 sm:mx-0 shadow-lg border-t-4 sm:border-t-8 border-emerald-400 h-full flex flex-col justify-center relative overflow-hidden">
              <div className="absolute -bottom-10 -right-10 bg-teal-800 rounded-full w-40 h-40 opacity-50 blur-2xl" />
              <div className="relative z-10">
                 <h3 className="text-2xl font-black text-emerald-300 mb-4 flex items-center gap-2">
@@ -3899,7 +3901,7 @@ export default function HistorySection({
       </section>
 
       {/* Mobile-only Sidebar Widgets: Shown below Vision & Mission on mobile */}
-      <div className="xl:hidden space-y-6 pt-2 pb-6 border-b border-teal-100 dark:border-slate-800">
+      <div className="xl:hidden space-y-px sm:space-y-6 pt-px pb-6 border-b border-teal-100 dark:border-slate-800 -mx-4 px-4 sm:mx-0 sm:px-0 -mt-3 sm:mt-0">
         {renderEservicesPortal()}
         {renderCommunityPillars()}
         {renderUnityWidget()}
@@ -3944,10 +3946,10 @@ export default function HistorySection({
           <BookOpen className="w-8 h-8 text-teal-600 dark:text-emerald-400" />
           {lang === 'en' ? 'Latest Blog Posts' : 'पछिल्लो ब्लग पोस्टहरू'}
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 -mx-4 sm:mx-0">
           {loadingPosts ? (
             [1, 2, 3].map((n) => (
-              <div key={n} className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-teal-100 dark:border-slate-800 space-y-3 animate-pulse shadow-sm">
+              <div key={n} className="bg-white dark:bg-slate-900 rounded-none sm:rounded-2xl p-4 border-y sm:border border-teal-100 dark:border-slate-800 space-y-3 animate-pulse shadow-sm">
                 <div className="w-full h-44 bg-teal-100/50 dark:bg-slate-800 rounded-xl" />
                 <div className="h-4 bg-teal-100/60 dark:bg-slate-800 rounded-md w-3/4" />
                 <div className="h-3 bg-teal-100/40 dark:bg-slate-800 rounded-md w-1/2" />
@@ -3975,7 +3977,7 @@ export default function HistorySection({
                   onTrackAction(`Read live blog post: ${post.title.en || post.title.ne}`);
                 }
               }}
-              className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-teal-100 dark:border-slate-800 overflow-hidden hover:shadow-md transition-shadow group block cursor-pointer"
+              className="bg-white dark:bg-slate-900 rounded-none sm:rounded-2xl shadow-sm border-y sm:border border-teal-100 dark:border-slate-800 overflow-hidden hover:shadow-md transition-shadow group block cursor-pointer"
             >
               <div className="aspect-video overflow-hidden">
                 <img 
@@ -4048,7 +4050,7 @@ export default function HistorySection({
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 -mx-4 sm:mx-0">
           {[...(albums || [])]
             .sort((a, b) => {
               const dateA = new Date(a.date).getTime();
@@ -4074,7 +4076,7 @@ export default function HistorySection({
                   }
                   onTrackAction(`Open Album Dedicated Page: ${album.title.en}`);
                 }}
-                className="bg-white dark:bg-slate-900 rounded-3xl border border-teal-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-emerald-300 dark:hover:border-emerald-500 transition-all duration-300 overflow-hidden cursor-pointer group flex flex-col"
+                className="bg-white dark:bg-slate-900 rounded-none sm:rounded-3xl border-y sm:border border-teal-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-emerald-300 dark:hover:border-emerald-500 transition-all duration-300 overflow-hidden cursor-pointer group flex flex-col"
               >
                 {/* Cover Preview Image */}
                 <div className="relative aspect-[16/10] overflow-hidden bg-teal-950">
@@ -4207,9 +4209,9 @@ export default function HistorySection({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-5xl mx-auto">
           {/* Left Column: District Chapters */}
-          <div className="bg-gradient-to-br from-white to-teal-50/20 dark:from-slate-900 dark:to-slate-900/40 rounded-2xl p-6 shadow-sm border border-teal-100/60 dark:border-slate-800/80 space-y-4">
+          <div className="bg-gradient-to-br from-white to-teal-50/20 dark:from-slate-900 dark:to-slate-900/40 rounded-none sm:rounded-2xl p-5 sm:p-6 shadow-sm border-y sm:border border-teal-100/60 dark:border-slate-800/80 space-y-4 -mx-4 sm:mx-0">
             <div className="flex items-center gap-2.5 pb-3 border-b border-teal-100/40 dark:border-slate-800">
               <Map className="w-5 h-5 text-teal-600 dark:text-teal-400" />
               <h4 className="text-lg font-extrabold text-teal-950 dark:text-teal-50">
@@ -4286,7 +4288,7 @@ export default function HistorySection({
           </div>
 
           {/* Right Column: Sister Institutions */}
-          <div className="bg-gradient-to-br from-white to-emerald-50/20 dark:from-slate-900 dark:to-slate-900/40 rounded-2xl p-6 shadow-sm border border-emerald-100/60 dark:border-slate-800/80 space-y-4">
+          <div className="bg-gradient-to-br from-white to-emerald-50/20 dark:from-slate-900 dark:to-slate-900/40 rounded-none sm:rounded-2xl p-5 sm:p-6 shadow-sm border-y sm:border border-emerald-100/60 dark:border-slate-800/80 space-y-4 -mx-4 sm:mx-0">
             <div className="flex items-center gap-2.5 pb-3 border-b border-emerald-100/40 dark:border-slate-800">
               <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               <h4 className="text-lg font-extrabold text-teal-950 dark:text-teal-50">

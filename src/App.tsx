@@ -2406,7 +2406,7 @@ export default function App() {
       />
 
       {/* Main body viewport container */}
-                  <main className="flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+                  <main className="flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-8 md:pb-12 pt-0">
         <React.Suspense fallback={<div className="flex justify-center items-center h-64"><div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>}>
         <React.Suspense fallback={<div className="flex justify-center items-center h-64"><div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>}>
         {(currentTab === 'history' || currentTab === 'home') && (
