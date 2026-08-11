@@ -1313,52 +1313,57 @@ export default function HistorySection({
                 </div>
 
                 <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Hero Banner Slides</h4>
-                    <div className="flex items-center gap-2">
-                      <label className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer">
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>{uploadingSlide ? 'Uploading...' : 'Upload & Add Slide'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={uploadingSlide}
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            try {
-                              setUploadingSlide(true);
-                              const url = await handleFileUpload(file);
-                              const updatedHero = [{ 
-                                id: `hero-${Date.now()}`, 
-                                imageUrl: url, 
-                                caption: { en: file.name.split('.')[0], ne: 'नयाँ स्लाइड तस्विर' } 
-                              }, ...editHeroImages];
-                              setEditHeroImages(updatedHero);
-                              setHeroImageIdx(0);
-                              alert('New slide image uploaded and added successfully!');
-                            } catch (err) {
-                              alert('Failed to upload slide image.');
-                            } finally {
-                              setUploadingSlide(false);
-                            }
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Hero Banner Slides</h4>
+                      <div className="flex items-center gap-2">
+                        <label className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{uploadingSlide ? 'Uploading...' : 'Upload & Add Slide'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploadingSlide}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              try {
+                                setUploadingSlide(true);
+                                const url = await handleFileUpload(file);
+                                const updatedHero = [{ 
+                                  id: `hero-${Date.now()}`, 
+                                  imageUrl: url, 
+                                  caption: { en: file.name.split('.')[0], ne: 'नयाँ स्लाइड तस्विर' } 
+                                }, ...editHeroImages];
+                                setEditHeroImages(updatedHero);
+                                setHeroImageIdx(0);
+                                alert('New slide image uploaded and added successfully!');
+                              } catch (err) {
+                                alert('Failed to upload slide image.');
+                              } finally {
+                                setUploadingSlide(false);
+                              }
+                            }}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updatedHero = [{ id: `hero-${Date.now()}`, imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&q=80', caption: { en: 'New Slide Image', ne: 'नयाँ स्लाइड तस्विर' } }, ...editHeroImages];
+                            setEditHeroImages(updatedHero);
+                            setHeroImageIdx(0);
                           }}
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const updatedHero = [{ id: `hero-${Date.now()}`, imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&q=80', caption: { en: 'New Slide Image', ne: 'नयाँ स्लाइड तस्विर' } }, ...editHeroImages];
-                          setEditHeroImages(updatedHero);
-                          setHeroImageIdx(0);
-                        }}
-                        className="px-3 py-1.5 bg-teal-800 hover:bg-teal-700 text-teal-100 rounded-lg text-xs font-bold flex items-center gap-1"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Add Placeholder</span>
-                      </button>
+                          className="px-3 py-1.5 bg-teal-800 hover:bg-teal-700 text-teal-100 rounded-lg text-xs font-bold flex items-center gap-1"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add Placeholder</span>
+                        </button>
+                      </div>
                     </div>
+                    <p className="text-[10.5px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium leading-tight">
+                      * For perfect display across all devices without awkward zooming, use images with a 16:9 aspect ratio (e.g., 1920x1080) and keep the main subject centered.
+                    </p>
                   </div>
                   <div className="space-y-4">
                     {editHeroImages.map((img, idx) => (

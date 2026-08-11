@@ -425,7 +425,7 @@ export default function MatrimonialSection({
                 <img
                   src={profile.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400'}
                   alt={profile.fullName}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-contain bg-slate-900 group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
 
@@ -545,7 +545,7 @@ export default function MatrimonialSection({
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm p-2 sm:p-4 md:p-6 overflow-y-auto flex items-start sm:items-center justify-center min-h-screen">
           <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl max-w-2xl w-full border border-teal-100 dark:border-slate-800 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col animate-in zoom-in-95 duration-200">
             <div className="relative h-48 sm:h-64 bg-slate-950 shrink-0">
-              <img src={selectedProfile.photoUrl} alt={selectedProfile.fullName} className="w-full h-full object-cover" />
+              <img src={selectedProfile.photoUrl} alt={selectedProfile.fullName} className="w-full h-full object-contain bg-slate-900" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
               <button
                 onClick={() => setSelectedProfile(null)}
