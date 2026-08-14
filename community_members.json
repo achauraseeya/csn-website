@@ -1,27 +1,5 @@
 [
   {
-    "id": "6",
-    "name": {
-      "en": "Anil Kumar Chaurasiya",
-      "ne": "अनिल कुमार चौरसिया"
-    },
-    "role": {
-      "en": "Executive Youth Member",
-      "ne": "कार्यकारी युवा सदस्य"
-    },
-    "category": "general",
-    "phone": "+977-9818812345",
-    "address": {
-      "en": "Bara, Nepal",
-      "ne": "बारा, नेपाल"
-    },
-    "bio": {
-      "en": "Coordinating youth blood donation networks and emergency relief activities in Madhesh Province.",
-      "ne": "मधेश प्रदेशमा युवा रक्तदान सञ्जाल र आपतकालीन राहत गतिविधिको समन्वय गर्दै।"
-    },
-    "avatarUrl": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=200"
-  },
-  {
     "id": "1",
     "name": {
       "en": "Shiwaji Prasad Chaurasiya",
