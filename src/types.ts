@@ -166,6 +166,10 @@ export interface SiteTexts {
   logoUrl: string;
   taglineEn: string;
   taglineNe: string;
+  headerTaglineEn?: string;
+  headerTaglineNe?: string;
+  footerTaglineEn?: string;
+  footerTaglineNe?: string;
   impactHeaderEn: string;
   impactHeaderNe: string;
   footerAboutEn: string;

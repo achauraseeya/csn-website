@@ -1564,6 +1564,45 @@ export default function App() {
 
       return updated;
     });
+
+    // Also remove from homepage leadership list if present
+    setSiteTexts((prev) => {
+      if (!prev.leadershipIdsJson) return prev;
+      try {
+        const parsed = JSON.parse(prev.leadershipIdsJson);
+        if (Array.isArray(parsed)) {
+          // Handle array of strings (member IDs) or array of member objects
+          const isObjectArray = parsed.length > 0 && typeof parsed[0] === 'object';
+          const hasMember = isObjectArray 
+            ? parsed.some((m: any) => m.id === id) 
+            : parsed.includes(id);
+
+          if (hasMember) {
+            const filtered = isObjectArray
+              ? parsed.filter((m: any) => m.id !== id)
+              : parsed.filter((mId: string) => mId !== id);
+
+            const nextTexts = {
+              ...prev,
+              leadershipIdsJson: JSON.stringify(filtered),
+            };
+
+            try {
+              localStorage.setItem('chaurasiya_site_texts', JSON.stringify(nextTexts));
+            } catch (e) {}
+
+            saveFileToGithub('site_texts.json', nextTexts, `Remove deleted member ${id} from leadership`)
+              .then(() => markRecentlySaved('site_texts'))
+              .catch((err) => console.error('Failed to sync site texts after member deletion:', err));
+
+            return nextTexts;
+          }
+        }
+      } catch (e) {
+        console.error('Error updating leadershipIds on member delete:', e);
+      }
+      return prev;
+    });
   };
 
   // --- DOCUMENTS API & Handlers ---
@@ -2406,7 +2445,7 @@ export default function App() {
       />
 
       {/* Main body viewport container */}
-                  <main className="flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-8 md:pb-12 pt-0">
+      <main className={`flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-8 md:pb-12 ${currentTab === 'history' || currentTab === 'home' ? 'pt-0 sm:pt-6 lg:pt-8' : 'pt-4 sm:pt-6 lg:pt-8'}`}>
         <React.Suspense fallback={<div className="flex justify-center items-center h-64"><div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>}>
         <React.Suspense fallback={<div className="flex justify-center items-center h-64"><div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>}>
         {(currentTab === 'history' || currentTab === 'home') && (
@@ -2731,7 +2770,7 @@ export default function App() {
               </span>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed font-medium pr-4">
-              {(lang === 'en' ? siteTexts.taglineEn : siteTexts.taglineNe) + " " + (lang === 'en' ? siteTexts.footerAboutEn : siteTexts.footerAboutNe)}
+              {((lang === 'en' ? (siteTexts.footerTaglineEn || siteTexts.taglineEn) : (siteTexts.footerTaglineNe || siteTexts.taglineNe)) || '') + " " + (lang === 'en' ? siteTexts.footerAboutEn : siteTexts.footerAboutNe)}
             </p>
             <div className="flex gap-3 pt-1 items-center">
                {siteTexts.socialFb && (

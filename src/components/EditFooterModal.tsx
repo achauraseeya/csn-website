@@ -23,8 +23,8 @@ export default function EditFooterModal({
 
   // Input States
   const [logoUrl, setLogoUrl] = useState('');
-  const [taglineEn, setTaglineEn] = useState('');
-  const [taglineNe, setTaglineNe] = useState('');
+  const [footerTaglineEn, setFooterTaglineEn] = useState('');
+  const [footerTaglineNe, setFooterTaglineNe] = useState('');
   const [footerAboutEn, setFooterAboutEn] = useState('');
   const [footerAboutNe, setFooterAboutNe] = useState('');
   const [socialFb, setSocialFb] = useState('');
@@ -41,8 +41,8 @@ export default function EditFooterModal({
   useEffect(() => {
     if (isOpen) {
       setLogoUrl(siteTexts.logoUrl || '');
-      setTaglineEn(siteTexts.taglineEn || '');
-      setTaglineNe(siteTexts.taglineNe || '');
+      setFooterTaglineEn(siteTexts.footerTaglineEn || siteTexts.taglineEn || '');
+      setFooterTaglineNe(siteTexts.footerTaglineNe || siteTexts.taglineNe || '');
       setFooterAboutEn(siteTexts.footerAboutEn || '');
       setFooterAboutNe(siteTexts.footerAboutNe || '');
       setSocialFb(siteTexts.socialFb || '');
@@ -103,8 +103,10 @@ export default function EditFooterModal({
     try {
       await onUpdateSiteTexts({
         logoUrl: logoUrl.trim(),
-        taglineEn: taglineEn.trim(),
-        taglineNe: taglineNe.trim(),
+        footerTaglineEn: footerTaglineEn.trim(),
+        footerTaglineNe: footerTaglineNe.trim(),
+        taglineEn: footerTaglineEn.trim(),
+        taglineNe: footerTaglineNe.trim(),
         footerAboutEn: footerAboutEn.trim(),
         footerAboutNe: footerAboutNe.trim(),
         socialFb: socialFb.trim(),
@@ -255,8 +257,8 @@ export default function EditFooterModal({
                   <input
                     type="text"
                     required
-                    value={taglineEn}
-                    onChange={(e) => setTaglineEn(e.target.value)}
+                    value={footerTaglineEn}
+                    onChange={(e) => setFooterTaglineEn(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-teal-950 dark:text-white"
                   />
                 </div>
@@ -267,8 +269,8 @@ export default function EditFooterModal({
                   <input
                     type="text"
                     required
-                    value={taglineNe}
-                    onChange={(e) => setTaglineNe(e.target.value)}
+                    value={footerTaglineNe}
+                    onChange={(e) => setFooterTaglineNe(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-teal-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-teal-950 dark:text-white"
                   />
                 </div>

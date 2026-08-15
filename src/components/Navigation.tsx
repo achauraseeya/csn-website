@@ -226,8 +226,8 @@ export default function Navigation({
             {/* Location & Estd Tagline (Same as Mobile: text-teal-700 dark:text-emerald-300) */}
             <p className="text-xs font-extrabold text-teal-700 dark:text-emerald-300 mt-0.5 tracking-wider uppercase">
               {lang === 'en'
-                ? (siteTexts.taglineEn || 'Kathmandu, Nepal | Estd: 2003 (२०६०)')
-                : (siteTexts.taglineNe || 'काठमाडौँ, नेपाल | स्थापना: २०६० (Estd: 2003)')}
+                ? (siteTexts.headerTaglineEn || 'Kathmandu, Nepal | Estd: 2003 (२०६०)')
+                : (siteTexts.headerTaglineNe || 'काठमाडौँ, नेपाल | स्थापना: २०६० (Estd: 2003)')}
             </p>
           </div>
 

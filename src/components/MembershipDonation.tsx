@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Landmark, Heart, Award, Users, Mail, Phone, MapPin, Briefcase, FileText, CheckCircle2, Loader2, Send } from 'lucide-react';
+import { Landmark, Heart, Award, Users, Mail, Phone, MapPin, Briefcase, FileText, CheckCircle2, Loader2, Send, QrCode, ZoomIn, Copy, Check, Upload, Image as ImageIcon, Sparkles, Printer, X, Download, ShieldCheck } from 'lucide-react';
 import { Language } from '../types';
 import { AdminFormFieldEditor } from './AdminFormFieldEditor';
 import { AdminCategoryManagerModal } from './AdminCategoryManagerModal';
 import { CustomFieldRenderer } from './CustomFieldRenderer';
-import { getCustomFormFields, CustomFormField } from '../utils/customFormFields';
+import { getCustomFormFields, syncCustomFormFieldsFromGithub, getHiddenStandardFields, syncHiddenStandardFieldsFromGithub, CustomFormField } from '../utils/customFormFields';
 import { getMemberCategories, MemberCategory } from '../utils/memberCategories';
 import { apiFetch, saveFileToGithub } from '../utils/githubDb';
 
@@ -20,6 +20,8 @@ interface MembershipDonationProps {
 
 export default function MembershipDonation({
   lang,
+  onAddMember,
+  onAddDonation,
   isAdmin = false,
   onTrackAction,
   initialSubTab = 'membership',
@@ -83,8 +85,15 @@ export default function MembershipDonation({
   const [donatedAmt, setDonatedAmt] = useState<number>(1000);
   const [donorName, setDonorName] = useState('');
   const [donorPhone, setDonorPhone] = useState('');
+  const [donorEmail, setDonorEmail] = useState('');
+  const [donorAddress, setDonorAddress] = useState('');
+  const [donorPan, setDonorPan] = useState('');
+  const [donationCause, setDonationCause] = useState(initialDonationCause || 'Rural Healthcare & Medical Camps');
   const [donateSubmitting, setDonateSubmitting] = useState(false);
   const [donateSuccess, setDonateSuccess] = useState(false);
+  const [showZoomQr, setShowZoomQr] = useState(false);
+  const [pledgeReceipt, setPledgeReceipt] = useState<any>(null);
+  const [copiedAccount, setCopiedAccount] = useState(false);
 
   // Admin editable Donation Info
   const [donationInfo, setDonationInfo] = useState(() => {
@@ -106,6 +115,9 @@ export default function MembershipDonation({
       accountNumber: '010101005234902 (Welfare Fund)',
       esewaId: '9812345678 (CSN Official)',
       contactEmail: 'csnepalwebsite@gmail.com',
+      qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=CSN_OFFICIAL_WELFARE_DONATION_ACCOUNT_010101005234902',
+      qrCodeLabelEn: 'Scan to Pay via eSewa, Fonepay, Khalti or Mobile Banking',
+      qrCodeLabelNe: 'ईसेवा, फोनपे, खल्ती वा मोबाइल बैंकिङबाट भुक्तानी गर्न स्क्यान गर्नुहोस्',
     };
   });
 
@@ -176,10 +188,16 @@ export default function MembershipDonation({
     apiFetch<any>('/api/donation-info', 'donation_info.json', null)
       .then((cloudInfo) => {
         if (cloudInfo && typeof cloudInfo === 'object' && cloudInfo.bankName) {
-          setDonationInfo(cloudInfo);
-          setEditDonationForm(cloudInfo);
+          const merged = {
+            qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=CSN_OFFICIAL_WELFARE_DONATION_ACCOUNT_010101005234902',
+            qrCodeLabelEn: 'Scan to Pay via eSewa, Fonepay, Khalti or Mobile Banking',
+            qrCodeLabelNe: 'ईसेवा, फोनपे, खल्ती वा मोबाइल बैंकिङबाट भुक्तानी गर्न स्क्यान गर्नुहोस्',
+            ...cloudInfo
+          };
+          setDonationInfo(merged);
+          setEditDonationForm(merged);
           try {
-            localStorage.setItem('chaurasiya_donation_info', JSON.stringify(cloudInfo));
+            localStorage.setItem('chaurasiya_donation_info', JSON.stringify(merged));
           } catch (e) {}
         }
       })
@@ -211,17 +229,18 @@ export default function MembershipDonation({
       })
       .catch(() => {});
 
-    // 4. Hidden standard fields
-    apiFetch<string[]>('/api/hidden-standard-fields', 'hidden_standard_fields.json', [])
-      .then((fields) => {
-        if (fields && Array.isArray(fields)) {
-          setHiddenStandardFields(fields);
-          try {
-            localStorage.setItem('csn_hidden_standard_fields', JSON.stringify(fields));
-          } catch (e) {}
-        }
-      })
-      .catch(() => {});
+    // 4. Hidden standard fields & custom fields sync
+    syncHiddenStandardFieldsFromGithub().then((fields) => {
+      if (fields && Array.isArray(fields)) {
+        setHiddenStandardFields(fields);
+      }
+    });
+
+    syncCustomFormFieldsFromGithub().then(() => {
+      setMembCustomFields(getCustomFormFields('membership'));
+      setVolCustomFields(getCustomFormFields('volunteer'));
+      setDonateCustomFields(getCustomFormFields('donation'));
+    });
   }, []);
 
   // Update lists from localStorage on changes
@@ -381,24 +400,86 @@ export default function MembershipDonation({
     setDonateSubmitting(true);
     onTrackAction(`Completed donation submission: NPR ${finalAmt}`);
 
-    const formData = new FormData();
-    formData.append('_subject', `New Welfare Donation Pledge - NPR ${finalAmt.toLocaleString()}`);
-    formData.append('_template', 'table');
-    formData.append('_captcha', 'false');
-    if (isFieldVisible('donation-name')) formData.append('Donor Name', donorName || 'Anonymous / Well-wisher');
-    if (isFieldVisible('donation-phone')) formData.append('Donor Phone / Mobile', donorPhone || 'Not provided');
-    formData.append('Pledged Amount (NPR)', `NPR ${finalAmt.toLocaleString()}`);
-    formData.append('Target Fund', 'Welfare & Healthcare Support Fund');
+    const pledgeRef = `CSN-DON-${Date.now().toString().slice(-6)}`;
+    const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' });
+
+    const pledgeRecord: any = {
+      referenceId: pledgeRef,
+      timestamp,
+      donorName: donorName.trim() || 'Anonymous / Well-wisher',
+      donorPhone: donorPhone.trim() || 'Not provided',
+      donorEmail: donorEmail.trim() || 'Not provided',
+      donorAddress: donorAddress.trim() || 'Not provided',
+      donorPan: donorPan.trim() || 'Not provided',
+      donationCause: donationCause || 'Welfare & Healthcare Support Fund',
+      pledgedAmount: finalAmt,
+      customAnswers: donateCustomAnswers,
+    };
+
+    // Prepare JSON payload for formsubmit.co
+    const payload: Record<string, string> = {
+      _subject: `New Welfare Donation Pledge #${pledgeRef} - NPR ${finalAmt.toLocaleString()}`,
+      _template: 'table',
+      _captcha: 'false',
+      'Pledge Reference ID': pledgeRef,
+      'Pledged Amount (NPR)': `NPR ${finalAmt.toLocaleString()}`,
+      'Target Cause / Fund': donationCause || 'Welfare & Healthcare Support Fund',
+      'Donor Full Name': donorName.trim() || 'Anonymous / Well-wisher',
+      'Donor Phone / Mobile': donorPhone.trim() || 'Not provided',
+      'Donor Email Address': donorEmail.trim() || 'Not provided',
+      'Donor Address / District': donorAddress.trim() || 'Not provided',
+      'Donor PAN / Citizenship': donorPan.trim() || 'Not provided',
+      'Submission Timestamp': timestamp,
+    };
+
+    // Add all dynamic custom questions & answers
+    donateCustomFields.forEach((cf) => {
+      const val = donateCustomAnswers[cf.id];
+      if (val) {
+        payload[cf.label.en || cf.label.ne] = val;
+      }
+    });
+
+    const targetRecipient = (donationInfo.contactEmail && donationInfo.contactEmail.trim()) || 'csnepalwebsite@gmail.com';
 
     try {
-      await fetch(`https://formsubmit.co/ajax/${donationInfo.contactEmail || 'csnepalwebsite@gmail.com'}`, {
+      await fetch(`https://formsubmit.co/ajax/${targetRecipient}`, {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
-    } catch {
-      // fallback
+
+      // Direct fallback to official email if custom email is different
+      if (targetRecipient !== 'csnepalwebsite@gmail.com') {
+        fetch('https://formsubmit.co/ajax/csnepalwebsite@gmail.com', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(payload),
+        }).catch(() => {});
+      }
+    } catch (err) {
+      console.warn('Network submission notice:', err);
     }
 
+    // Persist donation pledges locally & sync with GitHub
+    try {
+      const existing = localStorage.getItem('csn_donation_pledges');
+      const list = existing ? JSON.parse(existing) : [];
+      const updated = [pledgeRecord, ...list];
+      localStorage.setItem('csn_donation_pledges', JSON.stringify(updated));
+      saveFileToGithub('donation_pledges.json', updated, `New donation pledge ${pledgeRef}`).catch(() => {});
+    } catch (e) {
+      console.warn('LocalStorage notice:', e);
+    }
+
+    if (onAddDonation) {
+      onAddDonation(finalAmt);
+    }
+
+    setPledgeReceipt(pledgeRecord);
     setDonateSuccess(true);
     setDonateSubmitting(false);
   };
@@ -959,14 +1040,15 @@ export default function MembershipDonation({
       {/* 3. WELFARE DONATION TAB */}
       {activeSubTab === 'donation' && (
         <div className="bg-teal-950 text-white p-6 sm:p-10 rounded-3xl border-b-8 border-emerald-500 shadow-xl space-y-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
           
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
             <div>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-bold uppercase tracking-wider rounded-full">
+                <Heart className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" />
                 Welfare &amp; Healthcare Support Fund
               </span>
-              <h2 className="text-2xl sm:text-3xl font-black text-white mt-2">
+              <h2 className="text-2xl sm:text-3xl font-black text-white mt-2 tracking-tight">
                 {donationInfo[`title${lang === 'en' ? 'En' : 'Ne'}`] || donationInfo.titleEn}
               </h2>
               <p className="text-xs sm:text-sm text-teal-200 mt-1.5 leading-relaxed max-w-2xl">
@@ -978,13 +1060,15 @@ export default function MembershipDonation({
             {isAdmin && (
               <div className="flex flex-wrap items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => {
                     setEditDonationForm(donationInfo);
                     setShowEditDonationModal(true);
                   }}
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-teal-950 text-xs font-black uppercase tracking-wider rounded-xl shadow transition-all shrink-0 cursor-pointer"
+                  className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-teal-950 text-xs font-black uppercase tracking-wider rounded-xl shadow-lg transition-all shrink-0 cursor-pointer flex items-center gap-1.5"
                 >
-                  ✏️ Edit Donation Content
+                  <QrCode className="w-4 h-4" />
+                  <span>✏️ {lang === 'en' ? 'Edit Bank & QR Info' : 'बैंक तथा क्युआर विवरण सम्पादन'}</span>
                 </button>
               </div>
             )}
@@ -1002,19 +1086,73 @@ export default function MembershipDonation({
             </div>
           )}
 
-          {donateSuccess ? (
-            <div className="p-6 bg-teal-900/90 border border-emerald-500/40 text-emerald-300 rounded-2xl flex items-start gap-4 animate-in zoom-in-95 duration-200">
-              <CheckCircle2 className="w-8 h-8 text-emerald-400 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-lg font-black">Heartfelt Thank You!</h4>
-                <p className="text-xs leading-relaxed mt-1">
-                  Your pledge of NPR {donatedAmt.toLocaleString()} has been logged and notified to <strong>{donationInfo.contactEmail}</strong>. Please send the bank deposit/transfer copy to our email for verification.
-                </p>
+          {donateSuccess && pledgeReceipt ? (
+            <div className="p-6 sm:p-8 bg-teal-900/90 border-2 border-emerald-400 text-teal-50 rounded-3xl space-y-5 animate-in zoom-in-95 duration-200 shadow-2xl">
+              <div className="flex items-start justify-between gap-4 border-b border-teal-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-emerald-500 text-teal-950 rounded-2xl">
+                    <CheckCircle2 className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <span className="px-2.5 py-0.5 bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 rounded-full text-[10px] font-black uppercase tracking-wider font-mono">
+                      Ref: {pledgeReceipt.referenceId}
+                    </span>
+                    <h4 className="text-xl font-black text-white mt-1">
+                      {lang === 'en' ? 'Donation Pledge Recorded Successfully!' : 'दान संकल्प सफलतापूर्वक दर्ता भयो!'}
+                    </h4>
+                  </div>
+                </div>
                 <button
-                  onClick={() => setDonateSuccess(false)}
-                  className="mt-3 px-4 py-1.5 bg-emerald-500 text-teal-950 font-extrabold text-xs rounded-lg hover:bg-emerald-400"
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-3.5 py-2 bg-teal-800 hover:bg-teal-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow"
                 >
-                  Make Another Pledge
+                  <Printer className="w-4 h-4" />
+                  <span className="hidden sm:inline">Print Receipt</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div className="p-4 bg-teal-950/60 rounded-2xl border border-teal-800 space-y-2">
+                  <p className="text-teal-400 font-bold uppercase tracking-wider text-[10px]">Pledge Summary</p>
+                  <div className="text-sm font-black text-emerald-300">
+                    NPR {pledgeReceipt.pledgedAmount?.toLocaleString()}
+                  </div>
+                  <div className="text-teal-200"><strong className="text-white">Donor:</strong> {pledgeReceipt.donorName}</div>
+                  <div className="text-teal-200"><strong className="text-white">Phone:</strong> {pledgeReceipt.donorPhone}</div>
+                  <div className="text-teal-200"><strong className="text-white">Purpose:</strong> {pledgeReceipt.donationCause}</div>
+                  <div className="text-teal-200"><strong className="text-white">Time:</strong> {pledgeReceipt.timestamp}</div>
+                </div>
+
+                <div className="p-4 bg-teal-950/60 rounded-2xl border border-teal-800 space-y-2">
+                  <p className="text-teal-400 font-bold uppercase tracking-wider text-[10px]">Deposit &amp; Verification Step</p>
+                  <p className="text-teal-200 text-xs leading-relaxed">
+                    A notification copy has been routed to <strong>{donationInfo.contactEmail || 'csnepalwebsite@gmail.com'}</strong>.
+                  </p>
+                  <p className="text-teal-300 text-xs leading-relaxed pt-1">
+                    Please transfer NPR {pledgeReceipt.pledgedAmount?.toLocaleString()} to <strong>{donationInfo.bankName}</strong> (Acc: {donationInfo.accountNumber}) or scan the official QR code, and send your deposit screenshot to <strong>{donationInfo.contactEmail}</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                <a
+                  href={`mailto:${donationInfo.contactEmail || 'csnepalwebsite@gmail.com'}?subject=Donation Receipt & Voucher - ${pledgeReceipt.referenceId}&body=Hello Chaurasiya Samaj Nepal,%0D%0A%0D%0AI have recorded a donation pledge of NPR ${pledgeReceipt.pledgedAmount} with Reference ID ${pledgeReceipt.referenceId}.%0D%0A%0D%0ADonor Name: ${pledgeReceipt.donorName}%0D%0APhone: ${pledgeReceipt.donorPhone}%0D%0A%0D%0APlease find my deposit/transfer voucher screenshot attached.%0D%0A%0D%0AThank you!`}
+                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-xl shadow transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>{lang === 'en' ? 'Email Transfer Voucher to CSN' : 'भौचर इमेल गर्नुहोस्'}</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDonateSuccess(false);
+                    setPledgeReceipt(null);
+                  }}
+                  className="px-4 py-2.5 bg-teal-800 hover:bg-teal-700 text-white font-bold text-xs rounded-xl cursor-pointer"
+                >
+                  {lang === 'en' ? '➕ Record Another Pledge' : 'अर्को संकल्प गर्नुहोस्'}
                 </button>
               </div>
             </div>
@@ -1022,81 +1160,159 @@ export default function MembershipDonation({
             <form onSubmit={handleDonateSubmit} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {isFieldVisible('donation-name') && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">Donor Full Name</label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-teal-300 uppercase tracking-wider flex items-center justify-between">
+                      <span>{lang === 'en' ? 'Donor Full Name' : 'दाताको पूरा नाम'}</span>
+                    </label>
                     <input
                       type="text"
                       value={donorName}
                       onChange={(e) => setDonorName(e.target.value)}
-                      placeholder="e.g. Alok Kumar Chaurasiya"
-                      className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400"
+                      placeholder={lang === 'en' ? 'e.g. Alok Kumar Chaurasiya' : 'उदा. आलोक कुमार चौरसिया'}
+                      className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400 placeholder:text-teal-400/50 font-medium"
                     />
                   </div>
                 )}
                 {isFieldVisible('donation-phone') && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">Donor Phone / Mobile</label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">
+                      {lang === 'en' ? 'Donor Phone / Mobile' : 'दाताको फोन / मोबाइल'}
+                    </label>
                     <input
                       type="tel"
                       value={donorPhone}
                       onChange={(e) => setDonorPhone(e.target.value)}
                       placeholder="e.g. 9845012345"
-                      className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400"
+                      className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400 placeholder:text-teal-400/50 font-medium font-mono"
                     />
                   </div>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">
-                  Select Donation Amount (NPR)
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[500, 1000, 2500, 5000].map((amt) => {
-                    const isSelected = donatePreset === amt && !donateCustom;
-                    return (
-                      <button
-                        key={amt}
-                        type="button"
-                        onClick={() => {
-                          setDonatePreset(amt);
-                          setDonateCustom('');
-                          onTrackAction(`Select donation preset: NPR ${amt}`);
-                        }}
-                        className={`py-3 text-sm font-black rounded-xl border transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-emerald-500 text-teal-950 border-emerald-400 shadow-lg scale-105'
-                            : 'bg-teal-900/40 text-white border-teal-800 hover:bg-teal-900'
-                        }`}
-                      >
-                        NPR {amt.toLocaleString()}
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {isFieldVisible('donation-email') && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">
+                      {lang === 'en' ? 'Donor Email Address' : 'दाताको इमेल ठेगाना'}
+                    </label>
+                    <input
+                      type="email"
+                      value={donorEmail}
+                      onChange={(e) => setDonorEmail(e.target.value)}
+                      placeholder="e.g. donor@gmail.com"
+                      className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400 placeholder:text-teal-400/50 font-medium"
+                    />
+                  </div>
+                )}
+
+                {isFieldVisible('donation-address') && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">
+                      {lang === 'en' ? 'Donor Address / District' : 'दाताको ठेगाना / जिल्ला'}
+                    </label>
+                    <input
+                      type="text"
+                      value={donorAddress}
+                      onChange={(e) => setDonorAddress(e.target.value)}
+                      placeholder="e.g. Parsa, Birgunj / Kathmandu"
+                      className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400 placeholder:text-teal-400/50 font-medium"
+                    />
+                  </div>
+                )}
+
+                {isFieldVisible('donation-pan') && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">
+                      {lang === 'en' ? 'PAN / Tax ID (Optional)' : 'स्थायी लेखा नं (ऐच्छिक)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={donorPan}
+                      onChange={(e) => setDonorPan(e.target.value)}
+                      placeholder="e.g. 601234567"
+                      className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400 placeholder:text-teal-400/50 font-medium font-mono"
+                    />
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">
-                  Or Enter Custom Amount (NPR)
-                </label>
-                <input
-                  type="number"
-                  placeholder="e.g., 10000"
-                  value={donateCustom}
-                  onChange={(e) => {
-                    setDonateCustom(e.target.value);
-                    onTrackAction(`Type custom donation amount: ${e.target.value}`);
-                  }}
-                  className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400 font-mono"
-                />
-              </div>
+              {isFieldVisible('donation-cause') && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">
+                    {lang === 'en' ? 'Target Purpose / Dedicated Fund' : 'दानको उद्देश्य / समर्पित कोष'}
+                  </label>
+                  <select
+                    value={donationCause}
+                    onChange={(e) => setDonationCause(e.target.value)}
+                    className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400 font-medium"
+                  >
+                    <option value="Rural Healthcare & Free Medical Camps">🏥 Rural Healthcare &amp; Free Medical Camps (ग्रामीण स्वास्थ्य शिविर)</option>
+                    <option value="Student Stationery & Educational Kits Fund">📚 Student Stationery &amp; Educational Kits (विद्यार्थी शैक्षिक सहयोग)</option>
+                    <option value="Betel Farmers Outreach & Seed Support">🌱 Betel Farmers Outreach &amp; Seed Support (पान कृषक सहयोग)</option>
+                    <option value="Community Infrastructure & Bhavan Building">🏛️ Community Infrastructure &amp; Bhavan Building (सामुदायिक भवन निर्माण)</option>
+                    <option value="Emergency Welfare & Relief Assistance">🚨 Emergency Welfare &amp; Relief Assistance (आपत्कालीन कल्याणकारी राहत)</option>
+                  </select>
+                </div>
+              )}
+
+              {isFieldVisible('donation-presets') && (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-teal-300 uppercase tracking-wider flex items-center justify-between">
+                    <span>{lang === 'en' ? 'Select Donation Amount (NPR)' : 'दान रकम छनोट गर्नुहोस् (नेरू)'}</span>
+                    <span className="text-[11px] text-emerald-400 font-normal">
+                      {lang === 'en' ? 'Click preset or enter custom' : 'बटन क्लिक गर्नुहोस् वा इच्छित रकम लेख्नुहोस्'}
+                    </span>
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[500, 1000, 2500, 5000].map((amt) => {
+                      const isSelected = donatePreset === amt && !donateCustom;
+                      return (
+                        <button
+                          key={amt}
+                          type="button"
+                          onClick={() => {
+                            setDonatePreset(amt);
+                            setDonateCustom('');
+                            onTrackAction(`Select donation preset: NPR ${amt}`);
+                          }}
+                          className={`py-3.5 text-sm font-black rounded-xl border transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-emerald-500 text-teal-950 border-emerald-400 shadow-xl scale-105 ring-2 ring-emerald-300'
+                              : 'bg-teal-900/40 text-white border-teal-800 hover:bg-teal-900'
+                          }`}
+                        >
+                          NPR {amt.toLocaleString()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {isFieldVisible('donation-custom-amount') && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-teal-300 uppercase tracking-wider">
+                    {lang === 'en' ? 'Or Enter Custom Amount (NPR)' : 'वा अन्य इच्छित रकम प्रविष्ट गर्नुहोस् (नेरू)'}
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g., 10000"
+                    value={donateCustom}
+                    onChange={(e) => {
+                      setDonateCustom(e.target.value);
+                      onTrackAction(`Type custom donation amount: ${e.target.value}`);
+                    }}
+                    className="w-full p-3 bg-teal-900/60 border border-teal-800 text-sm text-white rounded-xl focus:outline-none focus:border-emerald-400 font-mono font-bold"
+                  />
+                </div>
+              )}
 
               {/* Dynamic Custom Fields for Donation */}
               {donateCustomFields.length > 0 && (
                 <div className="space-y-4 pt-4 border-t border-teal-800">
-                  <h5 className="font-extrabold text-teal-300 text-xs uppercase tracking-wide">
-                    {lang === 'en' ? 'Additional Information' : 'थप जानकारी'}:
+                  <h5 className="font-extrabold text-teal-300 text-xs uppercase tracking-wide flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                    <span>{lang === 'en' ? 'Additional Form Fields / Questions' : 'थप फारम प्रश्नहरू'}:</span>
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {donateCustomFields.map(cf => (
@@ -1114,36 +1330,126 @@ export default function MembershipDonation({
                 </div>
               )}
 
-              <div className="p-5 bg-teal-900/50 rounded-2xl border border-teal-800 space-y-3">
-                <h4 className="text-sm font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
-                  <Landmark className="w-5 h-5" />
-                  Direct Bank Wire Info &amp; QR Payments
-                </h4>
-                <div className="text-sm space-y-2 text-teal-200/90 leading-relaxed font-medium">
-                  <div><strong className="text-white">Bank Name:</strong> {donationInfo.bankName}</div>
-                  <div><strong className="text-white">Account Name:</strong> {donationInfo.accountName}</div>
-                  <div><strong className="text-white">Account Number:</strong> {donationInfo.accountNumber}</div>
-                  <div><strong className="text-white">eSewa / Khalti ID:</strong> {donationInfo.esewaId}</div>
-                  <div className="text-xs text-teal-400 italic pt-2 border-t border-teal-800/50">
-                    * Please email transaction copies to <strong>{donationInfo.contactEmail}</strong> for official receipts.
+              {/* Direct Bank Wire Info & QR Payments Box */}
+              {isFieldVisible('donation-bank-info') && (
+                <div className="p-6 bg-teal-900/60 rounded-3xl border border-teal-700/60 shadow-xl backdrop-blur-sm space-y-4">
+                  <div className="flex flex-col lg:flex-row items-stretch justify-between gap-6">
+                    {/* Left: Bank Wire details */}
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-black text-emerald-400 uppercase tracking-wide flex items-center gap-2">
+                          <Landmark className="w-5 h-5 text-emerald-400" />
+                          <span>{lang === 'en' ? 'Direct Bank Wire & Payment Information' : 'सिधै बैंक ट्रान्सफर तथा भुक्तानी विवरण'}</span>
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${donationInfo.bankName}\nAccount: ${donationInfo.accountName}\nAcc Number: ${donationInfo.accountNumber}\neSewa ID: ${donationInfo.esewaId}`);
+                            setCopiedAccount(true);
+                            setTimeout(() => setCopiedAccount(false), 2500);
+                          }}
+                          className="px-2.5 py-1 bg-teal-800 hover:bg-teal-700 text-teal-200 hover:text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                          title="Copy details to clipboard"
+                        >
+                          {copiedAccount ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedAccount ? 'Copied!' : 'Copy Info'}</span>
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-teal-100 font-medium">
+                        <div className="p-3 bg-teal-950/80 rounded-xl border border-teal-800">
+                          <span className="text-teal-400 text-[10px] font-black uppercase tracking-wider block">{lang === 'en' ? 'Bank Name' : 'बैंकको नाम'}:</span>
+                          <strong className="text-white font-bold text-xs mt-0.5 block">{donationInfo.bankName}</strong>
+                        </div>
+
+                        <div className="p-3 bg-teal-950/80 rounded-xl border border-teal-800">
+                          <span className="text-teal-400 text-[10px] font-black uppercase tracking-wider block">{lang === 'en' ? 'Account Name' : 'खातावालाको नाम'}:</span>
+                          <strong className="text-white font-bold text-xs mt-0.5 block">{donationInfo.accountName}</strong>
+                        </div>
+
+                        <div className="p-3 bg-teal-950/80 rounded-xl border border-teal-800">
+                          <span className="text-teal-400 text-[10px] font-black uppercase tracking-wider block">{lang === 'en' ? 'Account Number' : 'खाता नम्बर'}:</span>
+                          <strong className="text-emerald-300 font-mono font-black text-sm mt-0.5 block">{donationInfo.accountNumber}</strong>
+                        </div>
+
+                        <div className="p-3 bg-teal-950/80 rounded-xl border border-teal-800">
+                          <span className="text-teal-400 text-[10px] font-black uppercase tracking-wider block">{lang === 'en' ? 'eSewa / Khalti / Fonepay ID' : 'ईसेवा / खल्ती / फोनपे'}:</span>
+                          <strong className="text-white font-bold font-mono text-xs mt-0.5 block">{donationInfo.esewaId}</strong>
+                        </div>
+                      </div>
+
+                      <p className="text-[11px] text-teal-300/80 italic pt-1">
+                        * {lang === 'en' 
+                          ? `Please email deposit voucher or transaction receipts to ${donationInfo.contactEmail || 'csnepalwebsite@gmail.com'} for official receipt.` 
+                          : `आधिकारिक रसिदका लागि कृपया भौचर प्रतिलिपि ${donationInfo.contactEmail || 'csnepalwebsite@gmail.com'} मा पठाउनुहोस्।`}
+                      </p>
+                    </div>
+
+                    {/* Right: Institution Payment QR Code */}
+                    <div className="w-full lg:w-72 flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl border-2 border-emerald-400 shadow-xl shrink-0">
+                      <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-400 mb-2">
+                        <QrCode className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <span>{lang === 'en' ? 'Official Payment QR' : 'आधिकारिक क्युआर कोड'}</span>
+                      </div>
+                      
+                      {donationInfo.qrCodeUrl ? (
+                        <div 
+                          className="relative group cursor-pointer p-2 bg-white rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"
+                          onClick={() => setShowZoomQr(true)}
+                          title="Click to Zoom QR Code"
+                        >
+                          <img 
+                            src={donationInfo.qrCodeUrl} 
+                            alt="Chaurasiya Samaj Official Welfare QR Code" 
+                            className="w-44 h-44 sm:w-48 sm:h-48 object-contain rounded-lg"
+                          />
+                          <div className="absolute inset-0 bg-slate-950/60 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-xs font-black gap-1">
+                            <ZoomIn className="w-6 h-6 text-emerald-400" />
+                            <span>Click to Zoom</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-44 h-44 flex flex-col items-center justify-center text-center p-3 bg-slate-100 dark:bg-slate-800 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+                          <QrCode className="w-10 h-10 text-slate-400 mb-2" />
+                          <span className="text-[11px] text-slate-500 font-bold">Upload QR Code via Admin Settings</span>
+                        </div>
+                      )}
+
+                      <p className="text-[11px] text-slate-700 dark:text-slate-300 text-center font-medium mt-2 leading-tight">
+                        {lang === 'en'
+                          ? (donationInfo.qrCodeLabelEn || 'Scan with eSewa, Fonepay, Khalti or Mobile Banking')
+                          : (donationInfo.qrCodeLabelNe || 'ईसेवा, फोनपे, खल्ती वा मोबाइल बैंकिङबाट स्क्यान गर्नुहोस्')}
+                      </p>
+
+                      {donationInfo.qrCodeUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setShowZoomQr(true)}
+                          className="mt-2 px-3 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[11px] font-black rounded-lg hover:bg-emerald-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <ZoomIn className="w-3.5 h-3.5" />
+                          <span>{lang === 'en' ? 'Enlarge QR Code' : 'क्युआर ठूलो पार्नुहोस्'}</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               <button
                 type="submit"
                 disabled={donateSubmitting}
-                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-teal-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-[0.99]"
               >
                 {donateSubmitting ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin text-teal-950" />
-                    Recording Pledge...
+                    <span>Recording Pledge &amp; Dispatching Notification...</span>
                   </>
                 ) : (
                   <>
                     <Heart className="w-5 h-5 text-teal-950 fill-teal-950" />
-                    Record Donation Pledge
+                    <span>Record Donation Pledge</span>
                   </>
                 )}
               </button>
@@ -1152,12 +1458,63 @@ export default function MembershipDonation({
         </div>
       )}
 
+      {/* QR Code Full Zoom Modal */}
+      {showZoomQr && (
+        <div className="fixed inset-0 z-[120] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-6 text-slate-900 dark:text-white space-y-4 shadow-2xl border border-slate-200 dark:border-slate-800 text-center relative">
+            <button
+              type="button"
+              onClick={() => setShowZoomQr(false)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center justify-center gap-2 text-teal-950 dark:text-teal-200 font-black text-sm uppercase tracking-wider">
+              <QrCode className="w-5 h-5 text-emerald-600" />
+              <span>{lang === 'en' ? 'Institution Payment QR' : 'संस्थाको भुक्तानी क्युआर कोड'}</span>
+            </div>
+
+            <div className="p-3 bg-white rounded-2xl border-2 border-emerald-500 shadow-inner flex justify-center">
+              <img
+                src={donationInfo.qrCodeUrl}
+                alt="Chaurasiya Samaj Nepal Payment QR Code"
+                className="w-64 h-64 sm:w-72 sm:h-72 object-contain"
+              />
+            </div>
+
+            <div className="text-xs space-y-1 font-bold">
+              <p className="text-slate-800 dark:text-slate-200">{donationInfo.accountName}</p>
+              <p className="text-emerald-600 dark:text-emerald-400 font-mono">{donationInfo.accountNumber}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium pt-1">
+                {lang === 'en'
+                  ? 'Compatible with eSewa, Fonepay, Khalti, IME Pay, and all Nepalese Banking Apps.'
+                  : 'ईसेवा, फोनपे, खल्ती, आईएमई पे तथा सम्पूर्ण नेपाली मोबाइल बैंकिङसँग मिल्दोजुल्दो।'}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowZoomQr(false)}
+              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Admin Edit Donation Modal (Top-Level Overlay) */}
       {showEditDonationModal && (
         <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 text-slate-900">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200 border border-teal-100 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200 border border-teal-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-lg font-black text-teal-950 dark:text-teal-100">Edit Welfare Donation Page Details</h3>
+              <div className="flex items-center gap-2">
+                <QrCode className="w-5 h-5 text-emerald-600" />
+                <h3 className="text-lg font-black text-teal-950 dark:text-teal-100">
+                  {lang === 'en' ? 'Edit Welfare Donation, Bank & QR Code' : 'कल्याणकारी दान, बैंक तथा क्युआर विवरण सम्पादन'}
+                </h3>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowEditDonationModal(false)}
@@ -1252,13 +1609,114 @@ export default function MembershipDonation({
               </div>
 
               <div>
-                <label className="text-slate-700 dark:text-slate-300">Notification &amp; Contact Email</label>
+                <label className="text-slate-700 dark:text-slate-300">Notification &amp; Contact Email (Receives Pledges)</label>
                 <input
                   type="email"
                   value={editDonationForm.contactEmail}
                   onChange={(e) => setEditDonationForm({ ...editDonationForm, contactEmail: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white"
+                  placeholder="csnepalwebsite@gmail.com"
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 text-slate-900 dark:text-white font-mono"
                 />
+              </div>
+
+              {/* Institution Official Payment QR Code Section */}
+              <div className="p-4 bg-teal-50 dark:bg-slate-800/80 rounded-2xl border-2 border-dashed border-teal-300 dark:border-slate-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black text-teal-950 dark:text-teal-200 uppercase tracking-wider flex items-center gap-1.5">
+                    <QrCode className="w-4 h-4 text-emerald-600" />
+                    <span>Institution Payment QR Code (eSewa / Fonepay / Bank)</span>
+                  </h4>
+                  {editDonationForm.qrCodeUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setEditDonationForm({ ...editDonationForm, qrCodeUrl: '' })}
+                      className="text-[11px] text-rose-600 hover:underline font-bold cursor-pointer"
+                    >
+                      Remove QR
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-slate-700 dark:text-slate-300 text-[11px]">QR Code Image URL</label>
+                      <input
+                        type="url"
+                        value={editDonationForm.qrCodeUrl || ''}
+                        onChange={(e) => setEditDonationForm({ ...editDonationForm, qrCodeUrl: e.target.value })}
+                        placeholder="https://... / QR image link"
+                        className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg mt-0.5 text-slate-900 dark:text-white text-xs font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-slate-700 dark:text-slate-300 text-[11px] block">Or Upload QR Image File</label>
+                      <label className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold cursor-pointer transition-colors mt-0.5">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Upload QR Code Image</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = () => {
+                                if (typeof reader.result === 'string') {
+                                  setEditDonationForm({ ...editDonationForm, qrCodeUrl: reader.result });
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center p-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 min-h-[120px]">
+                    {editDonationForm.qrCodeUrl ? (
+                      <div className="text-center">
+                        <img
+                          src={editDonationForm.qrCodeUrl}
+                          alt="QR Preview"
+                          className="w-24 h-24 object-contain mx-auto rounded border p-1"
+                        />
+                        <span className="text-[10px] text-emerald-600 font-bold block mt-1">Live QR Preview</span>
+                      </div>
+                    ) : (
+                      <div className="text-center text-slate-400 p-2">
+                        <ImageIcon className="w-8 h-8 mx-auto mb-1 opacity-50" />
+                        <span className="text-[10px]">No QR Image Selected</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="text-slate-700 dark:text-slate-300 text-[11px]">QR Helper Text (English)</label>
+                    <input
+                      type="text"
+                      value={editDonationForm.qrCodeLabelEn || ''}
+                      onChange={(e) => setEditDonationForm({ ...editDonationForm, qrCodeLabelEn: e.target.value })}
+                      placeholder="Scan to Pay via eSewa, Fonepay, Khalti or Mobile Banking"
+                      className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg mt-0.5 text-slate-900 dark:text-white text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-slate-700 dark:text-slate-300 text-[11px]">QR Helper Text (Nepali)</label>
+                    <input
+                      type="text"
+                      value={editDonationForm.qrCodeLabelNe || ''}
+                      onChange={(e) => setEditDonationForm({ ...editDonationForm, qrCodeLabelNe: e.target.value })}
+                      placeholder="ईसेवा, फोनपे, खल्ती वा मोबाइल बैंकिङबाट भुक्तानी गर्न स्क्यान गर्नुहोस्"
+                      className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg mt-0.5 text-slate-900 dark:text-white text-xs"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t dark:border-slate-800">

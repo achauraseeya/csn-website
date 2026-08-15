@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, Settings, X, Check, FileQuestion, Edit2, EyeOff, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, Settings, X, Check, FileQuestion, Edit2, EyeOff, Eye, Sparkles } from 'lucide-react';
 import { Language } from '../types';
 import {
   FormId,
@@ -17,35 +17,40 @@ interface AdminFormFieldEditorProps {
   lang: Language;
   isAdmin: boolean;
   onFieldsUpdated?: () => void;
+  defaultOpen?: boolean;
 }
 
-const standardFieldsMap: Record<FormId, { key: string; label: string }[]> = {
+const standardFieldsMap: Record<FormId, { key: string; labelEn: string; labelNe: string }[]> = {
   membership: [
-    { key: 'membership-name', label: 'Full Name' },
-    { key: 'membership-phone', label: 'Phone Number' },
-    { key: 'membership-email', label: 'Email Address' },
-    { key: 'membership-address', label: 'Address / District' },
-    { key: 'membership-occupation', label: 'Occupation' },
-    { key: 'membership-type', label: 'Membership Category' },
-    { key: 'membership-duration', label: 'Duration' },
-    { key: 'membership-payment-method', label: 'Payment Method' },
-    { key: 'membership-payment-ref', label: 'Payment Reference' },
+    { key: 'membership-name', labelEn: 'Full Name', labelNe: 'पूरा नाम' },
+    { key: 'membership-phone', labelEn: 'Phone Number', labelNe: 'फोन नम्बर' },
+    { key: 'membership-email', labelEn: 'Email Address', labelNe: 'इमेल ठेगाना' },
+    { key: 'membership-address', labelEn: 'Address / District', labelNe: 'ठेगाना / जिल्ला' },
+    { key: 'membership-occupation', labelEn: 'Occupation', labelNe: 'पेशा' },
+    { key: 'membership-type', labelEn: 'Membership Category', labelNe: 'सदस्यता वर्ग' },
+    { key: 'membership-duration', labelEn: 'Duration', labelNe: 'अवधि' },
+    { key: 'membership-payment-method', labelEn: 'Payment Method', labelNe: 'भुक्तानी विधि' },
+    { key: 'membership-payment-ref', labelEn: 'Payment Reference', labelNe: 'भुक्तानी सन्दर्भ' },
   ],
   volunteer: [
-    { key: 'volunteer-name', label: 'Full Name' },
-    { key: 'volunteer-phone', label: 'Phone Number' },
-    { key: 'volunteer-email', label: 'Email Address' },
-    { key: 'volunteer-address', label: 'Address / Location' },
-    { key: 'volunteer-interests', label: 'Areas of Interest' },
-    { key: 'volunteer-availability', label: 'Availability' },
-    { key: 'volunteer-notes', label: 'Notes / Motivation' },
+    { key: 'volunteer-name', labelEn: 'Full Name', labelNe: 'पूरा नाम' },
+    { key: 'volunteer-phone', labelEn: 'Phone Number', labelNe: 'फोन नम्बर' },
+    { key: 'volunteer-email', labelEn: 'Email Address', labelNe: 'इमेल ठेगाना' },
+    { key: 'volunteer-address', labelEn: 'Address / Location', labelNe: 'ठेगाना / स्थान' },
+    { key: 'volunteer-interests', labelEn: 'Areas of Interest', labelNe: 'रुचिका क्षेत्रहरू' },
+    { key: 'volunteer-availability', labelEn: 'Availability', labelNe: 'उपलब्धता' },
+    { key: 'volunteer-notes', labelEn: 'Notes / Motivation', labelNe: 'कैफियत / प्रेरणा' },
   ],
   donation: [
-    { key: 'donation-name', label: 'Donor Name' },
-    { key: 'donation-phone', label: 'Donor Phone' },
-    { key: 'donation-presets', label: 'Preset Amount Buttons' },
-    { key: 'donation-custom-amount', label: 'Custom Amount Input' },
-    { key: 'donation-bank-info', label: 'Bank Wire & QR Info Box' },
+    { key: 'donation-name', labelEn: 'Donor Full Name', labelNe: 'दाताको पूरा नाम' },
+    { key: 'donation-phone', labelEn: 'Donor Phone / Mobile', labelNe: 'दाताको फोन / मोबाइल' },
+    { key: 'donation-email', labelEn: 'Donor Email Address', labelNe: 'दाताको इमेल ठेगाना' },
+    { key: 'donation-address', labelEn: 'Donor Address / District', labelNe: 'दाताको ठेगाना / जिल्ला' },
+    { key: 'donation-cause', labelEn: 'Target Cause / Dedicated Fund', labelNe: 'दानको उद्देश्य / कोष' },
+    { key: 'donation-pan', labelEn: 'PAN / Citizenship No (Optional)', labelNe: 'स्थायी लेखा नं / नागरिकता' },
+    { key: 'donation-presets', labelEn: 'Preset Amount Buttons (NPR)', labelNe: 'पूर्वनिर्धारित रकम बटनहरू' },
+    { key: 'donation-custom-amount', labelEn: 'Custom Amount Input', labelNe: 'इच्छित रकम प्रविष्टि' },
+    { key: 'donation-bank-info', labelEn: 'Bank Wire & QR Info Box', labelNe: 'बैंक तथा क्युआर जानकारी' },
   ],
   matrimonial: [],
   contact: [],
@@ -58,10 +63,16 @@ export function AdminFormFieldEditor({
   lang,
   isAdmin,
   onFieldsUpdated,
+  defaultOpen = false,
 }: AdminFormFieldEditorProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [fields, setFields] = useState<CustomFormField[]>(() => getCustomFormFields(formId));
   const [hiddenFields, setHiddenFields] = useState<string[]>(() => getHiddenStandardFields());
+
+  useEffect(() => {
+    setFields(getCustomFormFields(formId));
+    setHiddenFields(getHiddenStandardFields());
+  }, [formId]);
 
   // Editing state
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
@@ -82,6 +93,7 @@ export function AdminFormFieldEditor({
     setFieldType(field.fieldType);
     setRequired(field.required);
     setOptionsStr(field.options ? field.options.join(', ') : '');
+    setIsOpen(true);
   };
 
   const handleCancelEdit = () => {
@@ -121,45 +133,63 @@ export function AdminFormFieldEditor({
     if (onFieldsUpdated) onFieldsUpdated();
   };
 
+  const activeStandardList = standardFieldsMap[formId] || [];
+
   return (
-    <div className="my-4 p-4 bg-teal-50/80 dark:bg-slate-800/80 border-2 border-dashed border-teal-300 dark:border-slate-700 rounded-2xl">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-teal-900 dark:text-teal-100 font-extrabold text-xs uppercase tracking-wider">
+    <div className="my-4 p-4 sm:p-5 bg-teal-50/90 dark:bg-slate-900/90 border-2 border-dashed border-teal-300 dark:border-teal-700/60 rounded-2xl shadow-sm text-slate-900 dark:text-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-teal-950 dark:text-teal-200">
           <Settings className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <span>{lang === 'en' ? 'Admin Form Customizer' : 'प्रशासक फारम सम्पादक'}</span>
-          <span className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[10px] font-bold">
-            {fields.length} {lang === 'en' ? 'Custom Questions' : 'थप प्रश्नहरू'}
+          <span>{lang === 'en' ? 'Form Field & Custom Questions Manager' : 'फारम क्षेत्र तथा थप प्रश्न सम्पादक'}</span>
+          <span className="px-2.5 py-0.5 bg-emerald-600 text-white rounded-full text-[10px] font-extrabold shadow-sm">
+            {fields.length} {lang === 'en' ? 'Custom' : 'थप'}
           </span>
         </div>
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="px-3 py-1.5 bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-md ${
+            isOpen 
+              ? 'bg-slate-800 hover:bg-slate-700 text-white' 
+              : 'bg-emerald-500 hover:bg-emerald-400 text-teal-950'
+          }`}
         >
-          {isOpen ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-          {isOpen ? (lang === 'en' ? 'Close Editor' : 'सम्पादक बन्द गर्नुहोस्') : (lang === 'en' ? 'Manage Custom Fields' : 'थप प्रश्नहरू व्यवस्थापन गर्नुहोस्')}
+          {isOpen ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          {isOpen ? (lang === 'en' ? 'Close Field Editor' : 'सम्पादक बन्द गर्नुहोस्') : (lang === 'en' ? 'Manage & Edit Form Fields' : 'फारम क्षेत्रहरू सम्पादन गर्नुहोस्')}
         </button>
       </div>
 
       {isOpen && (
-        <div className="mt-4 pt-4 border-t border-teal-200 dark:border-slate-700 space-y-4 text-xs">
+        <div className="mt-4 pt-4 border-t border-teal-200 dark:border-slate-800 space-y-5 text-xs animate-in fade-in duration-200">
           {/* Toggle Default/Standard Fields */}
-          {standardFieldsMap[formId] && standardFieldsMap[formId].length > 0 && (
-            <div className="space-y-2 p-3 bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-800 rounded-xl">
-              <h5 className="font-bold text-teal-950 dark:text-teal-100 uppercase tracking-wide flex items-center gap-1.5">
-                <Eye className="w-4 h-4 text-emerald-600" />
-                <span>{lang === 'en' ? 'Manage Default Form Fields (Show/Hide)' : 'डिफल्ट फारम क्षेत्रहरू व्यवस्थापन गर्नुहोस्'}</span>
-              </h5>
-              <p className="text-[10px] text-slate-500 font-medium">
+          {activeStandardList.length > 0 && (
+            <div className="space-y-3 p-4 bg-white dark:bg-slate-950 border border-teal-200 dark:border-slate-800 rounded-2xl shadow-inner">
+              <div className="flex items-center justify-between">
+                <h5 className="font-extrabold text-teal-950 dark:text-teal-200 uppercase tracking-wide flex items-center gap-1.5 text-xs">
+                  <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>{lang === 'en' ? 'Standard Form Fields (Show / Hide / Delete from View)' : 'डिफल्ट फारम क्षेत्रहरू (देखाउनुहोस् / हटाउनुहोस्)'}</span>
+                </h5>
+                <span className="text-[10px] text-slate-500 font-medium">
+                  {lang === 'en' ? 'Check = Active | Uncheck = Hidden' : 'चेक = सक्रिय | अनचेक = लुकाइएको'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                 {lang === 'en' 
-                  ? 'Uncheck a field to hide/remove it from the form (effectively deleting it from display).' 
-                  : 'फारमबाट हटाउन वा लुकाउन अनचेक गर्नुहोस्।'}
+                  ? 'Uncheck any field below to immediately remove it from the public form view. Checked fields remain active.' 
+                  : 'सार्वजनिक फारमबाट हटाउन कुनै पनि क्षेत्र अनचेक गर्नुहोस्। चेक गरिएका क्षेत्रहरू फारममा सक्रिय रहनेछन्।'}
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
-                {standardFieldsMap[formId].map(sf => {
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+                {activeStandardList.map(sf => {
                   const isVisible = !hiddenFields.includes(sf.key);
                   return (
-                    <label key={sf.key} className="flex items-center gap-2 p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/60 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <label 
+                      key={sf.key} 
+                      className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
+                        isVisible
+                          ? 'bg-teal-50/70 dark:bg-teal-950/30 border-teal-300 dark:border-teal-800/60 text-teal-950 dark:text-teal-100 font-bold shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 opacity-70 line-through'
+                      }`}
+                    >
                       <input
                         type="checkbox"
                         checked={isVisible}
@@ -168,10 +198,10 @@ export function AdminFormFieldEditor({
                           setHiddenFields(updated);
                           if (onFieldsUpdated) onFieldsUpdated();
                         }}
-                        className="rounded text-teal-600 focus:ring-teal-500"
+                        className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700 cursor-pointer"
                       />
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 select-none truncate">
-                        {sf.label}
+                      <span className="truncate text-xs">
+                        {lang === 'en' ? sf.labelEn : sf.labelNe}
                       </span>
                     </label>
                   );
@@ -180,37 +210,43 @@ export function AdminFormFieldEditor({
             </div>
           )}
 
-          {/* Existing Fields List */}
+          {/* Existing Custom Fields List */}
           {fields.length > 0 && (
-            <div className="space-y-2">
-              <h5 className="font-bold text-teal-950 dark:text-teal-100 uppercase tracking-wide">
-                {lang === 'en' ? 'Active Custom Questions' : 'सक्रिय थप प्रश्नहरू'}:
+            <div className="space-y-2.5 p-4 bg-white dark:bg-slate-950 border border-teal-200 dark:border-slate-800 rounded-2xl">
+              <h5 className="font-extrabold text-teal-950 dark:text-teal-200 uppercase tracking-wide flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>{lang === 'en' ? 'Active Custom Questions / Fields' : 'सक्रिय थप प्रश्नहरू / क्षेत्रहरू'} ({fields.length}):</span>
               </h5>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {fields.map(f => (
-                  <div key={f.id} className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-800 flex items-center justify-between gap-2 shadow-sm">
+                  <div key={f.id} className="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-slate-800 flex items-center justify-between gap-3 shadow-sm">
                     <div className="min-w-0">
-                      <p className="font-bold text-gray-900 dark:text-white truncate">
+                      <p className="font-black text-slate-900 dark:text-white truncate text-xs">
                         {f.label[lang] || f.label.en}
                       </p>
-                      <p className="text-[10px] text-gray-500 font-mono">
-                        Type: {f.fieldType} {f.required ? '• Required' : ''}
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                        Type: <span className="font-bold text-teal-600 dark:text-teal-400">{f.fieldType}</span> {f.required ? '• Required' : '• Optional'}
                       </p>
+                      {f.options && f.options.length > 0 && (
+                        <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                          Options: {f.options.join(', ')}
+                        </p>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
                         onClick={() => handleStartEdit(f)}
-                        className="p-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 dark:bg-slate-800 dark:text-teal-300 rounded-lg transition-colors cursor-pointer"
-                        title="Edit field"
+                        className="p-2 bg-teal-100 hover:bg-teal-200 text-teal-900 dark:bg-slate-800 dark:text-teal-300 rounded-xl transition-colors cursor-pointer"
+                        title="Edit question details"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(f.id)}
-                        className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 rounded-lg transition-colors cursor-pointer"
-                        title="Delete field"
+                        className="p-2 bg-rose-100 hover:bg-rose-200 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 rounded-xl transition-colors cursor-pointer"
+                        title="Delete question permanently"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -222,30 +258,30 @@ export function AdminFormFieldEditor({
           )}
 
           {/* Add or Edit Field Form */}
-          <form onSubmit={handleSaveField} className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-teal-200 dark:border-slate-800 space-y-3">
-            <div className="flex items-center justify-between font-bold text-teal-900 dark:text-teal-100">
-              <div className="flex items-center gap-1.5">
-                <FileQuestion className="w-4 h-4 text-emerald-500" />
+          <form onSubmit={handleSaveField} className="bg-white dark:bg-slate-950 p-4 sm:p-5 rounded-2xl border-2 border-emerald-500/50 dark:border-emerald-500/30 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between font-black text-teal-950 dark:text-teal-200">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wide">
+                <FileQuestion className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>
                   {editingFieldId
-                    ? (lang === 'en' ? 'Edit Question Details' : 'प्रश्न सम्पादन गर्नुहोस्')
-                    : (lang === 'en' ? 'Add New Question to Form' : 'फारममा नयाँ प्रश्न थप्नुहोस्')}
+                    ? (lang === 'en' ? 'Edit Existing Question / Field' : 'प्रश्न सम्पादन गर्नुहोस्')
+                    : (lang === 'en' ? '➕ Add New Custom Question to Form' : '➕ फारममा नयाँ प्रश्न थप्नुहोस्')}
                 </span>
               </div>
               {editingFieldId && (
                 <button
                   type="button"
                   onClick={handleCancelEdit}
-                  className="text-[11px] text-rose-600 hover:underline font-bold cursor-pointer"
+                  className="text-xs text-rose-600 hover:underline font-extrabold cursor-pointer"
                 >
                   Cancel Edit
                 </button>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Question Label (English) *
                 </label>
                 <input
@@ -253,88 +289,98 @@ export function AdminFormFieldEditor({
                   required
                   value={labelEn}
                   onChange={e => setLabelEn(e.target.value)}
-                  placeholder="e.g. Passport / Citizenship No"
-                  className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 font-medium"
+                  placeholder="e.g. In Honor / Memory Of, Dedicated Purpose..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-teal-500"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Question Label (Nepali)
                 </label>
                 <input
                   type="text"
                   value={labelNe}
                   onChange={e => setLabelNe(e.target.value)}
-                  placeholder="उदा. नागरिकता नम्बर"
-                  className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 font-medium"
+                  placeholder="उदा. कसैको स्मृतिमा / विशेष उद्देश्य..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-teal-500"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
-                  Input Type
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Input Field Type
                 </label>
                 <select
                   value={fieldType}
                   onChange={e => setFieldType(e.target.value as any)}
-                  className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 font-bold font-sans text-gray-950 dark:text-white"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-teal-500"
                 >
-                  <option value="text">Short Text</option>
-                  <option value="number">Number</option>
-                  <option value="textarea">Paragraph Text</option>
-                  <option value="select">Dropdown Menu</option>
-                  <option value="checkbox">Checkbox (Yes/No)</option>
+                  <option value="text">Short Text (Single Line)</option>
+                  <option value="textarea">Paragraph / Multi-line Text</option>
+                  <option value="number">Numeric Number</option>
+                  <option value="select">Dropdown Selection Menu</option>
+                  <option value="radio">Radio Buttons (Choose 1)</option>
+                  <option value="multiselect">Multi-select Checkbox List</option>
+                  <option value="checkbox">Single Yes/No Checkbox</option>
                   <option value="date">Date Picker</option>
-                  <option value="email">Email Input</option>
-                  <option value="phone">Phone Input</option>
-                  <option value="radio">Radio Buttons</option>
-                  <option value="file">File/Image Upload</option>
-                  <option value="time">Time Picker</option>
-                  <option value="url">URL/Web Link</option>
-                  <option value="password">Password Input</option>
-                  <option value="multiselect">Checkbox List (Multi-Select)</option>
+                  <option value="email">Email Address</option>
+                  <option value="phone">Phone / Mobile</option>
+                  <option value="file">File / Receipt Image Upload</option>
+                  <option value="url">Website / Social URL</option>
                 </select>
               </div>
 
               {(fieldType === 'select' || fieldType === 'radio' || fieldType === 'multiselect') && (
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
-                    Options (comma-separated list)
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Options (comma-separated values) *
                   </label>
                   <input
                     type="text"
+                    required
                     value={optionsStr}
                     onChange={e => setOptionsStr(e.target.value)}
                     placeholder="Option 1, Option 2, Option 3"
-                    className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 font-medium text-gray-950 dark:text-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 cursor-pointer">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={required}
                   onChange={e => setRequired(e.target.checked)}
-                  className="rounded text-teal-600 focus:ring-teal-500"
+                  className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500"
                 />
-                <span className="font-bold text-gray-700 dark:text-gray-300">
-                  {lang === 'en' ? 'Mark as Required field' : 'अनिवार्य क्षेत्र'}
+                <span className="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                  {lang === 'en' ? 'Mandatory / Required Field' : 'अनिवार्य क्षेत्र'}
                 </span>
               </label>
 
-              <button
-                type="submit"
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl shadow-sm transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <Check className="w-3.5 h-3.5" />
-                {editingFieldId
-                  ? (lang === 'en' ? 'Update Field' : 'अद्यावधिक गर्नुहोस्')
-                  : (lang === 'en' ? 'Save New Field' : 'क्षेत्र बचत गर्नुहोस्')}
-              </button>
+              <div className="flex items-center gap-2">
+                {editingFieldId && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer text-xs uppercase tracking-wider"
+                >
+                  <Check className="w-4 h-4" />
+                  {editingFieldId
+                    ? (lang === 'en' ? 'Update Field' : 'अद्यावधिक गर्नुहोस्')
+                    : (lang === 'en' ? 'Save New Field' : 'नयाँ क्षेत्र बचत गर्नुहोस्')}
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -342,3 +388,4 @@ export function AdminFormFieldEditor({
     </div>
   );
 }
+

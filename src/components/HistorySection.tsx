@@ -174,6 +174,10 @@ export default function HistorySection({
   const [editLogoSubEn, setEditLogoSubEn] = useState(siteTexts.logoSubEn || 'Nepal');
   const [editLogoSubNe, setEditLogoSubNe] = useState(siteTexts.logoSubNe || 'चौरसिया समाज नेपाल');
   const [editLogoUrl, setEditLogoUrl] = useState(siteTexts.logoUrl || '');
+  const [editHeaderTaglineEn, setEditHeaderTaglineEn] = useState(siteTexts.headerTaglineEn || siteTexts.taglineEn || 'Kathmandu, Nepal | Estd: 2003 (२०६०)');
+  const [editHeaderTaglineNe, setEditHeaderTaglineNe] = useState(siteTexts.headerTaglineNe || siteTexts.taglineNe || 'काठमाडौँ, नेपाल | स्थापना: २०६० (Estd: 2003)');
+  const [editFooterTaglineEn, setEditFooterTaglineEn] = useState(siteTexts.footerTaglineEn || siteTexts.taglineEn || 'A dedicated social platform preserving betel leaf culture & serving humanity');
+  const [editFooterTaglineNe, setEditFooterTaglineNe] = useState(siteTexts.footerTaglineNe || siteTexts.taglineNe || 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था');
   const [editTaglineEn, setEditTaglineEn] = useState(siteTexts.taglineEn || 'A dedicated social platform preserving betel leaf culture & serving humanity');
   const [editTaglineNe, setEditTaglineNe] = useState(siteTexts.taglineNe || 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था');
   const [editImpactHeaderEn, setEditImpactHeaderEn] = useState(siteTexts.impactHeaderEn || 'Empowering & Transforming Lives');
@@ -381,6 +385,10 @@ export default function HistorySection({
     setEditLogoSubEn(siteTexts.logoSubEn || 'Nepal');
     setEditLogoSubNe(siteTexts.logoSubNe || 'चौरसिया समाज नेपाल');
     setEditLogoUrl(siteTexts.logoUrl || '');
+    setEditHeaderTaglineEn(siteTexts.headerTaglineEn || siteTexts.taglineEn || 'Kathmandu, Nepal | Estd: 2003 (२०६०)');
+    setEditHeaderTaglineNe(siteTexts.headerTaglineNe || siteTexts.taglineNe || 'काठमाडौँ, नेपाल | स्थापना: २०६० (Estd: 2003)');
+    setEditFooterTaglineEn(siteTexts.footerTaglineEn || siteTexts.taglineEn || 'A dedicated social platform preserving betel leaf culture & serving humanity');
+    setEditFooterTaglineNe(siteTexts.footerTaglineNe || siteTexts.taglineNe || 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था');
     setEditTaglineEn(siteTexts.taglineEn || 'A dedicated social platform preserving betel leaf culture & serving humanity');
     setEditTaglineNe(siteTexts.taglineNe || 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था');
     setEditImpactHeaderEn(siteTexts.impactHeaderEn || 'Empowering & Transforming Lives');
@@ -764,8 +772,12 @@ export default function HistorySection({
           logoSubFontSizeMobile: editLogoSubFontSizeMobile,
           menuFontSizeDesktop: editMenuFontSizeDesktop,
           menuFontSizeMobile: editMenuFontSizeMobile,
-          taglineEn: editTaglineEn,
-          taglineNe: editTaglineNe,
+          headerTaglineEn: editHeaderTaglineEn,
+          headerTaglineNe: editHeaderTaglineNe,
+          footerTaglineEn: editFooterTaglineEn,
+          footerTaglineNe: editFooterTaglineNe,
+          taglineEn: editFooterTaglineEn || editTaglineEn,
+          taglineNe: editFooterTaglineNe || editTaglineNe,
           footerAboutEn: editFooterAboutEn,
           footerAboutNe: editFooterAboutNe,
           footerAddressEn: editFooterAddressEn,
@@ -899,23 +911,31 @@ export default function HistorySection({
       if (siteTexts.leadershipIdsJson) {
         const parsed = JSON.parse(siteTexts.leadershipIdsJson);
         if (Array.isArray(parsed)) {
-          return parsed.map((item: any) => {
-            const latestMember = membersList?.find(m => m.id === item.id) || boardMembers.find(m => m.id === item.id);
-            if (latestMember) {
-              return {
-                ...item,
-                ...latestMember,
-              };
-            }
-            return item;
-          });
+          return parsed
+            .map((item: any) => {
+              const latestMember = membersList?.find(m => m.id === item.id) || boardMembers.find(m => m.id === item.id);
+              if (latestMember) {
+                return {
+                  ...item,
+                  ...latestMember,
+                };
+              }
+              // If membersList is loaded and this member was removed, filter it out
+              if (membersList && membersList.length > 0) {
+                return null;
+              }
+              return item;
+            })
+            .filter(Boolean);
         }
       }
     } catch (e) {}
-    return boardMembers.filter(m => m.id === '1' || m.id === 'vc1').map(bm => {
-      const latestMember = membersList?.find(m => m.id === bm.id);
-      return latestMember ? { ...bm, ...latestMember } : bm;
-    });
+    return boardMembers
+      .filter(m => m.id === '1' || m.id === 'vc1')
+      .map(bm => {
+        const latestMember = membersList?.find(m => m.id === bm.id);
+        return latestMember ? { ...bm, ...latestMember } : bm;
+      });
   };
 
   const getActiveEservices = (): any[] => {
@@ -953,6 +973,7 @@ export default function HistorySection({
         ))
       );
       if (chief) return chief;
+      return membersList[0];
     }
     return boardMembers.find(m => m.category === 'chief' || m.id === '1') || boardMembers[0];
   };
@@ -1361,9 +1382,16 @@ export default function HistorySection({
                         </button>
                       </div>
                     </div>
-                    <p className="text-[10.5px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium leading-tight">
-                      * For perfect display across all devices without awkward zooming, use images with a 16:9 aspect ratio (e.g., 1920x1080) and keep the main subject centered.
-                    </p>
+                    <div className="mt-2 p-3 bg-teal-100/70 dark:bg-slate-900/80 rounded-xl border border-teal-200 dark:border-slate-700 text-xs space-y-1.5">
+                      <p className="font-extrabold text-teal-950 dark:text-teal-200 flex items-center gap-1.5 text-xs">
+                        <span>📐 Admin Guide: Recommended Hero Banner Image Size</span>
+                      </p>
+                      <ul className="text-[11px] text-teal-900 dark:text-teal-300 space-y-1 leading-relaxed list-disc list-inside">
+                        <li><strong>Recommended Resolution:</strong> <strong>1920 × 1080 px</strong> or <strong>1600 × 900 px</strong> (Standard 16:9 widescreen landscape).</li>
+                        <li><strong>Safe Viewing Zone:</strong> Place key subjects and faces in the <strong>center 70%</strong> with comfortable breathing room on top and bottom. This prevents cropping or clipping on both desktop and mobile screens.</li>
+                        <li><strong>File Size & Format:</strong> WebP or JPG under 2MB for instant page loading on mobile networks.</li>
+                      </ul>
+                    </div>
                   </div>
                   <div className="space-y-4">
                     {editHeroImages.map((img, idx) => (
@@ -2497,23 +2525,57 @@ export default function HistorySection({
                 </div>
 
                 <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
-                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Website Tagline (Footer & Header)</h4>
+                  <div>
+                    <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Top Navigation Menu Tagline / Sub-Text</h4>
+                    <p className="text-[11px] text-teal-700 dark:text-teal-400 mt-0.5">Displayed right below the main logo in the top navigation bar.</p>
+                  </div>
                   <div className="space-y-3">
                     <div>
-                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Tagline (English)</label>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Header Tagline (English)</label>
                       <input
                         type="text"
-                        value={editTaglineEn}
-                        onChange={(e) => setEditTaglineEn(e.target.value)}
+                        value={editHeaderTaglineEn}
+                        onChange={(e) => setEditHeaderTaglineEn(e.target.value)}
+                        placeholder="e.g. Kathmandu, Nepal | Estd: 2003 (२०६०)"
                         className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Tagline (Nepali)</label>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Header Tagline (Nepali)</label>
                       <input
                         type="text"
-                        value={editTaglineNe}
-                        onChange={(e) => setEditTaglineNe(e.target.value)}
+                        value={editHeaderTaglineNe}
+                        onChange={(e) => setEditHeaderTaglineNe(e.target.value)}
+                        placeholder="उदा: काठमाडौँ, नेपाल | स्थापना: २०६० (Estd: 2003)"
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
+                  <div>
+                    <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Footer Logo Tagline / Mission Note</h4>
+                    <p className="text-[11px] text-teal-700 dark:text-teal-400 mt-0.5">Displayed in the website footer beneath the footer logo.</p>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Footer Tagline (English)</label>
+                      <input
+                        type="text"
+                        value={editFooterTaglineEn}
+                        onChange={(e) => setEditFooterTaglineEn(e.target.value)}
+                        placeholder="e.g. A dedicated social platform preserving betel leaf culture & serving humanity"
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Footer Tagline (Nepali)</label>
+                      <input
+                        type="text"
+                        value={editFooterTaglineNe}
+                        onChange={(e) => setEditFooterTaglineNe(e.target.value)}
+                        placeholder="उदा: पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था"
                         className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
                       />
                     </div>
@@ -3446,12 +3508,14 @@ export default function HistorySection({
   );
 
   return (
-    <div className="space-y-3 sm:space-y-10">
+    <>
       {/* Active Homepage Section Edit Modal */}
       {renderSectionEditModal()}
-      {/* Admin Homepage CMS Quick Bar */}
-      {isAdmin && (
-        <div className="bg-teal-900/95 dark:bg-slate-900/95 text-white p-3.5 rounded-2xl border border-teal-700/80 shadow-xl flex flex-wrap items-center justify-between gap-3 -mb-4 z-20">
+
+      <div className="space-y-4 sm:space-y-10">
+        {/* Admin Homepage CMS Quick Bar */}
+        {isAdmin && (
+          <div className="bg-teal-900/95 dark:bg-slate-900/95 text-white p-3.5 rounded-2xl border border-teal-700/80 shadow-xl flex flex-wrap items-center justify-between gap-3 -mb-2 sm:-mb-4 z-20 mx-0">
           <div className="flex items-center gap-2 font-black text-xs uppercase text-amber-300 tracking-wider">
             <Edit3 className="w-4 h-4 text-amber-400" />
             <span>Edit Homepage Section:</span>
@@ -4570,6 +4634,7 @@ export default function HistorySection({
         </div> {/* End of Column 2 (xl:col-span-9) */}
       </div> {/* End of 2-Column Grid (grid-cols-1 xl:grid-cols-12) */}
 
-    </div>
+      </div>
+    </>
   );
 }
