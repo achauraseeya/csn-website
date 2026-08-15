@@ -63,6 +63,10 @@
   "unityStatsJson": "",
   "taglineEn": "Kathmandu, Nepal",
   "taglineNe": "Kathmandu, Nepal",
+  "headerTaglineEn": "Estd: 2003 (२०६०)",
+  "headerTaglineNe": "स्थापना: २०६० (Estd: 2003)",
+  "footerTaglineEn": "Kathmandu, Nepal",
+  "footerTaglineNe": "Kathmandu, Nepal",
   "impactHeaderEn": "Unity, Consolidation and Cooperation",
   "impactHeaderNe": "एकता, एैक्यबद्धता र सहकार्य",
   "footerAboutEn": "We are dedicated to unifying our members.",
@@ -109,7 +113,5 @@
   "logoFontSizeDesktop": "text-2xl lg:text-3.5xl",
   "logoSubFontSizeMobile": "text-[9px] xs:text-[10px] sm:text-[11px]",
   "menuFontSizeDesktop": "text-xs xl:text-sm",
-  "menuFontSizeMobile": "text-sm",
-  "footerTaglineEn": "Kathmandu, Nepal",
-  "footerTaglineNe": "Kathmandu, Nepal"
+  "menuFontSizeMobile": "text-sm"
 }
