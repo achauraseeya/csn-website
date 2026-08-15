@@ -179,6 +179,10 @@ const defaultSiteTexts: SiteTexts = {
   unityStatsJson: '',
   taglineEn: 'Platform preserving betel leaf culture and serving humanity',
   taglineNe: 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था',
+  headerTaglineEn: 'Kathmandu, Nepal | Estd: 2003 (२०६०)',
+  headerTaglineNe: 'काठमाडौँ, नेपाल | स्थापना: २०६० (Estd: 2003)',
+  footerTaglineEn: 'A dedicated social platform preserving betel leaf culture & serving humanity',
+  footerTaglineNe: 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था',
   impactHeaderEn: 'Empowering & Transforming Lives',
   impactHeaderNe: 'सशक्तिकरण र जीवन परिवर्तन',
   footerAboutEn: 'We are dedicated to unifying community coordinators, supporting traditional cultivation, and providing essential healthcare and youth education programs.',
@@ -2761,16 +2765,29 @@ export default function App() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-12 gap-8 items-start mb-8">
           
           <div className="xl:col-span-5 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-16 h-10 sm:w-20 sm:h-11 rounded-xl bg-white overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-sm border border-slate-700">
-                <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-contain rounded-lg" />
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-10 sm:w-20 sm:h-11 rounded-xl bg-white overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-sm border border-slate-700">
+                  <img src={siteTexts.logoUrl || logoImg} alt="Logo" className="w-full h-full object-contain rounded-lg" />
+                </div>
+                <span className="font-black text-xl sm:text-2xl tracking-tight text-white">
+                  {lang === 'en' ? siteTexts.logoTextEn : siteTexts.logoTextNe}
+                </span>
               </div>
-              <span className="font-black text-xl sm:text-2xl tracking-tight text-white">
-                {lang === 'en' ? siteTexts.logoTextEn : siteTexts.logoTextNe}
-              </span>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingFooterSocials(true)}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer shrink-0"
+                  title={lang === 'en' ? 'Edit Footer Tagline & Information' : 'फुटर ट्यागलाइन र विवरण सम्पादन गर्नुहोस्'}
+                >
+                  <Edit className="w-3.5 h-3.5" />
+                  <span>{lang === 'en' ? 'Edit Footer' : 'फुटर सम्पादन'}</span>
+                </button>
+              )}
             </div>
             <p className="text-sm text-gray-400 leading-relaxed font-medium pr-4">
-              {((lang === 'en' ? (siteTexts.footerTaglineEn || siteTexts.taglineEn) : (siteTexts.footerTaglineNe || siteTexts.taglineNe)) || '') + " " + (lang === 'en' ? siteTexts.footerAboutEn : siteTexts.footerAboutNe)}
+              {((lang === 'en' ? (siteTexts.footerTaglineEn || 'A dedicated social platform preserving betel leaf culture & serving humanity') : (siteTexts.footerTaglineNe || 'पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था')) || '') + ((siteTexts.footerAboutEn || siteTexts.footerAboutNe) ? (" — " + (lang === 'en' ? siteTexts.footerAboutEn : siteTexts.footerAboutNe)) : '')}
             </p>
             <div className="flex gap-3 pt-1 items-center">
                {siteTexts.socialFb && (

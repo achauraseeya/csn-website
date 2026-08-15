@@ -41,8 +41,8 @@ export default function EditFooterModal({
   useEffect(() => {
     if (isOpen) {
       setLogoUrl(siteTexts.logoUrl || '');
-      setFooterTaglineEn(siteTexts.footerTaglineEn || siteTexts.taglineEn || '');
-      setFooterTaglineNe(siteTexts.footerTaglineNe || siteTexts.taglineNe || '');
+      setFooterTaglineEn(siteTexts.footerTaglineEn || '');
+      setFooterTaglineNe(siteTexts.footerTaglineNe || '');
       setFooterAboutEn(siteTexts.footerAboutEn || '');
       setFooterAboutNe(siteTexts.footerAboutNe || '');
       setSocialFb(siteTexts.socialFb || '');
@@ -105,8 +105,6 @@ export default function EditFooterModal({
         logoUrl: logoUrl.trim(),
         footerTaglineEn: footerTaglineEn.trim(),
         footerTaglineNe: footerTaglineNe.trim(),
-        taglineEn: footerTaglineEn.trim(),
-        taglineNe: footerTaglineNe.trim(),
         footerAboutEn: footerAboutEn.trim(),
         footerAboutNe: footerAboutNe.trim(),
         socialFb: socialFb.trim(),

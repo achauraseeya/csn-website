@@ -774,19 +774,6 @@ export default function HistorySection({
           menuFontSizeMobile: editMenuFontSizeMobile,
           headerTaglineEn: editHeaderTaglineEn,
           headerTaglineNe: editHeaderTaglineNe,
-          footerTaglineEn: editFooterTaglineEn,
-          footerTaglineNe: editFooterTaglineNe,
-          taglineEn: editFooterTaglineEn || editTaglineEn,
-          taglineNe: editFooterTaglineNe || editTaglineNe,
-          footerAboutEn: editFooterAboutEn,
-          footerAboutNe: editFooterAboutNe,
-          footerAddressEn: editFooterAddressEn,
-          footerAddressNe: editFooterAddressNe,
-          footerPhone: editFooterPhone,
-          footerEmail: editFooterEmail,
-          socialFb: editSocialFb,
-          socialTw: editSocialTw,
-          socialIg: editSocialIg,
         };
       } else if (activeEditSection === 'pillars') {
         updates = {
@@ -2547,95 +2534,6 @@ export default function HistorySection({
                         value={editHeaderTaglineNe}
                         onChange={(e) => setEditHeaderTaglineNe(e.target.value)}
                         placeholder="उदा: काठमाडौँ, नेपाल | स्थापना: २०६० (Estd: 2003)"
-                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
-                  <div>
-                    <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Footer Logo Tagline / Mission Note</h4>
-                    <p className="text-[11px] text-teal-700 dark:text-teal-400 mt-0.5">Displayed in the website footer beneath the footer logo.</p>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Footer Tagline (English)</label>
-                      <input
-                        type="text"
-                        value={editFooterTaglineEn}
-                        onChange={(e) => setEditFooterTaglineEn(e.target.value)}
-                        placeholder="e.g. A dedicated social platform preserving betel leaf culture & serving humanity"
-                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Footer Tagline (Nepali)</label>
-                      <input
-                        type="text"
-                        value={editFooterTaglineNe}
-                        onChange={(e) => setEditFooterTaglineNe(e.target.value)}
-                        placeholder="उदा: पान संस्कृतिको संरक्षण र मानव सेवामा समर्पित एक सामाजिक संस्था"
-                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-teal-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-teal-200/60 dark:border-slate-700 space-y-4">
-                  <h4 className="font-extrabold text-teal-900 dark:text-teal-200 uppercase text-xs tracking-wider">Footer About & Contact Details</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
-                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Footer About Paragraph (English)</label>
-                      <textarea
-                        rows={2}
-                        value={editFooterAboutEn}
-                        onChange={(e) => setEditFooterAboutEn(e.target.value)}
-                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Footer About Paragraph (Nepali)</label>
-                      <textarea
-                        rows={2}
-                        value={editFooterAboutNe}
-                        onChange={(e) => setEditFooterAboutNe(e.target.value)}
-                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Contact Phone</label>
-                      <input
-                        type="text"
-                        value={editFooterPhone}
-                        onChange={(e) => setEditFooterPhone(e.target.value)}
-                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Contact Email</label>
-                      <input
-                        type="text"
-                        value={editFooterEmail}
-                        onChange={(e) => setEditFooterEmail(e.target.value)}
-                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Address (English)</label>
-                      <input
-                        type="text"
-                        value={editFooterAddressEn}
-                        onChange={(e) => setEditFooterAddressEn(e.target.value)}
-                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-teal-900 dark:text-teal-200 block mb-1">Address (Nepali)</label>
-                      <input
-                        type="text"
-                        value={editFooterAddressNe}
-                        onChange={(e) => setEditFooterAddressNe(e.target.value)}
                         className="w-full p-2.5 bg-white dark:bg-slate-900 border border-teal-200 rounded-xl text-xs"
                       />
                     </div>

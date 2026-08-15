@@ -1125,12 +1125,18 @@ export default function MembershipDonation({
                 </div>
 
                 <div className="p-4 bg-teal-950/60 rounded-2xl border border-teal-800 space-y-2">
-                  <p className="text-teal-400 font-bold uppercase tracking-wider text-[10px]">Deposit &amp; Verification Step</p>
-                  <p className="text-teal-200 text-xs leading-relaxed">
-                    A notification copy has been routed to <strong>{donationInfo.contactEmail || 'csnepalwebsite@gmail.com'}</strong>.
+                  <p className="text-teal-400 font-bold uppercase tracking-wider text-[10px]">
+                    {lang === 'en' ? 'Deposit & Verification Step' : 'जम्मा तथा प्रमाणीकरण चरण'}
                   </p>
-                  <p className="text-teal-300 text-xs leading-relaxed pt-1">
-                    Please transfer NPR {pledgeReceipt.pledgedAmount?.toLocaleString()} to <strong>{donationInfo.bankName}</strong> (Acc: {donationInfo.accountNumber}) or scan the official QR code, and send your deposit screenshot to <strong>{donationInfo.contactEmail}</strong>.
+                  <p className="text-teal-200 text-xs leading-relaxed font-semibold">
+                    {lang === 'en'
+                      ? 'The notification copy has been recorded.'
+                      : 'सूचना प्रतिलिपि दर्ता भइसकेको छ।'}
+                  </p>
+                  <p className="text-teal-300 text-xs leading-relaxed pt-0.5">
+                    {lang === 'en'
+                      ? 'Send your deposit screenshot by clicking the button below.'
+                      : 'कृपया तलको बटन क्लिक गरी आफ्नो जम्मा भौचर/स्क्रिनसट पठाउनुहोस्।'}
                   </p>
                 </div>
               </div>
