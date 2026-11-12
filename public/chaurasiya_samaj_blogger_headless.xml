@@ -6,8 +6,17 @@
   <meta content='width=device-width, initial-scale=1, shrink-to-fit=no' name='viewport'/>
   <title><data:blog.pageTitle/></title>
   
-  <!-- SEO & Description -->
-  <meta name="description" content="Official Blogger Portal for Chaurasiya Samaj Nepal. Dedicated to unity, culture, and progress." />
+  <!-- Canonical URL mapping for Google Search Console & Googlebot -->
+  <link expr:href='data:blog.canonicalUrl' rel='canonical'/>
+  <b:include data='blog' name='all-head-content'/>
+  
+  <!-- Dynamic Search Description from Blogger Settings -->
+  <b:if cond='data:blog.metaDescription'>
+    <meta expr:content='data:blog.metaDescription' name='description'/>
+    <meta expr:content='data:blog.metaDescription' property='og:description'/>
+  <b:else/>
+    <meta content='Official website of Chaurasiya Samaj Nepal. Connecting hearts, preserving heritage, and fostering socio-economic empowerment.' name='description'/>
+  </b:if>
 
   <!-- Blogger Core XML Configuration (Required) -->
   <b:skin><![CDATA[

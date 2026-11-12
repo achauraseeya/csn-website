@@ -59,14 +59,14 @@ export const boardMembers: Member[] = [
   {
     id: '2',
     name: { en: 'Abhishek Kumar Chaurasiya', ne: 'अभिषेक कुमार चौरसिया' },
-    role: { en: 'Chief Technology Officer & General Secretary', ne: 'मुख्य प्रविधि अधिकारी र महासचिव' },
+    role: { en: 'Executive Member & Structural Engineer', ne: 'कार्यकारी सदस्य तथा स्ट्रक्चरल ईन्जिनियर' },
     category: 'secretary',
-    phone: '+977-9812345678',
-    email: 'abhishek@chaurasiyasamaaj.org.np',
+    phone: '+977-9818471605',
+    email: 'contact@achaurasiya.com.np',
     address: { en: 'Birgunj, Parsa, Nepal', ne: 'वीरगन्ज, पर्सा, नेपाल' },
     bio: {
-      en: 'A visionary software engineer and designer dedicated to digitizing our community services and building modern web portals.',
-      ne: 'हाम्रो सामुदायिक सेवाहरूलाई डिजिटाइज गर्न र आधुनिक वेब पोर्टलहरू निर्माण गर्न समर्पित एक दूरदर्शी सफ्टवेयर इन्जिनियर र डिजाइनर।',
+      en: 'Structural Engineer at Ministry of Infrastructure Development Nepal (M.Tech IIT Bombay). Dedicated to earthquake-resilient infrastructure and digital community development.',
+      ne: 'नेपालको पूर्वाधार विकास मन्त्रालयमा कार्यरत स्ट्रक्चरल ईन्जिनियर (M.Tech IIT Bombay)। भूकम्प प्रतिरोधी पूर्वाधार र सामुदायिक डिजिटल रूपान्तरणमा समर्पित।',
     },
     avatarUrl: '/abhishek_profile.jpg',
   },
@@ -275,15 +275,15 @@ export const impactStats: ImpactStat[] = [
 
 export const designerProfile: AbhishekProfile = {
   name: 'Abhishek Kumar Chaurasiya',
-  title: 'Distinguished Full-Stack Software Engineer & UI/UX Designer',
+  title: 'Structural Engineer',
   bio: {
-    en: 'Abhishek Kumar Chaurasiya is a passionate software architect, tech community leader, and the General Secretary & CTO of Chaurasiya Samaj Nepal. Driven by a deep love for his community and technological advancements, Abhishek designed this responsive platform to digitize resources, expand outreach, and deliver a clean digital ecosystem. He specializes in designing modern full-stack systems, mobile apps, and robust cloud services, while preserving cultural legacies through innovative open-source solutions.',
-    ne: 'अभिषेक कुमार चौरसिया एक भावुक सफ्टवेयर आर्किटेक्ट, प्रविधि समुदायका नेता र चौरसिया समाज नेपालका महासचिव तथा सीटीओ हुन्। आफ्नो समुदाय र प्राविधिक विकासप्रति गहिरो मायाले प्रेरित भई, अभिषेकले स्रोतहरूलाई डिजिटलाइज गर्न, पहुँच विस्तार गर्न र सफा डिजिटल इकोसिस्टम प्रदान गर्न यो उत्तरदायी प्लेटफर्मको डिजाइन गरेका हुन्। उनी नवीन ओपन-सोर्स समाधानहरू मार्फत सांस्कृतिक विरासतहरू जोगाउँदै आधुनिक फुल-स्ट्याक प्रणालीहरू, मोबाइल एपहरू र बलियो क्लाउड सेवाहरू डिजाइन गर्न विशेषज्ञ छन्।',
+    en: 'Abhishek Kumar Chaurasiya is a Structural Engineer and public-sector professional specializing in earthquake engineering, structural analysis, resilient infrastructure, and sustainable urban development. He currently serves as an Engineer with Nepal\'s Ministry of Infrastructure Development, where he contributes to the planning, design, and implementation of infrastructure and urban development projects aimed at enhancing the safety, resilience, and sustainability of Nepal\'s built environment. He earned his B.E. in Civil Engineering with distinction and academic honors from M. S. Ramaiah Institute of Technology, Bengaluru, and completed his Master of Technology (M.Tech) in Structural Engineering at the Indian Institute of Technology (IIT) Bombay.',
+    ne: 'अभिषेक कुमार चौरसिया भूकम्प इन्जिनियरिङ, संरचनात्मक विश्लेषण, लचिलो पूर्वाधार, र दिगो शहरी विकासमा विशेषज्ञता हासिल गर्ने एक संरचनात्मक इन्जिनियर र सार्वजनिक क्षेत्रका पेशेवर हुन्। उनी हाल नेपालको पूर्वाधार विकास मन्त्रालयमा इन्जिनियरको रूपमा कार्यरत छन्। उनले बेंगलुरुको एम. एस. रमैया इन्स्टिच्युट अफ टेक्नोलोजीबाट सिभिल इन्जिनियरिङमा स्नातक र भारतीय प्रविधि संस्थान (IIT) बम्बईबाट संरचनात्मक इन्जिनियरिङमा मास्टर अफ टेक्नोलोजी (M.Tech) पूरा गरेका हुन्।',
   },
-  education: 'Bachelor of Science in Computer Science & Information Technology (B.Sc. CSIT)',
-  skills: ['TypeScript / JavaScript', 'React / Next.js', 'Blogger Custom XML Templating', 'Node.js & Cloud Architecture', 'UI/UX Design (Figma)', 'Mobile App Development (Flutter)'],
+  education: 'M.Tech. (Structural Engineering), IIT Bombay | B.E. (Civil Engineering), MSRIT',
+  skills: ['Earthquake Engineering', 'Structural Analysis & Dynamics', 'Resilient Infrastructure', 'Base Isolation & Retrofitting', 'Structural Health Monitoring', 'Sustainable Urban Development'],
   email: 'contact@achaurasiya.com.np, abhishek.chaurasiya@nepal.gov.np',
-  phone: '+977-9812345678',
+  phone: '+977-9818471605',
 };
 
 export const projects = [

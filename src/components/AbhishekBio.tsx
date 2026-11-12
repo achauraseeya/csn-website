@@ -26,25 +26,47 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
     } catch (e) {}
     return {
       name: profileData?.name || defaultDesignerProfile.name,
-      title: profileData?.title || 'General Secretary, CTO & Chief Digital Designer of Chaurasiya Samaj Nepal',
-      subtitleNe: profileData?.subtitleNe || 'महासचिव, सीटीओ र चौरसिया समाज नेपालका प्रमुख डिजिटल डिजाइनर',
-      bioEn: profileData?.bioEn || defaultDesignerProfile.bio.en,
-      bioNe: profileData?.bioNe || defaultDesignerProfile.bio.ne,
-      education: profileData?.education || defaultDesignerProfile.education,
-      university: profileData?.university || 'Tribhuvan University, Nepal',
+      title: (profileData?.title && !profileData.title.toLowerCase().includes('software') && !profileData.title.toLowerCase().includes('cto'))
+        ? profileData.title
+        : 'Structural Engineer',
+      subtitleNe: (profileData?.subtitleNe && !profileData.subtitleNe.includes('डिजिटल') && !profileData.subtitleNe.includes('सीटीओ'))
+        ? profileData.subtitleNe
+        : 'स्ट्रक्चरल ईन्जिनियर',
+      bioEn: (profileData?.bioEn && !profileData.bioEn.toLowerCase().includes('software architect'))
+        ? profileData.bioEn
+        : defaultDesignerProfile.bio.en,
+      bioNe: (profileData?.bioNe && !profileData.bioNe.includes('सफ्टवेयर आर्किटेक्ट'))
+        ? profileData.bioNe
+        : defaultDesignerProfile.bio.ne,
+      education: (profileData?.education && !profileData.education.includes('CSIT'))
+        ? profileData.education
+        : defaultDesignerProfile.education,
+      university: (profileData?.university && !profileData.university.includes('Tribhuvan'))
+        ? profileData.university
+        : 'IIT Bombay, Mumbai, India',
       email: profileData?.email || defaultDesignerProfile.email,
-      phone: profileData?.phone || defaultDesignerProfile.phone || '+977-9800000000',
+      phone: profileData?.phone || defaultDesignerProfile.phone || '+977-9818471605',
       github: profileData?.github || 'https://github.com/achauraseeya',
       linkedin: profileData?.linkedin || 'https://www.linkedin.com/in/achaurasiya',
       facebook: profileData?.facebook || 'https://www.facebook.com/achaurasiya',
       instagram: profileData?.instagram || 'https://www.instagram.com/achauraseeya',
       websiteUrl: profileData?.websiteUrl || 'https://www.achaurasiya.com.np',
       avatarUrl: profileData?.avatarUrl || '/abhishek_profile.jpg',
-      skills: profileData?.skills || defaultDesignerProfile.skills,
-      quoteEn: profileData?.quoteEn || '"Technology holds the power to simplify grassroots community work. By building fast, accessible portals, we elevate traditional agriculture and unite our people under one digital roof."',
-      quoteNe: profileData?.quoteNe || '"प्रविधिले तल्लो तहका सामुदायिक कार्यहरूलाई सरलीकरण गर्ने शक्ति राख्छ। द्रुत र पहुँचयोग्य पोर्टलहरू निर्माण गरेर, हामी परम्परागत कृषि र हाम्रो समाजलाई एकै थलोमा जोड्छौँ।"',
-      portalTextEn: profileData?.portalTextEn || 'Discover complete software projects, research papers, and technical blogs at www.achaurasiya.com.np',
-      portalTextNe: profileData?.portalTextNe || 'www.achaurasiya.com.np मा सम्पूर्ण सफ्टवेयर परियोजनाहरू, अनुसन्धान पत्रहरू र ब्लगहरू हेर्नुहोस्।',
+      skills: (Array.isArray(profileData?.skills) && !profileData.skills.includes('TypeScript / JavaScript'))
+        ? profileData.skills
+        : defaultDesignerProfile.skills,
+      quoteEn: (profileData?.quoteEn && !profileData.quoteEn.includes('fast, accessible portals'))
+        ? profileData.quoteEn
+        : '"Engineering is not merely the design of structures, but the creation of resilient infrastructure that safeguards communities, supports economic growth, and shapes a sustainable future."',
+      quoteNe: (profileData?.quoteNe && !profileData.quoteNe.includes('द्रुत र पहुँचयोग्य पोर्टलहरू'))
+        ? profileData.quoteNe
+        : '"इन्जिनियरिङ भनेको केवल संरचनाहरूको डिजाइन मात्र होइन तर समुदायको सुरक्षा गर्ने, आर्थिक वृद्धिलाई टेवा पुर्‍याउने र दिगो भविष्य निर्माण गर्ने लचिलो पूर्वाधारको सिर्जना हो।"',
+      portalTextEn: (profileData?.portalTextEn && !profileData.portalTextEn.toLowerCase().includes('software projects'))
+        ? profileData.portalTextEn
+        : 'Discover complete research papers, structural engineering publications, and technical insights at www.achaurasiya.com.np',
+      portalTextNe: (profileData?.portalTextNe && !profileData.portalTextNe.includes('सफ्टवेयर'))
+        ? profileData.portalTextNe
+        : 'www.achaurasiya.com.np मा सम्पूर्ण इन्जिनियरिङ्ग अनुसन्धान पत्रहरू, प्रकाशनहरू र प्राविधिक विवरणहरू हेर्नुहोस्।',
       contributions: profileData?.contributions || [
         {
           title: { en: 'Engineer', ne: 'ईन्जिनियर' },
@@ -81,25 +103,47 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
         if (cloudProfile && typeof cloudProfile === 'object' && cloudProfile.name) {
           const updatedProfile = {
             name: cloudProfile.name || defaultDesignerProfile.name,
-            title: cloudProfile.title || 'General Secretary, CTO & Chief Digital Designer of Chaurasiya Samaj Nepal',
-            subtitleNe: cloudProfile.subtitleNe || 'महासचिव, सीटीओ र चौरसिया समाज नेपालका प्रमुख डिजिटल डिजाइनर',
-            bioEn: cloudProfile.bioEn || defaultDesignerProfile.bio.en,
-            bioNe: cloudProfile.bioNe || defaultDesignerProfile.bio.ne,
-            education: cloudProfile.education || defaultDesignerProfile.education,
-            university: cloudProfile.university || 'Tribhuvan University, Nepal',
+            title: (cloudProfile.title && !cloudProfile.title.toLowerCase().includes('software') && !cloudProfile.title.toLowerCase().includes('cto'))
+              ? cloudProfile.title
+              : 'Structural Engineer',
+            subtitleNe: (cloudProfile.subtitleNe && !cloudProfile.subtitleNe.includes('डिजिटल') && !cloudProfile.subtitleNe.includes('सीटीओ'))
+              ? cloudProfile.subtitleNe
+              : 'स्ट्रक्चरल ईन्जिनियर',
+            bioEn: (cloudProfile.bioEn && !cloudProfile.bioEn.toLowerCase().includes('software architect'))
+              ? cloudProfile.bioEn
+              : defaultDesignerProfile.bio.en,
+            bioNe: (cloudProfile.bioNe && !cloudProfile.bioNe.includes('सफ्टवेयर आर्किटेक्ट'))
+              ? cloudProfile.bioNe
+              : defaultDesignerProfile.bio.ne,
+            education: (cloudProfile.education && !cloudProfile.education.includes('CSIT'))
+              ? cloudProfile.education
+              : defaultDesignerProfile.education,
+            university: (cloudProfile.university && !cloudProfile.university.includes('Tribhuvan'))
+              ? cloudProfile.university
+              : 'IIT Bombay, Mumbai, India',
             email: cloudProfile.email || defaultDesignerProfile.email,
-            phone: cloudProfile.phone || defaultDesignerProfile.phone || '+977-9800000000',
+            phone: cloudProfile.phone || defaultDesignerProfile.phone || '+977-9818471605',
             github: cloudProfile.github || 'https://github.com/achauraseeya',
             linkedin: cloudProfile.linkedin || 'https://www.linkedin.com/in/achaurasiya',
             facebook: cloudProfile.facebook || 'https://www.facebook.com/achaurasiya',
             instagram: cloudProfile.instagram || 'https://www.instagram.com/achauraseeya',
             websiteUrl: cloudProfile.websiteUrl || 'https://www.achaurasiya.com.np',
             avatarUrl: cloudProfile.avatarUrl || '/abhishek_profile.jpg',
-            skills: Array.isArray(cloudProfile.skills) ? cloudProfile.skills : defaultDesignerProfile.skills,
-            quoteEn: cloudProfile.quoteEn || '"Technology holds the power to simplify grassroots community work. By building fast, accessible portals, we elevate traditional agriculture and unite our people under one digital roof."',
-            quoteNe: cloudProfile.quoteNe || '"प्रविधिले तल्लो तहका सामुदायिक कार्यहरूलाई सरलीकरण गर्ने शक्ति राख्छ। द्रुत र पहुँचयोग्य पोर्टलहरू निर्माण गरेर, हामी परम्परागत कृषि र हाम्रो समाजलाई एकै थलोमा जोड्छौँ।"',
-            portalTextEn: cloudProfile.portalTextEn || 'Discover complete software projects, research papers, and technical blogs at www.achaurasiya.com.np',
-            portalTextNe: cloudProfile.portalTextNe || 'www.achaurasiya.com.np मा सम्पूर्ण सफ्टवेयर परियोजनाहरू, अनुसन्धान पत्रहरू र ब्लगहरू हेर्याउनुहोस्।',
+            skills: (Array.isArray(cloudProfile.skills) && !cloudProfile.skills.includes('TypeScript / JavaScript'))
+              ? cloudProfile.skills
+              : defaultDesignerProfile.skills,
+            quoteEn: (cloudProfile.quoteEn && !cloudProfile.quoteEn.includes('fast, accessible portals'))
+              ? cloudProfile.quoteEn
+              : '"Engineering is not merely the design of structures, but the creation of resilient infrastructure that safeguards communities, supports economic growth, and shapes a sustainable future."',
+            quoteNe: (cloudProfile.quoteNe && !cloudProfile.quoteNe.includes('द्रुत र पहुँचयोग्य पोर्टलहरू'))
+              ? cloudProfile.quoteNe
+              : '"इन्जिनियरिङ भनेको केवल संरचनाहरूको डिजाइन मात्र होइन तर समुदायको सुरक्षा गर्ने, आर्थिक वृद्धिलाई टेवा पुर्‍याउने र दिगो भविष्य निर्माण गर्ने लचिलो पूर्वाधारको सिर्जना हो।"',
+            portalTextEn: (cloudProfile.portalTextEn && !cloudProfile.portalTextEn.toLowerCase().includes('software projects'))
+              ? cloudProfile.portalTextEn
+              : 'Discover complete research papers, structural engineering publications, and technical insights at www.achaurasiya.com.np',
+            portalTextNe: (cloudProfile.portalTextNe && !cloudProfile.portalTextNe.includes('सफ्टवेयर'))
+              ? cloudProfile.portalTextNe
+              : 'www.achaurasiya.com.np मा सम्पूर्ण इन्जिनियरिङ्ग अनुसन्धान पत्रहरू, प्रकाशनहरू र प्राविधिक विवरणहरू हेर्नुहोस्।',
             contributions: Array.isArray(cloudProfile.contributions) ? cloudProfile.contributions : []
           };
           setProfile(updatedProfile);
@@ -119,7 +163,9 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
     const origTitle = document.title;
     document.title = "Abhishek Kumar Chaurasiya - Structural Engineer & Public Sector Professional | Chaurasiya Samaj Nepal";
 
-    const shareUrl = `${window.location.origin}/?page=abhishek`;
+    const shareUrl = window.location.pathname.toLowerCase().includes('abhishek')
+      ? `${window.location.origin}${window.location.pathname}`
+      : `${window.location.origin}/?page=abhishek`;
 
     // Helper to set or create meta tag
     const setMetaTag = (attr: string, key: string, content: string) => {
@@ -268,7 +314,7 @@ export default function AbhishekBio({ lang, onTrackAction, isAdmin = false, onUp
   const [isUploading, setIsUploading] = useState(false);
 
   const t = {
-    title: { en: `Our Architect: ${profile.name}`, ne: `हाम्रो वास्तुकार: ${profile.name}` },
+    title: { en: `Er. ${profile.name}`, ne: `ई. ${profile.name}` },
     aboutMe: { en: 'Executive Biography', ne: 'कार्यकारी जीवनी' },
     skillsTitle: { en: 'Technical Expertise', ne: 'प्राविधिक विशेषज्ञता' },
     eduTitle: { en: 'Academic Foundation', ne: 'शैक्षिक पृष्ठभूमि' },

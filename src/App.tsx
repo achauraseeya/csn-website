@@ -1302,7 +1302,7 @@ export default function App() {
         window.location.pathname.toLowerCase().includes('abhishek')
       ) {
         setCurrentTab('abhishek-bio');
-        if (window.location.search !== '?page=abhishek') {
+        if (!window.location.pathname.toLowerCase().includes('abhishek') && window.location.search !== '?page=abhishek') {
           window.history.replaceState({ tab: 'abhishek-bio' }, '', '?page=abhishek');
         }
       } else if (postParam) {
@@ -1945,14 +1945,19 @@ export default function App() {
       pageViews: prev.pageViews + 1,
     }));
 
-    // Simulate standard SEO tags (Title, Meta Description)
-    document.title = lang === 'en' ? 'Chaurasiya Samaj Nepal | Official NGO Website' : 'चौरसिया समाज नेपाल | आधिकारिक NGO वेबसाइट';
+    // Preserve search description configured in Blogger settings or HTML
     const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) {
-      metaDesc.setAttribute('content', lang === 'en' 
-        ? 'Official NGO website of Chaurasiya Samaj Nepal. Dedicated to preserving betel leaf culture, education, healthcare, and humanitarian efforts.'
-        : 'चौरसिया समाज नेपालको आधिकारिक NGO वेबसाइट। पान संस्कृति, शिक्षा, स्वास्थ्य सेवा, र मानवीय प्रयासहरूको संरक्षण गर्न समर्पित।'
-      );
+    const existingContent = metaDesc?.getAttribute('content') || '';
+    // Only set fallback if no search description is provided by Blogger
+    const isGenericFallback = !existingContent || existingContent.includes('Official NGO website of Chaurasiya Samaj Nepal');
+
+    if (isGenericFallback && metaDesc) {
+      const customDesc = lang === 'en'
+        ? (siteTexts.footerAboutEn || siteTexts.footerTaglineEn || '')
+        : (siteTexts.footerAboutNe || siteTexts.footerTaglineNe || '');
+      if (customDesc) {
+        metaDesc.setAttribute('content', customDesc);
+      }
     }
 
     // Inject JSON-LD Schema for NGO
@@ -1962,8 +1967,8 @@ export default function App() {
       "@context": "https://schema.org",
       "@type": "NGO",
       "name": "Chaurasiya Samaj Nepal",
-      "url": "https://chaurasiyasumaj.org.np",
-      "logo": "https://chaurasiyasumaj.org.np/logo.png",
+      "url": "https://chaurasiyasamaj.org.np",
+      "logo": "https://chaurasiyasamaj.org.np/logo.png",
       "description": "Dedicated to unifying community coordinators, supporting traditional cultivation, and providing healthcare.",
       "address": {
         "@type": "PostalAddress",
@@ -2876,7 +2881,7 @@ export default function App() {
             </div>
             <span className="whitespace-normal text-left">
               {lang === 'en' ? 'Designed & Maintained by' : 'डिजाइन र मर्मत सम्भार:'}{' '}
-              <span className="font-extrabold text-white group-hover:underline">Abhishek Kumar Chaurasiya</span>
+              <span className="font-extrabold text-white group-hover:underline">Er. Abhishek Kumar Chaurasiya</span>
             </span>
           </button>
         </div>
