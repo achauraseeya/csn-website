@@ -3,20 +3,20 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <!-- Homepage -->
   <url>
-    <loc>https://csnepal.org/</loc>
-    <lastmod>2026-07-30</lastmod>
+    <loc>https://chaurasiyasamaj.org.np/</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- Abhishek Kumar Chaurasiya Executive & Structural Engineer Dedicated Profile -->
   <url>
-    <loc>https://csnepal.org/?page=abhishek</loc>
-    <lastmod>2026-07-30</lastmod>
+    <loc>https://chaurasiyasamaj.org.np/?page=abhishek</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.95</priority>
     <image:image>
-      <image:loc>https://csnepal.org/abhishek_profile.jpg</image:loc>
+      <image:loc>https://chaurasiyasamaj.org.np/abhishek_profile.jpg</image:loc>
       <image:title>Abhishek Kumar Chaurasiya - Structural Engineer</image:title>
       <image:caption>Er. Abhishek Kumar Chaurasiya, Structural Engineer at Ministry of Infrastructure Development Nepal, M.Tech IIT Bombay</image:caption>
     </image:image>
@@ -24,40 +24,120 @@
 
   <!-- Members Directory -->
   <url>
-    <loc>https://csnepal.org/?tab=directory</loc>
-    <lastmod>2026-07-30</lastmod>
+    <loc>https://chaurasiyasamaj.org.np/?tab=directory</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
   </url>
 
   <!-- Matrimonial Portal -->
   <url>
-    <loc>https://csnepal.org/?tab=matrimonial</loc>
-    <lastmod>2026-07-30</lastmod>
+    <loc>https://chaurasiyasamaj.org.np/?tab=matrimonial</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
   </url>
 
-  <!-- Events & Calendar -->
+  <!-- News & Notices Gallery -->
   <url>
-    <loc>https://csnepal.org/?tab=events</loc>
-    <lastmod>2026-07-30</lastmod>
+    <loc>https://chaurasiyasamaj.org.np/?tab=notices-gallery</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Events & Campaigns -->
+  <url>
+    <loc>https://chaurasiyasamaj.org.np/?tab=events</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
 
-  <!-- Notices Gallery -->
+  <!-- Photo Gallery & Albums -->
   <url>
-    <loc>https://csnepal.org/?tab=notices-gallery</loc>
-    <lastmod>2026-07-30</lastmod>
-    <changefreq>daily</changefreq>
+    <loc>https://chaurasiyasamaj.org.np/?tab=albums-gallery</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Our Heritage -->
   <url>
-    <loc>https://csnepal.org/?tab=our-heritage</loc>
-    <lastmod>2026-07-30</lastmod>
+    <loc>https://chaurasiyasamaj.org.np/?tab=our-heritage</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Renowned Personalities -->
+  <url>
+    <loc>https://chaurasiyasamaj.org.np/?tab=renowned-people</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Family Connectivity & Genealogy -->
+  <url>
+    <loc>https://chaurasiyasamaj.org.np/?tab=family-connectivity</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+  <!-- Membership Registration -->
+  <url>
+    <loc>https://chaurasiyasamaj.org.np/?tab=membership-form</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+  <!-- Volunteer Registration -->
+  <url>
+    <loc>https://chaurasiyasamaj.org.np/?tab=volunteer-form</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Donation - Guest House Construction -->
+  <url>
+    <loc>https://chaurasiyasamaj.org.np/?tab=donate-guesthouse</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+  <!-- Donation - Events & Social Causes -->
+  <url>
+    <loc>https://chaurasiyasamaj.org.np/?tab=donate-events</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- About Us - Vision & Goals -->
+  <url>
+    <loc>https://chaurasiyasamaj.org.np/?tab=about-vision</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- About Us - Mission & Objectives -->
+  <url>
+    <loc>https://chaurasiyasamaj.org.np/?tab=about-mission</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- About Us - History & Leadership -->
+  <url>
+    <loc>https://chaurasiyasamaj.org.np/?tab=about-history</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

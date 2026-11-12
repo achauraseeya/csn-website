@@ -5,4 +5,4 @@ Allow: /
 Allow: /?page=abhishek
 Allow: /?tab=*
 
-Sitemap: https://csnepal.org/sitemap.xml
+Sitemap: https://chaurasiyasamaj.org.np/sitemap.xml

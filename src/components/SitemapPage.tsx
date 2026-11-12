@@ -78,7 +78,7 @@ export default function SitemapPage({ lang, onNavigate }: SitemapPageProps) {
               <span className="inline-block px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[10px] font-extrabold rounded-md">LIVE</span>
             </h3>
             <p className="text-xs text-gray-500 dark:text-slate-400 font-mono">
-              https://csnepal.org/sitemap.xml
+              https://chaurasiyasamaj.org.np/sitemap.xml
             </p>
           </div>
         </div>
